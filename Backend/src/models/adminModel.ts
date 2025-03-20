@@ -1,5 +1,4 @@
-
-import { IAdmin } from "../entities/adminEntity";
+import { EAdmin } from "../entities/adminEntity";
 import mongoose,{Schema} from "mongoose";
 
 
@@ -26,9 +25,11 @@ const AdminSchema = new Schema({
 
     profilePicture: { type: String }
 
+}, {
+    collection: 'Admin'
 });  
 
 
-const Admin = mongoose.model<IAdmin>('dmin', AdminSchema);
+const Admin = mongoose.model<EAdmin>('Admin', AdminSchema);
 
 export default Admin;

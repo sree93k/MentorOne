@@ -1,90 +1,50 @@
 import bcrypt from 'bcryptjs'
-import { IAdmin } from 'entities/adminEntity'
+import { EAdmin } from '../../entities/adminEntity'
 import { IAdminAuthService } from "../interface/inAdminAuthservice"
-import {
-    generateAccessToken,
-    generateRefreshToken,
-    verifyRefreshToken,
-  } from "../../utils/jwt";
-import { IAdminRepository } from '../../repositories/interface/adminRespository';
-import AdminRepository from '../../repositories/implementations/adminRepository';
-import { JwtPayload } from 'jsonwebtoken';
+import { IAdminRepository } from '../../repositories/interface/inAdminRespository';
+import AdminRepository from '../../repositories/implementations/imAdminRepository';
 
-  export default class AdminAuthService implements IAdminAuthService{
-
+export default class AdminAuthService implements IAdminAuthService {
     private AdminRepository: IAdminRepository
 
-    constructor(){
+    constructor() {
         this.AdminRepository = new AdminRepository()
     }
 
-    async login(user: IAdmin): Promise<{
-        accessToken: string;
-        refreshToken: string;
-        adminFound: Omit<IAdmin, 'password'>; 
-        role:string;
+    async login(user: { adminEmail: string; adminPassword: string }): Promise<{
+        adminFound: Omit<EAdmin, 'adminPassword'>; 
+        role: string;
     } | null> {
+        console.log("Service - Login attempt for email:", user.adminEmail);
         
         if (!user.adminEmail) {
-            throw new Error("adminEmail is null or undefined");
+            console.log("Service - Error: adminEmail is required");
+            throw new Error("adminEmail is required");
         }
-        let adminFound = await this.AdminRepository.findByUserId(user.adminEmail.toString());
-    
-        if (adminFound && user.adminPassword && (
-            adminFound.adminPassword && await bcrypt.compare(user.adminPassword.toString(), adminFound.adminPassword.toString())
-        )) {
-            const id = adminFound._id?.toString();
-            
-            const accessToken = generateAccessToken({
-                id,
-                role: adminFound.role,
-            });
-    
-            const refreshToken = generateRefreshToken({
-                id,
-                role: adminFound.role,
-            });
-    
-            await this.AdminRepository.saveRefreshToken(id, refreshToken);
-    
-            const adminObject = adminFound.toObject();
 
-            const { password, ...adminWithoutPassword } = adminObject;
+        const adminFound = await this.AdminRepository.findByEmail(user.adminEmail);
+        console.log("Service - Admin found:", adminFound ? "Yes" : "No");
     
-            return { accessToken, refreshToken, adminFound: adminWithoutPassword, role: adminFound.role || 'defaultRole' };
+        if (adminFound && user.adminPassword && adminFound.adminPassword) {
+            console.log("Service - Comparing passwords");
+            console.log("Service - Input password:", user.adminPassword);
+            console.log("Service - Stored password hash:", adminFound.adminPassword);
+            
+            const isPasswordValid = await bcrypt.compare(user.adminPassword, adminFound.adminPassword);
+            console.log("Service - Password valid:", isPasswordValid);
+            
+            if (isPasswordValid) {
+                console.log("Service - Login successful");
+                const adminObject = adminFound.toObject();
+                const { adminPassword, ...adminWithoutPassword } = adminObject;
+                return { 
+                    adminFound: adminWithoutPassword, 
+                    role: adminFound.role || 'admin' 
+                };
+            }
         }
     
+        console.log("Service - Login failed");
         return null;
-    }
-
-    async logout(token: string , id:string): Promise<IAdmin | null> {
-
-        const admin = await this.AdminRepository.removeRefreshToken(id,token)
-        
-        return admin ? admin : null
-    }
-
-    async refreshAccessToken(userId:string): Promise <string| null> {
-        
-        const adminFound  = await this.AdminRepository.findById(userId)
-
-
-        if(adminFound){
-            const id = adminFound._id?.toString();
-            
-            const accessToken = generateAccessToken({
-                id,
-                role: adminFound.role,
-            });
-
-            return accessToken
-        }
-
-
-
-        return null
-    }
-
-    
-    
-  }
+    }   
+}

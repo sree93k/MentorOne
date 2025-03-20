@@ -1,19 +1,26 @@
 import { Request, Response } from 'express';
 import { ApiError } from '../../middlewares/errorHandler';
 import ApiResponse from '../../utils/apiResponse';
-import AdminAuthService from '../../services/implementations/imAdminAuthService';
+import imUserAuthService from '../../services/implementations/imUserAuthService'
 
-class AdminAuthController {
-    private adminAuthService: AdminAuthService;
+class UserAuthController {
+    private userAuthService: imUserAuthService;
+
+    private options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict' as const,
+        maxAge: 1000 * 60 * 60 * 24 * 2, // 2 days
+    };
 
     constructor() {
-        this.adminAuthService = new AdminAuthService();
+        this.userAuthService = new imUserAuthService();
     }
 
     public login = async (req: Request, res: Response): Promise<void> => {
         try {
             console.log("Controller - Login request received:", req.body);
-            const loginData = await this.adminAuthService.login(req.body);
+            const loginData = await this.userAuthService.login(req.body);
             console.log("Controller - Login service response:", loginData);
             
             if (!loginData) {
@@ -37,4 +44,4 @@ class AdminAuthController {
    
 }
 
-export default new AdminAuthController();
+export default new UserAuthController();
