@@ -1,10 +1,14 @@
-import { Router } from 'express';
-import adminAuthController from '../../controllers/adminAuth/adminAuthController';
-import { validateAdminLogin } from '../../validator/adminValidator';
+import { Router } from "express";
+import adminController from "../../controllers/adminController/adminController";
+import { validateAdminLogin } from "../../validator/adminValidator";
+import adminAuthRoute from "./adminAuthRoute";
+import { authenticate } from "../../middlewares/authenticateuser";
 
-const adminAuthRoutes = Router();
+const adminRoutes = Router();
 
-// Admin login route
-adminAuthRoutes.post('/login', validateAdminLogin, adminAuthController.login);
+adminRoutes.use("/auth", adminAuthRoute);
 
-export default adminAuthRoutes;
+adminRoutes.get("/validate_session", adminController.validateSuccessResponse);
+// adminRoutes.get("/allUsers", authenticate, adminController.getAllUser);
+
+export default adminRoutes;

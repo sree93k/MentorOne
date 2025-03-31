@@ -1,20 +1,17 @@
-import * as React from 'react';
-import CssBaseline from '@mui/material/CssBaseline';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
+// src/common/Container.tsx
+import React from "react";
 
-
-const SimpleContainer: React.FC = () => {
+const SimpleContainer: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+}> = ({ children, className }) => {
   return (
-    <React.Fragment>
-      <CssBaseline />
-      <Container maxWidth="sm">
-        <Box sx={{ bgcolor: '#cfe8fc', height: '100vh', padding:"10px"}} >
-        <h1>hii</h1>
-            </Box>
-      </Container>
-    </React.Fragment>
+    <div
+      className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${className || ""}`}
+    >
+      {children}
+    </div>
   );
-}
+};
 
 export default SimpleContainer;

@@ -1,0 +1,318 @@
+import bcrypt from "bcryptjs";
+import { EUsers } from "../../entities/userEntity";
+import { inUserAuthService } from "../interface/inUserAuthService";
+import { inUserRepository } from "../../repositories/interface/inUserRepository";
+import imUserRepository from "../../repositories/implementations/imUserRepository";
+import imOTPRepository from "../../repositories/implementations/imOTPRepository";
+import { inOTPRepository } from "../../repositories/interface/inOTPRepository";
+import UserModel from "../../models/userModel";
+import {
+  accessTokenForReset,
+  decodeAndVerifyToken,
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../../utils/jwt";
+
+export default class UserAuthService implements inUserAuthService {
+  private UserRepository: inUserRepository;
+  private OTPRepository: inOTPRepository;
+
+  constructor() {
+    this.UserRepository = new imUserRepository();
+    this.OTPRepository = new imOTPRepository();
+  }
+
+  async createUser(email: Partial<EUsers>): Promise<{
+    user: EUsers;
+    accessToken: string;
+    refreshToken: string | null;
+  }> {
+    try {
+      console.log("im user auth servioce", email);
+
+      const userData = await this.OTPRepository.userData(email);
+      console.log("user data at cerate user service", userData);
+
+      const newUser = new UserModel({ ...userData });
+      console.log("new usermodel at cerate user service", newUser);
+      const createdUser = await this.UserRepository.createUser(newUser);
+      console.log("ctreated successfully service thaa");
+
+      if (createdUser) {
+        const accessToken = generateAccessToken({
+          id: createdUser.id,
+          role: createdUser.role,
+        });
+        const refreshToken = generateRefreshToken({
+          id: createdUser.id,
+          role: createdUser.role,
+        });
+        const userAfterSavedToken = await this.UserRepository.saveRefreshToken(
+          createdUser.id,
+          refreshToken
+        );
+        if (userAfterSavedToken) {
+          return {
+            user: userAfterSavedToken,
+            accessToken,
+            refreshToken,
+          };
+        }
+      }
+
+      throw new Error("Failed to create user");
+    } catch (error) {
+      console.log("error at UserAuthService", error);
+      throw error;
+    }
+  }
+
+  async login(user: { email: string; password: string }): Promise<{
+    userFound: Omit<EUsers, "password">;
+    role: string;
+  } | null> {
+    console.log("Service - Login attempt for email:", user.email);
+
+    if (!user.email) {
+      console.log("Service - Error: email is required");
+      throw new Error("email is required");
+    }
+
+    const userFound = await this.UserRepository.findByEmail(user.email);
+    console.log("Service - User found:", userFound ? "Yes" : "No");
+
+    if (userFound && user.password && userFound.password) {
+      console.log("Service - Comparing passwords");
+      console.log("Service - Input password:", user.password);
+      console.log("Service - Stored password hash:", userFound.password);
+
+      const isPasswordValid = await bcrypt.compare(
+        user.password,
+        userFound.password
+      );
+      console.log("Service - Password valid:", isPasswordValid);
+
+      if (isPasswordValid) {
+        console.log("Service - Login successful");
+        const userObject = userFound.toObject();
+        const { password, ...userWithoutPassword } = userObject;
+        return {
+          userFound: userWithoutPassword as Omit<EUsers, "password">,
+          role: userFound.role ? userFound.role.join(",") : "none",
+        };
+      }
+    }
+
+    console.log("Service - Login failed");
+    return null;
+  }
+
+  //   async googleSignIn(user: Partial<EUsers>): Promise<{
+  //     user: EUsers;
+  //     accessToken: string;
+  //     refreshToken: string;
+  //   } | null> {
+  //     console.log("Service - Login attempt for email:", user.email);
+
+  //     if (!user.email) {
+  //       console.log("Service - Error: email is required");
+  //       throw new Error("email is required");
+  //     }
+
+  //     const userData = await this.UserRepository.findByEmail(user.email);
+  //     console.log("Service - User found:", userData ? "Yes" : "No");
+
+  //     if (userData) {
+  //       console.log("Service - Comparing passwords");
+
+  //       const { password, ...userWithoutPassword } = userData.toObject();
+  //       return {
+  //         userFound: userWithoutPassword as Omit<EUsers, "password">,
+  //         role: userData.role ? userData.role.join(",") : "none",
+  //       };
+  //     }
+
+  //     console.log("Service - Login failed");
+  //     return null;
+  //   }
+
+  async googleSignIn(user: { email: string }): Promise<{
+    user: EUsers;
+    accessToken: string;
+    refreshToken: string;
+  } | null> {
+    try {
+      console.log("googlesign in service 1", user.email);
+
+      if (!user.email || typeof user.email !== "string") {
+        console.error("Email is missing or invalid");
+        throw new Error("Email is required for Google sign-in");
+      }
+      const userData = await this.UserRepository.findByEmail(user.email);
+      console.log("googlesign in service 2", userData);
+      if (!userData) {
+        return null;
+      }
+      console.log("googlesign in service 3");
+      const userId =
+        userData.id || (userData.toObject && userData.toObject().id);
+      console.log("googlesign in service 4");
+      if (!userId) {
+        throw new Error("User ID is not available");
+      }
+      console.log("googlesign in service 5");
+      const accessToken = generateAccessToken({
+        id: userId,
+        role: userData.role,
+      });
+      console.log("access token", accessToken);
+
+      const refreshToken = generateRefreshToken({
+        id: userId,
+        role: userData.role,
+      });
+      console.log("refresh token ", refreshToken);
+
+      console.log("googlesign in service 6");
+      console.log("====================================");
+      console.log(userData);
+      console.log("====================================");
+      console.log("googlesign in service 7");
+      const userAfterSavedToken = await this.UserRepository.saveRefreshToken(
+        userId,
+        refreshToken
+      );
+      console.log("googlesign in service 8");
+      if (!userAfterSavedToken) {
+        console.error("Failed to save refresh token");
+        return null; // Return null if saving the token fails
+      }
+      console.log("googlesign in service 9");
+      return {
+        user: userAfterSavedToken,
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+      return null;
+    }
+  }
+
+  async googleSignUp(user: Partial<EUsers>): Promise<{
+    user: EUsers;
+    accessToken: string;
+    refreshToken: string;
+  } | null> {
+    try {
+      console.log("googlesign in service 1", user);
+
+      const userAfterSuccess = await this.UserRepository.googleSignUp(user);
+      console.log("googlesign in service 2", userAfterSuccess);
+      if (!userAfterSuccess) {
+        return null;
+      }
+      console.log("googlesign in service 3");
+      const userId =
+        userAfterSuccess.id ||
+        (userAfterSuccess.toObject && userAfterSuccess.toObject().id);
+      console.log("googlesign in service 4");
+      if (!userId) {
+        throw new Error("User ID is not available");
+      }
+      console.log("googlesign in service 5");
+      const accessToken = generateAccessToken({
+        id: userId,
+        role: userAfterSuccess.role,
+      });
+      console.log("access token", accessToken);
+
+      const refreshToken = generateRefreshToken({
+        id: userId,
+        role: userAfterSuccess.role,
+      });
+      console.log("refresh token ", refreshToken);
+
+      console.log("googlesign in service 6");
+      console.log("====================================");
+      console.log(userAfterSuccess);
+      console.log("====================================");
+      console.log("googlesign in service 7");
+      const userAfterSavedToken = await this.UserRepository.saveRefreshToken(
+        userId,
+        refreshToken
+      );
+      console.log("googlesign in service 8");
+      if (!userAfterSavedToken) {
+        console.error("Failed to save refresh token");
+        return null; // Return null if saving the token fails
+      }
+      console.log("googlesign in service 9");
+      return {
+        user: userAfterSavedToken,
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+      return null;
+    }
+  }
+
+  async refreshAccessToken(refreshToken: string): Promise<string | null> {
+    try {
+      const payload = verifyRefreshToken(refreshToken);
+      const newAccessToken = generateAccessToken({
+        id: payload.id,
+        role: payload.role,
+      });
+
+      return newAccessToken;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async decodeAndVerifyToken(token: string): Promise<Partial<EUsers | null>> {
+    try {
+      console.log("decode service 1");
+      
+      const decode = decodeAndVerifyToken(token);
+      console.log("decode service 2 sucesss");
+      return decode;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  generateTokenForForgotPassword(user: Partial<EUsers>): string {
+    return accessTokenForReset(user);
+  }
+
+  async logout(token: string, id: string): Promise<EUsers | null> {
+    const user = await this.UserRepository.removeRefreshToken(id, token);
+
+    return user ? user : null;
+  }
+
+  async resetPassword(email: string, password: string): Promise<EUsers | null> {
+    try {
+      console.log("reset passowrd service 1 email",email);
+      console.log("reset passowrd service 1 passowrd",password);
+      const hashedPassword = await bcrypt.hash(password, 10);
+      console.log("reset passowrd service 2",hashedPassword);
+      const user = await this.UserRepository.changePassword(
+        email,
+        hashedPassword
+      );
+      console.log("reset passowrd service 3");
+      console.log(user);
+      console.log("reset passowrd service 4, success");
+      return user;
+    } catch (error) {
+      return null;
+    }
+  }
+}
