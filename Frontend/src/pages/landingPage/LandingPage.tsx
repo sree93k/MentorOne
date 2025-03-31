@@ -1,445 +1,215 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/pages/landingPage/LandingPage.tsx
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
 import {
-  Box,
-  Button,
-  Container,
-  Grid,
-  Typography,
-  Card,
-  CardContent,
-  Avatar,
-  useTheme,
-} from '@mui/material';
-import {
-  AcademicCapIcon,
-  UserGroupIcon,
-  ChatBubbleLeftRightIcon,
-  ChartBarIcon,
-  StarIcon,
-} from '@heroicons/react/24/outline';
-import Header from '../../components/landing/Header';
-import Footer from '../../components/landing/Footer';
-import SimpleContainer from '../../common/Container';
+  GraduationCap,
+  Users,
+  MessageSquare,
+  BarChart,
+  Star,
+} from "lucide-react";
+import Header from "@/components/landing/Header";
+import Footer from "@/components/landing/Footer";
+import SimpleContainer from "@/common/Container";
+import Banner from "../../assets/Banner1.jpg";
+
 const features = [
   {
-    icon: AcademicCapIcon,
-    title: 'Expert Mentorship',
-    description: 'Connect with industry professionals and gain valuable insights',
+    icon: GraduationCap,
+    title: "Expert Mentorship",
+    description:
+      "Connect with industry professionals and gain valuable insights",
   },
   {
-    icon: UserGroupIcon,
-    title: 'Personalized Matching',
-    description: 'Find the perfect mentor based on your goals and interests',
+    icon: Users,
+    title: "Personalized Matching",
+    description: "Find the perfect mentor based on your goals and interests",
   },
   {
-    icon: ChatBubbleLeftRightIcon,
-    title: 'Seamless Communication',
-    description: 'Stay connected through our integrated messaging platform',
+    icon: MessageSquare,
+    title: "Seamless Communication",
+    description: "Stay connected through our integrated messaging platform",
   },
   {
-    icon: ChartBarIcon,
-    title: 'Progress Tracking',
-    description: 'Monitor your growth with detailed progress analytics',
+    icon: BarChart,
+    title: "Progress Tracking",
+    description: "Monitor your growth with detailed progress analytics",
   },
 ];
 
 const testimonials = [
   {
-    name: 'Sarah Johnson',
-    role: 'Software Engineer',
-    avatar: 'SJ',
-    content: 'Mentor One helped me transition into tech. My mentor provided invaluable guidance throughout my journey.',
+    name: "Sarah Johnson",
+    role: "Software Engineer",
+    avatar: "SJ",
+    content:
+      "Mentor One helped me transition into tech. My mentor provided invaluable guidance throughout my journey.",
     rating: 5,
   },
   {
-    name: 'Michael Chen',
-    role: 'Product Manager',
-    avatar: 'MC',
-    content: 'The mentorship I received was transformative. I gained practical insights that accelerated my career growth.',
+    name: "Michael Chen",
+    role: "Product Manager",
+    avatar: "MC",
+    content:
+      "The mentorship I received was transformative. I gained practical insights that accelerated my career growth.",
     rating: 5,
   },
   {
-    name: 'Emily Rodriguez',
-    role: 'UX Designer',
-    avatar: 'ER',
-    content: 'Finding a mentor in my field was easy. The platform\'s matching system is spot-on!',
+    name: "Emily Rodriguez",
+    role: "UX Designer",
+    avatar: "ER",
+    content:
+      "Finding a mentor in my field was easy. The platform's matching system is spot-on!",
     rating: 5,
   },
 ];
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const handleGetStarted = () => {
-    navigate('/register');
+    navigate("/signin");
   };
 
   const renderStars = (rating: number) => (
-    <Box sx={{ display: 'flex', gap: 0.5 }}>
+    <div className="flex gap-1">
       {[...Array(rating)].map((_, index) => (
-        <StarIcon key={index} style={{ width: '14px', height: '14px' }} className="text-yellow-400" />
+        <Star
+          key={index}
+          className="w-3.5 h-3.5 text-yellow-400 fill-current"
+        />
       ))}
-    </Box>
+    </div>
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-screen flex flex-col">
       <Header />
 
       {/* Hero Section */}
-      <Box 
-        sx={{ 
-          bgcolor: 'black',
-          color: 'white',
-          pt: { xs: 15, md: 22 },
-          pb: { xs: 10, md: 18 },
-          mt: 8,
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
-            zIndex: 1
-          }
-        }}
-      >
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-          <Grid container spacing={8} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Box sx={{ maxWidth: 600, mx: 'auto', px: { xs: 2, md: 0 } }}>
-                <Typography 
-                  variant="h1" 
-                  sx={{
-                    fontSize: { xs: '2.75rem', md: '3.75rem' },
-                    fontWeight: 800,
-                    mb: 3,
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em'
-                  }}
-                >
-                  Find Your Perfect Mentor
-                </Typography>
-                <Typography 
-                  variant="h5" 
-                  sx={{
-                    mb: 5,
-                    color: 'rgba(255,255,255,0.85)',
-                    fontSize: { xs: '1.25rem', md: '1.5rem' },
-                    lineHeight: 1.6,
-                    fontWeight: 400
-                  }}
-                >
-                  Connect with experienced professionals who can guide you towards success
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={handleGetStarted}
-                  sx={{
-                    bgcolor: 'white',
-                    color: 'black',
-                    px: 6,
-                    py: 2,
-                    fontSize: '1.125rem',
-                    fontWeight: 600,
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    boxShadow: 'none',
-                    '&:hover': {
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                    },
-                  }}
-                >
-                  Get Started
-                </Button>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box 
-                sx={{ 
-                  maxWidth: 600, 
-                  mx: 'auto', 
-                  px: { xs: 2, md: 0 },
-                  transform: { xs: 'scale(0.9)', md: 'scale(1)' },
-                  transition: 'transform 0.3s ease'
-                }}
+      <section className="bg-black text-white pt-16 md:pt-24 pb-12 md:pb-20 mt-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 to-black/40 z-10" />
+        <SimpleContainer className="relative z-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="max-w-xl mx-auto px-4 md:px-0">
+              <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
+                Find Your Perfect Mentor
+              </h1>
+              <p className="text-xl md:text-2xl text-white/85 mb-6 font-normal leading-relaxed">
+                Connect with experienced professionals who can guide you towards
+                success
+              </p>
+              <Button
+                onClick={handleGetStarted}
+                className="bg-white text-black px-8 py-3 text-lg font-semibold rounded-lg hover:bg-white/90 transition-all"
               >
-                <img
-                  src="/Banner1.jpg"
-                  alt="Mentorship"
-                  style={{ 
-                    width: '590px', 
-                    height: 'auto', 
-                    maxHeight: 500,
-                    filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.1))'
-                  }}
-                />
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
+                Get Started
+              </Button>
+            </div>
+            <div className="max-w-xl mx-auto px-4 md:px-0">
+              <img
+                src={Banner}
+                alt="Mentorship"
+                className="w-full max-h-[500px] object-cover shadow-lg scale-90 md:scale-100 transition-transform duration-300"
+              />
+            </div>
+          </div>
+        </SimpleContainer>
+      </section>
 
       {/* Features Section */}
-      <Box sx={{ py: { xs: 10, md: 15 }, bgcolor: 'white' }}>
-        <Container maxWidth="lg">
-          <Typography 
-            variant="h2" 
-            sx={{
-              textAlign: 'center',
-              fontWeight: 800,
-              mb: 2,
-              fontSize: { xs: '2.25rem', md: '2.75rem' },
-              letterSpacing: '-0.02em'
-            }}
-          >
+      <section className="py-12 md:py-20 bg-white">
+        <SimpleContainer>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2">
             Why Choose MENTOR ONE?
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              textAlign: 'center',
-              color: 'text.secondary',
-              mb: 8,
-              maxWidth: '700px',
-              mx: 'auto',
-              fontSize: { xs: '1rem', md: '1.125rem' },
-              lineHeight: 1.6
-            }}
-          >
-            Experience the power of personalized mentorship with our comprehensive platform
-          </Typography>
-          <Grid container spacing={4}>
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground text-center mb-10 max-w-2xl mx-auto leading-relaxed">
+            Experience the power of personalized mentorship with our
+            comprehensive platform
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card 
-                  sx={{
-                    height: '100%',
-                    transition: 'all 0.3s ease',
-                    bgcolor: 'background.paper',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: theme.shadows[8],
-                    },
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 3
-                  }}
-                >
-                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                    <Box 
-                      sx={{
-                        mb: 3,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '16px',
-                        bgcolor: 'primary.main',
-                        mx: 'auto'
-                      }}
-                    >
-                      <feature.icon className="h-8 w-8 text-white" />
-                    </Box>
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        fontWeight: 700,
-                        mb: 2,
-                        fontSize: '1.25rem',
-                        color: 'text.primary'
-                      }}
-                    >
-                      {feature.title}
-                    </Typography>
-                    <Typography 
-                      variant="body1"
-                      sx={{ 
-                        color: 'text.secondary',
-                        lineHeight: 1.6
-                      }}
-                    >
-                      {feature.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card
+                key={index}
+                className="h-full border hover:shadow-lg hover:-translate-y-2 transition-all duration-300"
+              >
+                <CardContent className="p-6 text-center">
+                  <div className="mb-4 flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mx-auto">
+                    <feature.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
-        </Container>
-      </Box>
+          </div>
+        </SimpleContainer>
+      </section>
 
       {/* Testimonials Section */}
-      <Box sx={{ py: { xs: 10, md: 15 }, bgcolor: 'grey.50' }}>
-        <Container maxWidth="lg">
-          <Typography 
-            variant="h2" 
-            sx={{
-              textAlign: 'center',
-              fontWeight: 800,
-              mb: 2,
-              fontSize: { xs: '2.25rem', md: '2.75rem' },
-              letterSpacing: '-0.02em'
-            }}
-          >
+      <section className="py-12 md:py-20 bg-gray-50">
+        <SimpleContainer>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2">
             Success Stories
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              textAlign: 'center',
-              color: 'text.secondary',
-              mb: 8,
-              maxWidth: '700px',
-              mx: 'auto',
-              fontSize: { xs: '1rem', md: '1.125rem' },
-              lineHeight: 1.6
-            }}
-          >
+          </h2>
+          <p className="text-lg md:text-xl text-muted-foreground text-center mb-10 max-w-2xl mx-auto leading-relaxed">
             Hear from our community members who have transformed their careers
-          </Typography>
-          <Grid container spacing={4}>
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Card 
-                  sx={{
-                    height: '100%',
-                    transition: 'all 0.3s ease',
-                    bgcolor: 'background.paper',
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: theme.shadows[8],
-                    },
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 3
-                  }}
-                >
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Avatar
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          bgcolor: 'primary.main',
-                          color: 'primary.contrastText',
-                          fontSize: '1.125rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        {testimonial.avatar}
-                      </Avatar>
-                      <Box sx={{ ml: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                          {testimonial.name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          {testimonial.role}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        mb: 2,
-                        color: 'text.primary',
-                        fontStyle: 'italic',
-                        lineHeight: 1.6
-                      }}
-                    >
-                      "{testimonial.content}"
-                    </Typography>
-                    {renderStars(testimonial.rating)}
-                  </CardContent>
-                </Card>
-              </Grid>
+              <Card
+                key={index}
+                className="h-full border hover:shadow-lg hover:-translate-y-2 transition-all duration-300"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar className="w-12 h-12 bg-primary text-white font-semibold">
+                      {testimonial.avatar}
+                    </Avatar>
+                    <div className="ml-3">
+                      <h3 className="text-lg font-bold">{testimonial.name}</h3>
+                      <p className="text-muted-foreground text-sm">
+                        {testimonial.role}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-base italic mb-3 leading-relaxed">
+                    "{testimonial.content}"
+                  </p>
+                  {renderStars(testimonial.rating)}
+                </CardContent>
+              </Card>
             ))}
-          </Grid>
-        </Container>
-      </Box>
+          </div>
+        </SimpleContainer>
+      </section>
 
       {/* CTA Section */}
-      <Box 
-        sx={{ 
-          bgcolor: 'black',
-          color: 'white',
-          py: { xs: 10, md: 15 },
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
-            zIndex: 1
-          }
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', maxWidth: 800, mx: 'auto', position: 'relative', zIndex: 2 }}>
-            <Typography 
-              variant="h2" 
-              sx={{
-                fontWeight: 800,
-                mb: 3,
-                fontSize: { xs: '2.25rem', md: '2.75rem' },
-                letterSpacing: '-0.02em'
-              }}
-            >
-              Ready to Start Your Journey?
-            </Typography>
-            <Typography 
-              variant="h6" 
-              sx={{
-                mb: 5,
-                color: 'rgba(255,255,255,0.85)',
-                fontSize: { xs: '1.125rem', md: '1.25rem' },
-                lineHeight: 1.6,
-                fontWeight: 400
-              }}
-            >
-              Join our community of mentors and mentees today
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleGetStarted}
-              sx={{
-                bgcolor: 'white',
-                color: 'black',
-                px: 6,
-                py: 2,
-                fontSize: '1.125rem',
-                fontWeight: 600,
-                borderRadius: '8px',
-                textTransform: 'none',
-                boxShadow: 'none',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.9)',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                },
-              }}
-            >
-              Get Started Now
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+      <section className="bg-black text-white py-12 md:py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 to-black/40 z-10" />
+        <SimpleContainer className="text-center max-w-3xl mx-auto relative z-20">
+          <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+            Ready to Start Your Journey?
+          </h2>
+          <p className="text-lg md:text-xl text-white/85 mb-6 font-normal leading-relaxed">
+            Join our community of mentors and mentees today
+          </p>
+          <Button
+            onClick={handleGetStarted}
+            className="bg-white text-black px-8 py-3 text-lg font-semibold rounded-lg hover:bg-white/90 transition-all"
+          >
+            Get Started Now
+          </Button>
+        </SimpleContainer>
+      </section>
 
       <Footer />
-    </Box>
+    </div>
   );
 };
 

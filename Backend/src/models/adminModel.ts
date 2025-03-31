@@ -1,34 +1,34 @@
+import { EAdmin } from "../entities/adminEntity";
+import mongoose, { Schema } from "mongoose";
 
-import { IAdmin } from "../entities/adminEntity";
-import mongoose,{Schema} from "mongoose";
-
-
-const AdminSchema = new Schema({
+const AdminSchema = new Schema(
+  {
     adminName: {
-        type: String,
+      type: String,
     },
     adminEmail: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-        lowercase: true
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
     role: {
-        type: String,
-        default: 'admin'
+      type: String,
+      default: "admin",
     },
     adminPassword: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
 
+    profilePicture: { type: String },
+  },
+  {
+    collection: "Admin",
+  }
+);
 
-    profilePicture: { type: String }
-
-});  
-
-
-const Admin = mongoose.model<IAdmin>('dmin', AdminSchema);
+const Admin = mongoose.model<EAdmin>("Admin", AdminSchema);
 
 export default Admin;

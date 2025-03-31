@@ -1,12 +1,14 @@
 import { Router } from "express";
-import adminRoutes from "./admin/adminAuthRoute";
-// import seekerRoutes from "./mentor/mentorRoute";  // mentor routes
-// import expertRoutes from "./mentee/menteeRoute";  // mentee routes
+import adminRoutes from "./admin/adminRoute";
+import userRoutes from "./userRoutes/userAuthRoute";
+// import expertRoutes from "./mentor/mentorRoute";  // mentor routes
+// import seekerRoutes from "./mentee/menteeRoute";  // mentee routes
 
 const router = Router();
+console.log("step 0");
 
-router.use("/api/admin", adminRoutes);
-// router.use("/api/seeker", seekerRoutes);
-// router.use("/api/expert", expertRoutes);
-
+router.use("/admin", adminRoutes);
+router.use("/user", userRoutes);
+// router.use("/seeker", seekerRoutes);
+// router.use("/expert", expertRoutes);
 export { router };

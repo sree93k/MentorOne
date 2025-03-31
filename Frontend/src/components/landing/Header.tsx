@@ -1,130 +1,118 @@
-import * as React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
-import Button from '@mui/material/Button';
-import MenuItem from '@mui/material/MenuItem';
-import { Link,useNavigate } from 'react-router-dom';
+// src/components/landing/Header.tsx
+import React from "react";
+import { Moon, Sun } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ThemeConfig } from "flowbite-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useTheme } from "../../utils/ThemeProvider";
+import { Menu } from "lucide-react";
+import Logo1 from "../../assets/logo.png";
+import LogoName1 from "../../assets/brandlogo.png";
 
+const pages = ["About", "Blog", "Community"];
 
-const pages = ['About', 'Blog', 'Community'];
-
-function ResponsiveAppBar() {
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
-    const navigate=useNavigate()
-  
-  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElNav(event.currentTarget);
-  };
-
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
+const Header: React.FC = () => {
+  const navigate = useNavigate();
+  const { setTheme } = useTheme();
 
   const handleGetStarted = () => {
-    navigate('/register');
+    navigate("/signin");
   };
 
   return (
-    <AppBar position="fixed" sx={{ backgroundColor: 'white', boxShadow: 2 }}>
-      <Container maxWidth="xl">
-        <Toolbar disableGutters sx={{ justifyContent: 'space-between', height: '70px' }}>
-          {/* Logo section */}
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="Logo" style={{ width: '40px', height: 'auto', marginRight: '10px' }} />
-            <img src="/brandlogo.png" alt="Brand" style={{ width: '120px', height: 'auto' }} />
-          </Box>
+    <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-[70px]">
+          {/* Logo Section */}
+          <div className="flex items-center gap-2">
+            <img src={Logo1} alt="Logo" className="w-14 h-auto" />
+            <img src={LogoName1} alt="Brand" className="w-40 h-auto" />
+          </div>
 
-          {/* Mobile menu */}
-          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-            <IconButton
-              size="large"
-              aria-label="menu"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              sx={{ color: 'black' }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{
-                display: { xs: 'block', md: 'none' },
-              }}
-            >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography sx={{ color: 'black' }}>{page}</Typography>
-                </MenuItem>
-              ))}
-              <MenuItem>
-                <Button variant="contained" fullWidth sx={{ backgroundColor: '#1976d2' }}>
-                  Get Started
+          {/* Mobile Menu */}
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Menu">
+                  <Menu className="w-6 h-6 text-black" />
                 </Button>
-              </MenuItem>
-            </Menu>
-          </Box>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {pages.map((page) => (
+                  <DropdownMenuItem key={page} asChild>
+                    <Link
+                      to={`/${page.toLowerCase()}`}
+                      className="w-full text-black hover:bg-gray-100"
+                    >
+                      {page}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem>
+                  <Button
+                    variant="default"
+                    className="w-full bg-black text-white hover:bg-gray-800"
+                    onClick={handleGetStarted}
+                  >
+                    Get Started
+                  </Button>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-          {/* Desktop menu */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 4 }}>
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-6">
             {pages.map((page) => (
-              <Link 
-                key={page} 
+              <Link
+                key={page}
                 to={`/${page.toLowerCase()}`}
-                style={{ textDecoration: 'none' }}
+                className="text-black hover:text-blue-600 font-medium transition-colors"
               >
-                <Button
-                  onClick={handleCloseNavMenu}
-                  sx={{ 
-                    color: 'black',
-                    '&:hover': {
-                      color: '#1976d2',
-                      backgroundColor: 'transparent'
-                    }
-                  }}
-                >
-                  {page}
-                </Button>
+                {page}
               </Link>
             ))}
-            <Button 
-              variant="contained" 
-              sx={{
-                backgroundColor: '#000000',
-                '&:hover': {
-                  backgroundColor: '#ffffff'
-                }
-              }}
+            <Button
+              variant="default"
+              className="bg-black text-white hover:bg-white hover:text-black border border-black transition-all"
               onClick={handleGetStarted}
             >
-                <Typography sx={{ color: '#fffff', '&:hover':{
-                    color: '#000000'
-                } }}>Get Started</Typography>
-              
+              Get Started
             </Button>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+          </div>
+          {/* <div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  <span className="sr-only">Toggle theme</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
+                  System
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <ThemeConfig dark={false} />
+          </div> */}
+        </div>
+      </div>
+    </header>
   );
-}
+};
 
-export default ResponsiveAppBar;
+export default Header;

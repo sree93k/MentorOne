@@ -1,32 +1,44 @@
 import { Request, Response, NextFunction } from "express";
 
-export class ApiError extends Error {
+ class ApiError extends Error {
     statusCode: number;
-    message: string;
     error: string;
+    data: null;
+    success:boolean;
 
-    constructor(statusCode: number, message: string, error: string) {
+    constructor(statusCode: number, error: string, message: string="something went wrong",stack:string="") {
         super(message);
         this.statusCode = statusCode;
-        this.message = message;
         this.error = error;
+        this.data = null;
+        this.success=false; 
+
+        if (stack) {
+            this.stack = stack;
+          } else {
+            Error.captureStackTrace(this, this.constructor);
+          }
     }
 }
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    if (err instanceof ApiError) {
-        return res.status(err.statusCode).json({
-            status: 'error',
-            statusCode: err.statusCode,
-            message: err.message,
-            error: err.error
-        });
+    const errorDetails = {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
     }
 
-    return res.status(500).json({
-        status: 'error',
-        statusCode: 500,
-        message: 'Internal Server Error',
-        error: err.message
+    const errorMessage =  errorDetails.message;
+
+    const apiError = new ApiError(500, errorMessage, err.message, err.stack || "");
+  
+    return res.status(apiError.statusCode).json({
+      statusCode: apiError.statusCode,
+      error: apiError.error,
+      message: apiError.message,
+      data: apiError.data,
+      success: apiError.success,
     });
 };
+
+export {ApiError}
