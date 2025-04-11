@@ -3,7 +3,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { RootState } from "../../redux/store/store";
 import { useDispatch, useSelector } from "react-redux";
 // import { validateAdminSession } from "../../services/adminService";
-import { logout, validateAdminSession } from "@/services/adminService";
+import { validateAdminSession } from "@/services/adminService";
+import { logout } from "@/services/adminAuth";
 import { resetAdmin } from "@/redux/slices/adminSlice";
 import toast from "react-hot-toast";
 
@@ -23,7 +24,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ element: Element }) => {
         return;
       }
       console.log("admin private route...step2 ");
-      if (response?.status === 401) {
+      if (response?.status === 400) {
         await logout();
         dispatch(resetAdmin());
         navigate("/admin/login");

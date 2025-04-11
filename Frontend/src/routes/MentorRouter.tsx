@@ -2,16 +2,14 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-const MentorDashboard = lazy(
-  () => import("../pages/mentorPages/MentorDashboard")
-);
+const MentorPage = lazy(() => import("../pages/mentorPages/MentorPage"));
 const MentorRouter: React.FC = () => {
   return (
-    <Suspense fallback={<h1>loaidng</h1>}>
-      <Routes>
-        <Route path="/dashboard" element={<MentorDashboard />} />
-      </Routes>
-    </Suspense>
+    // <Suspense fallback={<h1>loaidng</h1>}>
+    <Routes>
+      <Route path="/*" element={<MentorPage />} />
+    </Routes>
+    // </Suspense>
   );
 };
 

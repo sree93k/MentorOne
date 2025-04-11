@@ -48,6 +48,14 @@ const UsersSchema: Schema<EUsers> = new Schema(
       },
       default: ["mentee"],
     },
+    activated: {
+      type: Boolean,
+      default: false,
+    },
+    mentorActivated: {
+      type: Boolean,
+      default: false,
+    },
     profilePicture: {
       type: String,
       default: function (this: EUsers) {
@@ -56,6 +64,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
           : "https://www.svgrepo.com/show/384671/account-avatar-profile-user-14.svg";
       },
     },
+    profilePicturePublicId: { type: String, default: null },
     category: {
       type: String,
       enum: ["school", "college", "professional"],
@@ -63,22 +72,44 @@ const UsersSchema: Schema<EUsers> = new Schema(
     },
     schoolDetails: {
       type: Schema.Types.ObjectId,
+      ref: "SchoolExperience",
       required: function (this: EUsers) {
         return this.category === "school";
       },
     },
     collegeDetails: {
       type: Schema.Types.ObjectId,
+      ref: "CollegeExperience",
       required: function (this: EUsers) {
         return this.category === "college";
       },
     },
     professionalDetails: {
       type: Schema.Types.ObjectId,
+      ref: "CollegeExperience",
       required: function (this: EUsers) {
         return this.category === "professional";
       },
     },
+    currentType: {
+      type: Map,
+      of: Schema.Types.ObjectId,
+      validate: {
+        validator: function (value: Map<string, mongoose.Types.ObjectId>) {
+          const allowedKeys = ["school", "college", "fresher", "professional"];
+          return Array.from(value.keys()).every((key) =>
+            allowedKeys.includes(key)
+          );
+        },
+        message:
+          "currentType keys must be either school, college, fresher, or professional",
+      },
+      required: false,
+    },
+    // goals: {
+    //   type: Schema.Types.ObjectId,
+    //   required: false,
+    // },
     previousSchools: {
       type: [Schema.Types.ObjectId],
       required: false,
@@ -94,31 +125,36 @@ const UsersSchema: Schema<EUsers> = new Schema(
     bio: {
       type: String,
       required: function (this: EUsers) {
-        return this.role?.includes("mentor") || false;
+        return this.role?.includes("mentor") && this.mentorActivated === true;
       },
     },
     skills: {
       type: String,
       required: function (this: EUsers) {
-        return this.role?.includes("mentor") || false;
+        return this.role?.includes("mentor") && this.mentorActivated === true;
       },
     },
     selfIntro: {
       type: String,
       required: function (this: EUsers) {
-        return this.role?.includes("mentor") || false;
+        return this.role?.includes("mentor") && this.mentorActivated === true;
       },
     },
     achievements: {
       type: String,
       required: function (this: EUsers) {
-        return this.role?.includes("mentor") || false;
+        return this.role?.includes("mentor") && this.mentorActivated === true;
       },
     },
     mentorId: {
       type: Schema.Types.ObjectId,
+      ref: "Mentor",
       required: false,
-      ref: "Users",
+    },
+    menteeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Mentee",
+      required: false,
     },
     bookings: {
       type: Schema.Types.Mixed, // To be defined later

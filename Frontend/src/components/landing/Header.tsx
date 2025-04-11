@@ -14,7 +14,7 @@ import { useTheme } from "../../utils/ThemeProvider";
 import { Menu } from "lucide-react";
 import Logo1 from "../../assets/logo.png";
 import LogoName1 from "../../assets/brandlogo.png";
-
+import ThemeToggle from "../users/ThemeToggle";
 const pages = ["About", "Blog", "Community"];
 
 const Header: React.FC = () => {
@@ -22,11 +22,11 @@ const Header: React.FC = () => {
   const { setTheme } = useTheme();
 
   const handleGetStarted = () => {
-    navigate("/signin");
+    navigate("/login");
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
+    <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-50 dark:bg-gray-900 dark:text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-[70px]">
           {/* Logo Section */}
@@ -48,7 +48,7 @@ const Header: React.FC = () => {
                   <DropdownMenuItem key={page} asChild>
                     <Link
                       to={`/${page.toLowerCase()}`}
-                      className="w-full text-black hover:bg-gray-100"
+                      className="w-full text-black hover:bg-gray-100 dark:text-white"
                     >
                       {page}
                     </Link>
@@ -73,7 +73,7 @@ const Header: React.FC = () => {
               <Link
                 key={page}
                 to={`/${page.toLowerCase()}`}
-                className="text-black hover:text-blue-600 font-medium transition-colors"
+                className="text-black dark:text-white hover:text-blue-600 font-medium transition-colors"
               >
                 {page}
               </Link>
@@ -85,30 +85,8 @@ const Header: React.FC = () => {
             >
               Get Started
             </Button>
+            <ThemeToggle />
           </div>
-          {/* <div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  <span className="sr-only">Toggle theme</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                  Light
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
-                  System
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <ThemeConfig dark={false} />
-          </div> */}
         </div>
       </div>
     </header>

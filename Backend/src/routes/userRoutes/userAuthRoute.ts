@@ -7,18 +7,20 @@ import {
   validateReceivedOTP,
   validateGoogleData,
   validateEmail,
-  validateResetPassword
+  validateResetPassword,
 } from "../../validator/userValidator";
-
+import {
+  authenticate,
+  authenticateUser,
+  decodedRefreshToken,
+  decodedUserRefreshToken,
+  verifyUserRefreshToken,
+} from "../../middlewares/authenticateUser";
 const userAuthRoutes = Router();
 
 // User auth routes
 
-userAuthRoutes.post(
-  "/auth/sendOTP",
-  validateSignUpOTP,
-  userAuthController.sendOTP
-);
+userAuthRoutes.post("/sendOTP", validateSignUpOTP, userAuthController.sendOTP);
 
 // userAuthRoutes.post(
 //   "/auth/verifyEmail",
@@ -26,33 +28,36 @@ userAuthRoutes.post(
 //   userAuthController.verifyEmail
 // );
 userAuthRoutes.post(
-  "/auth/signup",
+  "/signup",
   validateUserSignUp,
   userAuthController.createUser
 );
-userAuthRoutes.post("/auth/login", validateUserLogin, userAuthController.login);
+userAuthRoutes.post("/login", validateUserLogin, userAuthController.login);
 
 userAuthRoutes.post(
-  "/auth/google_signin",
+  "/google_signin",
   validateGoogleData,
   userAuthController.googleAuthentication
 );
 
 userAuthRoutes.post(
-  "/auth/forgot_password_otp",
+  "/forgot_password_otp",
   validateEmail,
   userAuthController.forgotPasswordOTP
 );
 
-userAuthRoutes.post(
-  "/auth/otp_verify",
-  validateEmail,
-  userAuthController.verifyOTP
-);
+userAuthRoutes.post("/otp_verify", validateEmail, userAuthController.verifyOTP);
 
 userAuthRoutes.patch(
-  "/auth/forgot_password_reset",
+  "/forgot_password_reset",
   validateResetPassword,
   userAuthController.resetPassword
 );
+
+userAuthRoutes.patch(
+  "/logout",
+  decodedUserRefreshToken,
+  userAuthController.logout
+);
+
 export default userAuthRoutes;

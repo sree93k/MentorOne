@@ -15,7 +15,13 @@ import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import SimpleContainer from "@/common/Container";
 import Banner from "../../assets/Banner1.jpg";
-
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effect";
 const features = [
   {
     icon: GraduationCap,
@@ -71,7 +77,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    navigate("/signin");
+    navigate("/login");
   };
 
   const renderStars = (rating: number) => (
@@ -85,12 +91,26 @@ const LandingPage: React.FC = () => {
     </div>
   );
 
+  const words = [
+    {
+      text: "Frequntly",
+      className: " dark:text-black dark:text-white",
+    },
+    {
+      text: "Asked",
+      className: " dark:text-black dark:text-white",
+    },
+    {
+      text: "Questions.",
+      className: "text-blue-500 dark:text-blue-500",
+    },
+  ];
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       {/* Hero Section */}
-      <section className="bg-black text-white pt-16 md:pt-24 pb-12 md:pb-20 mt-16 relative overflow-hidden">
+      <section className="bg-black text-white pt-16 md:pt-24 pb-12 md:pb-20 mt-16 relative overflow-hidden dark:bg-gray-900">
         <div className="absolute inset-0 bg-gradient-to-br from-black/70 to-black/40 z-10" />
         <SimpleContainer className="relative z-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -121,7 +141,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-12 md:py-20 bg-white">
+      <section className="py-12 md:py-20 bg-white dark:text-white dark:bg-gray-900">
         <SimpleContainer>
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2">
             Why Choose MENTOR ONE?
@@ -152,7 +172,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-12 md:py-20 bg-gray-50">
+      <section className="py-12 md:py-20 bg-gray-50 dark:text-white dark:bg-gray-900">
         <SimpleContainer>
           <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-2">
             Success Stories
@@ -206,6 +226,32 @@ const LandingPage: React.FC = () => {
             Get Started Now
           </Button>
         </SimpleContainer>
+      </section>
+      <section className="mx-80 py-20 md:py-20 bg-gray-10 dark:text-white">
+        {/* <h1>Frequently Asked Questions</h1> */}
+        <TypewriterEffectSmooth words={words} />
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="item-1">
+            <AccordionTrigger>Is it accessible?</AccordionTrigger>
+            <AccordionContent>
+              Yes. It adheres to the WAI-ARIA design pattern.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger>Is it styled?</AccordionTrigger>
+            <AccordionContent>
+              Yes. It comes with default styles that matches the other
+              components&apos; aesthetic.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger>Is it animated?</AccordionTrigger>
+            <AccordionContent>
+              Yes. It&apos;s animated by default, but you can disable it if you
+              prefer.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
 
       <Footer />

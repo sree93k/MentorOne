@@ -1,5 +1,5 @@
 // src/components/login-form.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,15 +17,17 @@ import { validateEmail, validatePassword } from "@/utils/UserValidator";
 import { login } from "../../../services/userAuthService";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
 import {
   setUser,
   setIsAuthenticated,
   setAccessToken,
+  setCurrentTab,
+  setMentorActivated,
+  setLoading,
 } from "@/redux/slices/userSlice";
-import { ForgotPasswordModal } from "@/components/modal/ResetPasswordModal"; // Ensure correct import
-
-// Backend service functions (replace with actual implementations)
+import { ForgotPasswordModal } from "@/components/modal/ResetPasswordModal";
 import {
   sendForgotPasswordOtp,
   verifyForgotPasswordOtp,
@@ -40,11 +42,16 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<TUserLoginError>({});
-  const [loading, setLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const { mentorActivated } = useSelector((state: RootState) => state.user);
+
+  useEffect(() => {
+    console.log("hi useeffect is", mentorActivated);
+  }, []);
 
   const handleChange =
     (field: keyof TUserLoginError) =>
@@ -71,44 +78,62 @@ export function LoginForm({
     e.preventDefault();
     setLoading(true);
 
-    if (validateForm()) {
-      const data: TUserLogin = { role: [tab], email, password };
-      try {
-        const result = await login(data);
-        const responseData = result.response;
-
-        if (responseData) {
-          toast.success("Login successfully!");
-          const { user, accessToken } = responseData;
-          localStorage.setItem("accessToken", accessToken);
-          dispatch(setUser(user));
-          dispatch(setIsAuthenticated(true));
-          navigate(
-            tab === "mentee" ? "/seeker/dashboard" : "/expert/dashboard"
-          );
-        } else {
-          toast.error("Some Error Occurred. Please try again!");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("Invalid Username or Password");
+    try {
+      if (!validateForm()) {
+        toast.error("Invalid input. Please check your details.");
+        return;
       }
-    } else {
-      toast.error("Invalid Input");
+
+      const loginData: TUserLogin = { role: [tab], email, password };
+      console.log("Submitting login data:", loginData);
+
+      const result = await login(loginData);
+      console.log("result is ", result);
+
+      const { userFound, accessToken } = result.response;
+
+      if (!userFound || !accessToken) {
+        throw new Error("Login response missing user or token");
+      }
+
+      dispatch(setUser(userFound));
+      dispatch(setIsAuthenticated(true));
+      dispatch(setAccessToken(accessToken));
+      dispatch(setCurrentTab(tab));
+      dispatch(setMentorActivated(userFound.mentorActivated));
+      localStorage.setItem("accessToken", accessToken);
+      toast.success(`Welcome, ${userFound.firstName || "User"}!`);
+      console.log("step 1 response mentorstats,,....>>", mentorActivated);
+      const redirectPath =
+        tab === "mentee" ? "/seeker/dashboard" : "/expert/dashboard";
+      navigate(redirectPath);
+    } catch (error: unknown) {
+      console.error("Login error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error(
+        errorMessage === "Login failed"
+          ? "Invalid email or password"
+          : errorMessage
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <div
-      className={cn("flex flex-col gap-6", className)}
-      {...(props as React.HTMLAttributes<HTMLDivElement>)}
-    >
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden">
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="relative hidden bg-muted md:flex md:flex-col md:items-center md:justify-center md:p-8">
             <div className="flex flex-col items-center gap-1 pt-4 mb-4">
-              <img src={Logo} alt="Logo" className="h-20 w-20 object-contain" />
+              <Link to="/">
+                <img
+                  src={Logo}
+                  alt="Logo"
+                  className="h-20 w-20 object-contain"
+                />
+              </Link>
               <img
                 src={LogoName}
                 alt="Logo Name"
@@ -136,9 +161,29 @@ export function LoginForm({
               onValueChange={setTab as (value: string) => void}
               className="w-full"
             >
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="mentee">Mentee</TabsTrigger>
-                <TabsTrigger value="mentor">Mentor</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-6 gap-2">
+                <TabsTrigger
+                  value="mentee"
+                  className={cn(
+                    "border border-black transition-colors",
+                    tab === "mentee"
+                      ? "bg-black text-white"
+                      : "bg-transparent text-black hover:bg-gray-100"
+                  )}
+                >
+                  Mentee
+                </TabsTrigger>
+                <TabsTrigger
+                  value="mentor"
+                  className={cn(
+                    "border border-black transition-colors",
+                    tab === "mentor"
+                      ? "bg-black text-white"
+                      : "bg-transparent text-black hover:bg-gray-100"
+                  )}
+                >
+                  Mentor
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
@@ -159,9 +204,6 @@ export function LoginForm({
                     placeholder="e.g., sreekuttan1234@gmail.com"
                   />
                 </div>
-                {/* {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )} */}
               </div>
               <div className="grid gap-1">
                 <div className="flex items-center">
@@ -188,7 +230,6 @@ export function LoginForm({
                   />
                 </div>
                 {errors.password && (
-                  // <p className="text-sm text-red-500">{errors.password}</p>
                   <p className="text-sm text-red-500">
                     Invalid EmailID or Password
                   </p>
@@ -226,19 +267,20 @@ export function LoginForm({
         onOpenChange={setForgotPasswordOpen}
         email={email}
         onSubmitEmail={async (email: string) => {
-          "email send for forgopt passoerd login tsx step 1";
           await sendForgotPasswordOtp(email);
           toast.success("OTP sent to your email!");
         }}
         onVerifyOtp={async (otp: string, email: string) => {
           setVerifying(true);
           try {
-            console.log("entered on verify otp start 1 loginpage", email, otp);
-
-            await verifyForgotPasswordOtp({ email, otp });
-            console.log("otp veritfied step 2");
-
-            toast.success("OTP verified!");
+            const response = await verifyForgotPasswordOtp({ email, otp });
+            // Check the response to determine if OTP is valid
+            if (response?.status === 200 && response.data.success) {
+              console.log("OTP verified successfully");
+              toast.success("OTP verified!");
+            } else {
+              throw new Error(response?.data?.message || "Invalid OTP");
+            }
           } catch (error) {
             console.error("Verification error:", error);
             toast.error(
@@ -246,7 +288,7 @@ export function LoginForm({
                 ? error.message
                 : "OTP verification failed. Please try again."
             );
-            throw error;
+            throw error; // Re-throw to be caught in ForgotPasswordModal
           } finally {
             setVerifying(false);
           }
@@ -255,12 +297,10 @@ export function LoginForm({
           setVerifying(true);
           try {
             console.log("onResetPassword verification start 1");
-
             await resetPassword({ email, password });
-            console.log("onResetPassword verification  end");
-
+            console.log("onResetPassword verification end");
             toast.success("Password reset successfully!");
-            navigate("/signin");
+            navigate("/login");
           } catch (error) {
             console.error("Reset password error:", error);
             toast.error(

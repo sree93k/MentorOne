@@ -23,3 +23,18 @@
     );
   }
 }
+body {
+  @apply bg-gray-50 dark:bg-gray-900;
+}
+@keyframes custom-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loader {
+  animation: custom-spin 1s linear infinite;
+}

@@ -10,16 +10,16 @@ const AdminPage = lazy(() => import("@/pages/adminPages/AdminPage"));
 
 const AdminRouter: React.FC = () => {
   return (
-    <Suspense fallback={<h1>loaidng</h1>}>
-      <Routes>
-        <Route
-          path="/login"
-          element={<PublicRoute element={AdminSigninPage} />}
-        />
-        <Route path="/*" element={<PrivateRoute element={AdminPage} />} />
-        {/* <Route path="/dashboard" element={<AdminDashboard />} /> */}
-      </Routes>
-    </Suspense>
+    // <Suspense fallback={<h1>loaidng</h1>}>
+    <Routes>
+      <Route
+        path="/login"
+        element={<PublicRoute element={AdminSigninPage} />}
+      />
+      <Route path="/*" element={<PrivateRoute element={AdminPage} />} />
+      {/* <Route path="/dashboard" element={<AdminDashboard />} /> */}
+    </Routes>
+    // </Suspense>
   );
 };
 

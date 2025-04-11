@@ -10,6 +10,7 @@ export interface TUsers {
   gender: string;
   role: [string]; // No error, as no index signature restricts this
   profilePicture: string;
+  activated: boolean;
   bio: string;
   skills: string;
   selfIntro: string;
@@ -36,26 +37,32 @@ export interface TUserSignUp {
 }
 
 export interface TUserLoginResponse {
-  user: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    dob: string;
-    gender: string;
-    role: [string];
-    profilePicture: string;
-    bio: string;
-    skills: string;
-    selfIntro: string;
-    achievements: string;
-    mentorId: string;
-    isBlocked: boolean;
-  }; // No error, as user can be an object
-  accessToken: string;
+  success: boolean;
+  data: {
+    userFound: {
+      _id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      dob: string;
+      gender: string;
+      role: [string];
+      activated: boolean;
+      mentorActivated: boolean;
+      profilePicture: string;
+      bio: string;
+      skills: string;
+      selfIntro: string;
+      achievements: string;
+      mentorId: string;
+      isBlocked: boolean;
+    };
+    accessToken: string;
+    refreshToken: string; // Add refreshToken since it’s in the response
+  };
+  message: string;
 }
-
 export interface TUserLoginError {
   email?: string;
   password?: string;
@@ -69,4 +76,32 @@ export interface TUserSignUpError {
   confirmPassword?: string;
   gender?: string;
   phone?: string;
+}
+
+export interface TUserSignUpResponse {
+  success: boolean;
+  data: {
+    userFound: {
+      _id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      dob: string;
+      gender: string;
+      role: [string];
+      activated: boolean;
+      mentorActivated: boolean;
+      profilePicture: string;
+      bio: string;
+      skills: string;
+      selfIntro: string;
+      achievements: string;
+      mentorId: string;
+      isBlocked: boolean;
+    };
+    accessToken: string;
+    refreshToken: string; // Add refreshToken since it’s in the response
+  };
+  message: string;
 }

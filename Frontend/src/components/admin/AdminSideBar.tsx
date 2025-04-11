@@ -8,13 +8,25 @@ import {
   Users2,
   LogOut,
 } from "lucide-react";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import { Moon, Sun } from "lucide-react";
+
+// import { Button } from "@/components/ui/button";
 import { LogoutConfirmationModal } from "@/components/modal/Logout";
-import { adminLogout } from "@/services/adminAuth";
+import { logout } from "@/services/adminAuth";
 import { toast, Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/assets/logo.png";
 import LogoName from "@/assets/brandlogo.png";
-
+import { resetAdmin } from "@/redux/slices/adminSlice";
+import { useDispatch } from "react-redux";
+import ThemeToggle from "../users/ThemeToggle";
+import AdminNotification from "./AdminNotificaton";
 const SidebarItem = ({
   icon: Icon,
   text,
@@ -50,15 +62,18 @@ const AdminSidebar: React.FC = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [activeItem, setActiveItem] = useState("Dashboard");
+  const [isNotification, setIsNotification] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await adminLogout();
+      await logout();
       toast.success("Logged out successfully!");
       setLogoutModalOpen(false);
-      navigate("/admin/signin"); // Redirect to login page after logout
+      dispatch(resetAdmin());
+      navigate("/admin/login");
     } catch (error) {
       toast.error("Failed to logout. Please try again.");
     } finally {
@@ -73,6 +88,10 @@ const AdminSidebar: React.FC = () => {
     }
   };
 
+  const openNotification = () => {
+    setIsNotification(true);
+  };
+
   return (
     <>
       <div
@@ -81,7 +100,6 @@ const AdminSidebar: React.FC = () => {
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
-        {/* Logo */}
         <div className="p-4 mb-4 flex items-center">
           <img
             src={Logo}
@@ -96,8 +114,6 @@ const AdminSidebar: React.FC = () => {
             }`}
           />
         </div>
-
-        {/* Navigation Items */}
         <nav className="space-y-2 px-2">
           <SidebarItem
             icon={LayoutDashboard}
@@ -111,9 +127,7 @@ const AdminSidebar: React.FC = () => {
             text="Notifications"
             isExpanded={isExpanded}
             active={activeItem === "Notifications"}
-            onClick={() =>
-              handleItemClick("Notifications", "/admin/notifications")
-            }
+            onClick={openNotification}
           />
           <SidebarItem
             icon={Users}
@@ -127,28 +141,25 @@ const AdminSidebar: React.FC = () => {
             text="Bookings"
             isExpanded={isExpanded}
             active={activeItem === "Bookings"}
-            onClick={() => handleItemClick("Bookings", "/admin/bookings")}
+            onClick={() => handleItemClick("Bookings", "/admin/dashboard")}
           />
           <SidebarItem
             icon={Wallet}
             text="Transactions"
             isExpanded={isExpanded}
             active={activeItem === "Transactions"}
-            onClick={() =>
-              handleItemClick("Transactions", "/admin/transactions")
-            }
+            onClick={() => handleItemClick("Transactions", "/admin/dashboard")}
           />
           <SidebarItem
             icon={Users2}
             text="Subscribers"
             isExpanded={isExpanded}
             active={activeItem === "Subscribers"}
-            onClick={() => handleItemClick("Subscribers", "/admin/subscribers")}
+            onClick={() => handleItemClick("Subscribers", "/admin/dashboard")}
           />
         </nav>
-
-        {/* Logout at bottom */}
         <div className="absolute bottom-4 w-full px-2">
+          <ThemeToggle />
           <SidebarItem
             icon={LogOut}
             text="Logout"
@@ -157,7 +168,6 @@ const AdminSidebar: React.FC = () => {
           />
         </div>
       </div>
-      {/* Logout Confirmation Modal */}
       <LogoutConfirmationModal
         open={logoutModalOpen}
         onOpenChange={setLogoutModalOpen}
@@ -165,6 +175,10 @@ const AdminSidebar: React.FC = () => {
         loggingOut={loggingOut}
       />
       <Toaster position="top-right" />
+      <AdminNotification
+        open={isNotification}
+        onOpenChange={setIsNotification}
+      />
     </>
   );
 };

@@ -1,9 +1,14 @@
 import { EUsers } from "../../entities/userEntity";
 
 export interface inUserAuthService {
+  // login(user: { email: string; password: string }): Promise<{
+  //   userFound: Omit<EUsers, "password">;
+  //   role: string;
+  // } | null>;
   login(user: { email: string; password: string }): Promise<{
+    accessToken: string;
+    refreshToken: string;
     userFound: Omit<EUsers, "password">;
-    role: string;
   } | null>;
 
   createUser(email: Partial<EUsers>): Promise<{
@@ -20,6 +25,7 @@ export interface inUserAuthService {
     accessToken: string;
     refreshToken: string;
   } | null>;
+
   googleSignIn(user: { email: string }): Promise<{
     user: EUsers;
     accessToken: string;

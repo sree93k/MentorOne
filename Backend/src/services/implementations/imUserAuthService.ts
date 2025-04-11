@@ -69,75 +69,64 @@ export default class UserAuthService implements inUserAuthService {
     }
   }
 
+  //login
   async login(user: { email: string; password: string }): Promise<{
+    accessToken: string;
+    refreshToken: string;
     userFound: Omit<EUsers, "password">;
-    role: string;
   } | null> {
-    console.log("Service - Login attempt for email:", user.email);
+    try {
+      console.log("Service - Login attempt for email:", user.email);
 
-    if (!user.email) {
-      console.log("Service - Error: email is required");
-      throw new Error("email is required");
-    }
-
-    const userFound = await this.UserRepository.findByEmail(user.email);
-    console.log("Service - User found:", userFound ? "Yes" : "No");
-
-    if (userFound && user.password && userFound.password) {
-      console.log("Service - Comparing passwords");
-      console.log("Service - Input password:", user.password);
-      console.log("Service - Stored password hash:", userFound.password);
-
-      const isPasswordValid = await bcrypt.compare(
-        user.password,
-        userFound.password
-      );
-      console.log("Service - Password valid:", isPasswordValid);
-
-      if (isPasswordValid) {
-        console.log("Service - Login successful");
-        const userObject = userFound.toObject();
-        const { password, ...userWithoutPassword } = userObject;
-        return {
-          userFound: userWithoutPassword as Omit<EUsers, "password">,
-          role: userFound.role ? userFound.role.join(",") : "none",
-        };
+      if (!user.email) {
+        console.log("Service - Error: email is required");
+        throw new Error("email is required");
       }
-    }
 
-    console.log("Service - Login failed");
-    return null;
+      const userFound = await this.UserRepository.findByEmail(user.email);
+      console.log("Service - User found:", userFound ? "Yes" : "No");
+
+      if (userFound?.isBlocked) {
+        throw new Error("Account is Blocked");
+      }
+      if (
+        userFound &&
+        user.password &&
+        userFound.password &&
+        (await bcrypt.compare(user.password, userFound.password))
+      ) {
+        const id = userFound._id?.toString();
+
+        const accessToken = generateAccessToken({
+          id,
+          role: userFound.role,
+        });
+
+        const refreshToken = generateRefreshToken({
+          id,
+          role: userFound.role,
+        });
+
+        if (!id) {
+          throw new Error("User ID is undefined");
+        }
+        await this.UserRepository.saveRefreshToken(id, refreshToken);
+
+        const userObject = userFound.toObject();
+
+        const { password, ...userWithoutPassword } = userObject;
+
+        return { accessToken, refreshToken, userFound: userWithoutPassword };
+      }
+
+      console.log("Service - Login failed");
+      return null;
+    } catch (error) {
+      return null;
+    }
   }
 
-  //   async googleSignIn(user: Partial<EUsers>): Promise<{
-  //     user: EUsers;
-  //     accessToken: string;
-  //     refreshToken: string;
-  //   } | null> {
-  //     console.log("Service - Login attempt for email:", user.email);
-
-  //     if (!user.email) {
-  //       console.log("Service - Error: email is required");
-  //       throw new Error("email is required");
-  //     }
-
-  //     const userData = await this.UserRepository.findByEmail(user.email);
-  //     console.log("Service - User found:", userData ? "Yes" : "No");
-
-  //     if (userData) {
-  //       console.log("Service - Comparing passwords");
-
-  //       const { password, ...userWithoutPassword } = userData.toObject();
-  //       return {
-  //         userFound: userWithoutPassword as Omit<EUsers, "password">,
-  //         role: userData.role ? userData.role.join(",") : "none",
-  //       };
-  //     }
-
-  //     console.log("Service - Login failed");
-  //     return null;
-  //   }
-
+  //google auth
   async googleSignIn(user: { email: string }): Promise<{
     user: EUsers;
     accessToken: string;
@@ -154,6 +143,9 @@ export default class UserAuthService implements inUserAuthService {
       console.log("googlesign in service 2", userData);
       if (!userData) {
         return null;
+      }
+      if (userData?.isBlocked) {
+        throw new Error("Account is Blocked");
       }
       console.log("googlesign in service 3");
       const userId =
@@ -176,9 +168,9 @@ export default class UserAuthService implements inUserAuthService {
       console.log("refresh token ", refreshToken);
 
       console.log("googlesign in service 6");
-      console.log("====================================");
+
       console.log(userData);
-      console.log("====================================");
+
       console.log("googlesign in service 7");
       const userAfterSavedToken = await this.UserRepository.saveRefreshToken(
         userId,
@@ -278,7 +270,7 @@ export default class UserAuthService implements inUserAuthService {
   async decodeAndVerifyToken(token: string): Promise<Partial<EUsers | null>> {
     try {
       console.log("decode service 1");
-      
+
       const decode = decodeAndVerifyToken(token);
       console.log("decode service 2 sucesss");
       return decode;
@@ -291,18 +283,25 @@ export default class UserAuthService implements inUserAuthService {
     return accessTokenForReset(user);
   }
 
+  //logout
   async logout(token: string, id: string): Promise<EUsers | null> {
-    const user = await this.UserRepository.removeRefreshToken(id, token);
+    console.log("service user logout step 1 ", token, id);
 
+    const user = await this.UserRepository.removeRefreshToken(id, token);
+    console.log("service user logout step 2 ", user);
     return user ? user : null;
   }
 
   async resetPassword(email: string, password: string): Promise<EUsers | null> {
     try {
-      console.log("reset passowrd service 1 email",email);
-      console.log("reset passowrd service 1 passowrd",password);
+      console.log("reset passowrd service 1 email", email);
+      console.log("reset passowrd service 1 passowrd", password);
       const hashedPassword = await bcrypt.hash(password, 10);
-      console.log("reset passowrd service 2",hashedPassword);
+      console.log("reset passowrd service 2", hashedPassword);
+      const userData = await this.UserRepository.findByEmail(email);
+      if (userData?.isBlocked) {
+        throw new Error("Account is Blocked");
+      }
       const user = await this.UserRepository.changePassword(
         email,
         hashedPassword

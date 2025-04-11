@@ -1,12 +1,14 @@
 import { Router } from "express";
-import userAuthRoute from './userAuthRoute'
+import userAuthRoute from "./userAuthRoute";
 // import userPrivateRoute from './userPrivateRoute'
 // import {authenticateUser} from '../../middlewares/authenticateuser'
-
+import userPrivateRoute from "./userPrivateRoute";
+import userController from "../../controllers/userController/userController";
 const userRoutes = Router();
 
-
-userRoutes.use('/auth',userAuthRoute)
+userRoutes.use("/auth", userAuthRoute);
+userRoutes.get("/validate_session", userController.validateSuccessResponse);
+userRoutes.use("/", userPrivateRoute);
 // userRoutes.use('/',authenticateUser,userPrivateRoute)
 
 export default userRoutes;

@@ -1,8 +1,14 @@
 import { EAdmin } from "../../entities/adminEntity";
+import jwt from "jsonwebtoken";
 
-export interface IAdminAuthService {
-  login(user: { adminEmail: string; adminPassword: string }): Promise<{
+export interface inAdminAuthService {
+  login(user: Partial<EAdmin>): Promise<{
+    accessToken: string;
+    refreshToken: string;
     adminFound: Omit<EAdmin, "adminPassword">;
-    role: string;
   } | null>;
+
+  logout(token: string, id: string): Promise<EAdmin | null>;
+
+  refreshAccessToken(user: string | jwt.JwtPayload): Promise<string | null>;
 }

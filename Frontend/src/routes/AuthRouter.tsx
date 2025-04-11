@@ -2,17 +2,35 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 // import LoadingSpinner from "../common/LoadingSpinner";
-
+import PrivateRoute from "@/components/auth/UserPrivateRoute";
+import PublicRoute from "@/components/auth/UserPublicRoute";
+import LoadingPageWithReactLoading from "@/components/loadingPage/Loading";
+import LoadingOverlay from "@/common/LoadingOverlay";
 const LandingPage = lazy(() => import("../pages/landingPage/LandingPage"));
 const SigninPage = lazy(() => import("../pages/userAuth/Signin"));
 const SignupPage = lazy(() => import("../pages/userAuth/Signup"));
+const MenteeRoute = lazy(() => import("./MenteeRouter"));
+const MentorRoute = lazy(() => import("./MentorRouter"));
+const UserRouter = lazy(() => import("./UserRouter"));
+//==>>>>>>>>>>
 const AuthRouter: React.FC = () => {
   return (
     <Suspense fallback={<h1>loaidng</h1>}>
+      <LoadingOverlay />
+
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/signin" element={<SigninPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/" element={<PublicRoute element={LandingPage} />} />
+        <Route path="/login" element={<PublicRoute element={SigninPage} />} />
+        <Route path="/signup" element={<PublicRoute element={SignupPage} />} />
+        <Route
+          path="/seeker/*"
+          element={<PrivateRoute element={MenteeRoute} />}
+        />
+        <Route
+          path="/expert/*"
+          element={<PrivateRoute element={MentorRoute} />}
+        />
+        <Route path="/user/*" element={<PrivateRoute element={UserRouter} />} />
       </Routes>
     </Suspense>
   );

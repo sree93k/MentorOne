@@ -1,14 +1,12 @@
 import { extend } from "joi";
-import  {Document,Schema, ObjectId } from "mongoose";
+import mongoose, { Document, Schema, ObjectId } from "mongoose";
 
-
-export interface ESchoolExperience extends Document{
-    _id:ObjectId | null;
-    schoolName: string | null;
-    class: number | null;
-    city: string | null;
-    startDate: Date | null;
-    endDate: Date | null;
-  }
-
-  
+export interface ESchoolExperience extends Document {
+  _id: mongoose.Types.ObjectId;
+  userType: string;
+  schoolName: string;
+  class: number;
+  city: string;
+  startDate?: Date;
+  endDate?: Date;
+}

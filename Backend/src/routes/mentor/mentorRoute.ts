@@ -1,8 +1,16 @@
-import { Router } from 'express';
-
+import { Router } from "express";
+import { welcomeFormValidator } from "../../validator/MentorValidator";
+import mentorController from "../../controllers/mentorController/mentorController";
+import { authenticate } from "../../middlewares/authenticateUser";
 const mentorRoutes = Router();
 
-// Protected mentor routes will be added here
-// Example: mentorRoutes.get('/dashboard', mentorAuthMiddleware, mentorController.getDashboard);
+mentorRoutes.put(
+  "/welcomeform",
+  authenticate,
+  welcomeFormValidator,
+  mentorController.uploadWelcomeForm
+);
+
+mentorRoutes.get("/profile/:id", authenticate, mentorController.getProfileData);
 
 export default mentorRoutes;

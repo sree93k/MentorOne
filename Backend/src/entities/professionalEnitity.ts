@@ -1,11 +1,13 @@
-import  {Document,Schema, ObjectId } from "mongoose";
+import mongoose, { Document, Schema, ObjectId } from "mongoose";
 
-
-export interface EWorkExperience extends Document{
-    _id:ObjectId | null;
-    company:string | null;
-    jobRole:string | null;
-    startDate:Date | null
-    endDate:string | null;
-    city:string | null;
-} 
+export interface EWorkExperience extends Document {
+  _id: mongoose.Types.ObjectId;
+  userType: string;
+  company: string;
+  jobRole: string;
+  experience: String;
+  startDate: Date;
+  currentlyWorking: boolean;
+  endDate?: Date;
+  city: string;
+}
