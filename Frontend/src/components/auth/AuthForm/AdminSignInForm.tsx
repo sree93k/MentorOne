@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,78 +7,91 @@ import LogoNameImage from "@/assets/brandlogo.png";
 import SideImage from "@/assets/AdminLogin.jpg";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { adminLogin } from "@/services/adminAuth";
-import { TAdminLoginError, TAdminLogin } from "@/types/admin";
-import { validateEmail, validatePassword } from "@/utils/UserValidator";
+import { TAdminLoginResponse, TAdminLogin } from "@/types/admin";
+import { loginValidate } from "@/utils/AdminValidator";
 import {
-  setUser,
+  setLoading,
+  setAdmin,
   setIsAuthenticated,
   setAccessToken,
-} from "@/redux/slices/userSlice";
+} from "@/redux/slices/adminSlice";
+import { RootState } from "@/redux/store/store";
+
+interface LoginError {
+  adminEmail?: string;
+  adminPassword?: string;
+}
 
 const AdminLoginForm: React.FC = () => {
   const [adminEmail, setEmail] = useState("");
   const [adminPassword, setPassword] = useState("");
-  const [errors, setErrors] = useState<TAdminLoginError>({});
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<LoginError>({});
+
+  const { loading } = useSelector((state: RootState) => state.admin);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const handleChange =
-    (field: keyof TAdminLoginError) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      if (field === "adminEmail") setEmail(value);
-      if (field === "adminPassword") setPassword(value);
-      if (errors[field]) {
-        setErrors((prev) => ({ ...prev, [field]: undefined }));
-      }
-    };
 
-  const validateForm = () => {
-    let newErrors: TAdminLoginError = {};
-    const emailError = validateEmail(adminEmail);
-    if (emailError) newErrors.adminEmail = emailError;
-    const passwordError = validatePassword(adminPassword);
-    if (passwordError) newErrors.adminPassword = passwordError;
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
+  useEffect(() => {
+    console.log("useEffect ");
+  }, []);
+  console.log("store>>");
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    dispatch(setLoading(true));
+    console.log("submit 1");
 
-    if (validateForm()) {
-      const data: TAdminLogin = { adminEmail, adminPassword };
-      try {
-        const result = await adminLogin(data);
-        const responseData = result.response;
-
-        if (responseData) {
-          toast.success("Login successfully!");
-          const { admin, accessToken } = responseData;
-          localStorage.setItem("accessToken", accessToken);
-          dispatch(setUser(admin));
-          dispatch(setIsAuthenticated(true));
-          navigate("/admin/dashboard");
-        } else {
-          toast.error("Some Error Occurred. Please try again!");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        toast.error("Invalid Username or Password");
-      }
+    const formattedErrors = loginValidate({
+      adminEmail,
+      adminPassword,
+    }) as LoginError;
+    console.log("submit 2");
+    if (formattedErrors) {
+      console.log("submit 3");
+      setTimeout(() => {
+        dispatch(setLoading(false));
+        setError(formattedErrors);
+      }, 1000);
+      console.log("submit 4");
     } else {
-      toast.error("Invalid Input");
+      console.log("submit 5");
+      setError({});
+      console.log("submit 6");
+      const data: TAdminLogin = { adminEmail, adminPassword };
+      console.log("submit 7");
+      const response: TAdminLoginResponse = await adminLogin(data);
+      console.log("submit 8", response);
+      console.log("response success", response.success);
+      console.log("repsonse data", response.data);
+
+      if (response.success && response.data) {
+        console.log("submit 9");
+        const { adminFound, accessToken } = response.data;
+        console.log("user>>", adminFound); // Fixed: comma inside parentheses
+        console.log("accesstoken", accessToken);
+        console.log("LOGIN success>>>>>> respnse ", response);
+        console.log("LOGIN success>>>>>> accesstoken ", accessToken);
+
+        dispatch(setAdmin(adminFound));
+        dispatch(setIsAuthenticated(true));
+        dispatch(setAccessToken(accessToken));
+        localStorage.setItem("accessToken", accessToken);
+        toast.success("Welcome");
+        navigate("/admin/dashboard");
+      } else {
+        console.log("submit 10");
+        setError({
+          adminEmail: response.error,
+          adminPassword: response.error,
+        });
+        dispatch(setLoading(false));
+      }
     }
-    setLoading(false);
   };
 
   return (
-    <main
-      className={`relative w-full min-h-screen bg-white bg-cover bg-no-repeat `}
-    >
+    <main className="relative w-full min-h-screen bg-white bg-cover bg-no-repeat">
       <div className="container mx-auto flex flex-col lg:flex-row items-center justify-between py-12 px-4 bg-white m-20">
         {/* Left side with logo and illustration */}
         <div className="flex flex-col items-start mb-8 lg:mb-0">
@@ -105,7 +118,7 @@ const AdminLoginForm: React.FC = () => {
         <Card className="w-full max-w-[597px] bg-[#e44332] rounded-[20px] text-white border-none">
           <CardContent className="p-12">
             <h1 className="text-4xl font-bold text-center mb-12 font-sans">
-              Welcome Master One !
+              Welcome Master One!
             </h1>
 
             <div className="space-y-8">
@@ -120,10 +133,13 @@ const AdminLoginForm: React.FC = () => {
                     type="email"
                     required
                     value={adminEmail}
-                    onChange={handleChange("adminEmail")}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email ID"
                     className="h-[53px] bg-white text-black text-base text-left"
                   />
+                  {/* {error.adminEmail && (
+                    <p className="text-white">{error.adminEmail}</p>
+                  )} */}
                 </div>
 
                 <div className="space-y-2">
@@ -139,17 +155,14 @@ const AdminLoginForm: React.FC = () => {
                     type="password"
                     required
                     value={adminPassword}
-                    onChange={handleChange("adminPassword")}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     className="h-[53px] bg-white text-black text-base text-left"
                   />
+                  {error.adminPassword && (
+                    <p className="text-white">{error.adminPassword}</p>
+                  )}
                 </div>
-
-                {/* <div className="text-center">
-                <button className="text-xl font-extralight">
-                  Forgot password ?
-                </button>
-              </div> */}
 
                 <div className="flex justify-center pt-4">
                   <Button

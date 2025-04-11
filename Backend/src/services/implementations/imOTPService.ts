@@ -7,16 +7,29 @@ import { sendMail } from "../../utils/emailService";
 import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
-
+import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
+import imBaseRepository from "../../repositories/implementations/imBaseRepository";
+import Users from "../../models/userModel";
+import { string } from "joi";
 export default class OTPServices implements inOTPService {
   private OTPRepository: inOTPRepository;
+  private BaseRepository: inBaseRepository<EUsers>;
   constructor() {
     this.OTPRepository = new imOTPRepository();
+    this.BaseRepository = new imBaseRepository<EUsers>(Users);
   }
 
   async sendOTP(user: EUsers): Promise<EOTP | null> {
     try {
       console.log("otp sent service 1");
+      if (!user?.email) {
+        throw new Error("User email is null");
+      }
+      const userData = await this.BaseRepository.findByEmail(user.email);
+      if (userData?.isBlocked) {
+        throw new Error("Account is Blocked");
+      }
+      await this.OTPRepository.deleteOTPsByEmail(user.email);
       let newUser;
       const OTPNumber = Math.floor(10000 + Math.random() * 90000).toString();
       const expirationTime = new Date(Date.now() + 1 * 60000);
@@ -63,7 +76,7 @@ export default class OTPServices implements inOTPService {
     email: Partial<EUsers>
   ): Promise<EOTP | null> {
     try {
-      console.log("Verifying OTP for email: and otp", email,"and ",otp);
+      console.log("Verifying OTP for email: and otp", email, "and ", otp);
       const OTPUser = await this.OTPRepository.findOTP(email);
       console.log("otp check output", OTPUser);
 
@@ -71,7 +84,7 @@ export default class OTPServices implements inOTPService {
         console.log("No OTP found for email:", email);
         throw new Error("OTP not found");
       }
-console.log("OTP Service otps are, ",OTPUser.otp,"and ",otp);
+      console.log("OTP Service otps are, ", OTPUser.otp, "and ", otp);
 
       if (OTPUser.otp !== otp.otp) {
         console.log("OTP mismatch. Expected:", OTPUser.otp, "Got:", otp);

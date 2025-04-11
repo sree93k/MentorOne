@@ -1,7 +1,12 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
-import { TUsers, TUserLogin, TUserLoginResponse } from "../types/user";
+import {
+  TUsers,
+  TUserLogin,
+  TUserLoginResponse,
+  TUserSignUpResponse,
+} from "../types/user";
 import { TOTP } from "../types/otp";
-import { userAxiosInstance } from "./instance/userInstances";
+import { userAxiosInstance } from "./instances/userInstance";
 import { CredentialResponse } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import {
@@ -9,12 +14,9 @@ import {
   DecodedGoogleToken,
   GoogleSignInRequest,
 } from "@/types/googleAuth";
-import { log } from "util";
+import { access } from "fs";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
-  withCredentials: true,
-});
+const api = userAxiosInstance;
 
 //isnup otp send
 export const sentOTP = async (Credential: Partial<TUsers>) => {
@@ -23,8 +25,25 @@ export const sentOTP = async (Credential: Partial<TUsers>) => {
     console.log("credentialsc >>", Credential);
 
     const response = await api.post("/user/auth/sendOTP", Credential);
+    console.log("user auth sendt otp response", response);
+
     return response;
   } catch (error) {
+    console.log("errr is", error?.response?.data);
+
+    if (error instanceof AxiosError) {
+      return error?.response?.data;
+    } else {
+      return null;
+    }
+  }
+};
+
+export const validateUserSession = async () => {
+  try {
+    const response = await userAxiosInstance.get("/user/validate_session");
+    return response;
+  } catch (error: unknown) {
     if (error instanceof AxiosError) {
       return error.response;
     } else {
@@ -34,13 +53,22 @@ export const sentOTP = async (Credential: Partial<TUsers>) => {
 };
 
 //signup
-export const signUp = async (otpData: TOTP): Promise<boolean> => {
+export const signUp = async (
+  otpData: TOTP
+): Promise<{ response: TUserSignUpResponse["data"] }> => {
   try {
     console.log("otp data ");
     console.log("otp data", otpData);
 
     const response = await api.post("/user/auth/signup", otpData);
-    return response.status === 200;
+    console.log("sign up response in servuce iu s", response);
+    console.log("response.data.data.  ", response.data.data);
+
+    return {
+      userFound: response.data.data.user,
+      accessToken: response.data.data.accessToken,
+      refreshToken: response.data.data.refreshToken,
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(
@@ -51,10 +79,9 @@ export const signUp = async (otpData: TOTP): Promise<boolean> => {
   }
 };
 
-// userAuthService.ts
 export const login = async (
   userData: TUserLogin
-): Promise<{ response: TUserLoginResponse }> => {
+): Promise<{ response: TUserLoginResponse["data"] }> => {
   try {
     console.log("login service/......", userData);
 
@@ -62,9 +89,18 @@ export const login = async (
       "/user/auth/login",
       userData
     );
-    console.log("login response/......", response);
+    console.log("login response/..1....", response);
+    console.log("login response/..2....", response.data);
+    console.log("login response/..3....", response.data.data);
 
-    return { response: response.data };
+    // Return the response matching the declared type
+    return {
+      response: {
+        userFound: response.data.data.userFound,
+        accessToken: response.data.data.accessToken,
+        refreshToken: response.data.data.refreshToken, // Include refreshToken
+      },
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(error.response?.data?.message || "Login failed");
@@ -116,18 +152,22 @@ export const signInWithGoogle = async (
 
 export const logout = async () => {
   try {
+    console.log("user logout servcie start1 ");
+
     const response = await api.patch("/user/auth/logout", null, {
       withCredentials: true,
     });
-
+    console.log("user logout servcie start2 response", response);
     localStorage.removeItem("accessToken");
 
     if (response.data.success) {
+      console.log("user logout servcie start3 finish success");
       return response.data;
     }
-
+    console.log("user logout servcie start3 finish null");
     return null;
   } catch (error: unknown) {
+    console.log("user logout servcie start4 ");
     if (error instanceof AxiosError) {
       return error.response;
     } else {
@@ -208,18 +248,3 @@ export const resetPassword = async ({
     }
   }
 };
-
-export const logoutUser = async (): Promise<void> => {
-  try {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // Here you would typically:
-    // - Make an API call to your backend logout endpoint
-    // - Clear local storage/auth tokens
-    // - Update auth state
-    localStorage.clear();
-  } catch (error) {
-    throw new Error("Logout failed. Please try again.");
-  }
-};
-///==>>>>>>>>>>>>>>>>>>>>>>>>

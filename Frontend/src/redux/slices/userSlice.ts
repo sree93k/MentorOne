@@ -1,30 +1,46 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 interface User {
-  id: string;
+  _id: string;
   email: string;
-  name: string;
-  role: "admin" | "mentor" | "mentee";
+  firstName: string;
+  lastName: string;
+  role: "mentor" | "mentee";
+  profleImg: string;
+  phone: string;
+  passwordDate: string;
+  activated?: boolean;
+  mentorActivated?: boolean;
 }
 
 interface InitialState {
+  _id: string;
   user: User | null;
   loading: boolean;
   error: object;
   isAuthenticated: boolean;
+  activated: boolean;
+  mentorActivated?: boolean;
   accessToken: string;
-  modal: boolean;
+  currentTab: string;
   formData: object;
+  pageTitle: string;
+  tempData: object;
 }
 
 const initialState: InitialState = {
+  _id: "",
   user: null,
   loading: false,
   error: {},
   isAuthenticated: false,
+  activated: false,
+  mentorActivated: false,
   accessToken: "",
-  modal: false,
+  currentTab: "",
   formData: {},
+  pageTitle: "User Panel",
+  tempData: {},
 };
 
 const userSlice = createSlice({
@@ -33,6 +49,12 @@ const userSlice = createSlice({
   reducers: {
     setUser(state, action) {
       state.user = action.payload;
+      if (action.payload && action.payload.activated !== undefined) {
+        state.activated = action.payload.activated;
+      }
+      if (action.payload && action.payload.currentTab !== undefined) {
+        state.currentTab = action.payload.currentTab;
+      }
     },
     setLoading(state, action) {
       state.loading = action.payload;
@@ -43,24 +65,22 @@ const userSlice = createSlice({
     setIsAuthenticated(state, action) {
       state.isAuthenticated = action.payload;
     },
+    setActivated(state, action) {
+      state.activated = action.payload;
+    },
+    setMentorActivated(state, action) {
+      state.mentorActivated = action.payload;
+    },
+    setCurrentTab(state, action) {
+      state.currentTab = action.payload;
+    },
     setAccessToken(state, action) {
       state.accessToken = action.payload;
-    },
-    setModal(state, action) {
-      state.modal = action.payload;
     },
     setFormData(state, action) {
       state.formData = action.payload;
     },
-    resetUser(state) {
-      state.user = null;
-      state.loading = false;
-      state.error = {};
-      state.isAuthenticated = false;
-      state.accessToken = "";
-      state.modal = false;
-      state.formData = {};
-    },
+    resetUser: () => initialState,
   },
 });
 
@@ -69,8 +89,10 @@ export const {
   setLoading,
   setError,
   setIsAuthenticated,
+  setActivated,
+  setMentorActivated,
+  setCurrentTab,
   setAccessToken,
-  setModal,
   setFormData,
   resetUser,
 } = userSlice.actions;

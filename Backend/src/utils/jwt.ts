@@ -33,6 +33,7 @@ export const verifyRefreshToken = (token: string): any => {
 
 export const decodeToken = (token: string): any => {
   try {
+    console.log("decode toekn 1 , toeken", token);
     return jwt.decode(token);
   } catch (error) {
     throw new Error("invalid");

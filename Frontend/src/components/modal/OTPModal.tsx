@@ -22,14 +22,14 @@ export function EmailVerificationModal({
   onReportIssue,
 }: EmailVerificationModalProps) {
   const [otp, setOtp] = useState("");
-  const [resendTimer, setResendTimer] = useState(0);
+  const [resendTimer, setResendTimer] = useState(60); // Start at 60
   const [verifying, setVerifying] = useState(false);
 
+  // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (open && resendTimer === 0) {
-      setResendTimer(60); // Set to 60 seconds
+    if (open && resendTimer > 0) {
       interval = setInterval(() => {
         setResendTimer((prev) => {
           if (prev <= 1) {
@@ -44,12 +44,26 @@ export function EmailVerificationModal({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [open, resendTimer]);
+  }, [open, resendTimer]); // Re-run when resendTimer changes
 
-  const handleResendOtp = () => {
+  // Reset OTP and timer when modal opens
+  useEffect(() => {
+    if (open) {
+      setOtp(""); // Clear OTP input
+      setResendTimer(60); // Reset timer to 60 seconds
+    }
+  }, [open]);
+
+  const handleResendOtp = async () => {
     if (resendTimer === 0) {
-      onResendOtp();
-      setResendTimer(60); // Reset to 60 seconds
+      try {
+        await onResendOtp(); // Call the resend function (should trigger backend sendOTP)
+        setResendTimer(60); // Reset timer to 60 seconds
+        setOtp(""); // Clear the OTP input
+      } catch (error) {
+        console.error("Failed to resend OTP:", error);
+        // Optionally, show an error message to the user
+      }
     }
   };
 

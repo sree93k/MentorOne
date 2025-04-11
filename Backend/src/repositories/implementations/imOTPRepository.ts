@@ -8,12 +8,10 @@ export default class OTPRepository implements inOTPRepository {
   async saveOTP(otp: EOTP): Promise<EOTP | null> {
     try {
       console.log("repo save otp 1", otp);
-
       const newOTP = new OTPModel(otp);
       console.log("repo save otp 2", newOTP);
       await newOTP.save();
       console.log("repo save otp 3", newOTP);
-
       return newOTP;
     } catch (error) {
       if (error instanceof Error) {
@@ -23,13 +21,23 @@ export default class OTPRepository implements inOTPRepository {
       }
     }
   }
-
+  async deleteOTPsByEmail(email: string): Promise<void> {
+    try {
+      await OTPModel.deleteMany({ email });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new ApiError(500, "Failed to delete OTPs", error.message);
+      } else {
+        throw new ApiError(500, "Failed to delete OTPs", "Unknown error");
+      }
+    }
+  }
   async findOTP(email: Partial<EUsers>): Promise<EOTP | null> {
     try {
       //   console.log("find otp repo 1", user);
       //   const email = user.email; // Extract the email string
       //   const matchOTP = await OTPModel.findOne({ email });
-      console.log("find otp repo 1", email);
+      console.log("find otp repo 1>>>>", email);
       const matchOTP = await OTPModel.findOne({ email });
       console.log("find otp repo 2", matchOTP);
       return matchOTP ? matchOTP.toObject() : null;

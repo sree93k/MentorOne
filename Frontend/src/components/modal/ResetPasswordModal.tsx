@@ -1,4 +1,3 @@
-// src/components/ForgotPasswordModal.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,16 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock } from "lucide-react";
-import { OtpInput } from "./OTPInput"; // Assuming this exists
+import { OtpInput } from "./OTPInput";
 
 export interface ForgotPasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  email?: string; // Optional initial email from LoginForm
-  onSubmitEmail: (email: string) => Promise<void>; // Send OTP
-  onVerifyOtp: (otp: string, email: string) => Promise<void>; // Verify OTP
-  onResetPassword: (email: string, newPassword: string) => Promise<void>; // Reset password
-  onResendOtp: (email: string) => Promise<void>; // Resend OTP
+  email?: string;
+  onSubmitEmail: (email: string) => Promise<void>;
+  onVerifyOtp: (otp: string, email: string) => Promise<void>;
+  onResetPassword: (email: string, newPassword: string) => Promise<void>;
+  onResendOtp: (email: string) => Promise<void>;
   verifying?: boolean;
 }
 
@@ -42,6 +41,7 @@ export function ForgotPasswordModal({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -52,14 +52,21 @@ export function ForgotPasswordModal({
       setNewPassword("");
       setConfirmPassword("");
       setResendTimer(0);
+      setOtpError(null);
     }
   }, [open, initialEmail]);
 
-  // Timer for resend OTP
+  // Set timer when entering OTP step
+  useEffect(() => {
+    if (step === "otp") {
+      setResendTimer(60);
+    }
+  }, [step]);
+
+  // Timer countdown logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (step === "otp" && resendTimer === 0) {
-      setResendTimer(60);
+    if (step === "otp" && resendTimer > 0) {
       interval = setInterval(() => {
         setResendTimer((prev) => {
           if (prev <= 1) {
@@ -75,7 +82,6 @@ export function ForgotPasswordModal({
     };
   }, [step, resendTimer]);
 
-  // Handle email submission
   const handleEmailSubmit = async () => {
     if (!email) return;
     try {
@@ -83,36 +89,45 @@ export function ForgotPasswordModal({
       setStep("otp");
     } catch (error) {
       console.error("Failed to send OTP:", error);
+      // Optionally, add an error message for the user here
     }
   };
 
-  // Handle OTP verification
   const handleOtpVerify = async () => {
-    if (otp.length === 5) {
-      await onVerifyOtp(otp, email);
-      setStep("reset"); // Move to reset password step
+    if (otp.length !== 5) return;
+    try {
+      setOtpError(null); // Clear any previous error
+      await onVerifyOtp(otp, email); // Wait for verification
+      setStep("reset"); // Only proceed if successful
+    } catch (error) {
+      console.error("OTP verification failed:", error);
+      setOtpError("Invalid OTP. Please try again."); // Show error to user
     }
   };
 
-  // Handle password reset
   const handleResetPassword = async () => {
     if (newPassword !== confirmPassword) {
       console.error("Passwords do not match");
+      // Optionally, add a password mismatch error state here
       return;
     }
     try {
       await onResetPassword(email, newPassword);
-      onOpenChange(false); // Close modal after successful reset
+      onOpenChange(false); // Close modal on success
     } catch (error) {
       console.error("Failed to reset password:", error);
+      // Optionally, add an error message for the user here
     }
   };
 
-  // Handle OTP resend
   const handleResendOtp = async () => {
     if (resendTimer === 0 && email) {
-      await onResendOtp(email);
-      setResendTimer(60);
+      try {
+        await onResendOtp(email);
+        setResendTimer(60);
+      } catch (error) {
+        console.error("Failed to resend OTP:", error);
+      }
     }
   };
 
@@ -163,6 +178,9 @@ export function ForgotPasswordModal({
                 </p>
               </div>
               <OtpInput value={otp} onChange={setOtp} length={5} />
+              {/* {otpError && (
+                <p className="text-red-600 text-sm mt-2">{otpError}</p>
+              )} */}
               <div className="mt-4 text-sm">
                 <p className="text-gray-700">
                   Didn’t receive OTP? Resend in{" "}

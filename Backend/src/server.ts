@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
-
+import multer from "multer";
 // Load environment variables first
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -10,7 +10,7 @@ import compression from "compression";
 import morgan from "morgan";
 import { connectDatabase } from "./config/database";
 import { router } from "./routes/router";
-
+import cookieParser from "cookie-parser";
 // Validate required environment variables
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
@@ -35,13 +35,25 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.use("/uploads", express.static("uploads"));
 app.use(express.json());
+app.use(cookieParser());
 app.options("*", cors());
 app.use(morgan("dev"));
 app.use(compression());
 
 // Connect to Database
 connectDatabase();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Ensure this folder exists in your project root
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  },
+});
+const upload = multer({ storage });
 
 // Mount Routes
 app.use("/", router);

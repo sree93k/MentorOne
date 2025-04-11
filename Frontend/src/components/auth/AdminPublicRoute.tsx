@@ -9,7 +9,7 @@ interface PublicRouteProps {
 
 const PublicRoute: React.FC<PublicRouteProps> = ({ element: Element }) => {
   const { isAuthenticated } = useSelector((state: RootState) => state.admin);
-  console.log("admin public route...");
+  console.log("admin public route...", isAuthenticated);
 
   return isAuthenticated ? <Navigate to="/admin/dashboard" /> : <Element />;
 };

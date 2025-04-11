@@ -1,12 +1,12 @@
-import  {Document,Schema, ObjectId } from "mongoose";
+import mongoose, { Document, Schema, ObjectId } from "mongoose";
 
-
-export interface ECollegeExperience extends Document{
-    _id:ObjectId | null;
-    course:string | null;
-    specializedIn: string | null;
-    courseStartDate:Date | null;
-    courseEndDate:Date | null
-    collegeName:string | null;
-    city:string | null;
-} 
+export interface ECollegeExperience extends Document {
+  _id: mongoose.Types.ObjectId;
+  userType: string;
+  course: string;
+  specializedIn: string;
+  startDate: Date;
+  endDate: Date;
+  collegeName: string;
+  city: string;
+}

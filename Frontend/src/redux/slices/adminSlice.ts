@@ -1,12 +1,32 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
+interface Admin {
+  _id: string; // Match API response
+  adminEmail: string; // Match API response
+  adminName: string; // Match API response
+  role: "admin";
+  firstName?: string; // Optional fields from response
+  lastName?: string;
+  profilePicture?: string;
+  __v?: number; // Optional MongoDB version key
+}
+interface InitialState {
+  user: Admin | null;
+  loading: boolean;
+  error: object;
+  isAuthenticated: boolean;
+  accessToken: string;
+  formData: object;
+  pageTitle: string;
+  tempData: object;
+}
+
+const initialState: InitialState = {
   user: null,
   loading: false,
   error: {},
   isAuthenticated: false,
   accessToken: "",
-  modal: false,
   formData: {},
   pageTitle: "Admin Panel",
   tempData: {},
@@ -15,9 +35,8 @@ const initialState = {
 const adminSlice = createSlice({
   name: "admin",
   initialState,
-
   reducers: {
-    setUser(state, action) {
+    setAdmin(state, action) {
       state.user = action.payload;
     },
     setLoading(state, action) {
@@ -40,7 +59,7 @@ const adminSlice = createSlice({
 });
 
 export const {
-  setUser,
+  setAdmin,
   setLoading,
   setError,
   setIsAuthenticated,
