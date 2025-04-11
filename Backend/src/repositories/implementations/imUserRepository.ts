@@ -159,7 +159,11 @@ export default class UserRepository implements inUserRepository {
       const user = await Users.findById(id)
         .select("-refreshToken")
         .populate("mentorId")
-        .populate("menteeId");
+        .populate("menteeId")
+        .populate("schoolDetails")
+        .populate("collegeDetails")
+        .populate("professionalDetails");
+
       console.log("user repo step2@@@@@@@@@@@@@@@", user);
       return user;
     } catch (error) {
@@ -211,7 +215,13 @@ export default class UserRepository implements inUserRepository {
         { _id: id },
         { $set: updateData },
         { new: true } // Return the updated document
-      ).select("-refreshToken"); // Exclude refreshToken from the result
+      )
+        .select("-refreshToken")
+        .populate("mentorId")
+        .populate("menteeId")
+        .populate("schoolDetails")
+        .populate("collegeDetails")
+        .populate("professionalDetails"); // Exclude refreshToken from the result
 
       console.log("Repo updateUser step7 - userAfterUpdate:", userAfterUpdate);
 

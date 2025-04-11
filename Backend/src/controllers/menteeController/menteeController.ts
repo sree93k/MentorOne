@@ -38,37 +38,6 @@ class menteeController {
     this.MenteeProfileService = new imMenteeProfileService();
   }
 
-  //   public uploadWelcomeForm = async (
-  //     req: Request,
-  //     res: Response,
-  //     next: NextFunction
-  //   ): Promise<void> => {
-  //     try {
-  //       console.log("mnetee controller uploadWelcomeForm step 1");
-
-  //       console.log(req.body);
-  //       console.log("mnetee controller uploadWelcomeForm step 2");
-  //       const userId = req.body?.id; // Assuming `req.user` contains the authenticated user's details
-  //       console.log("mnetee controller uploadWelcomeForm step 3");
-  //       if (!userId) {
-  //         console.log("mnetee controller uploadWelcomeForm step 4 errro");
-  //         throw new ApiError(400, "User ID is required");
-  //       }
-  //       console.log("mnetee controller uploadWelcomeForm step 5");
-  //       const response = await this.MenteeProfileService.welcomeData(
-  //         req.body,
-  //         userId
-  //       );
-  //       console.log("mnetee controller uploadWelcomeForm step 6", response);
-  //       res.status(200).json(new ApiResponse(200, response));
-  //       console.log("mnetee controller uploadWelcomeForm step 7");
-  //       return;
-  //     } catch (error) {
-  //       console.log("mnetee controller uploadWelcomeForm step 8 errro ctach");
-  //       next(error);
-  //     }
-  //   };
-
   public uploadWelcomeForm = async (
     req: Request,
     res: Response,
@@ -76,9 +45,10 @@ class menteeController {
   ): Promise<void> => {
     try {
       console.log("mnetee controller uploadWelcomeForm step 1");
+
       console.log(req.body);
       console.log("mnetee controller uploadWelcomeForm step 2");
-      const userId = req.body?.id;
+      const userId = req.body?.id; // Assuming `req.user` contains the authenticated user's details
       console.log("mnetee controller uploadWelcomeForm step 3");
       if (!userId) {
         console.log("mnetee controller uploadWelcomeForm step 4 errro");
@@ -90,11 +60,6 @@ class menteeController {
         userId
       );
       console.log("mnetee controller uploadWelcomeForm step 6", response);
-
-      if (res.headersSent) {
-        console.log("Headers already sent before sending response");
-        return;
-      }
       res.status(200).json(new ApiResponse(200, response));
       console.log("mnetee controller uploadWelcomeForm step 7");
       return;
@@ -103,6 +68,41 @@ class menteeController {
       next(error);
     }
   };
+
+  //   public uploadWelcomeForm = async (
+  //     req: Request,
+  //     res: Response,
+  //     next: NextFunction
+  //   ): Promise<void> => {
+  //     try {
+  //       console.log("mnetee controller uploadWelcomeForm step 1");
+  //       console.log(req.body);
+  //       console.log("mnetee controller uploadWelcomeForm step 2");
+  //       const userId = req.body?.id;
+  //       console.log("mnetee controller uploadWelcomeForm step 3");
+  //       if (!userId) {
+  //         console.log("mnetee controller uploadWelcomeForm step 4 errro");
+  //         throw new ApiError(400, "User ID is required");
+  //       }
+  //       console.log("mnetee controller uploadWelcomeForm step 5");
+  //       const response = await this.MenteeProfileService.welcomeData(
+  //         req.body,
+  //         userId
+  //       );
+  //       console.log("mnetee controller uploadWelcomeForm step 6", response);
+
+  //       if (res.headersSent) {
+  //         console.log("Headers already sent before sending response");
+  //         return;
+  //       }
+  //       res.status(200).json(new ApiResponse(200, response));
+  //       console.log("mnetee controller uploadWelcomeForm step 7");
+  //       return;
+  //     } catch (error) {
+  //       console.log("mnetee controller uploadWelcomeForm step 8 errro ctach");
+  //       next(error);
+  //     }
+  //   };
   public uploadProfileImage = async (
     req: Request & { user?: { id: string } },
     res: Response,
@@ -163,29 +163,35 @@ class menteeController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("mentee copntroller editUserProfile step 1", req.user);
+
       const id = req.user?.id;
       if (!id) {
+        console.log("mentee copntroller editUserProfile step 2");
         res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
         return;
       }
-
+      console.log("mentee copntroller editUserProfile step 3");
       const payload = req.body;
+      console.log("mentee copntroller editUserProfile step 4", payload);
       const updatedUser = await this.MenteeProfileService.editUserProfile(
         id,
         payload
       );
-
+      console.log("mentee copntroller editUserProfile step 5", updatedUser);
       if (!updatedUser) {
+        console.log("mentee copntroller editUserProfile step 6");
         res.status(404).json(new ApiResponse(404, null, "User not found"));
         return;
       }
-
+      console.log("mentee copntroller editUserProfile step 7");
       res
         .status(200)
         .json(
           new ApiResponse(200, updatedUser, "Profile updated successfully")
         );
     } catch (error) {
+      console.log("mentee copntroller editUserProfile step 8 errror", error);
       next(error);
     }
   };
@@ -211,6 +217,29 @@ class menteeController {
       res
         .status(200)
         .json(new ApiResponse(200, null, "Account deleted successfully"));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public profileData = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("profileData mentee controller step1");
+      const id = req?.user?.id;
+      const response = await this.MenteeProfileService.userProfielData(id);
+      if (!response) {
+        console.log("mentee copntroller editUserProfile step 6");
+        res.status(404).json(new ApiResponse(404, null, "User not found"));
+        return;
+      }
+      console.log("mentee copntroller editUserProfile step 7");
+      res
+        .status(200)
+        .json(new ApiResponse(200, response, "Profile updated successfully"));
     } catch (error) {
       next(error);
     }

@@ -129,7 +129,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
       },
     },
     skills: {
-      type: String,
+      type: [{ type: String }],
       required: function (this: EUsers) {
         return this.role?.includes("mentor") && this.mentorActivated === true;
       },
