@@ -12,6 +12,8 @@ menteeRoutes.put(
   menteeController.uploadWelcomeForm
 );
 
+menteeRoutes.get("/profileData", authenticate, menteeController.profileData);
+
 menteeRoutes.put(
   "/upload_profile_image",
   authenticate,

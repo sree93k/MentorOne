@@ -86,32 +86,12 @@ export const uploadMenteeWelcomeForm = async (
   }
 };
 
-//upload_profile_image
-// export const uploadProfileImage = async (
-//   formData: FormData,
-//   accessToken: string
-// ) => {
-//   try {
-//     console.log("Starting image upload:", formData, accessToken);
-//     const response = await api.put("/seeker/upload_profile_image", formData, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//         "Content-Type": "multipart/form-data",
-//       },
-//     });
-//     console.log("Image upload response:", response.data);
-//     return response.data; // Expecting { profilePicture: "url" } from backend
-//   } catch (error) {
-//     console.error("Error uploading profile image:", error);
-//     throw error;
-//   }
-// };
+// upload_profile_image
 export const uploadProfileImage = async (
   formData: FormData,
   accessToken: string
 ) => {
   try {
-    if (!accessToken) throw new Error("No access token available");
     console.log("Starting image upload:", formData, accessToken);
     const response = await api.put("/seeker/upload_profile_image", formData, {
       headers: {
@@ -120,28 +100,71 @@ export const uploadProfileImage = async (
       },
     });
     console.log("Image upload response:", response.data);
-    return response.data;
+    return response.data; // Expecting { profilePicture: "url" } from backend
   } catch (error) {
     console.error("Error uploading profile image:", error);
-    if (error.response?.status === 401) {
-      toast.error("Session expired. Please log in again.");
-      // Optionally redirect to login
-      // window.location.href = "/login";
-    }
     throw error;
   }
 };
 
+export const userProfileData = async () => {
+  try {
+    console.log("mentee service userProfileData step1 ");
+    const accessToken = localStorage.getItem("accessToken");
+    const response = await api.get("/seeker/profileData", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data.data.user;
+  } catch (error) {
+    console.error("Error uuserProfileData service >>:", error);
+    throw error;
+  }
+};
+
+// export const uploadProfileImage = async (
+//   formData: FormData,
+//   accessToken: string
+// ) => {
+//   try {
+//     if (!accessToken) throw new Error("No access token available");
+//     console.log("Starting image upload:", formData, accessToken);
+//     const response = await api.put("/seeker/upload_profile_image", formData, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//         "Content-Type": "multipart/form-data",
+//       },
+//     });
+//     console.log("Image upload response:", response.data);
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error uploading profile image:", error);
+//     if (error.response?.status === 401) {
+//       toast.error("Session expired. Please log in again.");
+//       // Optionally redirect to login
+//       // window.location.href = "/login";
+//     }
+//     throw error;
+//   }
+// };
+
 //profileEdit
 export const updateUserProfile = async (payload: any, accessToken: string) => {
   try {
+    console.log("mentee servcie is updateUserProfile1", payload, accessToken);
+
     const response = await api.put("/seeker/profileEdit", payload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
-    return response.data;
+    console.log("mentee servcie is updateUserProfile 2", response);
+    const updateData = response.data.data;
+    console.log("mentee servcie is updateUserProfile 3", updateData);
+    return updateData;
   } catch (error) {
     console.error("Error updating profile:", error);
     throw error;

@@ -13,12 +13,12 @@ import imMenteeRepository from "../../repositories/implementations/imMenteeRepos
 import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
 import imBaseRepositotry from "../../repositories/implementations/imBaseRepository";
 import imBaseRepository from "../../repositories/implementations/imBaseRepository";
-import CollegeExperience from "../../models/CollegeExperienceModel";
-import SchoolExperience from "../../models/schoolExperienceModel";
-import ProfessionalExperience from "../../models/professionalExperienceModel";
+// import CollegeExperience from "../../models/CollegeExperienceModel";
+// import SchoolExperience from "../../models/schoolExperienceModel";
+// import ProfessionalExperience from "../../models/professionalExperienceModel";
 import Users from "../../models/userModel";
-import Mentor from "../../models/mentorModel";
-import Mentee from "../../models/menteeModel";
+// import Mentor from "../../models/mentorModel";
+// import Mentee from "../../models/menteeModel";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -145,68 +145,39 @@ export default class MenteeProfileService implements inMenteeProfileService {
       return null;
     }
   }
+  //
+
+  public async userProfielData(
+    id: string
+  ): Promise<{ user: Omit<EUsers, "password">[] } | null> {
+    try {
+      const response = await this.UserRepository.findById(id);
+
+      const { password, ...userData } = response?.toObject();
+      return { user: userData };
+    } catch (error) {
+      console.log("error at welcomedata service...last ", error);
+      return null;
+    }
+  }
+
   //editUserProfile
   public async editUserProfile(
     id: string,
     payload: any
   ): Promise<EUsers | null> {
     try {
-      const user = await this.BaseRepository.findById(id);
-      if (!user) return null;
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-      // Direct user fields
-      const directFields = [
-        "firstName",
-        "lastName",
-        "phone",
-        "email",
-        "bio",
-        "skills",
-        "selfIntro",
-        "achievements",
-      ];
-      const userUpdate: Partial<EUsers> = {};
-      for (const key of directFields) {
-        if (payload[key] !== undefined) {
-          userUpdate[key as keyof EUsers] = payload[key];
-        }
-      }
+      console.log("service editUserProfile step 1", id, payload);
 
-      // Update direct fields if any
-      if (Object.keys(userUpdate).length > 0) {
-        await this.BaseRepository.update(id, userUpdate);
-      }
+      const updateData = await this.BaseRepository.update(id, payload);
 
-      // Handle referenced documents
-      if (payload.collegeDetails && user.collegeDetails) {
-        await CollegeExperience.findByIdAndUpdate(
-          user.collegeDetails,
-          payload.collegeDetails
-        );
-      }
-      if (payload.schoolDetails && user.schoolDetails) {
-        await SchoolExperience.findByIdAndUpdate(
-          user.schoolDetails,
-          payload.schoolDetails
-        );
-      }
-      if (payload.professionalDetails && user.professionalDetails) {
-        await ProfessionalExperience.findByIdAndUpdate(
-          user.professionalDetails,
-          payload.professionalDetails
-        );
-      }
-      if (payload.mentorId && user.mentorId) {
-        await Mentor.findByIdAndUpdate(user.mentorId, payload.mentorId);
-      }
-      if (payload.menteeId && user.menteeId) {
-        await Mentee.findByIdAndUpdate(user.menteeId, payload.menteeId);
-      }
-
-      return await this.BaseRepository.findById(id);
+      console.log("service editUserProfile step 2", updateData);
+      return updateData;
     } catch (error) {
-      console.error("Error editing user profile:", error);
-      throw error;
+      console.log("error at editUserProfile service...last ", error);
+      return null;
     }
   }
 
@@ -214,26 +185,26 @@ export default class MenteeProfileService implements inMenteeProfileService {
   public async deleteAccount(id: string): Promise<boolean> {
     try {
       const user = await this.BaseRepository.findById(id);
-      if (!user) return false;
+      //   if (!user) return false;
 
-      // Delete referenced documents
-      if (user.collegeDetails) {
-        await CollegeExperience.findByIdAndDelete(user.collegeDetails);
-      }
-      if (user.schoolDetails) {
-        await SchoolExperience.findByIdAndDelete(user.schoolDetails);
-      }
-      if (user.professionalDetails) {
-        await ProfessionalExperience.findByIdAndDelete(
-          user.professionalDetails
-        );
-      }
-      if (user.mentorId) {
-        await Mentor.findByIdAndDelete(user.mentorId);
-      }
-      if (user.menteeId) {
-        await Mentee.findByIdAndDelete(user.menteeId);
-      }
+      //   // Delete referenced documents
+      //   if (user.collegeDetails) {
+      //     await CollegeExperience.findByIdAndDelete(user.collegeDetails);
+      //   }
+      //   if (user.schoolDetails) {
+      //     await SchoolExperience.findByIdAndDelete(user.schoolDetails);
+      //   }
+      //   if (user.professionalDetails) {
+      //     await ProfessionalExperience.findByIdAndDelete(
+      //       user.professionalDetails
+      //     );
+      //   }
+      //   if (user.mentorId) {
+      //     await Mentor.findByIdAndDelete(user.mentorId);
+      //   }
+      //   if (user.menteeId) {
+      //     await Mentee.findByIdAndDelete(user.menteeId);
+      //   }
 
       // Delete user
       return await this.BaseRepository.delete(id);

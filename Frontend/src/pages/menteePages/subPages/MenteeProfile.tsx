@@ -3,8 +3,9 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pencil, UploadIcon, Loader2, HardDriveUpload } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   updateUserProfile,
@@ -15,7 +16,7 @@ import { XIcon, SearchIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import * as Yup from "yup";
-
+import { userProfileData } from "@/services/menteeService";
 // Define the EditableField component props
 interface EditableFieldProps {
   label: string;
@@ -152,7 +153,7 @@ const MenteeProfile: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState("");
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
-
+  const dispatch = useDispatch();
   const presetSkills = [
     "Javascript",
     "Node JS",
@@ -166,7 +167,7 @@ const MenteeProfile: React.FC = () => {
     "Docker",
   ];
 
-  const { user, isAuthenticated, accessToken } = useSelector(
+  const { user, error, loading, isAuthenticated, accessToken } = useSelector(
     (state: RootState) => state.user
   );
 
@@ -197,7 +198,7 @@ const MenteeProfile: React.FC = () => {
     interestedNewCareer: "",
     featuredArticle: "",
     mentorMotivation: "",
-    shortInfo: "MERN Stack Developer | Fresher",
+    shortInfo: "",
     skills: [
       "Javascript",
       "Node JS",
@@ -207,6 +208,53 @@ const MenteeProfile: React.FC = () => {
       "Tailwind CSS",
     ],
   });
+  useEffect(() => {
+    const fetchUserData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await userProfileData();
+        console.log("user reposnse data", response);
+
+        if (response) {
+          console.log("setuser>>>1", user);
+
+          dispatch(setUser(response));
+          console.log("setuser>>>2", user);
+        } else {
+          setError("Failed to fetch user data");
+        }
+      } catch (err) {
+        setError("An error occurred while fetching user data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserData();
+  }, []);
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     setLoading(true);
+  //     setError(null);
+  //     try {
+  //       const response = await userProfileData();
+  //       console.log("user response data", response);
+  //       if (response) {
+  //         dispatch(setUser(response));
+  //       } else {
+  //         setError("Failed to fetch user data");
+  //       }
+  //     } catch (err) {
+  //       setError("An error occurred while fetching user data");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchUserData();
+  // }, []);
+  // useEffect(() => {
+  //   console.log("Redux user changed to:", user);
+  // }, [user]);
 
   // Populate profile data from Redux store on mount
   useEffect(() => {
@@ -238,15 +286,8 @@ const MenteeProfile: React.FC = () => {
         interestedNewCareer: user?.menteeId?.interestedNewcareer?.[0] || "",
         featuredArticle: user?.mentorId?.featuredArticle || "",
         mentorMotivation: user?.mentorId?.mentorMotivation || "",
-        shortInfo: "MERN Stack Developer | Fresher",
-        skills: [
-          "Javascript",
-          "Node JS",
-          "Mongo DB",
-          "React JS",
-          "AWS",
-          "Tailwind CSS",
-        ],
+        shortInfo: user?.mentorId?.shortInfo || "",
+        skills: [] || "",
       });
       setPreviewUrl(user.profilePicture || null);
     }
@@ -337,7 +378,8 @@ const MenteeProfile: React.FC = () => {
           "skills",
         ].includes(field)
       ) {
-        payload = { mentorId: { [field]: value } };
+        // payload = { mentorId: { [field]: value } };
+        payload = { [field]: value };
       } else if (field === "interestedNewCareer") {
         payload = {
           menteeId: {
@@ -347,8 +389,13 @@ const MenteeProfile: React.FC = () => {
       } else {
         payload = { [field]: value };
       }
-      await updateUserProfile(payload, accessToken);
+      const updateData = await updateUserProfile(payload, accessToken);
+      console.log("user data receievd>>>", updateData);
+
       setProfileData((prev) => ({ ...prev, [field]: value }));
+      dispatch(setUser(updateData));
+      console.log("redux user updatd is >>>>>>>>>>>>>>>", user);
+
       toast.success(`${field} updated successfully`);
     } catch (error) {
       if (error instanceof Yup.ValidationError) {
@@ -359,7 +406,29 @@ const MenteeProfile: React.FC = () => {
       }
     }
   };
+  // const updateProfileField = async (
+  //   field: string,
+  //   value: string | string[]
+  // ) => {
+  //   try {
+  //     await profileSchema.validateAt(field, {
+  //       [field]: value,
+  //       workAs: profileData.workAs,
+  //     });
+  //     let payload = { [field]: value }; // Simplified for example
+  //     const updateData = await updateUserProfile(payload, accessToken);
+  //     console.log("user data receievd>>>", updateData);
 
+  //     setProfileData((prev) => ({ ...prev, [field]: value }));
+  //     console.log("user updateData redux r>>>1", user);
+  //     dispatch(setUser(updateData));
+  //     console.log("user updateData redux>>>2", user);
+  //     toast.success(`${field} updated successfully`);
+  //   } catch (error) {
+  //     toast.error(`Failed to update ${field}`);
+  //     console.error(error);
+  //   }
+  // };
   // Handle edit button click
   const handleEdit = (field: string) => {
     setEditingField(field);
@@ -485,10 +554,11 @@ const MenteeProfile: React.FC = () => {
             </h2>
             {/* Short Info Editing */}
             <div className="mt-2">
-              {editingField === "shortInfo" ? (
+              {/* {editingField === "shortInfo" ? (
                 <div className="flex items-center gap-2">
                   <Input
                     value={profileData.shortInfo}
+                    placeholder="Enter Short Info"
                     onChange={(e) =>
                       setProfileData((prev) => ({
                         ...prev,
@@ -518,7 +588,7 @@ const MenteeProfile: React.FC = () => {
                     <Pencil size={16} />
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
             {/* Skills Editing */}
             <div className="mt-2">
@@ -579,8 +649,16 @@ const MenteeProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex justify-between items-start">
-                  <p className="text-gray-300 text-sm">
-                    {profileData.skills.join(" | ")}
+                  <p
+                    className={`text-sm ${
+                      profileData?.skills?.length > 0
+                        ? "text-gray-300"
+                        : "text-gray-500 italic"
+                    }`}
+                  >
+                    {profileData?.skills?.length > 0
+                      ? profileData.skills.join(" | ")
+                      : "Enter the Skills"}
                   </p>
                   <button
                     onClick={() => handleEdit("skills")}
