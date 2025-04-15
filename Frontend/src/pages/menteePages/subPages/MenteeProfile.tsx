@@ -7,10 +7,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  updateUserProfile,
-  uploadProfileImage,
-} from "@/services/menteeService";
+import { updateUserProfile } from "@/services/menteeService";
+import { uploadProfileImage } from "@/services/uploadService";
 import { toast } from "react-hot-toast";
 import { XIcon, SearchIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -167,7 +165,7 @@ const MenteeProfile: React.FC = () => {
     "Docker",
   ];
 
-  const { user, error, loading, isAuthenticated, accessToken } = useSelector(
+  const { user, error, loading, isAuthenticated } = useSelector(
     (state: RootState) => state.user
   );
 
@@ -326,7 +324,7 @@ const MenteeProfile: React.FC = () => {
       const formData = new FormData();
       formData.append("image", selectedFile);
       console.log("FormData entries:", [...formData.entries()]);
-      const response = await uploadProfileImage(formData, accessToken);
+      const response = await uploadProfileImage(formData);
       const newProfilePictureUrl = response.profilePicture;
       if (newProfilePictureUrl) {
         setPreviewUrl(newProfilePictureUrl);
@@ -389,7 +387,7 @@ const MenteeProfile: React.FC = () => {
       } else {
         payload = { [field]: value };
       }
-      const updateData = await updateUserProfile(payload, accessToken);
+      const updateData = await updateUserProfile(payload);
       console.log("user data receievd>>>", updateData);
 
       setProfileData((prev) => ({ ...prev, [field]: value }));
@@ -482,7 +480,7 @@ const MenteeProfile: React.FC = () => {
   );
 
   // Placeholder delete account function (replace with actual API call)
-  const deleteAccount = async (accessToken: string) => {
+  const deleteAccount = async () => {
     console.log("Deleting account...");
     // Example API call:
     // await fetch('/api/delete-account', {
@@ -809,7 +807,7 @@ const MenteeProfile: React.FC = () => {
                       "Are you sure you want to delete your account? This action cannot be undone."
                     )
                   ) {
-                    deleteAccount(accessToken)
+                    deleteAccount()
                       .then(() => {
                         toast.success("Account deleted successfully");
                         // Redirect to login or home page

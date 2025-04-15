@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Lock } from "lucide-react";
 import { OtpInput } from "./OTPInput";
-
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import { setLoading } from "@/redux/slices/userSlice";
 export interface ForgotPasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,8 +43,10 @@ export function ForgotPasswordModal({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
+  // const [loading, setLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
-
+  const { loading } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
   // Reset state when modal closes
   useEffect(() => {
     if (!open) {
@@ -85,8 +89,11 @@ export function ForgotPasswordModal({
   const handleEmailSubmit = async () => {
     if (!email) return;
     try {
-      await onSubmitEmail(email);
+      dispatch(setLoading(true));
+      const response = await onSubmitEmail(email);
+      console.log("handleEmailSubmit >>>>>reponse 1", response);
       setStep("otp");
+      dispatch(setLoading(false));
     } catch (error) {
       console.error("Failed to send OTP:", error);
       // Optionally, add an error message for the user here
@@ -133,6 +140,14 @@ export function ForgotPasswordModal({
 
   const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, "$1****$3");
 
+  const cancelButtonClick = () => {
+    try {
+      onOpenChange(false);
+      setLoading(false);
+    } catch (error) {
+      console.log("error..cancelButtonClick.");
+    }
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-t-4 border-b-4 border-blue-600 rounded-lg p-0 bg-white">
@@ -240,7 +255,7 @@ export function ForgotPasswordModal({
         <DialogFooter className="flex flex-row justify-between p-4 bg-gray-50 rounded-b-lg">
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => cancelButtonClick()}
             className="rounded-full px-8"
           >
             Cancel
@@ -248,10 +263,10 @@ export function ForgotPasswordModal({
           {step === "email" ? (
             <Button
               onClick={handleEmailSubmit}
-              disabled={!email}
+              disabled={!email || loading}
               className="rounded-full px-8 bg-blue-600 hover:bg-blue-700"
             >
-              Send OTP
+              {loading ? "Loading..." : "Send OTP"}
             </Button>
           ) : step === "otp" ? (
             <Button

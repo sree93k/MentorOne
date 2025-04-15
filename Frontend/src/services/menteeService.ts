@@ -151,10 +151,10 @@ export const userProfileData = async () => {
 // };
 
 //profileEdit
-export const updateUserProfile = async (payload: any, accessToken: string) => {
+export const updateUserProfile = async (payload: any) => {
   try {
-    console.log("mentee servcie is updateUserProfile1", payload, accessToken);
-
+    console.log("mentee servcie is updateUserProfile1?????", payload);
+    const accessToken = localStorage.getItem("accessToken");
     const response = await api.put("/seeker/profileEdit", payload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -172,14 +172,19 @@ export const updateUserProfile = async (payload: any, accessToken: string) => {
 };
 
 //delete profile
-export const deleteUserAccount = async (accessToken: string) => {
+export const deleteUserAccount = async () => {
   try {
+    console.log("delete account serbice start");
+    const accessToken = localStorage.getItem("accessToken");
+
     const response = await api.delete(`/user/deleteAccount`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-
+    if (response.status == 200) {
+      localStorage.removeItem("accessToken");
+    }
     return response;
   } catch (error) {
     console.error("Delete account error:", error);

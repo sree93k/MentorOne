@@ -85,6 +85,9 @@ export default class MentorProfileService implements inMentorProfileService {
       if (user.schoolDetails) {
         populateFields.push("schoolDetails");
       }
+      if (user.professionalDetails) {
+        populateFields.push("professionalDetails");
+      }
 
       let userServerData = user;
       if (populateFields.length > 0) {
@@ -129,13 +132,14 @@ export default class MentorProfileService implements inMentorProfileService {
           userType = experience?.userType;
         }
       } else {
-        console.log("userServerData exists....ifelse");
+        console.log("userServerData exists....ifelse", userServerData);
         experience =
           userServerData.schoolDetails ??
           userServerData.collegeDetails ??
           userServerData.professionalDetails ??
           null;
         userType = experience?.userType;
+        console.log("use type si %%%%%%%%%%%%%%%%%%%%%%%", experience);
         console.log("use type si %%%%%%%%%%%%%%%%%%%%%%%", userType);
         console.log("use type si %%%%%%%%%%%%%%%%%%%%%%%", experience);
       }
