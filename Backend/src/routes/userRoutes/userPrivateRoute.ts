@@ -13,4 +13,10 @@ userPrivateRoute.post(
   uploadController.uploadProfileImage
 );
 
+userPrivateRoute.post(
+  "/update_profile_image",
+  upload.single("image"),
+  uploadController.uploadProfileImage
+);
+
 export default userPrivateRoute;

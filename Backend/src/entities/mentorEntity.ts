@@ -18,6 +18,7 @@ export interface EMentor extends Document {
   totalExperience: string | null;
   isApproved: string | null;
   isBlocked: boolean | null;
+  rejectionReason: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }

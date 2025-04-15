@@ -66,6 +66,10 @@ const MentorSchema: Schema<EMentor> = new Schema(
       type: String,
       required: false,
     },
+    rejectionReason: {
+      type: String,
+      required: false,
+    },
     interestedNewCareer: { type: [String], required: false },
   },
   {

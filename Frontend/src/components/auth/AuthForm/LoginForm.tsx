@@ -267,8 +267,15 @@ export function LoginForm({
         onOpenChange={setForgotPasswordOpen}
         email={email}
         onSubmitEmail={async (email: string) => {
-          await sendForgotPasswordOtp(email);
-          toast.success("OTP sent to your email!");
+          const response1 = await sendForgotPasswordOtp(email);
+          console.log("response1", response1);
+          dispatch(setLoading(false));
+          if (response1.statusCode === 200) {
+            toast.success("OTP sent to your email!");
+          } else {
+            toast.error(response1?.data || "Invalid Email");
+            throw new Error(response1?.data || "Invalid Email");
+          }
         }}
         onVerifyOtp={async (otp: string, email: string) => {
           setVerifying(true);
@@ -297,8 +304,8 @@ export function LoginForm({
           setVerifying(true);
           try {
             console.log("onResetPassword verification start 1");
-            await resetPassword({ email, password });
-            console.log("onResetPassword verification end");
+            const response = await resetPassword({ email, password });
+            console.log("onResetPassword verification end Loginpage", response);
             toast.success("Password reset successfully!");
             navigate("/login");
           } catch (error) {

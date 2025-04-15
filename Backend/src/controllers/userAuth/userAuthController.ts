@@ -171,12 +171,12 @@ class UserAuthController {
         .cookie("refreshToken", loginData.refreshToken, this.options)
         .json(new ApiResponse(200, loginData));
     } catch (error) {
-      console.error("Controller - Login error:", error);
-      if (error instanceof ApiError) {
-        res.status(error.statusCode).json(error);
-      } else {
-        res.status(500).json(new ApiError(500, "Internal Server Error"));
-      }
+      console.error("Controller - Login error:1", error);
+      // if (error instanceof ApiError) {
+      res.status(error?.statusCode).json(error);
+      // } else {
+      //   res.status(500).json(new ApiError(500, "Internal Server Error"));
+      // }
     }
   };
 
@@ -272,15 +272,16 @@ class UserAuthController {
       const isUserExists = await this.userService.findUserWithEmail(req.body);
       console.log("forgot password otp auth controller 2", isUserExists);
       if (!isUserExists || isUserExists?.isBlocked) {
+        console.log("hello mister perrera>>>>>>>");
+
         res
           .status(400)
           .json(
             new ApiResponse(
               400,
-              null,
               isUserExists?.isBlocked
                 ? "Account is blocked"
-                : "Check Your Email"
+                : "Account not exist"
             )
           );
         console.log("forgot password otp auth controller 3");

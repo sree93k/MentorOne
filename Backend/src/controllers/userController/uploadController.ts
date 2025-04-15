@@ -19,7 +19,11 @@ class UploadController {
   ): Promise<void> => {
     try {
       console.log("upload controller step 1", req.file);
-
+      const id = req?.user?.id;
+      if (!id) {
+        res.status(401).json({ message: "User not authenticated" });
+        return;
+      }
       const imageFile = req.file;
       if (!imageFile) {
         console.log("upload controller step 2 no file");
@@ -33,10 +37,13 @@ class UploadController {
         .toBuffer();
 
       // Upload the resized buffer
-      const result = await this.uploadService.uploadProfileImage({
-        ...imageFile,
-        buffer: resizedImageBuffer,
-      });
+      const result = await this.uploadService.uploadProfileImage(
+        {
+          ...imageFile,
+          buffer: resizedImageBuffer,
+        },
+        id
+      );
 
       console.log("upload controller step 5", result);
       res.status(200).json({ imageUrl: result.url });

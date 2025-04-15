@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import SampleProfile from "../../pages/adminPages/adminSubPages/SampleProfile";
+// import SampleProfile from "../../pages/adminPages/adminSubPages/SampleProfile";
 const AdminDashboard = lazy(() => import("./adminSubPages/AdminDashboard"));
 const AdminSidebar = lazy(() => import("@/components/admin/AdminSideBar"));
 const AllUsers = lazy(() => import("./adminSubPages/AdminAllUsers"));
@@ -18,7 +18,7 @@ const AdminPage: React.FC = () => {
             <Route path="/dashboard" element={<AdminDashboard />} />
             <Route path="/allUsers" element={<AllUsers />} />
             <Route path="/userProfile/:id" element={<UserProfile />} />
-            <Route path="/sampleProfile" element={<SampleProfile />} />
+            {/* <Route path="/sampleProfile" element={<SampleProfile />} /> */}
             {/* Default redirect to dashboard */}
             <Route path="/" element={<Navigate to="dashboard" replace />} />
             <Route path="*" element={<Navigate to="dashboard" replace />} />

@@ -1,5 +1,6 @@
 import mongoose, { Schema, model, Document, ObjectId } from "mongoose";
 import { EUsers } from "../entities/userEntity";
+import { required } from "joi";
 
 // Define the schema
 const UsersSchema: Schema<EUsers> = new Schema(
@@ -168,6 +169,10 @@ const UsersSchema: Schema<EUsers> = new Schema(
     isBlocked: {
       type: Boolean,
       default: false,
+    },
+    blockingReason: {
+      type: String,
+      required: false,
     },
     refreshToken: {
       type: [String],

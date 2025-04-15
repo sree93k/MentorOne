@@ -83,7 +83,7 @@ export const login = async (
   userData: TUserLogin
 ): Promise<{ response: TUserLoginResponse["data"] }> => {
   try {
-    console.log("login service/......", userData);
+    console.log("login service/......start", userData);
 
     const response: AxiosResponse<TUserLoginResponse> = await api.post(
       "/user/auth/login",
@@ -102,8 +102,11 @@ export const login = async (
       },
     };
   } catch (error) {
+    console.log("login service/......errror 1", error);
+
     if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || "Login failed");
+      console.log("login service/......error 2", error);
+      throw new Error(error.response?.data?.data || "Login failed");
     }
     throw new Error("An unexpected error occurred");
   }
@@ -183,12 +186,13 @@ export const sendForgotPasswordOtp = async (email: string) => {
     const response = await api.post("/user/auth/forgot_password_otp", {
       email,
     });
-    console.log("forgot_password_otp step 1"), response;
-    return response;
+    console.log("forgot_password_otp step 2", response);
+    return response.data;
   } catch (error: unknown) {
+    console.log("forgot_password_otp errro ", error);
     if (error instanceof AxiosError) {
-      console.log("forgot_password_otp error 1", error);
-      return error.response;
+      console.log("forgot_password_otp error 1", error.response?.data);
+      return error.response?.data;
     } else {
       console.log("forgot_password_otp errro 2,");
       return null;

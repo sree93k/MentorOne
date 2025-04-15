@@ -14,6 +14,7 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
+import ApiResponse from "../../utils/apiResponse";
 
 export default class UserAuthService implements inUserAuthService {
   private UserRepository: inUserRepository;
@@ -69,7 +70,65 @@ export default class UserAuthService implements inUserAuthService {
     }
   }
 
-  //login
+  // //login
+  // async login(user: { email: string; password: string }): Promise<{
+  //   accessToken: string;
+  //   refreshToken: string;
+  //   userFound: Omit<EUsers, "password">;
+  // } | null> {
+  //   try {
+  //     console.log("Service - Login attempt for email:", user.email);
+
+  //     if (!user.email) {
+  //       console.log("Service - Error: email is required");
+  //       throw new Error("email is required");
+  //     }
+
+  //     const userFound = await this.UserRepository.findByEmail(user.email);
+  //     console.log("Service - User found:", userFound ? "Yes" : "No");
+
+  //     if (userFound?.isBlocked) {
+  //       console.log("is blocked user", userFound.isBlocked);
+
+  //       throw new Error("Account is Blocked");
+  //     }
+  //     if (
+  //       userFound &&
+  //       user.password &&
+  //       userFound.password &&
+  //       (await bcrypt.compare(user.password, userFound.password))
+  //     ) {
+  //       const id = userFound._id?.toString();
+  //       if (!id) {
+  //         throw new Error("User ID is undefined");
+  //       }
+  //       const accessToken = generateAccessToken({
+  //         id,
+  //         role: userFound.role,
+  //       });
+
+  //       const refreshToken = generateRefreshToken({
+  //         id,
+  //         role: userFound.role,
+  //       });
+
+  //       await this.UserRepository.saveRefreshToken(id, refreshToken);
+
+  //       const userObject = userFound.toObject();
+
+  //       const { password, ...userWithoutPassword } = userObject;
+
+  //       return { accessToken, refreshToken, userFound: userWithoutPassword };
+  //     }
+
+  //     console.log("Service - Login failed");
+  //     return null;
+  //   } catch (error) {
+  //     console.log("login Service - Login attempt error", error);
+
+  //     return error;
+  //   }
+  // }
   async login(user: { email: string; password: string }): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -78,17 +137,23 @@ export default class UserAuthService implements inUserAuthService {
     try {
       console.log("Service - Login attempt for email:", user.email);
 
+      // Check if email is provided
       if (!user.email) {
         console.log("Service - Error: email is required");
-        throw new Error("email is required");
+        throw new ApiResponse(400, "Email is required");
       }
 
+      // Find user by email
       const userFound = await this.UserRepository.findByEmail(user.email);
       console.log("Service - User found:", userFound ? "Yes" : "No");
 
+      // Check if user is blocked
       if (userFound?.isBlocked) {
-        throw new Error("Account is Blocked");
+        console.log("is blocked user", userFound.isBlocked);
+        throw new ApiResponse(403, "Account is Blocked");
       }
+
+      // Validate credentials
       if (
         userFound &&
         user.password &&
@@ -96,7 +161,9 @@ export default class UserAuthService implements inUserAuthService {
         (await bcrypt.compare(user.password, userFound.password))
       ) {
         const id = userFound._id?.toString();
-
+        if (!id) {
+          throw new ApiResponse(500, "User ID is undefined");
+        }
         const accessToken = generateAccessToken({
           id,
           role: userFound.role,
@@ -107,13 +174,9 @@ export default class UserAuthService implements inUserAuthService {
           role: userFound.role,
         });
 
-        if (!id) {
-          throw new Error("User ID is undefined");
-        }
         await this.UserRepository.saveRefreshToken(id, refreshToken);
 
         const userObject = userFound.toObject();
-
         const { password, ...userWithoutPassword } = userObject;
 
         return { accessToken, refreshToken, userFound: userWithoutPassword };
@@ -122,7 +185,12 @@ export default class UserAuthService implements inUserAuthService {
       console.log("Service - Login failed");
       return null;
     } catch (error) {
-      return null;
+      console.log("login Service - Login attempt error", error);
+      // Re-throw the error instead of returning it
+      if (error instanceof ApiResponse) {
+        throw error;
+      }
+      throw new ApiResponse(500, "Internal Server Error");
     }
   }
 
