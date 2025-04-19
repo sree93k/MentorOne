@@ -91,21 +91,49 @@ class AdminController {
       console.log("admincontroller mentorStatusUpdate step1 ", req.params.id);
       console.log("admincontroller mentorStatusUpdate step2 ", req.body);
       const id = req.params.id;
-      const status = req.body.status;
-      const repsonse = await this.adminService.mentorStatusChange(id, status);
+      const { status, reason } = req.body; // Extract reason from body
+      const response = await this.adminService.mentorStatusChange(
+        id,
+        status,
+        reason
+      );
       console.log(
-        "admincontroller mentorStatusUpdate step3 resposne",
-        repsonse
+        "admincontroller mentorStatusUpdate step3 response",
+        response
       );
       res
         .status(200)
         .json(
-          new ApiResponse(200, repsonse, "Mentor status updated successfully")
+          new ApiResponse(200, response, "Mentor status updated successfully")
         );
     } catch (error) {
       next(error);
     }
   };
+  // public mentorStatusUpdate = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     console.log("admincontroller mentorStatusUpdate step1 ", req.params.id);
+  //     console.log("admincontroller mentorStatusUpdate step2 ", req.body);
+  //     const id = req.params.id;
+  //     const status = req.body.status;
+  //     const repsonse = await this.adminService.mentorStatusChange(id, status);
+  //     console.log(
+  //       "admincontroller mentorStatusUpdate step3 resposne",
+  //       repsonse
+  //     );
+  //     res
+  //       .status(200)
+  //       .json(
+  //         new ApiResponse(200, repsonse, "Mentor status updated successfully")
+  //       );
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
 
   public userStatusUpdate = async (
     req: Request,

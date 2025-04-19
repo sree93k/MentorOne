@@ -22,7 +22,8 @@ export interface inAdminService {
 
   mentorStatusChange(
     id: string,
-    status: string
+    status: string,
+    reason: string
   ): Promise<{
     mentorData: EMentor | null;
   } | null>;

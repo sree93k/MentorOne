@@ -40,13 +40,14 @@ export default class MentorProfileService implements inMentorProfileService {
     id: string
   ): Promise<EUsers | null> {
     try {
+      console.log(" mentor service, welcomeData step 1");
       console.log("welcomedata service step 1....formdata", formData);
       let experience:
         | ECollegeExperience
         | ESchoolExperience
         | EWorkExperience
         | null = null;
-
+      console.log(" mentor service, welcomeData step 2");
       console.log("welcomedata service step 4....formdata", formData);
       const {
         bio,
@@ -61,6 +62,7 @@ export default class MentorProfileService implements inMentorProfileService {
         imageUrl,
         ...userData
       } = formData;
+      console.log(" mentor service, welcomeData step 3");
       console.log("interestedNewcareer>>>>>>>>>>", interestedNewcareer);
       const mentorData = {
         bio,
@@ -73,30 +75,38 @@ export default class MentorProfileService implements inMentorProfileService {
         featuredArticle,
         interestedNewCareer: interestedNewcareer,
       };
-      console.log("mentor data is>>>>>>>>>>>", mentorData);
+      console.log(" mentor service, welcomeData step 4");
+
+      console.log("mentor data is>>>>>>>>>>>", mentorData, "and id :", id);
 
       const user = await this.BaseRepository.findById(id);
-      if (!user) throw new Error("User not found");
+      console.log(" mentor service, welcomeData step 5", user);
 
+      if (!user) throw new Error("User not found");
+      console.log(" mentor service, welcomeData step 6");
       const populateFields: string[] = [];
       if (user.collegeDetails) {
+        console.log(" mentor service, welcomeData step 7");
         populateFields.push("collegeDetails");
       }
       if (user.schoolDetails) {
+        console.log(" mentor service, welcomeData step 8");
         populateFields.push("schoolDetails");
       }
       if (user.professionalDetails) {
+        console.log(" mentor service, welcomeData step 9");
         populateFields.push("professionalDetails");
       }
-
+      console.log(" mentor service, welcomeData step 10");
       let userServerData = user;
       if (populateFields.length > 0) {
+        console.log(" mentor service, welcomeData step 11");
         userServerData = await this.BaseRepository.getModel()
           .findById(id)
           .populate(populateFields) // Or use populateFields if that's your intent
           .exec();
       }
-
+      console.log(" mentor service, welcomeData step 12");
       let userType;
 
       console.log("userServerData is>>>", userServerData);

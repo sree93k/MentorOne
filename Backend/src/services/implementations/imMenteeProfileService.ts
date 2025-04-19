@@ -12,7 +12,7 @@ import { inMenteeRepository } from "../../repositories/interface/inMenteeReposit
 import imMenteeRepository from "../../repositories/implementations/imMenteeRepository";
 import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
 import imBaseRepositotry from "../../repositories/implementations/imBaseRepository";
-import imBaseRepository from "../../repositories/implementations/imBaseRepository";
+
 // import CollegeExperience from "../../models/CollegeExperienceModel";
 // import SchoolExperience from "../../models/schoolExperienceModel";
 // import ProfessionalExperience from "../../models/professionalExperienceModel";
@@ -162,24 +162,24 @@ export default class MenteeProfileService implements inMenteeProfileService {
   }
 
   //editUserProfile
-  public async editUserProfile(
-    id: string,
-    payload: any
-  ): Promise<EUsers | null> {
-    try {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+  // public async editUserProfile(
+  //   id: string,
+  //   payload: any
+  // ): Promise<EUsers | null> {
+  //   try {
+  //     console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-      console.log("service editUserProfile step 1", id, payload);
+  //     console.log("service editUserProfile step 1", id, payload);
 
-      const updateData = await this.BaseRepository.update(id, payload);
+  //     const updateData = await this.BaseRepository.update(id, payload);
 
-      console.log("service editUserProfile step 2", updateData);
-      return updateData;
-    } catch (error) {
-      console.log("error at editUserProfile service...last ", error);
-      return null;
-    }
-  }
+  //     console.log("service editUserProfile step 2", updateData);
+  //     return updateData;
+  //   } catch (error) {
+  //     console.log("error at editUserProfile service...last ", error);
+  //     return null;
+  //   }
+  // }
 
   //deleteAccount
   public async deleteAccount(id: string): Promise<boolean> {

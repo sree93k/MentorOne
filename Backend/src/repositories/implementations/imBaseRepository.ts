@@ -49,4 +49,17 @@ export default class BaseRepository<T> implements inBaseRepository<T> {
     const result = await this.model.findByIdAndDelete(id).exec();
     return result !== null;
   }
+
+  async findByField<K extends keyof T>(
+    field: K,
+    value: string
+  ): Promise<T[] | null> {
+    try {
+      const query = { [field]: value } as unknown as Partial<T>;
+      return await this.model.find(query).exec();
+    } catch (error) {
+      console.error("Error in findByField:", error);
+      return null;
+    }
+  }
 }

@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronDown,
   UserCircle2,
+  Wallet,
 } from "lucide-react";
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -276,11 +277,11 @@ const MenteeSidebar: React.FC = () => {
           onClick={() => handleItemClick("Bookings")}
         />
         <SidebarItem
-          icon={Clock}
-          text="Bill History"
+          icon={Wallet}
+          text="Payment History"
           isExpanded={isExpanded}
           active={activeItem === "Bill History"}
-          onClick={() => handleItemClick("Bill History")}
+          onClick={() => handleItemClick("Profile Details", "/seeker/payment")}
         />
         <SidebarItem
           icon={Bell}

@@ -1,9 +1,10 @@
 import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
-  withCredentials: true,
-});
+import { userAxiosInstance } from "./instances/userInstance";
+const api = userAxiosInstance;
+// const api = axios.create({
+//   baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
+//   withCredentials: true,
+// });
 
 // services/mentorService.ts
 interface UpdateUserDataPayload {
@@ -38,7 +39,7 @@ interface UpdateUserDataPayload {
 //upload image
 export const uploadImage = async (imageFile: File): Promise<string> => {
   try {
-    console.log("image upload stepp1");
+    console.log("image upload stepp1", imageFile);
 
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
@@ -50,7 +51,7 @@ export const uploadImage = async (imageFile: File): Promise<string> => {
     console.log("image upload stepp3", formData);
     console.log("image upload stepp3.5", imageFile);
     formData.append("image", imageFile);
-    console.log("image upload stepp4", formData);
+    console.log("image upload stepp4......", formData);
     const response = await api.post("/user/upload_image", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -119,4 +120,38 @@ export const updateUserDetails = async (userId: string, data: any) => {
   });
   console.log("mentor profile update service step2", response);
   return response.data;
+};
+
+//updateMentorDatas
+export const updateMentorDatas = async (payload: any) => {
+  try {
+    console.log("user servcie is updateUserProfile1?????", payload);
+    const accessToken = localStorage.getItem("accessToken");
+    const response = await api.put("/expert/update_mentor", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("user servcie is updateUserProfile 2", response);
+    const updateData = response.data.data;
+    console.log("user servcie is updateUserProfile 3", updateData);
+    return updateData;
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+};
+
+export const CreateService = async (formData: FormData) => {
+  try {
+    const response = await axios.post("/expert/createservice", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };

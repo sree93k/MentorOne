@@ -31,12 +31,13 @@ export const authenticate = (
     req.user = decoded;
     console.log("autheticte start 5", decoded);
     console.log("autheticte start 5.5", req.user);
-    // if (decoded.role !== "mentee" && decoded.role !== "mentor") {
+    // if (decoded.role.includes("mentee") && decoded.role !== "mentor") {
     // console.log("autheticte failed2");
     // res.status(401).json(new ApiResponse(401, null, "you are not authorized"));
     // return;
     // }
-    console.log("autheticte start 6");
+
+    console.log("autheticte start 6......");
     console.log("autheticte success");
     next();
   } catch (err) {

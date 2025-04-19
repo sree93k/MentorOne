@@ -6,4 +6,5 @@ export interface inBaseRepository<T> {
   update(id: string, item: Partial<T>): Promise<T | null>;
   delete(id: string): Promise<boolean>;
   updateField(id: string, field: keyof T, value: string): Promise<T | null>;
+  findByField<K extends keyof T>(field: K, value: string): Promise<T[] | null>;
 }
