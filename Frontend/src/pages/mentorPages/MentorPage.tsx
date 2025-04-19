@@ -1,9 +1,14 @@
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-// import Welcome from "@/components/mentor/ZDemoWelcome2";
-import WelcomeModal from "@/components/mentor/MentorWelcomeModal";
-
+import ServicesPage from "./MentorSubPages/MentorServices";
+import CreateService from "./MentorSubPages/CreateServices";
+import MentorPaymentsPage from "./MentorSubPages/MentorPayment";
+import BookingsPage from "./MentorSubPages/BookingPage";
+import PriorityDMPage from "./MentorSubPages/PriorityDMPage";
+import TestimonialPage from "./MentorSubPages/TestimonialPage";
+import CalendarPage from "./MentorSubPages/CalenderPage";
+//=======
 const Footer = lazy(() => import("@/components/landing/Footer"));
 const MentorSidebar = lazy(() => import("@/components/mentor/MentorSidebar"));
 const MentorHeader = lazy(() => import("@/components/mentor/MentorHeader"));
@@ -25,8 +30,13 @@ export const MentorPage = () => {
           <Routes>
             <Route path="/dashboard" element={<MentorDashboard />} />
             <Route path="/profile" element={<MentorProfile />} />
-            {/* <Route path="/welcome" element={<Welcome />} /> */}
-            {/* <Route path="/WelcomeModal" element={<WelcomeModal />} /> */}
+            <Route path="/services" element={<ServicesPage />} />
+            <Route path="/createService" element={<CreateService />} />
+            <Route path="/payment" element={<MentorPaymentsPage />} />
+            <Route path="/booking" element={<BookingsPage />} />
+            <Route path="/prioritydm" element={<PriorityDMPage />} />
+            <Route path="/testimonials" element={<TestimonialPage />} />
+            <Route path="/calender" element={<CalendarPage />} />
           </Routes>
         </Suspense>
       </main>

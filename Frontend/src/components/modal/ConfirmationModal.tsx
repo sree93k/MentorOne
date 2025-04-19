@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import React from "react";
-
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 interface ConfirmationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

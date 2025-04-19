@@ -25,11 +25,24 @@ export default class UploadService implements inUploadService {
 
   //uploadprofileimage
   public async uploadProfileImage(
-    file: Express.Multer.File,
-    id: string
+    file: Express.Multer.File
   ): Promise<UploadResponse> {
-    return this.updateProfileImage(file, id); // Delegate to updateProfileImage
+    try {
+      // Upload the buffer (which should be the resized image)
+      const result = await uploadToCloudinary(file.buffer);
+
+      // If the file was saved to disk, clean it up
+      if (file.path) {
+        fs.unlinkSync(file.path);
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error uploading to Cloudinary:", error);
+      throw new Error("Failed to upload image");
+    }
   }
+
   //updateProfileImage
   public async updateProfileImage(
     file: Express.Multer.File,
@@ -67,6 +80,17 @@ export default class UploadService implements inUploadService {
     } catch (error) {
       console.error("Error updating profile image:", error);
       throw new Error("Failed to update profile image");
+    }
+  }
+
+  public async updateImage(
+    file: Express.Multer.File,
+    id: string
+  ): Promise<EUsers | null> {
+    try {
+      return null;
+    } catch (error) {
+      return null;
     }
   }
 }

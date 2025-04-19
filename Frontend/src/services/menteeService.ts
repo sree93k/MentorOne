@@ -1,10 +1,11 @@
 // services/menteeService.ts
 import axios, { AxiosError, AxiosResponse } from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
-  withCredentials: true,
-});
+import { userAxiosInstance } from "./instances/userInstance";
+const api = userAxiosInstance;
+// const api = axios.create({
+//   baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
+//   withCredentials: true,
+// });
 interface UpdateUserDataPayload {
   userType: string;
   schoolName?: string;
@@ -151,73 +152,22 @@ export const userProfileData = async () => {
 // };
 
 //profileEdit
-export const updateUserProfile = async (payload: any) => {
-  try {
-    console.log("mentee servcie is updateUserProfile1?????", payload);
-    const accessToken = localStorage.getItem("accessToken");
-    const response = await api.put("/seeker/profileEdit", payload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("mentee servcie is updateUserProfile 2", response);
-    const updateData = response.data.data;
-    console.log("mentee servcie is updateUserProfile 3", updateData);
-    return updateData;
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    throw error;
-  }
-};
-
-//delete profile
-export const deleteUserAccount = async () => {
-  try {
-    console.log("delete account serbice start");
-    const accessToken = localStorage.getItem("accessToken");
-
-    const response = await api.delete(`/user/deleteAccount`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    if (response.status == 200) {
-      localStorage.removeItem("accessToken");
-    }
-    return response;
-  } catch (error) {
-    console.error("Delete account error:", error);
-    return error;
-  }
-};
-
-//resetPassword
-export const updateUserPassword = async (
-  newPassword: string,
-  accessToken: string
-) => {
-  try {
-    // Basic client-side validation
-    if (!newPassword || newPassword.length < 6) {
-      console.log("Password must be at least 6 characters long");
-
-      return;
-    }
-
-    const response = await api.put(
-      `/user/resetPassword`,
-      { newPassword },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    return response;
-  } catch (error) {
-    console.error("Update password error:", error);
-    return error;
-  }
-};
+// export const updateUserProfile = async (payload: any) => {
+//   try {
+//     console.log("mentee servcie is updateUserProfile1?????", payload);
+//     const accessToken = localStorage.getItem("accessToken");
+//     const response = await api.put("/seeker/profileEdit", payload, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//         "Content-Type": "application/json",
+//       },
+//     });
+//     console.log("mentee servcie is updateUserProfile 2", response);
+//     const updateData = response.data.data;
+//     console.log("mentee servcie is updateUserProfile 3", updateData);
+//     return updateData;
+//   } catch (error) {
+//     console.error("Error updating profile:", error);
+//     throw error;
+//   }
+// };

@@ -107,21 +107,31 @@ export const updateUserStatus = async (userId: string, isBlocked: boolean) => {
 };
 
 // Update mentor approval status
-export const updateMentorStatus = async (mentorId: string, status: string) => {
+// Update mentor approval status
+export const updateMentorStatus = async (
+  mentorId: string,
+  status: string,
+  reason: string = ""
+) => {
   try {
-    console.log("updateMentorStatus step 1 sending...", mentorId, status);
+    console.log(
+      "updateMentorStatus step 1 sending...",
+      mentorId,
+      status,
+      reason
+    );
 
     const accessToken = localStorage.getItem("accessToken");
     const mentorData = await api.patch(
       `/admin/mentorstatus_update/${mentorId}`,
-      { status }, // This is the body
+      { status, reason }, // Include reason in the body
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       }
     );
-    console.log("updateMentorStatus repsonse", mentorData);
+    console.log("updateMentorStatus response", mentorData);
 
     return mentorData;
   } catch (error) {
@@ -129,3 +139,25 @@ export const updateMentorStatus = async (mentorId: string, status: string) => {
     throw error;
   }
 };
+// export const updateMentorStatus = async (mentorId: string, status: string) => {
+//   try {
+//     console.log("updateMentorStatus step 1 sending...", mentorId, status);
+
+//     const accessToken = localStorage.getItem("accessToken");
+//     const mentorData = await api.patch(
+//       `/admin/mentorstatus_update/${mentorId}`,
+//       { status }, // This is the body
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//         },
+//       }
+//     );
+//     console.log("updateMentorStatus repsonse", mentorData);
+
+//     return mentorData;
+//   } catch (error) {
+//     console.error("Error updating mentor status:", error);
+//     throw error;
+//   }
+// };

@@ -1,6 +1,8 @@
 import { Router } from "express";
 import multer from "multer";
 import uploadController from "../../controllers/userController/uploadController";
+import { authenticate } from "../../middlewares/authenticateUser";
+import userController from "../../controllers/userController/userController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
@@ -15,8 +17,21 @@ userPrivateRoute.post(
 
 userPrivateRoute.post(
   "/update_profile_image",
+  authenticate,
   upload.single("image"),
   uploadController.uploadProfileImage
+);
+
+userPrivateRoute.put(
+  "/profileEdit",
+  authenticate,
+  userController.editUserProfile
+);
+
+userPrivateRoute.put(
+  "/resetPassword",
+  authenticate,
+  userController.resetPassword
 );
 
 export default userPrivateRoute;

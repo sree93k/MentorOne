@@ -14,18 +14,18 @@ menteeRoutes.put(
 
 menteeRoutes.get("/profileData", authenticate, menteeController.profileData);
 
-menteeRoutes.put(
-  "/upload_profile_image",
-  authenticate,
-  upload.single("image"),
-  uploadController.uploadImage
-);
+// menteeRoutes.put(
+//   "/upload_profile_image",
+//   authenticate,
+//   upload.single("image"),
+//   uploadController.uploadImage
+// );
 
-menteeRoutes.put(
-  "/profileEdit",
-  authenticate,
-  menteeController.editUserProfile
-);
+// menteeRoutes.put(
+//   "/profileEdit",
+//   authenticate,
+//   menteeController.editUserProfile
+// );
 
 menteeRoutes.delete(
   "/deleteAccount",

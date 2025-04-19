@@ -170,10 +170,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
       type: Boolean,
       default: false,
     },
-    blockingReason: {
-      type: String,
-      required: false,
-    },
     refreshToken: {
       type: [String],
       default: [],

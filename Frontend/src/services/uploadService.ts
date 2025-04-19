@@ -1,9 +1,10 @@
 import axios from "axios";
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
-  withCredentials: true,
-});
+import { userAxiosInstance } from "./instances/userInstance";
+const api = userAxiosInstance;
+// const api = axios.create({
+//   baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
+//   withCredentials: true,
+// });
 
 export const uploadProfileImage = async (formData: FormData) => {
   try {

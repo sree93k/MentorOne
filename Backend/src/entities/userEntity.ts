@@ -38,7 +38,6 @@ export interface EUsers extends Document {
   bookings?: object | null; // To be defined later
   subscription?: ObjectId | null;
   isBlocked?: boolean | null;
-  blockingReason?: string | null;
   refreshToken?: string[] | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;

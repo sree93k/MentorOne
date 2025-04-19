@@ -19,35 +19,29 @@ class UploadController {
   ): Promise<void> => {
     try {
       console.log("upload controller step 1", req.file);
-      const id = req?.user?.id;
-      if (!id) {
-        res.status(401).json({ message: "User not authenticated" });
-        return;
-      }
+
       const imageFile = req.file;
       if (!imageFile) {
         console.log("upload controller step 2 no file");
         res.status(400).json({ message: "No file uploaded" });
         return;
       }
-
+      console.log("upload controller step 3");
       // Read the file from disk and resize it
       const resizedImageBuffer = await sharp(imageFile.path)
         .resize({ width: 1024 }) // Resize to max 1024px width
         .toBuffer();
-
+      console.log("upload controller step 4");
       // Upload the resized buffer
-      const result = await this.uploadService.uploadProfileImage(
-        {
-          ...imageFile,
-          buffer: resizedImageBuffer,
-        },
-        id
-      );
+      const result = await this.uploadService.uploadProfileImage({
+        ...imageFile,
+        buffer: resizedImageBuffer,
+      });
 
       console.log("upload controller step 5", result);
       res.status(200).json({ imageUrl: result.url });
     } catch (error) {
+      console.log("upload controller step cath error");
       next(error);
     }
   };

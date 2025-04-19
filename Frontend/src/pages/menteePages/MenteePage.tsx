@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
-
+import MenteeBillingPage from "./subPages/MenteePayment";
 const Footer = lazy(() => import("@/components/landing/Footer"));
 const MenteeHeader = lazy(() => import("@/components/mentee/MenteeHeader"));
 const MenteeSidebar = lazy(() => import("@/components/mentee/MenteeSidebar"));
@@ -34,6 +34,7 @@ const MenteePage = () => {
             <Route path="/courses" element={<CoursePage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/blogpost" element={<BlogPostPage />} />
+            <Route path="/payment" element={<MenteeBillingPage />} />
           </Routes>
         </Suspense>
       </main>

@@ -315,9 +315,10 @@ const AllUsers: React.FC = () => {
                     {page > 1 ? (
                       <PaginationPrevious
                         onClick={() => setPage((prev) => prev - 1)}
+                        className="cursor-pointer"
                       />
                     ) : (
-                      <PaginationPrevious className="pointer-events-none opacity-50" />
+                      <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
                     )}
                   </PaginationItem>
                   {getPageItems().map((pageNum, index) =>
@@ -330,6 +331,7 @@ const AllUsers: React.FC = () => {
                         <PaginationLink
                           onClick={() => setPage(pageNum)}
                           isActive={pageNum === page}
+                          className="cursor-pointer"
                         >
                           {pageNum}
                         </PaginationLink>
@@ -340,9 +342,10 @@ const AllUsers: React.FC = () => {
                     {page < totalPages ? (
                       <PaginationNext
                         onClick={() => setPage((prev) => prev + 1)}
+                        className="cursor-pointer"
                       />
                     ) : (
-                      <PaginationNext className="pointer-events-none opacity-50" />
+                      <PaginationNext className=" pointer-events-none opacity-50" />
                     )}
                   </PaginationItem>
                 </PaginationContent>

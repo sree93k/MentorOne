@@ -10,6 +10,11 @@ import {
   LogOut,
   ChevronDown,
   UserCircle2,
+  MessageSquareCode,
+  Heart,
+  CalendarDays,
+  HandCoins,
+  Wallet,
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { LogoutConfirmationModal } from "@/components/modal/Logout";
@@ -291,20 +296,72 @@ const MentorSidebar: React.FC = () => {
           active={activeItem === "Home"}
           onClick={() => handleItemClick("Home", "/expert/dashboard")}
         />
+
+        <SidebarItem
+          icon={Bell}
+          text="Notification"
+          isExpanded={isExpanded}
+          active={activeItem === "Notification"}
+          onClick={openNotification}
+        />
+
+        <SidebarItem
+          icon={Phone}
+          text="Bookings"
+          isExpanded={isExpanded}
+          active={activeItem === "Bookings"}
+          onClick={() => handleItemClick("Bookings", "/expert/booking")}
+        />
+        {/* <SidebarItem icon={HandCoins} text="Services" isExpanded={isExpanded} /> */}
+        <SidebarItem
+          icon={HandCoins}
+          text="Services"
+          isExpanded={isExpanded}
+          active={activeItem === "Services"}
+          onClick={() => handleItemClick("Services", "/expert/services")}
+        />
+        <SidebarItem
+          icon={MessageSquareCode}
+          text="Priority"
+          isExpanded={isExpanded}
+          active={activeItem === "Priority"}
+          onClick={() => handleItemClick("Priority", "/expert/prioritydm")}
+        />
+        <SidebarItem
+          icon={Heart}
+          text="Testimonials"
+          isExpanded={isExpanded}
+          active={activeItem === "Testimonials"}
+          onClick={() =>
+            handleItemClick("Testimonials", "/expert/testimonials")
+          }
+        />
+        <SidebarItem
+          icon={CalendarDays}
+          text="Calender"
+          isExpanded={isExpanded}
+          active={activeItem === "Calender"}
+          onClick={() => handleItemClick("Calender", "/expert/calender")}
+        />
+
+        {/* <SidebarItem
+        icon={Wallet}
+        text="Payment History"
+        isExpanded={isExpanded}
+      /> */}
+        <SidebarItem
+          icon={Wallet}
+          text="Payment History"
+          isExpanded={isExpanded}
+          active={activeItem === "Payment"}
+          onClick={() => handleItemClick("Payment", "/expert/payment")}
+        />
         <SidebarItem
           icon={FileText}
           text="Profile Details"
           isExpanded={isExpanded}
           active={activeItem === "Profile Details"}
           onClick={() => handleItemClick("Profile Details", "/expert/profile")}
-        />
-        <SidebarItem icon={Phone} text="Bookings" isExpanded={isExpanded} />
-        <SidebarItem icon={Clock} text="Bill History" isExpanded={isExpanded} />
-        <SidebarItem
-          icon={Bell}
-          text="Notification"
-          isExpanded={isExpanded}
-          onClick={openNotification}
         />
       </nav>
       <div className="absolute bottom-4 w-full px-2">

@@ -2,19 +2,29 @@ import React, { useState, useEffect } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, UploadIcon, Loader2, HardDriveUpload } from "lucide-react";
+import {
+  Pencil,
+  UploadIcon,
+  Loader2,
+  HardDriveUpload,
+  EyeIcon,
+  EyeOffIcon,
+} from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { updateUserProfile } from "@/services/menteeService";
+import { updateUserProfile } from "@/services/userServices";
 import { uploadProfileImage } from "@/services/uploadService";
 import { toast } from "react-hot-toast";
 import { XIcon, SearchIcon } from "lucide-react";
+import { updateUserPassword, deleteUserAccount } from "@/services/userServices";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import * as Yup from "yup";
 import { userProfileData } from "@/services/menteeService";
+import ConfirmationModal from "@/components/modal/ConfirmationModal";
+import { CircleCheckBig, Ban, CircleDashed } from "lucide-react";
 // Define the EditableField component props
 interface EditableFieldProps {
   label: string;
@@ -24,6 +34,7 @@ interface EditableFieldProps {
   onEdit: () => void;
   isEditing?: boolean;
   onSave?: () => void;
+  onCancel?: () => void;
   onChange?: (value: string) => void;
   type?: string;
 }
@@ -78,6 +89,27 @@ const profileSchema = Yup.object().shape({
   skills: Yup.array().of(Yup.string()).optional(),
 });
 
+const passwordSchema = Yup.object().shape({
+  currentPassword: Yup.string().required("Current password is required"),
+  newPassword: Yup.string()
+    .required("New password is required")
+    .min(8, "Password must be at least 8 characters")
+    .matches(/[A-Z]/, "Must contain at least one uppercase letter")
+    .matches(/[a-z]/, "Must contain at least one lowercase letter")
+    .matches(/\d/, "Must contain at least one number")
+    .matches(/[@$!%*?&]/, "Must contain at least one special character")
+    .test(
+      "not-same-as-current",
+      "New password must be different from current password",
+      function (value) {
+        return value !== this.parent.currentPassword;
+      }
+    ),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("newPassword")], "Passwords must match")
+    .required("Please confirm your new password"),
+});
+
 // EditableField component
 const EditableField: React.FC<EditableFieldProps> = ({
   label,
@@ -87,6 +119,7 @@ const EditableField: React.FC<EditableFieldProps> = ({
   onEdit,
   isEditing = false,
   onSave,
+  onCancel,
   onChange,
   type = "text",
 }) => {
@@ -121,12 +154,20 @@ const EditableField: React.FC<EditableFieldProps> = ({
             Edit
           </button>
         ) : (
-          <button
-            onClick={handleSaveWithValidation}
-            className="text-sm text-green-600 hover:underline"
-          >
-            Save
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveWithValidation}
+              className="text-sm text-green-600 hover:underline"
+            >
+              Save
+            </button>
+            <button
+              onClick={onCancel}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Cancel
+            </button>
+          </div>
         )}
       </div>
       <Input
@@ -151,7 +192,21 @@ const MenteeProfile: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState("");
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [originalValues, setOriginalValues] = useState<{
+    [key: string]: string;
+  }>({});
   const dispatch = useDispatch();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isFormValid, setIsFormValid] = useState(false);
+
   const presetSkills = [
     "Javascript",
     "Node JS",
@@ -197,64 +252,30 @@ const MenteeProfile: React.FC = () => {
     featuredArticle: "",
     mentorMotivation: "",
     shortInfo: "",
-    skills: [
-      "Javascript",
-      "Node JS",
-      "Mongo DB",
-      "React JS",
-      "AWS",
-      "Tailwind CSS",
-    ],
+    skills: [] as string[],
   });
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true);
-      setError(null);
+      dispatch(setLoading(true));
+      dispatch(setError(null));
       try {
         const response = await userProfileData();
-        console.log("user reposnse data", response);
-
+        console.log("user response data", response);
         if (response) {
-          console.log("setuser>>>1", user);
-
           dispatch(setUser(response));
-          console.log("setuser>>>2", user);
         } else {
-          setError("Failed to fetch user data");
+          dispatch(setError("Failed to fetch user data"));
         }
       } catch (err) {
-        setError("An error occurred while fetching user data");
+        dispatch(setError("An error occurred while fetching user data"));
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     };
     fetchUserData();
-  }, []);
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     setLoading(true);
-  //     setError(null);
-  //     try {
-  //       const response = await userProfileData();
-  //       console.log("user response data", response);
-  //       if (response) {
-  //         dispatch(setUser(response));
-  //       } else {
-  //         setError("Failed to fetch user data");
-  //       }
-  //     } catch (err) {
-  //       setError("An error occurred while fetching user data");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, []);
-  // useEffect(() => {
-  //   console.log("Redux user changed to:", user);
-  // }, [user]);
+  }, [dispatch]);
 
-  // Populate profile data from Redux store on mount
+  // Sync profileData with Redux user state
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -279,13 +300,13 @@ const MenteeProfile: React.FC = () => {
         achievements: user?.mentorId?.achievements?.[0] || "",
         linkedinUrl: "",
         youtubeUrl: "",
-        profilePicture: user?.profilePicture || "",
         portfolioUrl: user?.mentorId?.portfolio || "",
         interestedNewCareer: user?.menteeId?.interestedNewcareer?.[0] || "",
         featuredArticle: user?.mentorId?.featuredArticle || "",
         mentorMotivation: user?.mentorId?.mentorMotivation || "",
         shortInfo: user?.mentorId?.shortInfo || "",
-        skills: [] || "",
+        skills: user?.skills || [],
+        profilePicture: user?.profilePicture || "",
       });
       setPreviewUrl(user.profilePicture || null);
     }
@@ -297,6 +318,32 @@ const MenteeProfile: React.FC = () => {
       setPreviewUrl(user.profilePicture);
     }
   }, [user, selectedFile]);
+
+  useEffect(() => {
+    const validate = async () => {
+      try {
+        await passwordSchema.validate(
+          {
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          },
+          { abortEarly: false }
+        );
+        setErrors({});
+        setIsFormValid(true);
+      } catch (validationErrors: any) {
+        const errorObj: Record<string, string> = {};
+        validationErrors.inner.forEach((err: any) => {
+          errorObj[err.path] = err.message;
+        });
+        setErrors(errorObj);
+        setIsFormValid(false);
+      }
+    };
+
+    validate();
+  }, [currentPassword, newPassword, confirmPassword]);
 
   // Handle image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -404,34 +451,20 @@ const MenteeProfile: React.FC = () => {
       }
     }
   };
-  // const updateProfileField = async (
-  //   field: string,
-  //   value: string | string[]
-  // ) => {
-  //   try {
-  //     await profileSchema.validateAt(field, {
-  //       [field]: value,
-  //       workAs: profileData.workAs,
-  //     });
-  //     let payload = { [field]: value }; // Simplified for example
-  //     const updateData = await updateUserProfile(payload, accessToken);
-  //     console.log("user data receievd>>>", updateData);
 
-  //     setProfileData((prev) => ({ ...prev, [field]: value }));
-  //     console.log("user updateData redux r>>>1", user);
-  //     dispatch(setUser(updateData));
-  //     console.log("user updateData redux>>>2", user);
-  //     toast.success(`${field} updated successfully`);
-  //   } catch (error) {
-  //     toast.error(`Failed to update ${field}`);
-  //     console.error(error);
-  //   }
-  // };
   // Handle edit button click
   const handleEdit = (field: string) => {
+    setOriginalValues((prev) => ({ ...prev, [field]: profileData[field] }));
     setEditingField(field);
   };
 
+  const handleCancel = (field: string) => {
+    setProfileData((prev) => ({ ...prev, [field]: originalValues[field] }));
+    setEditingField(null);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
   // Handle save button click
   const handleSave = (
     fieldOrFields: string | { [key: string]: string },
@@ -453,17 +486,17 @@ const MenteeProfile: React.FC = () => {
   // Add a skill
   const addSkill = (skill: string) => {
     if (skill && !profileData.skills.includes(skill)) {
-      setProfileData((prev) => ({ ...prev, skills: [...prev.skills, skill] }));
+      const updatedSkills = [...profileData.skills, skill];
+      setProfileData((prev) => ({ ...prev, skills: updatedSkills }));
       setSkillSearchTerm("");
     }
   };
 
   // Remove a skill
+
   const removeSkill = (index: number) => {
-    setProfileData((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((_, i) => i !== index),
-    }));
+    const updatedSkills = profileData.skills.filter((_, i) => i !== index);
+    setProfileData((prev) => ({ ...prev, skills: updatedSkills }));
   };
 
   // Filter skills for dropdown
@@ -479,17 +512,58 @@ const MenteeProfile: React.FC = () => {
     (currentYear - 20 + i).toString()
   );
 
-  // Placeholder delete account function (replace with actual API call)
-  const deleteAccount = async () => {
-    console.log("Deleting account...");
-    // Example API call:
-    // await fetch('/api/delete-account', {
-    //   method: 'DELETE',
-    //   headers: {
-    //     Authorization: `Bearer ${accessToken}`,
-    //   },
-    // });
+  const handlePasswordUpdate = async () => {
+    try {
+      await passwordSchema.validate(
+        { currentPassword, newPassword, confirmPassword },
+        { abortEarly: false }
+      );
+
+      setIsPasswordUpdating(true);
+
+      const response = await updateUserPassword(currentPassword, newPassword);
+      if (response && response?.status === 200) {
+        toast.success(response.data.message);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+        setEditingField(null);
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error: any) {
+      if (error.name === "ValidationError") {
+        error.inner.forEach((err: any) => {
+          setError(err.message);
+          toast.error(err.message);
+        });
+      } else {
+        toast.error("An error occurred while updating password");
+        console.error(error);
+      }
+    } finally {
+      setIsPasswordUpdating(false);
+    }
   };
+
+  // const handleDeleteAccount = async () => {
+  //   try {
+  //     const response = await deleteUserAccount();
+  //     if (response && response.status === 200) {
+  //       toast.success("Account deleted successfully");
+  //       // Redirect to login page
+  //       window.location.href = "/login";
+  //     } else {
+  //       toast.error("Failed to delete account");
+  //     }
+  //   } catch (error) {
+  //     toast.error("An error occurred while deleting account");
+  //     console.error(error);
+  //   }
+  // };
 
   return (
     <div className="flex-1 px-24">
@@ -721,6 +795,22 @@ const MenteeProfile: React.FC = () => {
           {/* Tab 1: Overview */}
           <Tabs.Content value="overview">
             <div className="max-w-2xl">
+              <div className="pb-6">
+                <label htmlFor="" className="text-sm bold py-3 font-medium">
+                  Email
+                </label>
+                <div className="flex items-center">
+                  <p className="px-4  text-sm text-green-600">
+                    {profileData.email}
+                  </p>
+                  <CircleCheckBig
+                    size={22}
+                    color="#198041"
+                    strokeWidth={1.75}
+                  />
+                </div>
+              </div>
+
               <EditableField
                 label="First Name"
                 field="firstName"
@@ -729,6 +819,7 @@ const MenteeProfile: React.FC = () => {
                 onEdit={() => handleEdit("firstName")}
                 isEditing={editingField === "firstName"}
                 onSave={() => handleSave("firstName", profileData.firstName)}
+                onCancel={() => handleCancel("firstName")}
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, firstName: value }))
                 }
@@ -741,6 +832,7 @@ const MenteeProfile: React.FC = () => {
                 onEdit={() => handleEdit("lastName")}
                 isEditing={editingField === "lastName"}
                 onSave={() => handleSave("lastName", profileData.lastName)}
+                onCancel={() => handleCancel("lastName")}
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, lastName: value }))
                 }
@@ -753,6 +845,7 @@ const MenteeProfile: React.FC = () => {
                 onEdit={() => handleEdit("phone")}
                 isEditing={editingField === "phone"}
                 onSave={() => handleSave("phone", profileData.phone)}
+                onCancel={() => handleCancel("phone")}
                 type="tel"
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, phone: value }))
@@ -760,26 +853,111 @@ const MenteeProfile: React.FC = () => {
               />
               {editingField === "password" ? (
                 <div className="mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium">Password</label>
-                    <button
-                      onClick={() => handleSave("password")}
-                      className="text-sm text-green-600 hover:underline"
-                    >
-                      Save
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    <Input
-                      type="password"
-                      placeholder="New Password"
-                      className="w-full"
-                    />
-                    <Input
-                      type="password"
-                      placeholder="Confirm Password"
-                      className="w-full"
-                    />
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium">Password</label>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <Input
+                          type={showCurrentPassword ? "text" : "password"}
+                          placeholder="Current Password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="w-full"
+                        />
+                        {errors.currentPassword && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.currentPassword}
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowCurrentPassword(!showCurrentPassword)
+                          }
+                          className="absolute right-2 top-2.5"
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOffIcon className="h-4 w-4" />
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type={showNewPassword ? "text" : "password"}
+                          placeholder="New Password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full"
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-2 top-2.5"
+                        >
+                          {showNewPassword ? (
+                            <EyeOffIcon className="h-4 w-4" />
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm Password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="w-full"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute right-2 top-2.5"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOffIcon className="h-4 w-4" />
+                          ) : (
+                            <EyeIcon className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                      {/* Inline error message */}
+                      {errors.confirmPassword && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {errors.confirmPassword}
+                        </p>
+                      )}
+
+                      <div className="flex gap-4">
+                        <Button
+                          onClick={handlePasswordUpdate}
+                          disabled={
+                            !currentPassword ||
+                            !newPassword ||
+                            !confirmPassword ||
+                            newPassword !== confirmPassword ||
+                            isPasswordUpdating ||
+                            !isFormValid
+                          }
+                          className="text-sm flex-1 text-green-600 hover:underline"
+                        >
+                          {isPasswordUpdating ? "Updating..." : "Save Password"}
+                        </Button>
+                        <button
+                          className="text-sm  flex-1 text-red-600 hover:underline"
+                          onClick={() => handleCancel("password")}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -794,34 +972,18 @@ const MenteeProfile: React.FC = () => {
                     </button>
                   </div>
                   <p className="text-sm text-gray-500">
-                    User Since 7:05PM, 7th March 2025
+                    {/* User Since 7:05PM, 7th March 2025 */}
+                    Change password atleast every month for security.
                   </p>
                 </div>
               )}
-              <Button
+              {/* <Button
                 variant="outline"
                 className="text-red-500 border-red-500 hover:bg-red-50"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Are you sure you want to delete your account? This action cannot be undone."
-                    )
-                  ) {
-                    deleteAccount()
-                      .then(() => {
-                        toast.success("Account deleted successfully");
-                        // Redirect to login or home page
-                        // window.location.href = "/login";
-                      })
-                      .catch((error) => {
-                        toast.error("Failed to delete account");
-                        console.error(error);
-                      });
-                  }
-                }}
+                onClick={() => setIsDeleteModalOpen(true)}
               >
                 Delete Account
-              </Button>
+              </Button> */}
             </div>
           </Tabs.Content>
 
@@ -1267,6 +1429,15 @@ const MenteeProfile: React.FC = () => {
           </Tabs.Content>
         </Tabs.Root>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {/* <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        description="Are you sure you want to delete your account? This action cannot be undone."
+      /> */}
     </div>
   );
 };
