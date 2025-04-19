@@ -1,4 +1,3 @@
-// CalendarPage.tsx
 import { useState, useRef } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -19,9 +18,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import BlockDatesModal from "@/components/mentor/BlockDatesModal";
 import CreateScheduleModal from "@/components/mentor/CreateScheduleModal";
-import { CalendarDays, Edit, Plus, CircleCheckBig, Ban } from "lucide-react";
+import {
+  CalendarDays,
+  Edit,
+  Plus,
+  CircleCheckBig,
+  Ban,
+  Trash2,
+} from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import toast from "react-hot-toast";
 
 interface SettingItemProps {
   icon: React.ReactNode;
@@ -47,7 +54,7 @@ function SettingItem({ icon, title, description, action }: SettingItemProps) {
 
 type DaySchedule = {
   day: string;
-  time: string;
+  times: string[];
   available: boolean;
 };
 
@@ -70,7 +77,7 @@ export default function CalendarPage() {
         "Friday",
         "Saturday",
         "Sunday",
-      ].map((day) => ({ day, time: "12:00PM", available: false })),
+      ].map((day) => ({ day, times: ["12:00PM"], available: false })),
     },
   ]);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -95,9 +102,56 @@ export default function CalendarPage() {
     );
   };
 
+  const addDayTime = (scheduleId: string, dayIndex: number) => {
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.id === scheduleId
+          ? {
+              ...schedule,
+              days: schedule.days.map((day, i) => {
+                if (i === dayIndex) {
+                  if (day.times.length >= 3) {
+                    toast.error("Cannot add more than 3 time slots");
+                    return day;
+                  }
+                  return { ...day, times: [...day.times, "12:00PM"] };
+                }
+                return day;
+              }),
+            }
+          : schedule
+      )
+    );
+  };
+
+  const removeDayTime = (
+    scheduleId: string,
+    dayIndex: number,
+    timeIndex: number
+  ) => {
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.id === scheduleId
+          ? {
+              ...schedule,
+              days: schedule.days.map((day, i) =>
+                i === dayIndex
+                  ? {
+                      ...day,
+                      times: day.times.filter((_, ti) => ti !== timeIndex),
+                    }
+                  : day
+              ),
+            }
+          : schedule
+      )
+    );
+  };
+
   const updateDayTime = (
     scheduleId: string,
     dayIndex: number,
+    timeIndex: number,
     time: string
   ) => {
     setSchedules((prev) =>
@@ -106,7 +160,14 @@ export default function CalendarPage() {
           ? {
               ...schedule,
               days: schedule.days.map((day, i) =>
-                i === dayIndex ? { ...day, time } : day
+                i === dayIndex
+                  ? {
+                      ...day,
+                      times: day.times.map((t, ti) =>
+                        ti === timeIndex ? time : t
+                      ),
+                    }
+                  : day
               ),
             }
           : schedule
@@ -126,10 +187,17 @@ export default function CalendarPage() {
         "Friday",
         "Saturday",
         "Sunday",
-      ].map((day) => ({ day, time: "12:00PM", available: false })),
+      ].map((day) => ({ day, times: ["12:00PM"], available: false })),
     };
     setSchedules([...schedules, newSchedule]);
     setIsCreateScheduleModalOpen(false);
+  };
+
+  const handleRemoveSchedule = (scheduleId: string) => {
+    if (scheduleId === "default") return;
+    setSchedules((prev) =>
+      prev.filter((schedule) => schedule.id !== scheduleId)
+    );
   };
 
   const handleSave = (scheduleId: string) => {
@@ -143,6 +211,12 @@ export default function CalendarPage() {
   const handleBlockDates = () => {
     console.log("Blocked dates:", selectedDates);
     setIsBlockDatesModalOpen(false);
+  };
+
+  const removeBlockedDate = (date: Date) => {
+    setSelectedDates(
+      selectedDates.filter((d) => d.toDateString() !== date.toDateString())
+    );
   };
 
   return (
@@ -171,12 +245,21 @@ export default function CalendarPage() {
               title="Reschedule Policy"
               description="How can customers reschedule calls"
               action={
-                <Button variant="outline" size="sm">
-                  Update Policy
-                </Button>
+                <Select defaultValue="2">
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Select days" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="1">30 mins</SelectItem>
+                    <SelectItem value="2">1 hrs</SelectItem>
+                    <SelectItem value="3">8 hrs</SelectItem>
+                    <SelectItem value="7">24 hrs</SelectItem>
+                    <SelectItem value="14">No reschedule</SelectItem>
+                    <SelectItem value="30">Any time</SelectItem>
+                  </SelectContent>
+                </Select>
               }
             />
-
             <SettingItem
               icon={<CalendarDays className="h-5 w-5" />}
               title="Booking Period"
@@ -197,7 +280,6 @@ export default function CalendarPage() {
                 </Select>
               }
             />
-
             <SettingItem
               icon={<CalendarDays className="h-5 w-5" />}
               title="Notice Period"
@@ -209,7 +291,7 @@ export default function CalendarPage() {
                     <SelectTrigger className="w-32">
                       <SelectValue placeholder="Select unit" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="minutes">Minutes</SelectItem>
                       <SelectItem value="hours">Hours</SelectItem>
                       <SelectItem value="days">Days</SelectItem>
@@ -248,17 +330,20 @@ export default function CalendarPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2">
-                <Accordion type="single" collapsible className="w-full">
+                <Accordion
+                  type="single"
+                  collapsible
+                  className="w-full bg-gray-100"
+                >
                   {schedules.map((schedule) => (
                     <AccordionItem key={schedule.id} value={schedule.id}>
                       <AccordionTrigger className="text-left w-full text-lg font-medium flex items-center justify-between px-4 py-3 hover:bg-muted rounded-md">
                         {schedule.name}
                       </AccordionTrigger>
-
                       <AccordionContent>
-                        <div className="flex justify-end mb-4 ">
+                        <div className="flex justify-end mb-4 gap-2">
                           {editingSchedule === schedule.id ? (
-                            <div className="flex gap-2 ">
+                            <>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -273,7 +358,7 @@ export default function CalendarPage() {
                               >
                                 Cancel
                               </Button>
-                            </div>
+                            </>
                           ) : (
                             <Button
                               variant="ghost"
@@ -284,6 +369,16 @@ export default function CalendarPage() {
                               Edit
                             </Button>
                           )}
+                          {schedule.id !== "default" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveSchedule(schedule.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove
+                            </Button>
+                          )}
                         </div>
 
                         <table className="w-full text-left border-collapse">
@@ -291,7 +386,9 @@ export default function CalendarPage() {
                             <tr className="border-b">
                               <th className="py-2">Day</th>
                               <th className="py-2">Available</th>
-                              <th className="py-2">Time</th>
+                              <th className="py-2" colSpan={4}>
+                                Times
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -309,7 +406,7 @@ export default function CalendarPage() {
                               );
                               const day = schedule.days[index] || {
                                 day: dayName,
-                                time: "",
+                                times: [],
                                 available: false,
                               };
 
@@ -317,17 +414,6 @@ export default function CalendarPage() {
                                 <tr key={dayName} className="border-b">
                                   <td className="py-2">
                                     <div className="flex items-center space-x-2">
-                                      {/* <Checkbox
-                                        id={`${schedule.id}-${day.day}`}
-                                        checked={day.available}
-                                        onCheckedChange={() =>
-                                          toggleDayAvailability(
-                                            schedule.id,
-                                            index
-                                          )
-                                        }
-                                        className="text-primary border-primary"
-                                      /> */}
                                       <Checkbox
                                         id={`${schedule.id}-${day.day}`}
                                         checked={day.available}
@@ -340,13 +426,17 @@ export default function CalendarPage() {
                                             index
                                           )
                                         }
-                                        className={`peer shrink-0 rounded-sm border 
-    ${editingSchedule === schedule.id ? "cursor-pointer" : "cursor-not-allowed"}
-    data-[state=checked]:bg-blue-600 
-    data-[state=checked]:text-white
-    data-[state=checked]:border-blue-600
-    text-white
-  `}
+                                        className={`peer shrink-0 rounded-sm border
+                                          ${
+                                            editingSchedule === schedule.id
+                                              ? "cursor-pointer"
+                                              : "cursor-not-allowed"
+                                          }
+                                          data-[state=checked]:bg-blue-600
+                                          data-[state=checked]:text-white
+                                          data-[state=checked]:border-blue-600
+                                          text-white
+                                        `}
                                       />
                                       <Label
                                         htmlFor={`${schedule.id}-${day.day}`}
@@ -355,7 +445,6 @@ export default function CalendarPage() {
                                       </Label>
                                     </div>
                                   </td>
-
                                   <td className="py-2">
                                     {day.available ? (
                                       <CircleCheckBig
@@ -371,47 +460,82 @@ export default function CalendarPage() {
                                       />
                                     )}
                                   </td>
-
-                                  <td className="py-2 relative">
-                                    {editingSchedule === schedule.id ? (
-                                      <div className="flex items-center gap-2">
-                                        <button
-                                          className="w-32 px-2 py-1 bg-gray-100 text-left border rounded cursor-pointer"
-                                          onClick={() =>
-                                            setTimePickerOpenId(
-                                              timePickerOpenId ===
-                                                `${schedule.id}-${index}`
-                                                ? null
-                                                : `${schedule.id}-${index}`
-                                            )
-                                          }
-                                        >
-                                          {day.time || "--:--"}
-                                        </button>
-
-                                        {timePickerOpenId ===
-                                          `${schedule.id}-${index}` && (
-                                          <div className="absolute z-10 top-full mt-2">
-                                            <CustomTimePicker
-                                              initialTime={day.time}
-                                              onConfirm={(newTime) => {
-                                                updateDayTime(
-                                                  schedule.id,
-                                                  index,
-                                                  newTime
-                                                );
-                                                setTimePickerOpenId(null);
-                                              }}
-                                            />
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <span className="text-sm font-medium">
-                                        {day.time || "--:--"}
-                                      </span>
+                                  <td className="py-2">
+                                    {editingSchedule === schedule.id && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          addDayTime(schedule.id, index)
+                                        }
+                                      >
+                                        <Plus className="h-4 w-4 mr-1" />
+                                        Add Time
+                                      </Button>
                                     )}
                                   </td>
+                                  {[0, 1, 2].map((timeIndex) => (
+                                    <td
+                                      key={`${schedule.id}-${index}-${timeIndex}`}
+                                      className="py-2"
+                                    >
+                                      {editingSchedule === schedule.id &&
+                                      day.times[timeIndex] ? (
+                                        <div className="flex items-center">
+                                          <button
+                                            className="w-24 px-2 py-1 bg-gray-100 text-left border rounded cursor-pointer"
+                                            onClick={() =>
+                                              setTimePickerOpenId(
+                                                timePickerOpenId ===
+                                                  `${schedule.id}-${index}-${timeIndex}`
+                                                  ? null
+                                                  : `${schedule.id}-${index}-${timeIndex}`
+                                              )
+                                            }
+                                          >
+                                            {day.times[timeIndex] || "--:--"}
+                                          </button>
+                                          {timePickerOpenId ===
+                                            `${schedule.id}-${index}-${timeIndex}` && (
+                                            <div className="absolute z-10 top-full mt-2">
+                                              <CustomTimePicker
+                                                initialTime={
+                                                  day.times[timeIndex]
+                                                }
+                                                onConfirm={(newTime) => {
+                                                  updateDayTime(
+                                                    schedule.id,
+                                                    index,
+                                                    timeIndex,
+                                                    newTime
+                                                  );
+                                                  setTimePickerOpenId(null);
+                                                }}
+                                              />
+                                            </div>
+                                          )}
+                                          <Button
+                                            variant="ghost"
+                                            className="bg-red-100 p-1 ml-0"
+                                            size="sm"
+                                            onClick={() =>
+                                              removeDayTime(
+                                                schedule.id,
+                                                index,
+                                                timeIndex
+                                              )
+                                            }
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <div className="text-sm font-medium">
+                                          {day.times[timeIndex] || "--:--"}
+                                        </div>
+                                      )}
+                                    </td>
+                                  ))}
                                 </tr>
                               );
                             })}
@@ -423,19 +547,41 @@ export default function CalendarPage() {
                 </Accordion>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg  ">
+              <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-medium mb-2">Block Dates</h3>
                 <p className="text-sm text-gray-500 mb-4">
                   Add dates when you will be unavailable to take calls
                 </p>
-
                 <Button
                   variant="outline"
-                  className="w-full bg-black text-white hover:bg-black/90"
+                  className="w-full bg-black text-white hover:bg-black/90 mb-4"
                   onClick={() => setIsBlockDatesModalOpen(true)}
                 >
                   Add Unavailable Dates
                 </Button>
+                {selectedDates.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Blocked Dates:</p>
+                    {selectedDates.map((date, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="text-sm">
+                          {date.toLocaleDateString()}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="bg-red-100 p-1"
+                          onClick={() => removeBlockedDate(date)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
