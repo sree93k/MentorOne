@@ -274,7 +274,7 @@ const MenteeSidebar: React.FC = () => {
           text="Bookings"
           isExpanded={isExpanded}
           active={activeItem === "Bookings"}
-          onClick={() => handleItemClick("Bookings")}
+          onClick={() => handleItemClick("Bookings", "/seeker/bookings")}
         />
         <SidebarItem
           icon={Wallet}

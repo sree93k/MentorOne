@@ -3,7 +3,7 @@ import { Input } from "../../components/ui/input";
 import { Send } from "lucide-react";
 import LogoImg from "@/assets/Logo2.png";
 import LogoName from "@/assets/LogoName2.png";
-import MentorChat from "./MentorChat";
+import MentorChat from "../users/Chatting";
 import { RootState } from "@/redux/store/store";
 import { useSelector } from "react-redux";
 import ThemeToggle from "../users/ThemeToggle";
@@ -42,7 +42,11 @@ const MentorHeader: React.FC = () => {
            
           </nav> */}
           <div className="flex items-center gap-4">
-            <Input type="search" placeholder="Search" className="w-64" />
+            <Input
+              type="search"
+              placeholder="Search"
+              className="w-64 rounded-full"
+            />
             <button onClick={openChat}>
               <Send size={24} />
             </button>

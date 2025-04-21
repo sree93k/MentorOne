@@ -466,7 +466,7 @@ const MentorProfile: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 px-24 border rounded-xl">
+    <div className="flex-1 mx-36 border rounded-xl">
       <div className="bg-red-500 text-white p-8 rounded-t-xl relative">
         <div className="flex items-end gap-6">
           <div className="relative">

@@ -364,7 +364,7 @@ const MenteeDashboard: React.FC = () => {
             >
               <AceternityLogo />
 
-              <span>Subsscribe</span>
+              <span>Get Start Now</span>
             </HoverBorderGradient>
           </div>
         </div>
@@ -490,12 +490,19 @@ const MenteeDashboard: React.FC = () => {
           </section>
         </div>
         <section>
-          <div className="h-[30rem] rounded-md flex flex-col antialiased bg-white dark:bg-black dark:bg-grid-white/[0.05] items-center justify-center relative overflow-hidden mt-10">
+          <div className=" rounded-md flex flex-col antialiased bg-white dark:bg-black dark:bg-grid-white/[0.05] items-center justify-center relative overflow-hidden mt-10 gap-4">
             <InfiniteMovingCards
               items={testimonials}
               direction="right"
               speed="slow"
             />
+            <div className="w-full " style={{ marginLeft: "-150px" }}>
+              <InfiniteMovingCards
+                items={testimonials}
+                direction="right"
+                speed="fast"
+              />
+            </div>
           </div>
         </section>
       </div>
