@@ -141,22 +141,24 @@ const AdminSidebar: React.FC = () => {
             text="Bookings"
             isExpanded={isExpanded}
             active={activeItem === "Bookings"}
-            onClick={() => handleItemClick("Bookings", "/admin/dashboard")}
+            onClick={() => handleItemClick("Bookings", "/admin/bookings")}
           />
           <SidebarItem
             icon={Wallet}
             text="Transactions"
             isExpanded={isExpanded}
             active={activeItem === "Transactions"}
-            onClick={() => handleItemClick("Transactions", "/admin/dashboard")}
+            onClick={() =>
+              handleItemClick("Transactions", "/admin/transactions")
+            }
           />
-          <SidebarItem
+          {/* <SidebarItem
             icon={Users2}
             text="Subscribers"
             isExpanded={isExpanded}
             active={activeItem === "Subscribers"}
             onClick={() => handleItemClick("Subscribers", "/admin/dashboard")}
-          />
+          /> */}
         </nav>
         <div className="absolute bottom-4 w-full px-2">
           <ThemeToggle />

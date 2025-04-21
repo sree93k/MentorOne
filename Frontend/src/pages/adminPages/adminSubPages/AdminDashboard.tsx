@@ -32,7 +32,7 @@ const AdminDashboard: React.FC = () => {
       <div className="flex-1 ml-24 p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Hi, Admin</h1>
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <Input type="search" placeholder="Search" className="w-64" />
         </div>
 

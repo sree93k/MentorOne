@@ -1,6 +1,9 @@
 import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import BookingsPage from "./adminSubPages/BookingPage";
+import TransactionsPage from "./adminSubPages/TransactionPage";
+import AdminHeader from "@/components/admin/AdminHeader";
 // import SampleProfile from "../../pages/adminPages/adminSubPages/SampleProfile";
 const AdminDashboard = lazy(() => import("./adminSubPages/AdminDashboard"));
 const AdminSidebar = lazy(() => import("@/components/admin/AdminSideBar"));
@@ -9,7 +12,8 @@ const UserProfile = lazy(() => import("./adminSubPages/UserProfile"));
 
 const AdminPage: React.FC = () => {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className=" min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AdminHeader />
       <AdminSidebar />
 
       <main className="flex-1 max-w-full p-6">
@@ -18,9 +22,12 @@ const AdminPage: React.FC = () => {
             <Route path="/dashboard" element={<AdminDashboard />} />
             <Route path="/allUsers" element={<AllUsers />} />
             <Route path="/userProfile/:id" element={<UserProfile />} />
+            <Route path="/bookings" element={<BookingsPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
             {/* <Route path="/sampleProfile" element={<SampleProfile />} /> */}
             {/* Default redirect to dashboard */}
             <Route path="/" element={<Navigate to="dashboard" replace />} />
+
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Routes>
         </Suspense>

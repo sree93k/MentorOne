@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import LogoImg from "@/assets/logo.png";
 import LogoName from "@/assets/brandlogo.png";
-import MenteeChat from "@/components/mentee/MenteeChat";
+import MenteeChat from "../users/Chatting";
 import { Link, useLocation } from "react-router-dom";
 import ThemeToggle from "../users/ThemeToggle";
 const MenteeHeader: React.FC = () => {
@@ -73,7 +73,11 @@ const MenteeHeader: React.FC = () => {
             </Link> */}
           </nav>
           <div className="flex items-center gap-4">
-            <Input type="search" placeholder="Search" className="w-64" />
+            <Input
+              type="search"
+              placeholder="Search"
+              className="w-64 rounded-full"
+            />
             <button onClick={openChat}>
               <Send size={24} className="text-gray-600 dark:text-gray-300" />
             </button>
