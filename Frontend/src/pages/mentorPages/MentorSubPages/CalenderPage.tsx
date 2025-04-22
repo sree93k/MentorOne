@@ -220,7 +220,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="mx-36 p-6">
+    <div className="mx-36 ">
       <h1 className="text-2xl font-bold mb-6">Availability Schedule</h1>
       <Tabs defaultValue="calender" className="mb-8">
         <TabsList className="border-b w-full rounded-none justify-start h-auto p-0 bg-transparent">
@@ -347,13 +347,15 @@ export default function CalendarPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="bg-black text-white"
                                 onClick={() => handleSave(schedule.id)}
                               >
                                 Save
                               </Button>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
+                                className="bg-white"
                                 onClick={() => setEditingSchedule(null)}
                               >
                                 Cancel
@@ -426,7 +428,7 @@ export default function CalendarPage() {
                                             index
                                           )
                                         }
-                                        className={`peer shrink-0 rounded-sm border
+                                        className={`peer shrink-0 rounded-sm border bg-white
                                           ${
                                             editingSchedule === schedule.id
                                               ? "cursor-pointer"
@@ -465,6 +467,7 @@ export default function CalendarPage() {
                                       <Button
                                         variant="outline"
                                         size="sm"
+                                        className="bg-white"
                                         onClick={() =>
                                           addDayTime(schedule.id, index)
                                         }
@@ -481,42 +484,50 @@ export default function CalendarPage() {
                                     >
                                       {editingSchedule === schedule.id &&
                                       day.times[timeIndex] ? (
-                                        <div className="flex items-center">
-                                          <button
-                                            className="w-24 px-2 py-1 bg-gray-100 text-left border rounded cursor-pointer"
-                                            onClick={() =>
-                                              setTimePickerOpenId(
-                                                timePickerOpenId ===
-                                                  `${schedule.id}-${index}-${timeIndex}`
-                                                  ? null
-                                                  : `${schedule.id}-${index}-${timeIndex}`
-                                              )
-                                            }
-                                          >
-                                            {day.times[timeIndex] || "--:--"}
-                                          </button>
-                                          {timePickerOpenId ===
-                                            `${schedule.id}-${index}-${timeIndex}` && (
-                                            <div className="absolute z-10 top-full mt-2">
-                                              <CustomTimePicker
-                                                initialTime={
-                                                  day.times[timeIndex]
-                                                }
-                                                onConfirm={(newTime) => {
-                                                  updateDayTime(
-                                                    schedule.id,
-                                                    index,
-                                                    timeIndex,
-                                                    newTime
-                                                  );
-                                                  setTimePickerOpenId(null);
-                                                }}
-                                              />
-                                            </div>
-                                          )}
+                                        <div className="flex items-center relative ">
+                                          <div className="relative ">
+                                            <button
+                                              className="w-24 px-2 py-1 bg-gray-100 text-left border rounded cursor-pointer bg-white"
+                                              onClick={() =>
+                                                setTimePickerOpenId(
+                                                  timePickerOpenId ===
+                                                    `${schedule.id}-${index}-${timeIndex}`
+                                                    ? null
+                                                    : `${schedule.id}-${index}-${timeIndex}`
+                                                )
+                                              }
+                                            >
+                                              {day.times[timeIndex] || "--:--"}
+                                            </button>
+                                            {timePickerOpenId ===
+                                              `${schedule.id}-${index}-${timeIndex}` && (
+                                              <div
+                                                className={`absolute z-50 left-0 top-[100%] mt-1 ${
+                                                  timeIndex > 0
+                                                    ? "right-0 left-auto"
+                                                    : ""
+                                                }`}
+                                              >
+                                                <CustomTimePicker
+                                                  initialTime={
+                                                    day.times[timeIndex]
+                                                  }
+                                                  onConfirm={(newTime) => {
+                                                    updateDayTime(
+                                                      schedule.id,
+                                                      index,
+                                                      timeIndex,
+                                                      newTime
+                                                    );
+                                                    setTimePickerOpenId(null);
+                                                  }}
+                                                />
+                                              </div>
+                                            )}
+                                          </div>
                                           <Button
                                             variant="ghost"
-                                            className="bg-red-100 p-1 ml-0"
+                                            className="  py-0 px-1 ml-0"
                                             size="sm"
                                             onClick={() =>
                                               removeDayTime(
@@ -565,7 +576,7 @@ export default function CalendarPage() {
                     {selectedDates.map((date, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between"
+                        className="flex items-center justify-between border px-2"
                       >
                         <span className="text-sm">
                           {date.toLocaleDateString()}
@@ -573,13 +584,20 @@ export default function CalendarPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="bg-red-100 p-1"
+                          className=" p-1"
                           onClick={() => removeBlockedDate(date)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
+                  </div>
+                )}
+                {selectedDates.length === 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 mb-4">
+                      No blocked dates
+                    </p>
                   </div>
                 )}
               </div>

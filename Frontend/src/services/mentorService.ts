@@ -1,10 +1,7 @@
 import axios from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
 const api = userAxiosInstance;
-// const api = axios.create({
-//   baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
-//   withCredentials: true,
-// });
+import AWS from "aws-sdk";
 
 // services/mentorService.ts
 interface UpdateUserDataPayload {
@@ -143,15 +140,59 @@ export const updateMentorDatas = async (payload: any) => {
   }
 };
 
+// Create Service Function
 export const CreateService = async (formData: FormData) => {
   try {
-    const response = await axios.post("/expert/createservice", formData, {
+    console.log("hello");
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    // Send data to backend
+    const response = await api.post("/expert/createService", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${accessToken}`,
       },
     });
+
     return response.data;
   } catch (error) {
+    console.error("Error creating service:", error);
     throw error;
+  }
+};
+export const uploadToS3WithPresignedUrl = async (
+  file: File,
+  folder: string
+): Promise<string> => {
+  try {
+    console.log("hiii");
+
+    const response = await api.get("/expert/generate-presigned-url", {
+      params: {
+        fileName: file.name,
+        fileType: file.type,
+        folder,
+      },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    });
+    const { url, key } = response.data;
+
+    await fetch(url, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    return `https://${process.env.REACT_APP_S3_BUCKET_NAME}.s3.${process.env.REACT_APP_AWS_REGION}.amazonaws.com/${key}`;
+  } catch (error) {
+    console.error("Error uploading with presigned URL:", error);
+    throw new Error("Failed to upload file to S3");
   }
 };

@@ -6,10 +6,3 @@ export interface EGoals extends Document {
   careerGoals: string;
   interestedNewcareer: string[];
 }
-
-// export interface EGoals extends Document {
-//     _id: mongoose.Types.ObjectId;
-//     goals: string[];
-//     careerGoals: string;
-//     interestedNewcareer: string[];
-//   }
