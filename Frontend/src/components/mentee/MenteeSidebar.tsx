@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store"; // Adjust the import based on your store setup
 import {
@@ -291,8 +291,29 @@ const MenteeSidebar: React.FC = () => {
           onClick={openNotification}
         />
       </nav>
-
       <div className="absolute bottom-4 w-full px-2">
+        {/* User Profile SidebarItem (shown in both expanded and collapsed states) */}
+        {user?.firstName && (
+          <SidebarItem
+            icon={() => (
+              <img
+                src={user?.profilePicture || "https://via.placeholder.com/24"} // Fallback image if profilePicture is null
+                alt="Profile"
+                className="w-6 h-6 rounded-full object-cover"
+              />
+            )}
+            text={`${
+              user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
+            } ${
+              user.lastName
+                ? user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)
+                : ""
+            }`}
+            isExpanded={isExpanded}
+          />
+        )}
+
+        {/* Logout SidebarItem */}
         <SidebarItem
           icon={LogOut}
           text="Logout"
@@ -301,6 +322,15 @@ const MenteeSidebar: React.FC = () => {
           onClick={() => setLogoutModalOpen(true)}
         />
       </div>
+      {/* <div className="absolute bottom-4 w-full px-2">
+        <SidebarItem
+          icon={LogOut}
+          text="Logout"
+          isExpanded={isExpanded}
+          active={activeItem === "Logout"}
+          onClick={() => setLogoutModalOpen(true)}
+        />
+      </div> */}
 
       {/* Logout Confirmation Modal */}
       <LogoutConfirmationModal

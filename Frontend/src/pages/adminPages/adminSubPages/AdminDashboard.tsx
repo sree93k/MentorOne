@@ -29,7 +29,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <>
       {/* Main Content */}
-      <div className="flex-1 ml-24 p-8">
+      <div className="flex-1 ml-24 p-8 bg-white">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>

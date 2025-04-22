@@ -174,6 +174,15 @@ const UsersSchema: Schema<EUsers> = new Schema(
       type: [String],
       default: [],
     },
+    isOnline: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
+    contacts: {
+      type: [Schema.Types.ObjectId],
+      required: false,
+    },
   },
   {
     collection: "Users",

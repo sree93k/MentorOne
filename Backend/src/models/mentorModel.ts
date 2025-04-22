@@ -28,10 +28,10 @@ const MentorSchema: Schema<EMentor> = new Schema(
       type: [String],
       required: false,
     },
-    services: {
-      type: [{ type: Schema.Types.ObjectId, ref: "Services" }],
-      required: false,
-    },
+    // services: {
+    //   type: [{ type: Schema.Types.ObjectId, ref: "Services" }],
+    //   required: false,
+    // },
     linkedinURL: {
       type: String,
       required: false,
@@ -67,7 +67,33 @@ const MentorSchema: Schema<EMentor> = new Schema(
       required: false,
     },
     interestedNewCareer: { type: [String], required: false },
+    schedules: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Schedule",
+      },
+    ],
+    mentorPolicyId: {
+      type: Schema.Types.ObjectId,
+      ref: "MentorPolicy",
+      default: null,
+    },
+    services: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Service",
+      },
+    ],
+    followers: {
+      type: [Schema.Types.ObjectId],
+      required: false,
+    },
+    topTestimonials: {
+      type: [Schema.Types.ObjectId],
+      required: false,
+    },
   },
+
   {
     timestamps: true,
   }

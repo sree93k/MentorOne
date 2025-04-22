@@ -23,7 +23,7 @@ export default function FilterHeader({
           <DropdownMenuTrigger className="focus:outline-none">
             <ChevronDown size={16} />
           </DropdownMenuTrigger>
-          <DropdownMenuContent>
+          <DropdownMenuContent className="bg-white">
             {options.map((option) => (
               <DropdownMenuItem key={option}>{option}</DropdownMenuItem>
             ))}

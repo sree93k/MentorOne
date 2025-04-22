@@ -130,229 +130,217 @@ const AllUsers: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen pl-24">
-      <main className="flex-1 max-w-full p-6">
-        <div className="p-6">
-          {/* Header and Stats */}
-          <div className="mb-3 flex items-start justify-between flex-wrap">
-            <div className="mb-4 items-center pt-5">
-              <h1 className="text-2xl font-bold">Users List</h1>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
-              {/* Static stats - replace with dynamic data if needed */}
-              <Card className="p-2 h-20">
-                <h3 className="text-sm text-gray-600 mb-0">Total Users</h3>
-                <p className="text-3xl font-bold">{total}</p>
-              </Card>
-              <Card className="p-2 h-20">
-                <h3 className="text-sm text-gray-600 mb-0">Total Mentors</h3>
-                <p className="text-3xl font-bold">{totalMentors}</p>
-              </Card>
-              <Card className="p-2 h-20">
-                <h3 className="text-sm text-gray-600 mb-0">Total Mentees</h3>
-                <p className="text-3xl font-bold">{totalMentees}</p>
-              </Card>
-              <Card className="p-2 h-20">
-                <h3 className="text-sm text-gray-600 mb-0">Total Both</h3>
-                <p className="text-3xl font-bold">{totalMentees}</p>
-              </Card>
-              <Card className="p-2 h-20">
-                <h3 className="text-sm text-gray-600 mb-0">
-                  Approval Pendings
-                </h3>
-                <p className="text-3xl font-bold">{approvalPending}</p>
-              </Card>
-            </div>
+    <div className="flex min-h-screen ">
+      <main className="flex-1 mx-32 p-6 bg-white ">
+        {/* Header and Stats */}
+        <div className="mb-3 flex items-start justify-between flex-wrap ">
+          <div className="mb-4 items-center pt-5">
+            <h1 className="text-2xl font-bold">Users List</h1>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
+            {/* Static stats - replace with dynamic data if needed */}
+            <Card className="p-2 h-20">
+              <h3 className="text-sm text-gray-600 mb-0">Total Users</h3>
+              <p className="text-3xl font-bold">{total}</p>
+            </Card>
+            <Card className="p-2 h-20">
+              <h3 className="text-sm text-gray-600 mb-0">Total Mentors</h3>
+              <p className="text-3xl font-bold">{totalMentors}</p>
+            </Card>
+            <Card className="p-2 h-20">
+              <h3 className="text-sm text-gray-600 mb-0">Total Mentees</h3>
+              <p className="text-3xl font-bold">{totalMentees}</p>
+            </Card>
+            <Card className="p-2 h-20">
+              <h3 className="text-sm text-gray-600 mb-0">Total Both</h3>
+              <p className="text-3xl font-bold">{totalMentees}</p>
+            </Card>
+            <Card className="p-2 h-20">
+              <h3 className="text-sm text-gray-600 mb-0">Approval Pendings</h3>
+              <p className="text-3xl font-bold">{approvalPending}</p>
+            </Card>
+          </div>
+        </div>
 
-          {/* Users Table */}
-          <div className="rounded-md border">
-            {loading ? (
-              <div className="p-4 text-center">Loading...</div>
-            ) : error ? (
-              <div className="p-4 text-center text-red-500">{error}</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-gray-50 text-left">
-                      <th className="px-4 py-3 text-sm font-medium">SI No</th>
-                      <th className="px-4 py-3 text-sm font-medium">Name</th>
-                      <th className="px-4 py-3 text-sm font-medium">
-                        Email ID
-                      </th>
-                      <th className="px-4 py-3 text-sm font-medium">
-                        Mentor Status
-                      </th>
-                      <th className="px-4 py-3 text-sm font-medium">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="flex items-center gap-1">
-                            Role
-                            <ChevronDown className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem
-                              onClick={() => setRoleFilter(null)}
-                            >
-                              All
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRoleFilter("Mentee")}
-                            >
-                              Mentee
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRoleFilter("Mentor")}
-                            >
-                              Mentor
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRoleFilter("Both")}
-                            >
-                              Both
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </th>
-                      <th className="px-4 py-3 text-sm font-medium">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="flex items-center gap-1">
-                            Status
-                            <ChevronDown className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem
-                              onClick={() => setStatusFilter(null)}
-                            >
-                              All
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setStatusFilter("Active")}
-                            >
-                              Active
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setStatusFilter("Blocked")}
-                            >
-                              Blocked
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </th>
-                      <th className="px-4 py-3 text-sm font-medium">Action</th>
+        {/* Users Table */}
+        <div className="rounded-md border">
+          {loading ? (
+            <div className="p-4 text-center">Loading...</div>
+          ) : error ? (
+            <div className="p-4 text-center text-red-500">{error}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left">
+                    <th className="px-4 py-3 text-sm font-medium">SI No</th>
+                    <th className="px-4 py-3 text-sm font-medium">Name</th>
+                    <th className="px-4 py-3 text-sm font-medium">Email ID</th>
+                    <th className="px-4 py-3 text-sm font-medium">
+                      Mentor Status
+                    </th>
+                    <th className="px-4 py-3 text-sm font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="flex items-center gap-1">
+                          Role
+                          <ChevronDown className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => setRoleFilter(null)}>
+                            All
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setRoleFilter("Mentee")}
+                          >
+                            Mentee
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setRoleFilter("Mentor")}
+                          >
+                            Mentor
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setRoleFilter("Both")}
+                          >
+                            Both
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </th>
+                    <th className="px-4 py-3 text-sm font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="flex items-center gap-1">
+                          Status
+                          <ChevronDown className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={() => setStatusFilter(null)}
+                          >
+                            All
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setStatusFilter("Active")}
+                          >
+                            Active
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setStatusFilter("Blocked")}
+                          >
+                            Blocked
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </th>
+                    <th className="px-4 py-3 text-sm font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-3 text-center">
+                        No users found
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {users.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-3 text-center">
-                          No users found
+                  ) : (
+                    users.map((user, index) => (
+                      <tr key={user._id} className="border-b">
+                        <td className="px-4 py-3 text-sm">
+                          {(page - 1) * limit + index + 1}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {`${user.firstName} ${user.lastName}`}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{user.email}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {/* {user?.mentorId?.isApproved || "N/A"} */}
+                          {user?.mentorId?.isApproved === "Pending" ? (
+                            <Badge icon={HiCheck} color="purple">
+                              Pending
+                            </Badge>
+                          ) : user?.mentorId?.isApproved === "Rejected" ? (
+                            <Badge icon={HiCheck} color="failure">
+                              Rejected
+                            </Badge>
+                          ) : user?.mentorId?.isApproved === "Approved" ? (
+                            <Badge icon={HiCheck} color="success">
+                              Approved
+                            </Badge>
+                          ) : (
+                            <Badge icon={HiCheck} color="warning" className="">
+                              N/A
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm">{user.role}</td>
+                        <td className="px-4 py-3 text-sm">
+                          {user?.isBlocked ? "Blocked" : "Active"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Button
+                            className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
+                            onClick={() =>
+                              navigate(`/admin/userProfile/${user._id}`)
+                            }
+                          >
+                            Edit
+                          </Button>
                         </td>
                       </tr>
-                    ) : (
-                      users.map((user, index) => (
-                        <tr key={user._id} className="border-b">
-                          <td className="px-4 py-3 text-sm">
-                            {(page - 1) * limit + index + 1}
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            {`${user.firstName} ${user.lastName}`}
-                          </td>
-                          <td className="px-4 py-3 text-sm">{user.email}</td>
-                          <td className="px-4 py-3 text-sm">
-                            {/* {user?.mentorId?.isApproved || "N/A"} */}
-                            {user?.mentorId?.isApproved === "Pending" ? (
-                              <Badge icon={HiCheck} color="purple">
-                                Pending
-                              </Badge>
-                            ) : user?.mentorId?.isApproved === "Rejected" ? (
-                              <Badge icon={HiCheck} color="failure">
-                                Rejected
-                              </Badge>
-                            ) : user?.mentorId?.isApproved === "Approved" ? (
-                              <Badge icon={HiCheck} color="success">
-                                Approved
-                              </Badge>
-                            ) : (
-                              <Badge
-                                icon={HiCheck}
-                                color="warning"
-                                className=""
-                              >
-                                N/A
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-sm">{user.role}</td>
-                          <td className="px-4 py-3 text-sm">
-                            {user?.isBlocked ? "Blocked" : "Active"}
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            <Button
-                              className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
-                              onClick={() =>
-                                navigate(`/admin/userProfile/${user._id}`)
-                              }
-                            >
-                              Edit
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Pagination */}
-          {!loading && !error && total > 0 && (
-            <div className="mt-4">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    {page > 1 ? (
-                      <PaginationPrevious
-                        onClick={() => setPage((prev) => prev - 1)}
-                        className="cursor-pointer"
-                      />
-                    ) : (
-                      <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
-                    )}
-                  </PaginationItem>
-                  {getPageItems().map((pageNum, index) =>
-                    pageNum === 0 ? (
-                      <PaginationItem key={`ellipsis-${index}`}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    ) : (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          onClick={() => setPage(pageNum)}
-                          isActive={pageNum === page}
-                          className="cursor-pointer"
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
+                    ))
                   )}
-                  <PaginationItem>
-                    {page < totalPages ? (
-                      <PaginationNext
-                        onClick={() => setPage((prev) => prev + 1)}
-                        className="cursor-pointer"
-                      />
-                    ) : (
-                      <PaginationNext className=" pointer-events-none opacity-50" />
-                    )}
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && !error && total > 0 && (
+          <div className="mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  {page > 1 ? (
+                    <PaginationPrevious
+                      onClick={() => setPage((prev) => prev - 1)}
+                      className="cursor-pointer"
+                    />
+                  ) : (
+                    <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
+                  )}
+                </PaginationItem>
+                {getPageItems().map((pageNum, index) =>
+                  pageNum === 0 ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink
+                        onClick={() => setPage(pageNum)}
+                        isActive={pageNum === page}
+                        className="cursor-pointer"
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  {page < totalPages ? (
+                    <PaginationNext
+                      onClick={() => setPage((prev) => prev + 1)}
+                      className="cursor-pointer"
+                    />
+                  ) : (
+                    <PaginationNext className=" pointer-events-none opacity-50" />
+                  )}
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </main>
     </div>
   );

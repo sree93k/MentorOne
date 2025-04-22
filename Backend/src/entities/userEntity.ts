@@ -39,6 +39,8 @@ export interface EUsers extends Document {
   subscription?: ObjectId | null;
   isBlocked?: boolean | null;
   refreshToken?: string[] | null;
+  isOnline: Boolean | null;
+  contacts: ObjectId[] | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
 }
