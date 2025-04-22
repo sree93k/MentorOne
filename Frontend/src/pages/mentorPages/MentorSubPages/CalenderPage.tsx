@@ -68,7 +68,7 @@ export default function CalendarPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([
     {
       id: "default",
-      name: "Default",
+      name: "Week Schedule",
       days: [
         "Monday",
         "Tuesday",
@@ -319,13 +319,13 @@ export default function CalendarPage() {
                   </Button>
                 ))}
               </div>
-              <Button
+              {/* <Button
                 variant="outline"
                 className="bg-black text-white"
                 onClick={() => setIsCreateScheduleModalOpen(true)}
               >
                 New Schedule <Plus className="ml-2 h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -333,7 +333,7 @@ export default function CalendarPage() {
                 <Accordion
                   type="single"
                   collapsible
-                  className="w-full bg-gray-100"
+                  className="w-full bg-gray-100 p-2"
                 >
                   {schedules.map((schedule) => (
                     <AccordionItem key={schedule.id} value={schedule.id}>

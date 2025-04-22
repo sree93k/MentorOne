@@ -5,5 +5,5 @@ export interface EMentee extends Document {
   joinPurpose: string[] | null;
   careerGoals: string | null;
   interestedNewcareer: string[] | null;
-  skills: string[] | null;
+  Bookings: ObjectId[] | null;
 }

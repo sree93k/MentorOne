@@ -21,8 +21,8 @@ import { LogoutConfirmationModal } from "@/components/modal/Logout";
 import { logout } from "@/services/adminAuth";
 import { toast, Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import Logo from "@/assets/logo.png";
-import LogoName from "@/assets/brandlogo.png";
+import Logo from "@/assets/logo3.png";
+import LogoName from "@/assets/logoname3.png";
 import { resetAdmin } from "@/redux/slices/adminSlice";
 import { useDispatch } from "react-redux";
 import ThemeToggle from "../users/ThemeToggle";
@@ -161,7 +161,6 @@ const AdminSidebar: React.FC = () => {
           /> */}
         </nav>
         <div className="absolute bottom-4 w-full px-2">
-          <ThemeToggle />
           <SidebarItem
             icon={LogOut}
             text="Logout"

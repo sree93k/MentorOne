@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { Card } from "@/components/ui/card";
 import FilterHeader from "./FilterHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -140,48 +140,65 @@ export default function TransactionsPage() {
   const modeOptions = ["All", "Credit card", "UPI", "Debit Card"];
 
   return (
-    <div className="flex flex-col mx-32 min-h-screen bg-white py-8">
-      <h1 className="text-2xl font-bold mb-6">Transactions</h1>
-      <div className="flex-1 felx-col gap-8">
-        <Tabs
-          defaultValue="booked"
-          className="flex"
-          onValueChange={setActiveTab}
-        >
-          <TabsList className="flex flex-col h-fit bg-transparent p-0 w-40">
-            <TabsTrigger
-              value="booked"
-              className={`py-2 px-4 text-left rounded-none ${
-                activeTab === "booked"
-                  ? "bg-gray-100 font-semibold"
-                  : "bg-transparent"
-              }`}
-            >
-              Booked
-            </TabsTrigger>
-            <TabsTrigger
-              value="pending"
-              className={`py-2 px-4 text-left rounded-none ${
-                activeTab === "pending"
-                  ? "bg-gray-100 font-semibold"
-                  : "bg-transparent"
-              }`}
-            >
-              Pending
-            </TabsTrigger>
-            <TabsTrigger
-              value="completed"
-              className={`py-2 px-4 text-left rounded-none ${
-                activeTab === "completed"
-                  ? "bg-gray-100 font-semibold"
-                  : "bg-transparent"
-              }`}
-            >
-              Completed
-            </TabsTrigger>
-          </TabsList>
+    <div className="flex flex-col mx-32 min-h-screen bg-white py-6 px-6">
+      <div className="flex flex-row mb-6">
+        <h1 className="text-2xl font-bold pt-4 mb-6">Transactions</h1>
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-6 mb-0 ml-auto">
+          {/* Static stats - replace with dynamic data if needed */}
+          <Card className="p-2 h-20 w-60">
+            <h3 className="text-sm text-gray-600 mb-0">Total Bookings</h3>
+            <p className="text-3xl font-bold">22</p>
+          </Card>
+          <Card className="p-2 h-20">
+            <h3 className="text-sm text-gray-600 mb-0">Pending</h3>
+            <p className="text-3xl font-bold">11</p>
+          </Card>
+          <Card className="p-2 h-20">
+            <h3 className="text-sm text-gray-600 mb-0">Completed</h3>
+            <p className="text-3xl font-bold">11</p>
+          </Card>
+        </div>
+      </div>
+      <Tabs
+        defaultValue="booked"
+        className="flex flex-col "
+        onValueChange={setActiveTab}
+      >
+        <TabsList className="flex w-full justify-start bg-transparent p-0 mb-4 border-b ">
+          <TabsTrigger
+            value="booked"
+            className={`px-4 py-2 rounded-none border-b-2 ${
+              activeTab === "booked"
+                ? "border-black font-semibold"
+                : "border-transparent"
+            }`}
+          >
+            Booked
+          </TabsTrigger>
+          <TabsTrigger
+            value="pending"
+            className={`px-4 py-2 rounded-none border-b-2 ${
+              activeTab === "pending"
+                ? "border-black font-semibold"
+                : "border-transparent"
+            }`}
+          >
+            Pending
+          </TabsTrigger>
+          <TabsTrigger
+            value="completed"
+            className={`px-4 py-2 rounded-none border-b-2 ${
+              activeTab === "completed"
+                ? "border-black font-semibold"
+                : "border-transparent"
+            }`}
+          >
+            Completed
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="booked" className="max-w-4xl">
+        <TabsContent value="booked" className="max-w-5xl ">
+          <div className="overflow-x-auto ">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -214,9 +231,11 @@ export default function TransactionsPage() {
                 ))}
               </TableBody>
             </Table>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="pending" className="max-w-4xl">
+        <TabsContent value="pending" className="max-w-5xl">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -247,9 +266,11 @@ export default function TransactionsPage() {
                 ))}
               </TableBody>
             </Table>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="completed" className="max-w-4xl">
+        <TabsContent value="completed" className="max-w-5xl">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -286,9 +307,9 @@ export default function TransactionsPage() {
                 ))}
               </TableBody>
             </Table>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

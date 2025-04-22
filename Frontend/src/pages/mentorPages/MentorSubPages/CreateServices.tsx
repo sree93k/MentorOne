@@ -39,7 +39,7 @@ const serviceTypes: ServiceType[] = [
     id: "1-1-call",
     title: "1:1 Call",
     icon: <Calendar className="h-8 w-8 text-primary" />,
-    description: "Schedule 1:1 Video Call",
+    description: "Schedule 1:1 Video Call or Chat",
   },
   {
     id: "priority-dm",
@@ -76,6 +76,7 @@ const serviceValidationSchema = Yup.object().shape({
 const CreateServices: React.FC = () => {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [oneToOneType, setOneToOneType] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("digital-product");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -218,7 +219,7 @@ const CreateServices: React.FC = () => {
   };
 
   return (
-    <div className="mx-40 py-6 border border-gray-300">
+    <div className="mx-40 py-6 border border-gray-200 bg-white">
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-7 w-7 " />
@@ -255,6 +256,48 @@ const CreateServices: React.FC = () => {
 
         {(selectedType === "1-1-call" || selectedType === "priority-dm") && (
           <div className="space-y-6">
+            {selectedType === "1-1-call" && (
+              <div className="w-full my-8">
+                <div className="flex flex-col items-start gap-4 w-full">
+                  <button
+                    onClick={() => setOneToOneType("chat")}
+                    className={`flex justify-between items-center min-w-[400px] w-1/2 px-4 py-3 border rounded-lg  bg-[#fdf9e0] 
+           transition-all duration-200
+           ${
+             oneToOneType === "chat"
+               ? "border-black font-semibold bg-[#fdf9e0]"
+               : "border-gray-300  hover:border-black"
+           }`}
+                  >
+                    <p>Chat Session</p>
+                    <p className="text-gray-500 text-sm">
+                      Message-based support
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => setOneToOneType("video")}
+                    className={`flex justify-between items-center min-w-[400px] w-1/2 px-4 py-3 border rounded-lg bg-[#fdf9e0] 
+           transition-all duration-200
+           ${
+             oneToOneType === "video"
+               ? "border-black font-semibold bg-[#fdf9e0]"
+               : "border-gray-300  hover:border-black"
+           }`}
+                  >
+                    <p>Video Call</p>
+                    <p className="text-gray-500 text-sm">
+                      1-on-1 video session
+                    </p>
+                  </button>
+                </div>
+
+                {/* Optional: show selected value */}
+                {/* <div className="mt-4 text-sm text-gray-600">
+               Selected: <span className="font-semibold">{oneToOneType}</span>
+             </div> */}
+              </div>
+            )}
             <div className="flex flex-wrap md:flex-nowrap gap-6">
               <div className="flex-1">
                 <Label className="text-sm font-medium mb-2 block">Title</Label>

@@ -28,7 +28,7 @@ const MentorHeader: React.FC = () => {
         </div>
 
         <div className="flex items gap-8">
-          <span className="text-2xl font-semibold text-black dark:text-white">
+          <span className="text-2xl font-semibold text-gray-600 dark:text-white">
             Hi,{" "}
             {`${
               user?.firstName
