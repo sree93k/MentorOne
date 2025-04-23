@@ -27,4 +27,10 @@ mentorRoutes.get(
   authenticate,
   mentorController.generatePresignedUrl
 );
+
+mentorRoutes.get(
+  "/get-presigned-url",
+  authenticate,
+  mentorController.getPresignedUrl
+);
 export default mentorRoutes;

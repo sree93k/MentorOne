@@ -13,10 +13,6 @@ const ServiceSchema: Schema = new Schema(
       enum: ["1-1Call", "priorityDM", "DigitalProducts"],
       required: true,
     },
-    serviceId: {
-      type: Schema.Types.ObjectId,
-      refPath: "type", // Dynamically references OnlineService or DigitalProduct based on type
-    },
     title: {
       type: String,
       required: true,
@@ -35,8 +31,39 @@ const ServiceSchema: Schema = new Schema(
       trim: true,
       maxlength: 200,
     },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now },
+    duration: {
+      type: Number,
+      min: 5,
+    },
+    longDescription: {
+      type: String,
+      trim: true,
+      minlength: 20,
+    },
+    oneToOneType: {
+      type: String,
+      enum: ["chat", "video"],
+    },
+    digitalProductType: {
+      type: String,
+      enum: ["documents", "videoTutorials"],
+    },
+    fileUrl: {
+      type: String,
+    },
+    exclusiveContent: [
+      {
+        season: { type: String },
+        episodes: [
+          {
+            episode: { type: String },
+            title: { type: String },
+            description: { type: String },
+            videoUrl: { type: String },
+          },
+        ],
+      },
+    ],
   },
   {
     collection: "Service",
