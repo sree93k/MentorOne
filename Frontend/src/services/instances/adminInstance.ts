@@ -2,7 +2,7 @@ import axios from "axios";
 import store from "@/redux/store/store";
 import { resetAdmin } from "@/redux/slices/adminSlice";
 
-const API_URL = import.meta.env.VITE_MENTOR_ONE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 export const adminAxiosInstance = axios.create({
   baseURL: API_URL,
   withCredentials: true,
@@ -18,7 +18,7 @@ adminAxiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshResponse = await axios.get("/admin/auth/refresh_token", {
-          baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
+          baseURL: import.meta.env.VITE_API_URL,
           withCredentials: true,
         });
         console.log("refreshResponse>>>>>>>>", refreshResponse);

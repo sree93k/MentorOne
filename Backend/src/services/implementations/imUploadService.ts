@@ -9,7 +9,8 @@ import { inBaseRepository } from "../../repositories/interface/inBaseRepository"
 import imBaseRepository from "../../repositories/implementations/imBaseRepository";
 import Users from "../../models/userModel";
 import { EUsers } from "../../entities/userEntity";
-
+import { s3 } from "../../config/awsS3";
+const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 export default class UploadService implements inUploadService {
   private BaseRepository: inBaseRepository<EUsers>;
 
@@ -91,6 +92,55 @@ export default class UploadService implements inUploadService {
       return null;
     } catch (error) {
       return null;
+    }
+  }
+
+  ///aws s3 bucket
+  public async S3generatePresignedUrl(
+    fileName: string,
+    fileType: string,
+    folder: string
+  ): Promise<{ url: string; key: string }> {
+    try {
+      console.log(
+        "S3generatePresignedUrl service step 1",
+        fileName,
+        fileType,
+        folder
+      );
+      const key = `${folder}/${Date.now()}_${fileName}`;
+      console.log("S3generatePresignedUrl service step 2", key);
+      const params = {
+        Bucket: BUCKET_NAME,
+        Key: key,
+        ContentType: fileType,
+        Expires: 600,
+      };
+      console.log("S3generatePresignedUrl service step 3", params);
+      const url = await s3.getSignedUrlPromise("putObject", params);
+      console.log("S3generatePresignedUrl service step 4", url, key);
+      return { url, key };
+    } catch (error: any) {
+      console.log("S3generatePresignedUrl service step 5");
+      console.error("Error generating presigned URL:", error);
+      throw new Error(`Failed to generate presigned URL: ${error.message}`);
+    }
+  }
+
+  public async S3generatePresignedUrlForGet(key: string): Promise<string> {
+    try {
+      const params = {
+        Bucket: BUCKET_NAME,
+        Key: key,
+        Expires: 600,
+      };
+      const url = await s3.getSignedUrlPromise("getObject", params);
+      return url;
+    } catch (error: any) {
+      console.error("Error generating presigned URL for GET:", error);
+      throw new Error(
+        `Failed to generate presigned URL for GET: ${error.message}`
+      );
     }
   }
 }

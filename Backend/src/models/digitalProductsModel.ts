@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IDigitalProduct } from "../entities/digitalProductEntity";
+import { EDigitalProduct } from "../entities/digitalProductEntity";
 
 const DigitalProductSchema: Schema = new Schema(
   {
@@ -34,7 +34,7 @@ const DigitalProductSchema: Schema = new Schema(
   }
 );
 
-const DigitalProductModel = mongoose.model<IDigitalProduct>(
+const DigitalProductModel = mongoose.model<EDigitalProduct>(
   "DigitalProduct",
   DigitalProductSchema
 );

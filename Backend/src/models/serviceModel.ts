@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IService } from "../entities/serviceEntity";
+import { EService } from "../entities/serviceEntity";
 
 const ServiceSchema: Schema = new Schema(
   {
@@ -44,6 +44,6 @@ const ServiceSchema: Schema = new Schema(
   }
 );
 
-const ServiceModel = mongoose.model<IService>("Service", ServiceSchema);
+const ServiceModel = mongoose.model<EService>("Service", ServiceSchema);
 
 export default ServiceModel;

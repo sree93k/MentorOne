@@ -1,6 +1,6 @@
 import { Document, ObjectId } from "mongoose";
 
-export interface IPriorityDM extends Document {
+export interface EPriorityDM extends Document {
   _id: ObjectId;
   mentorId: ObjectId;
   menteeId: ObjectId;

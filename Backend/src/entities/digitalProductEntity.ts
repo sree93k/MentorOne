@@ -1,6 +1,6 @@
 import { Document, ObjectId } from "mongoose";
 
-export interface IDigitalProduct extends Document {
+export interface EDigitalProduct extends Document {
   _id: ObjectId;
   mentorId: ObjectId;
   type: "documents" | "videoTutorials";

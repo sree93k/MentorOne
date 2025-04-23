@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import uploadController from "../../controllers/userController/uploadController";
-import { authenticate } from "../../middlewares/authenticateUser";
+import { authenticate } from "../../middlewares/authenticateuser";
 import userController from "../../controllers/userController/userController";
 const userPrivateRoute = Router();
 

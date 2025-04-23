@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IOnlineService } from "../entities/onlineServcieEntity";
+import { EOnlineService } from "../entities/onlineServcieEntity";
 
 const OnlineServiceSchema: Schema = new Schema(
   {
@@ -33,7 +33,7 @@ const OnlineServiceSchema: Schema = new Schema(
   }
 );
 
-const OnlineServiceModel = mongoose.model<IOnlineService>(
+const OnlineServiceModel = mongoose.model<EOnlineService>(
   "OnlineService",
   OnlineServiceSchema
 );
