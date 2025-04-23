@@ -1,6 +1,6 @@
 import { Document, ObjectId } from "mongoose";
 
-export interface IService extends Document {
+export interface EService extends Document {
   _id: ObjectId;
   mentorId: ObjectId;
   type: "1-1Call" | "priorityDM" | "DigitalProducts";

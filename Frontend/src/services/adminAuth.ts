@@ -2,10 +2,6 @@ import { TAdminLogin, TAdminLoginResponse } from "@/types/admin";
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
 const api = userAxiosInstance;
-// const api = axios.create({
-//   baseURL: import.meta.env.VITE_MENTOR_ONE_API_URL,
-//   withCredentials: true,
-// });
 
 export const adminLogin = async (
   credential: TAdminLogin

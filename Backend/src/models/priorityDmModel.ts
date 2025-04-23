@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IPriorityDM } from "../entities/priorityDMEntity";
+import { EPriorityDM } from "../entities/priorityDMEntity";
 
 const PriorityDMSchema: Schema = new Schema(
   {
@@ -39,7 +39,7 @@ const PriorityDMSchema: Schema = new Schema(
   }
 );
 
-const PriorityDMModel = mongoose.model<IPriorityDM>(
+const PriorityDMModel = mongoose.model<EPriorityDM>(
   "PriorityDM",
   PriorityDMSchema
 );

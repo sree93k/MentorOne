@@ -25,7 +25,8 @@ import { Label } from "@/components/ui/label";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { CreateService } from "@/services/mentorService";
-
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
 // Yup validation schema
 const serviceValidationSchema = Yup.object().shape({
   type: Yup.string()
@@ -158,10 +159,12 @@ const CreateServices: React.FC = () => {
       oneToOneType: "",
       pdfFile: null,
       exclusiveContent: [],
+      selectedTab: "digital-product",
     },
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const user = useSelector((state: RootState) => state.user.user);
   useEffect(() => {
     setSelectedType("1-1-call");
     setValue("type", "1-1-call");
@@ -174,6 +177,12 @@ const CreateServices: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && file.type === "application/pdf") {
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
+        alert("File size exceeds 10MB limit.");
+        e.target.value = "";
+        return;
+      }
       setSelectedFile(file);
       setValue("pdfFile", file);
     } else {
@@ -231,105 +240,15 @@ const CreateServices: React.FC = () => {
     setValue("exclusiveContent", updatedContent);
   };
 
-  // const onSubmit = async (data: any) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("mentorId", "YOUR_MENTOR_ID"); // Replace with actual mentor ID
-  //     formData.append(
-  //       "type",
-  //       data.type === "1-1-call"
-  //         ? "1-1Call"
-  //         : data.type === "priority-dm"
-  //         ? "priorityDM"
-  //         : "DigitalProducts"
-  //     );
-  //     formData.append("title", data.title);
-  //     formData.append("shortDescription", data.shortDescription);
-  //     formData.append("amount", data.amount.toString());
-
-  //     if (data.type === "1-1-call" || data.type === "priority-dm") {
-  //       formData.append("duration", data.duration.toString());
-  //       formData.append("longDescription", data.longDescription);
-  //       if (data.type === "1-1-call") {
-  //         formData.append("oneToOneType", data.oneToOneType);
-  //       }
-  //     }
-
-  //     if (
-  //       data.type === "digital-products" &&
-  //       data.selectedTab === "digital-product" &&
-  //       data.pdfFile
-  //     ) {
-  //       formData.append("digitalProductType", "documents");
-  //       formData.append("pdfFile", data.pdfFile);
-  //     }
-
-  //     if (
-  //       data.type === "digital-products" &&
-  //       data.selectedTab === "exclusive-content"
-  //     ) {
-  //       formData.append("digitalProductType", "videoTutorials");
-  //       data.exclusiveContent.forEach(
-  //         (
-  //           season: {
-  //             season: string;
-  //             episodes: {
-  //               episode: string;
-  //               title: string;
-  //               description: string;
-  //               video: File;
-  //             }[];
-  //           },
-  //           seasonIndex: number
-  //         ) => {
-  //           formData.append(
-  //             `exclusiveContent[${seasonIndex}][season]`,
-  //             season.season
-  //           );
-  //           season.episodes.forEach(
-  //             (
-  //               episode: {
-  //                 episode: string;
-  //                 title: string;
-  //                 description: string;
-  //                 video: File;
-  //               },
-  //               episodeIndex: number
-  //             ) => {
-  //               formData.append(
-  //                 `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`,
-  //                 episode.episode
-  //               );
-  //               formData.append(
-  //                 `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`,
-  //                 episode.title
-  //               );
-  //               formData.append(
-  //                 `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`,
-  //                 episode.description
-  //               );
-  //               formData.append(
-  //                 `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`,
-  //                 episode.video
-  //               );
-  //             }
-  //           );
-  //         }
-  //       );
-  //     }
-
-  //     await CreateService(formData);
-  //     alert("Service created successfully!");
-  //     navigate(-1);
-  //   } catch (error) {
-  //     console.error("Error creating service:", error);
-  //     alert("Failed to create service.");
-  //   }
-  // };
   const onSubmit = async (data: any) => {
     try {
       const formData = new FormData();
-      const mentorId = localStorage.getItem("userId") || "YOUR_MENTOR_ID"; // Replace with actual mentor ID
+      const mentorId = user?._id;
+      console.log("menotr id is >", mentorId);
+
+      if (!mentorId) {
+        throw new Error("Mentor ID not found. Please log in again.");
+      }
       formData.append("mentorId", mentorId);
       formData.append(
         "type",
@@ -342,6 +261,7 @@ const CreateServices: React.FC = () => {
       formData.append("title", data.title);
       formData.append("shortDescription", data.shortDescription);
       formData.append("amount", data.amount.toString());
+      formData.append("selectedTab", data.selectedTab); // Add selectedTab
 
       if (data.type === "1-1-call" || data.type === "priority-dm") {
         formData.append("duration", data.duration.toString());
@@ -417,9 +337,9 @@ const CreateServices: React.FC = () => {
       await CreateService(formData);
       alert("Service created successfully!");
       navigate(-1);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating service:", error);
-      alert("Failed to create service.");
+      alert(`Failed to create service: ${error.message || "Unknown error"}`);
     }
   };
 
@@ -632,7 +552,10 @@ const CreateServices: React.FC = () => {
         {selectedType === "digital-products" && (
           <Tabs
             value={selectedTab}
-            onValueChange={setSelectedTab}
+            onValueChange={(value) => {
+              setSelectedTab(value);
+              setValue("selectedTab", value);
+            }}
             className="mb-8"
           >
             <TabsList className="w-full my-16">

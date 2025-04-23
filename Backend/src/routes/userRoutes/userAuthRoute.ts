@@ -15,7 +15,7 @@ import {
   decodedRefreshToken,
   decodedUserRefreshToken,
   verifyUserRefreshToken,
-} from "../../middlewares/authenticateUser";
+} from "../../middlewares/authenticateuser";
 const userAuthRoutes = Router();
 
 // User auth routes

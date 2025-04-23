@@ -82,5 +82,65 @@ class mentorController {
       next(error);
     }
   };
+  public createService = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("createService controller step 1");
+
+      const formData = req.body;
+      console.log("createService controller step 2");
+      const files = req.files as Express.Multer.File[];
+      console.log("createService controller step 3");
+      const result = await this.MentorProfileService.createService(
+        formData,
+        files
+      );
+      console.log("createService  controller step 4");
+      if (!result) {
+        console.log("createService controller step 5 result errir");
+        throw new ApiError(500, "Failed to create service");
+      }
+      console.log("createService controller step 6 success");
+      res.status(201).json(new ApiResponse(201, result, "Service created"));
+    } catch (error) {
+      console.log("createService controller  catch errro step 7");
+      next(error);
+    }
+  };
+
+  public generatePresignedUrl = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("generatePresignedUrl controller step 1");
+
+      const { fileName, fileType, folder } = req.query as {
+        fileName: string;
+        fileType: string;
+        folder: string;
+      };
+      console.log("generatePresignedUrl controller step 2");
+      if (!fileName || !fileType || !folder) {
+        console.log("generatePresignedUrl controller step 3");
+        throw new ApiError(400, "Missing required query parameters");
+      }
+      console.log("generatePresignedUrl controller step 4");
+      const url = await this.uploadService.S3generatePresignedUrl(
+        fileName,
+        fileType,
+        folder
+      );
+      console.log("generatePresignedUrl controller step 5");
+      res.json(url);
+    } catch (error) {
+      console.log("generatePresignedUrl controller step 6");
+      next(error);
+    }
+  };
 }
 export default new mentorController();

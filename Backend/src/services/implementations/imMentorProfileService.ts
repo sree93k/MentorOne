@@ -14,6 +14,7 @@ import { EMentor } from "../../entities/mentorEntity";
 import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
 import imBaseRepository from "../../repositories/implementations/imBaseRepository";
 import Users from "../../models/userModel";
+import { ApiError } from "../../middlewares/errorHandler";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -22,7 +23,7 @@ interface WelcomeFormData {
   userType: string;
   [key: string]: any;
 }
-
+import { EService } from "../../entities/serviceEntity";
 export default class MentorProfileService implements inMentorProfileService {
   private UserRepository: inUserRepository;
   private CareerRepository: inCareerRepository;
@@ -193,6 +194,138 @@ export default class MentorProfileService implements inMentorProfileService {
     } catch (error) {
       console.log("error at profileDatas service...last ", error);
       return null;
+    }
+  }
+
+  async createService(
+    formData: Record<string, any>,
+    files: Express.Multer.File[]
+  ): Promise<EService | null> {
+    try {
+      console.log("createService service step 1");
+      const {
+        mentorId,
+        type,
+        title,
+        shortDescription,
+        amount,
+        digitalProductType,
+      } = formData;
+      console.log("createService service step 2");
+      // Validate required fields
+      if (!mentorId || !type || !title || !shortDescription || !amount) {
+        console.log("createService service step 3");
+        throw new ApiError(400, "Missing required fields");
+      }
+      console.log("createService service step 4");
+      const service = {
+        mentorId,
+        type,
+        title,
+        shortDescription,
+        amount: parseFloat(amount),
+      };
+      console.log("createService service step 5");
+      let serviceId;
+      console.log("createService service step 6");
+      if (type === "1-1Call" || type === "priorityDM") {
+        console.log("createService service step 7");
+        const { duration, longDescription, oneToOneType } = formData;
+        if (
+          !duration ||
+          !longDescription ||
+          (type === "1-1Call" && !oneToOneType)
+        ) {
+          console.log("createService service step 8");
+          throw new ApiError(400, "Missing required fields for online service");
+        }
+        console.log("createService service step 9");
+        const onlineService = {
+          mentorId,
+          type: type === "1-1Call" ? oneToOneType : "priorityDM",
+          duration: parseInt(duration),
+          longDescription,
+        };
+        console.log("createService service step 10");
+        serviceId = await this.MentorRepository.createOnlineService(
+          onlineService
+        );
+        console.log("createService service step 11");
+        if (!serviceId) {
+          console.log("createService service step 12");
+          throw new ApiError(500, "Failed to create online service");
+        }
+        console.log("createService service step 13");
+      } else if (type === "DigitalProducts") {
+        console.log("createService service step 14");
+        if (!digitalProductType) {
+          console.log("createService service step 15");
+          throw new ApiError(400, "Missing digital product type");
+        }
+        console.log("createService service step 16");
+        const digitalProduct = { mentorId, type: digitalProductType };
+        console.log("createService service step 17");
+        if (digitalProductType === "documents") {
+          console.log("createService service step 18");
+          const fileUrl = formData.fileUrl;
+          console.log("createService service step 19");
+          if (!fileUrl) {
+            console.log("createService service step 20");
+            throw new ApiError(400, "Missing file URL for documents");
+          }
+          console.log("createService service step 21");
+          digitalProduct.fileUrl = fileUrl;
+          console.log("createService service step 22");
+        } else if (digitalProductType === "videoTutorials") {
+          console.log("createService service step 23");
+          const exclusiveContent = JSON.parse(
+            formData.exclusiveContent || "[]"
+          );
+          console.log("createService service step 24");
+          if (!exclusiveContent.length) {
+            console.log("createService service step 25");
+            throw new ApiError(
+              400,
+              "Missing exclusive content for video tutorials"
+            );
+          }
+          console.log("createService service step 26");
+          const videoTutorial = { exclusiveContent };
+          const videoTutorialId =
+            await this.MentorRepository.createVideoTutorial(videoTutorial);
+          console.log("createService service step 27");
+          if (!videoTutorialId) {
+            console.log("createService service step 28");
+            throw new ApiError(500, "Failed to create video tutorial");
+          }
+          digitalProduct.videoTutorials = [videoTutorialId];
+        }
+        console.log("createService service step 29");
+        serviceId = await this.MentorRepository.createDigitalProduct(
+          digitalProduct
+        );
+        console.log("createService service step 30");
+        if (!serviceId) {
+          console.log("createService service step 31");
+          throw new ApiError(500, "Failed to create digital product");
+        }
+      } else {
+        console.log("createService service step 32");
+        throw new ApiError(400, "Invalid service type");
+      }
+      console.log("createService service step 33");
+      service.serviceId = serviceId;
+      const newService = await this.MentorRepository.createService(service);
+      if (!newService) {
+        console.log("createService service step 34");
+        throw new ApiError(500, "Failed to create service");
+      }
+      console.log("createService service step 35");
+      return newService;
+    } catch (error) {
+      console.log("createService service step 36");
+      console.error("Error in createService:", error);
+      throw error;
     }
   }
 }

@@ -4,7 +4,11 @@ import { inMentorRepository } from "../interface/inMentorRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import Mentor from "../../models/mentorModel";
 import { Stats } from "fs";
-
+import OnlineService from "../../models/onlineServiceModel";
+import DigitalProduct from "../../models/digitalProductsModel";
+import VideoTutorial from "../../models/videoTutorialModel";
+import Service from "../../models/serviceModel";
+import { EService } from "../../entities/serviceEntity";
 export default class MentorRepository implements inMentorRepository {
   async createMentor(mentorData: EMentor): Promise<EMentor | null> {
     console.log("mentor repo statt 1", mentorData);
@@ -39,5 +43,73 @@ export default class MentorRepository implements inMentorRepository {
     );
     console.log("mentor repo updateMentorStatus repsonse", response);
     return response;
+  }
+
+  //create servcie
+  async createService(service: Record<string, any>): Promise<EService | null> {
+    try {
+      console.log("createService repo step 1");
+
+      const newService = new Service(service);
+      console.log("createService repo step 2");
+      await newService.save();
+      console.log("createService repo step 3");
+      return newService;
+    } catch (error) {
+      console.log("createService repo step 4");
+      console.error("Error creating service:", error);
+      throw new ApiError(500, "Failed to create service");
+    }
+  }
+
+  async createOnlineService(
+    onlineService: Record<string, any>
+  ): Promise<string> {
+    try {
+      console.log("createOnlineService repo step 1");
+      const newOnlineService = new OnlineService(onlineService);
+      console.log("createOnlineService repo step 2");
+      await newOnlineService.save();
+      console.log("createOnlineService repo step 3");
+      return newOnlineService._id.toString();
+    } catch (error) {
+      console.log("createOnlineService repo step 4");
+      console.error("Error creating online service:", error);
+      throw new ApiError(500, "Failed to create online service");
+    }
+  }
+
+  async createDigitalProduct(
+    digitalProduct: Record<string, any>
+  ): Promise<string> {
+    try {
+      console.log("createDigitalProduct repo step 1");
+      const newDigitalProduct = new DigitalProduct(digitalProduct);
+      console.log("createDigitalProduct repo step 2");
+      await newDigitalProduct.save();
+      console.log("createDigitalProduct repo step 3");
+      return newDigitalProduct._id.toString();
+    } catch (error) {
+      console.log("createDigitalProduct repo step 4");
+      console.error("Error creating digital product:", error);
+      throw new ApiError(500, "Failed to create digital product");
+    }
+  }
+
+  async createVideoTutorial(
+    videoTutorial: Record<string, any>
+  ): Promise<string> {
+    try {
+      console.log("createVideoTutorial repo step 1");
+      const newVideoTutorial = new VideoTutorial(videoTutorial);
+      console.log("createVideoTutorial repo step 2");
+      await newVideoTutorial.save();
+      console.log("createVideoTutorial repo step 3");
+      return newVideoTutorial._id.toString();
+    } catch (error) {
+      console.log("createVideoTutorial repo step 4");
+      console.error("Error creating video tutorial:", error);
+      throw new ApiError(500, "Failed to create video tutorial");
+    }
   }
 }
