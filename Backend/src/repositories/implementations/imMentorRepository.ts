@@ -46,10 +46,9 @@ export default class MentorRepository implements inMentorRepository {
   }
 
   //create servcie
-  async createService(service: Record<string, any>): Promise<EService | null> {
+  async createService(service: Partial<EService>): Promise<EService | null> {
     try {
-      console.log("createService repo step 1");
-
+      console.log("createService repo step 1", service);
       const newService = new Service(service);
       console.log("createService repo step 2");
       await newService.save();

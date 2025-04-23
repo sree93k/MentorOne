@@ -14,4 +14,5 @@ export interface inUploadService {
     fileType: string,
     folder: string
   ): Promise<{ url: string; key: string }>;
+  S3generatePresignedUrlForGet(key: string): Promise<string>;
 }

@@ -25,8 +25,32 @@ import { Label } from "@/components/ui/label";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { CreateService } from "@/services/mentorService";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import toast from "react-hot-toast";
+
+// Define form values type
+interface FormValues {
+  type: "1-1-call" | "priority-dm" | "digital-products";
+  title: string;
+  shortDescription: string;
+  longDescription?: string;
+  duration?: number;
+  amount: number;
+  oneToOneType?: "chat" | "video";
+  pdfFile?: File | null | undefined;
+  exclusiveContent?: Array<{
+    season: string;
+    episodes: Array<{
+      episode: string;
+      title: string;
+      description: string;
+      video: File;
+    }>;
+  }>;
+  selectedTab?: "digital-product" | "exclusive-content" | "";
+}
+
 // Yup validation schema
 const serviceValidationSchema = Yup.object().shape({
   type: Yup.string()
@@ -52,11 +76,13 @@ const serviceValidationSchema = Yup.object().shape({
     is: (type: string) => ["1-1-call", "priority-dm"].includes(type),
     then: (schema) =>
       schema
+        .typeError("Duration must be a number")
         .min(5, "Duration must be at least 5 minutes")
         .required("Duration is required"),
     otherwise: (schema) => schema.optional(),
   }),
   amount: Yup.number()
+    .typeError("Amount must be a number")
     .min(0, "Amount cannot be negative")
     .required("Amount is required"),
   oneToOneType: Yup.string().when("type", {
@@ -78,7 +104,7 @@ const serviceValidationSchema = Yup.object().shape({
             value && value instanceof File && value.type === "application/pdf"
           );
         }),
-    otherwise: (schema) => schema.optional(),
+    otherwise: (schema) => schema.optional().nullable(),
   }),
   exclusiveContent: Yup.array().when(["type", "selectedTab"], {
     is: (type: string, selectedTab: string) =>
@@ -95,18 +121,37 @@ const serviceValidationSchema = Yup.object().shape({
                 description: Yup.string().required(
                   "Episode description is required"
                 ),
-                video: Yup.mixed().required("Video file is required"),
+                video: Yup.mixed()
+                  .required("Video file is required")
+                  .test(
+                    "fileType",
+                    "File must be a video (mp4, mov, avi)",
+                    (value) => {
+                      return (
+                        value &&
+                        value instanceof File &&
+                        [
+                          "video/mp4",
+                          "video/quicktime",
+                          "video/x-msvideo",
+                        ].includes(value.type)
+                      );
+                    }
+                  ),
               })
             ),
           })
         )
         .min(1, "At least one season with episodes is required"),
-    otherwise: (schema) => schema.optional(),
+    otherwise: (schema) => schema.optional().nullable(),
   }),
+  selectedTab: Yup.string()
+    .oneOf(["digital-product", "exclusive-content", ""])
+    .optional(),
 });
 
 interface ServiceType {
-  id: string;
+  id: "1-1-call" | "priority-dm" | "digital-products";
   title: string;
   icon: React.ReactNode;
   description: string;
@@ -135,43 +180,81 @@ const serviceTypes: ServiceType[] = [
 
 const CreateServices: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<
+    "1-1-call" | "priority-dm" | "digital-products"
+  >("1-1-call");
   const [oneToOneType, setOneToOneType] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("digital-product");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedTab, setSelectedTab] = useState<
+    "digital-product" | "exclusive-content" | ""
+  >("digital-product");
+
   const {
     control,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
-  } = useForm({
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
     resolver: yupResolver(serviceValidationSchema),
     defaultValues: {
-      type: "",
+      type: "1-1-call",
       title: "",
       shortDescription: "",
       longDescription: "",
       duration: undefined,
       amount: undefined,
       oneToOneType: "",
-      pdfFile: null,
+      pdfFile: undefined,
       exclusiveContent: [],
-      selectedTab: "digital-product",
+      selectedTab: "",
     },
   });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const user = useSelector((state: RootState) => state.user.user);
+
+  // Log form errors for debugging
   useEffect(() => {
-    setSelectedType("1-1-call");
-    setValue("type", "1-1-call");
-  }, [setValue]);
+    if (Object.keys(errors).length > 0) {
+      console.log("Form validation errors:", errors);
+      toast.error("Please fix the form errors before submitting.");
+    }
+  }, [errors]);
+
+  useEffect(() => {
+    console.log("Selected Type:", selectedType);
+    console.log("Selected Tab:", selectedTab);
+    // Reset form when selectedType changes
+    reset({
+      type: selectedType,
+      title: "",
+      shortDescription: "",
+      longDescription: "",
+      duration: undefined,
+      amount: undefined,
+      oneToOneType: "",
+      pdfFile: undefined,
+      exclusiveContent: [],
+      selectedTab: selectedType === "digital-products" ? "digital-product" : "",
+    });
+    setSelectedFile(null);
+    setOneToOneType(null);
+    setSelectedTab(
+      selectedType === "digital-products" ? "digital-product" : ""
+    );
+  }, [selectedType, reset]);
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    } else {
+      console.error("File input ref is not set");
+      toast.error("File input is not available");
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,17 +262,18 @@ const CreateServices: React.FC = () => {
     if (file && file.type === "application/pdf") {
       if (file.size > 10 * 1024 * 1024) {
         // 10MB limit
-        alert("File size exceeds 10MB limit.");
+        toast.error("File size exceeds 10MB limit.");
         e.target.value = "";
         return;
       }
       setSelectedFile(file);
       setValue("pdfFile", file);
+      toast.success("PDF selected successfully!");
     } else {
-      alert("Please upload a valid PDF file.");
+      toast.error("Please upload a valid PDF file.");
       e.target.value = "";
       setSelectedFile(null);
-      setValue("pdfFile", null);
+      setValue("pdfFile", undefined);
     }
   };
 
@@ -229,6 +313,7 @@ const CreateServices: React.FC = () => {
         },
       ]);
     }
+    toast.success("Video added to exclusive content!");
   };
 
   const onRemoveEpisode = (seasonIndex: number, episodeIndex: number) => {
@@ -238,13 +323,15 @@ const CreateServices: React.FC = () => {
       updatedContent.splice(seasonIndex, 1);
     }
     setValue("exclusiveContent", updatedContent);
+    toast.success("Episode removed successfully!");
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: FormValues) => {
+    console.log("onSubmit called with data:", data);
     try {
       const formData = new FormData();
       const mentorId = user?._id;
-      console.log("menotr id is >", mentorId);
+      console.log("Mentor ID:", mentorId);
 
       if (!mentorId) {
         throw new Error("Mentor ID not found. Please log in again.");
@@ -261,13 +348,15 @@ const CreateServices: React.FC = () => {
       formData.append("title", data.title);
       formData.append("shortDescription", data.shortDescription);
       formData.append("amount", data.amount.toString());
-      formData.append("selectedTab", data.selectedTab); // Add selectedTab
+      if (data.selectedTab && data.type === "digital-products") {
+        formData.append("selectedTab", data.selectedTab);
+      }
 
       if (data.type === "1-1-call" || data.type === "priority-dm") {
-        formData.append("duration", data.duration.toString());
-        formData.append("longDescription", data.longDescription);
+        formData.append("duration", data.duration!.toString());
+        formData.append("longDescription", data.longDescription!);
         if (data.type === "1-1-call") {
-          formData.append("oneToOneType", data.oneToOneType);
+          formData.append("oneToOneType", data.oneToOneType!);
         }
       }
 
@@ -285,61 +374,66 @@ const CreateServices: React.FC = () => {
         data.selectedTab === "exclusive-content"
       ) {
         formData.append("digitalProductType", "videoTutorials");
-        data.exclusiveContent.forEach(
-          (
-            season: {
-              season: string;
-              episodes: {
-                episode: string;
-                title: string;
-                description: string;
-                video: File;
-              }[];
-            },
-            seasonIndex: number
-          ) => {
-            formData.append(
-              `exclusiveContent[${seasonIndex}][season]`,
-              season.season
-            );
-            season.episodes.forEach(
-              (
-                episode: {
+        if (data.exclusiveContent && data.exclusiveContent.length > 0) {
+          data.exclusiveContent.forEach(
+            (
+              season: {
+                season: string;
+                episodes: {
                   episode: string;
                   title: string;
                   description: string;
                   video: File;
-                },
-                episodeIndex: number
-              ) => {
-                formData.append(
-                  `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`,
-                  episode.episode
-                );
-                formData.append(
-                  `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`,
-                  episode.title
-                );
-                formData.append(
-                  `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`,
-                  episode.description
-                );
-                formData.append(
-                  `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`,
-                  episode.video
-                );
-              }
-            );
-          }
-        );
+                }[];
+              },
+              seasonIndex: number
+            ) => {
+              formData.append(
+                `exclusiveContent[${seasonIndex}][season]`,
+                season.season
+              );
+              season.episodes.forEach(
+                (
+                  episode: {
+                    episode: string;
+                    title: string;
+                    description: string;
+                    video: File;
+                  },
+                  episodeIndex: number
+                ) => {
+                  formData.append(
+                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`,
+                    episode.episode
+                  );
+                  formData.append(
+                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`,
+                    episode.title
+                  );
+                  formData.append(
+                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`,
+                    episode.description
+                  );
+                  formData.append(
+                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`,
+                    episode.video
+                  );
+                }
+              );
+            }
+          );
+        }
       }
 
+      console.log("Submitting FormData:", formData);
       await CreateService(formData);
-      alert("Service created successfully!");
+      toast.success("Service created successfully!");
       navigate(-1);
     } catch (error: any) {
       console.error("Error creating service:", error);
-      alert(`Failed to create service: ${error.message || "Unknown error"}`);
+      toast.error(
+        `Failed to create service: ${error.message || "Unknown error"}`
+      );
     }
   };
 
@@ -353,6 +447,20 @@ const CreateServices: React.FC = () => {
       </div>
 
       <div className="max-w-4xl mx-auto">
+        {/* Display all form errors at the top */}
+        {Object.keys(errors).length > 0 && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+            <p>Please fix the following errors:</p>
+            <ul className="list-disc ml-4">
+              {Object.entries(errors).map(([field, error]) => (
+                <li key={field}>
+                  {field}: {error?.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="mb-10">
           <h2 className="text-lg font-semibold mb-4">Select Type</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -462,7 +570,12 @@ const CreateServices: React.FC = () => {
                       type="number"
                       placeholder="30"
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      onChange={(e) => {
+                        const value = e.target.value
+                          ? parseInt(e.target.value, 10)
+                          : undefined;
+                        field.onChange(value);
+                      }}
                     />
                   )}
                 />
@@ -511,9 +624,12 @@ const CreateServices: React.FC = () => {
                         className="pl-8"
                         placeholder="0"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value
+                            ? parseInt(e.target.value, 10)
+                            : undefined;
+                          field.onChange(value);
+                        }}
                       />
                     )}
                   />
@@ -553,7 +669,10 @@ const CreateServices: React.FC = () => {
           <Tabs
             value={selectedTab}
             onValueChange={(value) => {
-              setSelectedTab(value);
+              console.log("Changing selectedTab to:", value);
+              setSelectedTab(
+                value as "digital-product" | "exclusive-content" | ""
+              );
               setValue("selectedTab", value);
             }}
             className="mb-8"
@@ -642,9 +761,12 @@ const CreateServices: React.FC = () => {
                             className="pl-8"
                             placeholder="0"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
+                            onChange={(e) => {
+                              const value = e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : undefined;
+                              field.onChange(value);
+                            }}
                           />
                         )}
                       />
@@ -755,9 +877,12 @@ const CreateServices: React.FC = () => {
                             className="pl-8"
                             placeholder="0"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
+                            onChange={(e) => {
+                              const value = e.target.value
+                                ? parseInt(e.target.value, 10)
+                                : undefined;
+                              field.onChange(value);
+                            }}
                           />
                         )}
                       />
@@ -778,7 +903,10 @@ const CreateServices: React.FC = () => {
                         Upload Videos
                       </Label>
                       <Button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => {
+                          console.log("Opening video upload modal");
+                          setIsModalOpen(true);
+                        }}
                         className="bg-black text-white"
                       >
                         Add Video
@@ -840,17 +968,24 @@ const CreateServices: React.FC = () => {
         )}
 
         <Button
-          onClick={handleSubmit(onSubmit)}
-          className="!my-14 w-full bg-black text-white text-lg p-8"
+          onClick={() => {
+            console.log("Create button clicked");
+            handleSubmit(onSubmit)();
+          }}
+          disabled={isSubmitting}
+          className="!my-14 w-full bg-black text-white text-lg p-8 disabled:opacity-50"
           size="lg"
         >
-          Create
+          {isSubmitting ? "Creating..." : "Create"}
         </Button>
       </div>
 
       <UploadVideoModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          console.log("Closing video upload modal");
+          setIsModalOpen(false);
+        }}
         onAddVideo={onAddVideo}
       />
       <PDFViewerModal
