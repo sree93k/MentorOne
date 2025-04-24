@@ -15,7 +15,7 @@ export const authenticate = (
   next: NextFunction
 ): void => {
   console.log("autheticte start 1");
-  console.log("request  IS ", req);
+  // console.log("request  IS ", req);
 
   const token =
     req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
