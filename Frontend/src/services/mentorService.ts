@@ -79,9 +79,99 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
 };
 
 //============================
+// export const CreateService = async (formData: FormData) => {
+//   try {
+//     console.log("CreateService service step 1", formData);
+
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+
+//     const type = formData.get("type") as string;
+//     const digitalProductType = formData.get("digitalProductType") as
+//       | string
+//       | null;
+//     let pdfUrl: string | null = null;
+//     let exclusiveContent: any[] = [];
+
+//     if (type === "DigitalProducts" && digitalProductType === "documents") {
+//       const pdfFile = formData.get("pdfFile") as File;
+//       if (pdfFile) {
+//         console.log("Uploading PDF:", pdfFile.name);
+//         pdfUrl = await uploadToS3WithPresignedUrl(pdfFile, "pdfs");
+//         console.log("Uploaded PDF URL:", pdfUrl);
+//         formData.delete("pdfFile");
+//         formData.append("fileUrl", pdfUrl);
+//       }
+//     }
+
+//     if (type === "DigitalProducts" && digitalProductType === "videoTutorials") {
+//       let seasonIndex = 0;
+//       while (formData.get(`exclusiveContent[${seasonIndex}][season]`)) {
+//         const season = formData.get(
+//           `exclusiveContent[${seasonIndex}][season]`
+//         ) as string;
+//         const episodes: any[] = [];
+//         let episodeIndex = 0;
+//         while (
+//           formData.get(
+//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`
+//           )
+//         ) {
+//           const episode = formData.get(
+//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`
+//           ) as string;
+//           const title = formData.get(
+//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`
+//           ) as string;
+//           const description = formData.get(
+//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`
+//           ) as string;
+//           const video = formData.get(
+//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`
+//           ) as File;
+
+//           if (!video) {
+//             throw new Error(`Missing video file for episode ${episodeIndex}`);
+//           }
+
+//           console.log("Uploading video:", video.name);
+//           const videoUrl = await uploadToS3WithPresignedUrl(video, "videos");
+//           console.log("Uploaded video URL:", videoUrl);
+//           episodes.push({ episode, title, description, videoUrl });
+
+//           formData.delete(
+//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`
+//           );
+//           episodeIndex++;
+//         }
+//         exclusiveContent.push({ season, episodes });
+//         seasonIndex++;
+//       }
+//       formData.delete("exclusiveContent");
+//       formData.append("exclusiveContent", JSON.stringify(exclusiveContent));
+//     }
+//     console.log("formdatA FEORE TO CREATE SERVICE..", formData);
+
+//     console.log("Sending service creation request with FormData:", formData);
+//     const response = await api.post("/expert/createService", formData, {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     });
+
+//     console.log("Service creation response:", response.data);
+//     return response.data;
+//   } catch (error: any) {
+//     console.error("Error creating service:", error);
+//     throw new Error(`Failed to create service: ${error.message}`);
+//   }
+// };
 export const CreateService = async (formData: FormData) => {
   try {
-    console.log("CreateService service step 1");
+    console.log("CreateService service step 1", formData);
 
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
@@ -107,53 +197,100 @@ export const CreateService = async (formData: FormData) => {
     }
 
     if (type === "DigitalProducts" && digitalProductType === "videoTutorials") {
-      let seasonIndex = 0;
-      while (formData.get(`exclusiveContent[${seasonIndex}][season]`)) {
-        const season = formData.get(
-          `exclusiveContent[${seasonIndex}][season]`
-        ) as string;
-        const episodes: any[] = [];
+      // Process videos using the new naming convention
+      const videoCount = parseInt(formData.get("videoCount") as string, 10);
+
+      // Keep track of seasons we've seen to group episodes
+      const seasons: Record<string, any[]> = {};
+
+      // Process each video
+      for (let i = 0; i < videoCount; i++) {
+        // Find all video entries by iterating through potential indices
+        let seasonIndex = 0;
         let episodeIndex = 0;
-        while (
-          formData.get(
-            `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`
-          )
-        ) {
-          const episode = formData.get(
-            `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`
-          ) as string;
-          const title = formData.get(
-            `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`
-          ) as string;
-          const description = formData.get(
-            `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`
-          ) as string;
-          const video = formData.get(
-            `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`
-          ) as File;
+        let found = false;
 
-          if (!video) {
-            throw new Error(`Missing video file for episode ${episodeIndex}`);
+        // Find the right indices for this video (i)
+        while (seasonIndex < 100 && !found) {
+          // arbitrary limit
+          episodeIndex = 0;
+          while (episodeIndex < 100 && !found) {
+            // arbitrary limit
+            const videoKey = `video_${seasonIndex}_${episodeIndex}`;
+            const video = formData.get(videoKey) as File;
+
+            if (video) {
+              const season = formData.get(`${videoKey}_season`) as string;
+              const episode = formData.get(`${videoKey}_episode`) as string;
+              const title = formData.get(`${videoKey}_title`) as string;
+              const description = formData.get(
+                `${videoKey}_description`
+              ) as string;
+
+              console.log("Uploading video:", video.name);
+              const videoUrl = await uploadToS3WithPresignedUrl(
+                video,
+                "videos"
+              );
+              console.log("Uploaded video URL:", videoUrl);
+
+              // Create episode object
+              const episodeObject = {
+                episode,
+                title,
+                description,
+                videoUrl,
+              };
+
+              // Add to seasons map
+              if (!seasons[season]) {
+                seasons[season] = [];
+              }
+              seasons[season].push(episodeObject);
+
+              // Clean up FormData
+              formData.delete(videoKey);
+              formData.delete(`${videoKey}_season`);
+              formData.delete(`${videoKey}_episode`);
+              formData.delete(`${videoKey}_title`);
+              formData.delete(`${videoKey}_description`);
+
+              found = true;
+            }
+            episodeIndex++;
           }
-
-          console.log("Uploading video:", video.name);
-          const videoUrl = await uploadToS3WithPresignedUrl(video, "videos");
-          console.log("Uploaded video URL:", videoUrl);
-          episodes.push({ episode, title, description, videoUrl });
-
-          formData.delete(
-            `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`
-          );
-          episodeIndex++;
+          seasonIndex++;
         }
-        exclusiveContent.push({ season, episodes });
-        seasonIndex++;
       }
-      formData.delete("exclusiveContent");
-      formData.append("exclusiveContent", JSON.stringify(exclusiveContent));
+
+      // Convert seasons map to expected array format
+      exclusiveContent = Object.entries(seasons).map(([season, episodes]) => ({
+        season,
+        episodes,
+      }));
+
+      // Clean up FormData
+      formData.delete("videoCount");
+
+      // Create a new FormData object with the correct structure
+      const newFormData = new FormData();
+
+      // Copy all fields except exclusiveContent
+      for (const [key, value] of formData.entries()) {
+        if (key !== "exclusiveContent") {
+          newFormData.append(key, value);
+        }
+      }
+
+      // Add exclusiveContent as a properly structured object
+      newFormData.append("exclusiveContent", JSON.stringify(exclusiveContent));
+
+      // Replace the original FormData
+      formData = newFormData;
     }
 
-    console.log("Sending service creation request with FormData:", formData);
+    console.log("FormData before to create service:", formData);
+
     const response = await api.post("/expert/createService", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -168,7 +305,6 @@ export const CreateService = async (formData: FormData) => {
     throw new Error(`Failed to create service: ${error.message}`);
   }
 };
-
 // Other unrelated functions (kept for completeness)
 interface UpdateUserDataPayload {
   userType: string;

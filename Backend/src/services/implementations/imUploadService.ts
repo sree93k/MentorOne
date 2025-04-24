@@ -10,7 +10,7 @@ import imBaseRepository from "../../repositories/implementations/imBaseRepositor
 import Users from "../../models/userModel";
 import { EUsers } from "../../entities/userEntity";
 import { s3 } from "../../config/awsS3";
-const BUCKET_NAME = process.env.S3_BUCKET_NAME;
+const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 export default class UploadService implements inUploadService {
   private BaseRepository: inBaseRepository<EUsers>;
 

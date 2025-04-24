@@ -326,6 +326,116 @@ const CreateServices: React.FC = () => {
     toast.success("Episode removed successfully!");
   };
 
+  // const onSubmit = async (data: FormValues) => {
+  //   console.log("onSubmit called with data:", data);
+  //   try {
+  //     const formData = new FormData();
+  //     const mentorId = user?._id;
+  //     console.log("Mentor ID:", mentorId);
+
+  //     if (!mentorId) {
+  //       throw new Error("Mentor ID not found. Please log in again.");
+  //     }
+  //     formData.append("mentorId", mentorId);
+  //     formData.append(
+  //       "type",
+  //       data.type === "1-1-call"
+  //         ? "1-1Call"
+  //         : data.type === "priority-dm"
+  //         ? "priorityDM"
+  //         : "DigitalProducts"
+  //     );
+  //     formData.append("title", data.title);
+  //     formData.append("shortDescription", data.shortDescription);
+  //     formData.append("amount", data.amount.toString());
+  //     if (data.selectedTab && data.type === "digital-products") {
+  //       formData.append("selectedTab", data.selectedTab);
+  //     }
+
+  //     if (data.type === "1-1-call" || data.type === "priority-dm") {
+  //       formData.append("duration", data.duration!.toString());
+  //       formData.append("longDescription", data.longDescription!);
+  //       if (data.type === "1-1-call") {
+  //         formData.append("oneToOneType", data.oneToOneType!);
+  //       }
+  //     }
+
+  //     if (
+  //       data.type === "digital-products" &&
+  //       data.selectedTab === "digital-product" &&
+  //       data.pdfFile
+  //     ) {
+  //       formData.append("digitalProductType", "documents");
+  //       formData.append("pdfFile", data.pdfFile);
+  //     }
+
+  //     if (
+  //       data.type === "digital-products" &&
+  //       data.selectedTab === "exclusive-content"
+  //     ) {
+  //       formData.append("digitalProductType", "videoTutorials");
+  //       if (data.exclusiveContent && data.exclusiveContent.length > 0) {
+  //         data.exclusiveContent.forEach(
+  //           (
+  //             season: {
+  //               season: string;
+  //               episodes: {
+  //                 episode: string;
+  //                 title: string;
+  //                 description: string;
+  //                 video: File;
+  //               }[];
+  //             },
+  //             seasonIndex: number
+  //           ) => {
+  //             formData.append(
+  //               `exclusiveContent[${seasonIndex}][season]`,
+  //               season.season
+  //             );
+  //             season.episodes.forEach(
+  //               (
+  //                 episode: {
+  //                   episode: string;
+  //                   title: string;
+  //                   description: string;
+  //                   video: File;
+  //                 },
+  //                 episodeIndex: number
+  //               ) => {
+  //                 formData.append(
+  //                   `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`,
+  //                   episode.episode
+  //                 );
+  //                 formData.append(
+  //                   `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`,
+  //                   episode.title
+  //                 );
+  //                 formData.append(
+  //                   `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`,
+  //                   episode.description
+  //                 );
+  //                 formData.append(
+  //                   `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`,
+  //                   episode.video
+  //                 );
+  //               }
+  //             );
+  //           }
+  //         );
+  //       }
+  //     }
+
+  //     console.log("Submitting FormData:", formData);
+  //     await CreateService(formData);
+  //     toast.success("Service created successfully!");
+  //     navigate(-1);
+  //   } catch (error: any) {
+  //     console.error("Error creating service:", error);
+  //     toast.error(
+  //       `Failed to create service: ${error.message || "Unknown error"}`
+  //     );
+  //   }
+  // };
   const onSubmit = async (data: FormValues) => {
     console.log("onSubmit called with data:", data);
     try {
@@ -374,53 +484,33 @@ const CreateServices: React.FC = () => {
         data.selectedTab === "exclusive-content"
       ) {
         formData.append("digitalProductType", "videoTutorials");
+
+        // Add videos individually with a clear naming pattern
         if (data.exclusiveContent && data.exclusiveContent.length > 0) {
-          data.exclusiveContent.forEach(
-            (
-              season: {
-                season: string;
-                episodes: {
-                  episode: string;
-                  title: string;
-                  description: string;
-                  video: File;
-                }[];
-              },
-              seasonIndex: number
-            ) => {
-              formData.append(
-                `exclusiveContent[${seasonIndex}][season]`,
-                season.season
-              );
-              season.episodes.forEach(
-                (
-                  episode: {
-                    episode: string;
-                    title: string;
-                    description: string;
-                    video: File;
-                  },
-                  episodeIndex: number
-                ) => {
-                  formData.append(
-                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`,
-                    episode.episode
-                  );
-                  formData.append(
-                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`,
-                    episode.title
-                  );
-                  formData.append(
-                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`,
-                    episode.description
-                  );
-                  formData.append(
-                    `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`,
-                    episode.video
-                  );
-                }
-              );
-            }
+          // Don't add exclusiveContent directly to formData yet
+          // We'll map the videos with clear references instead
+
+          // Add metadata for each season/episode
+          data.exclusiveContent.forEach((season, seasonIndex) => {
+            season.episodes.forEach((episode, episodeIndex) => {
+              // Add the video file with a unique identifier
+              const videoKey = `video_${seasonIndex}_${episodeIndex}`;
+              formData.append(videoKey, episode.video);
+
+              // Add metadata for this video
+              formData.append(`${videoKey}_season`, season.season);
+              formData.append(`${videoKey}_episode`, episode.episode);
+              formData.append(`${videoKey}_title`, episode.title);
+              formData.append(`${videoKey}_description`, episode.description);
+            });
+          });
+
+          // Add the count of videos so the backend knows how many to process
+          formData.append(
+            "videoCount",
+            data.exclusiveContent
+              .reduce((count, season) => count + season.episodes.length, 0)
+              .toString()
           );
         }
       }
@@ -436,7 +526,6 @@ const CreateServices: React.FC = () => {
       );
     }
   };
-
   return (
     <div className="mx-40 py-6 border border-gray-200 bg-white">
       <div className="flex items-center gap-4 mb-8">
