@@ -10,4 +10,9 @@ export interface inMentorProfileService {
   // ): Promise<EService | null>;
   createService(formData: Record<string, any>): Promise<EService | null>;
   getAllServices(userId: string): Promise<EService[]>;
+  getServiceById(serviceId: string): Promise<EService | null>;
+  updateService(
+    serviceId: string,
+    formData: Record<string, any>
+  ): Promise<EService | null>;
 }

@@ -324,4 +324,189 @@ export default class MentorProfileService implements inMentorProfileService {
       throw new ApiError(500, `Failed to fetch services: ${error.message}`);
     }
   }
+
+  async getServiceById(serviceId: string): Promise<EService | null> {
+    try {
+      console.log("getServiceById service step 1: Fetching service", serviceId);
+      const service = await this.ServiceRepository.getServiceById(serviceId);
+      console.log("getServiceById service step 2: Service fetched", service);
+      return service;
+    } catch (error: any) {
+      console.error("getServiceById service error:", error);
+      throw new ApiError(500, `Failed to fetch service: ${error.message}`);
+    }
+  }
+
+  async updateService(
+    serviceId: string,
+    formData: Record<string, any>
+  ): Promise<EService | null> {
+    try {
+      console.log("updateService service step 1", formData);
+
+      const {
+        mentorId,
+        title,
+        shortDescription,
+        amount,
+        duration,
+        longDescription,
+        oneToOneType,
+        digitalProductType,
+        pdfFile,
+        pdfFile_url,
+        videoCount,
+      } = formData;
+
+      console.log("updateService service step 2: Parsed formData", {
+        mentorId,
+        title,
+        shortDescription,
+        amount,
+        duration,
+        longDescription,
+        oneToOneType,
+        digitalProductType,
+        pdfFile: pdfFile ? `File: ${pdfFile.originalname}` : null,
+        pdfFile_url,
+        videoCount,
+      });
+
+      if (!mentorId || !title || !shortDescription || !amount) {
+        console.log("updateService service step 3: Missing required fields");
+        throw new ApiError(
+          400,
+          "Missing required fields: mentorId, title, shortDescription, or amount"
+        );
+      }
+
+      const service: Partial<EService> = {
+        mentorId,
+        title,
+        shortDescription,
+        amount: parseFloat(amount),
+      };
+
+      console.log("updateService service step 4");
+
+      const existingService = await this.ServiceRepository.getServiceById(
+        serviceId
+      );
+      if (!existingService) {
+        console.log("updateService service step 5");
+        throw new ApiError(404, "Service not found");
+      }
+
+      if (
+        existingService.type === "1-1Call" ||
+        existingService.type === "priorityDM"
+      ) {
+        console.log("updateService service step 6");
+        if (duration) {
+          service.duration = parseInt(duration);
+        }
+        if (longDescription) {
+          service.longDescription = longDescription;
+        }
+        if (existingService.type === "1-1Call" && oneToOneType) {
+          service.oneToOneType = oneToOneType;
+        }
+      } else if (existingService.type === "DigitalProducts") {
+        console.log("updateService service step 7");
+        if (!digitalProductType) {
+          console.log("updateService service step 8");
+          throw new ApiError(400, "Digital product type is required");
+        }
+        service.digitalProductType = digitalProductType;
+        if (digitalProductType === "documents") {
+          console.log("updateService service step 9");
+          if (pdfFile && pdfFile_url) {
+            console.log("updateService service step 10");
+            service.fileUrl = pdfFile_url; // Use S3 URL
+          }
+        } else if (digitalProductType === "videoTutorials") {
+          console.log("updateService service step 11");
+          const exclusiveContent: any[] = [];
+          const videoCountNum = parseInt(videoCount || "0", 10);
+
+          for (let i = 0; i < videoCountNum; i++) {
+            let seasonIndex = 0;
+            let episodeIndex = 0;
+            let found = false;
+
+            while (seasonIndex < 100 && !found) {
+              episodeIndex = 0;
+              while (episodeIndex < 100 && !found) {
+                const videoKey = `video_${seasonIndex}_${episodeIndex}`;
+                if (formData[videoKey]) {
+                  const season = formData[`${videoKey}_season`];
+                  const episode = formData[`${videoKey}_episode`];
+                  const title = formData[`${videoKey}_title`];
+                  const description = formData[`${videoKey}_description`];
+                  const videoUrl =
+                    formData[`${videoKey}_url`] ||
+                    formData[`${videoKey}_videoUrl`];
+
+                  const seasonObj = exclusiveContent.find(
+                    (s) => s.season === season
+                  );
+                  const episodeObj = {
+                    episode,
+                    title,
+                    description,
+                    videoUrl,
+                  };
+
+                  if (seasonObj) {
+                    seasonObj.episodes.push(episodeObj);
+                  } else {
+                    exclusiveContent.push({
+                      season,
+                      episodes: [episodeObj],
+                    });
+                  }
+
+                  found = true;
+                }
+                episodeIndex++;
+              }
+              seasonIndex++;
+            }
+          }
+
+          if (videoCountNum > 0 && exclusiveContent.length === 0) {
+            console.log("updateService service step 12");
+            throw new ApiError(
+              400,
+              "Exclusive content is required for video tutorials"
+            );
+          }
+          if (exclusiveContent.length > 0) {
+            service.exclusiveContent = exclusiveContent;
+          }
+        }
+      } else {
+        console.log("updateService service step 13");
+        throw new ApiError(400, "Invalid service type");
+      }
+
+      console.log("updateService service step 14");
+      const updatedService = await this.ServiceRepository.updateService(
+        serviceId,
+        service
+      );
+      console.log("updateService service step 15");
+      if (!updatedService) {
+        console.log("updateService service step 16");
+        throw new ApiError(500, "Failed to update service");
+      }
+
+      console.log("updateService service step 17");
+      return updatedService;
+    } catch (error) {
+      console.log("updateService service step 18");
+      console.error("Error in updateService:", error);
+      throw error;
+    }
+  }
 }

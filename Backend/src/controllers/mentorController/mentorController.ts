@@ -192,5 +192,83 @@ class mentorController {
       next(error);
     }
   };
+
+  // New methods
+  public getServiceById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("getServiceById controller step 1");
+      const serviceId = req.params.id;
+      if (!serviceId) {
+        console.log("getServiceById controller step 2: No service ID");
+        throw new ApiError(400, "Service ID is required");
+      }
+      console.log("getServiceById controller step 2: Service ID", serviceId);
+
+      const service = await this.MentorProfileService.getServiceById(serviceId);
+      console.log("getServiceById controller step 3: Service fetched", service);
+
+      if (!service) {
+        throw new ApiError(404, "Service not found");
+      }
+
+      res.json(new ApiResponse(200, service, "Service fetched successfully"));
+    } catch (error) {
+      console.log("getServiceById controller step 4");
+      next(error);
+    }
+  };
+
+  public updateService = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("updateService controller step 1");
+      const serviceId = req.params.id;
+      // Merge req.body and req.files into formData
+      const formData: { [key: string]: any } = { ...req.body };
+      if (req.files && Array.isArray(req.files)) {
+        req.files.forEach((file: Express.MulterS3.File) => {
+          formData[file.fieldname] = file; // Store file object
+          if (file.location) {
+            formData[`${file.fieldname}_url`] = file.location; // Store S3 URL
+          }
+        });
+      }
+
+      // Log FormData contents
+      const formDataEntries: { [key: string]: any } = {};
+      for (const [key, value] of Object.entries(formData)) {
+        formDataEntries[key] =
+          value && value.location
+            ? `File: ${value.originalname} (S3 URL: ${value.location})`
+            : value;
+      }
+      console.log("Received updateService data:", serviceId, formDataEntries);
+      console.log("updateService controller step 2");
+
+      if (!serviceId) {
+        throw new ApiError(400, "Service ID is required");
+      }
+
+      const updatedService = await this.MentorProfileService.updateService(
+        serviceId,
+        formData
+      );
+      console.log("updateService controller step 3");
+
+      res.json(
+        new ApiResponse(200, updatedService, "Service updated successfully")
+      );
+    } catch (error) {
+      console.log("updateService controller step 4");
+      next(error);
+    }
+  };
 }
 export default new mentorController();

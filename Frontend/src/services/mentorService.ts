@@ -350,7 +350,19 @@ interface Service {
   duration?: number;
   amount: number;
   shortDescription: string;
+  longDescription?: string;
+  oneToOneType?: "chat" | "video";
   digitalProductType?: "documents" | "videoTutorials";
+  fileUrl?: string;
+  exclusiveContent?: Array<{
+    season: string;
+    episodes: Array<{
+      episode: string;
+      title: string;
+      description: string;
+      videoUrl: string;
+    }>;
+  }>;
   stats?: {
     views: number;
     bookings: number;
@@ -358,7 +370,6 @@ interface Service {
     conversions: string;
   };
 }
-
 export const getAllServices = async (): Promise<Service[]> => {
   try {
     console.log("MentorServiceAPI.getAllServices step 1: Making API call");
@@ -382,5 +393,62 @@ export const getAllServices = async (): Promise<Service[]> => {
   } catch (error: any) {
     console.error("MentorServiceAPI.getAllServices error:", error);
     throw new Error("Failed to fetch services");
+  }
+};
+
+export const getServiceById = async (serviceId: string): Promise<Service> => {
+  try {
+    console.log("getServiceById step 1: Fetching service", serviceId);
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.get(`/expert/service/${serviceId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log("getServiceById step 2: Service fetched", response.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("getServiceById error:", error);
+    throw new Error(`Failed to fetch service: ${error.message}`);
+  }
+};
+
+export const updateService = async (
+  serviceId: string,
+  formData: FormData
+): Promise<Service> => {
+  try {
+    console.log("updateService step 1: Updating service", serviceId);
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    // Log FormData contents
+    const formDataEntries: { [key: string]: any } = {};
+    for (const [key, value] of formData.entries()) {
+      formDataEntries[key] = value instanceof File ? value.name : value;
+    }
+    console.log("updateService step 2: FormData entries", formDataEntries);
+
+    const response = await api.put(
+      `/expert/updateService/${serviceId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    console.log("updateService step 3: Service updated", response.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("updateService error:", error);
+    throw new Error(`Failed to update service: ${error.message}`);
   }
 };

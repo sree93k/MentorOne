@@ -8,6 +8,7 @@ import BookingsPage from "./MentorSubPages/BookingPage";
 import PriorityDMPage from "./MentorSubPages/PriorityDMPage";
 import TestimonialPage from "./MentorSubPages/TestimonialPage";
 import CalendarPage from "./MentorSubPages/CalenderPage";
+import ServiceEditPage from "./MentorSubPages/ServiceEditPage";
 //=======
 const Footer = lazy(() => import("@/components/landing/Footer"));
 const MentorSidebar = lazy(() => import("@/components/mentor/MentorSidebar"));
@@ -37,6 +38,7 @@ export const MentorPage = () => {
             <Route path="/prioritydm" element={<PriorityDMPage />} />
             <Route path="/testimonials" element={<TestimonialPage />} />
             <Route path="/calender" element={<CalendarPage />} />
+            <Route path="/editService/:id" element={<ServiceEditPage />} />
           </Routes>
         </Suspense>
       </main>

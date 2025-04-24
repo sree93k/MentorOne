@@ -1,39 +1,29 @@
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Calendar,
-  MessageSquare,
-  MonitorPlay,
-  X,
-} from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, X } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-
-import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import UploadVideoModal from "@/components/mentor/VideoUploadModal";
-import PDFViewerModal from "@/components/modal/PdfViewModal";
-import * as Yup from "yup";
 import { Label } from "@/components/ui/label";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { CreateService } from "@/services/mentorService";
+import * as Yup from "yup";
+import toast from "react-hot-toast";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import toast from "react-hot-toast";
+import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
+import { getServiceById, updateService } from "@/services/mentorService";
+import UploadVideoModal from "@/components/mentor/VideoUploadModal";
+import PDFViewerModal from "@/components/modal/PdfViewModal";
 
 // Define form values type
 interface FormValues {
-  type: "1-1-call" | "priority-dm" | "digital-products";
   title: string;
   shortDescription: string;
   longDescription?: string;
@@ -47,152 +37,114 @@ interface FormValues {
       episode: string;
       title: string;
       description: string;
-      video: File;
+      video?: File;
+      videoUrl?: string;
     }>;
   }>;
-  selectedTab?: "digital-product" | "exclusive-content" | "";
 }
 
 // Yup validation schema
-const serviceValidationSchema = Yup.object().shape({
-  type: Yup.string()
-    .oneOf(["1-1-call", "priority-dm", "digital-products"])
-    .required("Service type is required"),
-  title: Yup.string()
-    .min(3, "Title must be at least 3 characters")
-    .max(100, "Title cannot exceed 100 characters")
-    .required("Service title is required"),
-  shortDescription: Yup.string()
-    .min(10, "Short description must be at least 10 characters")
-    .max(200, "Short description cannot exceed 200 characters")
-    .required("Short description is required"),
-  longDescription: Yup.string().when("type", {
-    is: (type: string) => ["1-1-call", "priority-dm"].includes(type),
-    then: (schema) =>
-      schema
-        .min(20, "Long description must be at least 20 characters")
-        .required("Long description is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  duration: Yup.number().when("type", {
-    is: (type: string) => ["1-1-call", "priority-dm"].includes(type),
-    then: (schema) =>
-      schema
-        .typeError("Duration must be a number")
-        .min(5, "Duration must be at least 5 minutes")
-        .required("Duration is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  amount: Yup.number()
-    .typeError("Amount must be a number")
-    .min(0, "Amount cannot be negative")
-    .required("Amount is required"),
-  oneToOneType: Yup.string().when("type", {
-    is: "1-1-call",
-    then: (schema) =>
-      schema
-        .oneOf(["chat", "video"], "Select a valid 1:1 call type")
-        .required("1:1 call type is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  pdfFile: Yup.mixed().when(["type", "selectedTab"], {
-    is: (type: string, selectedTab: string) =>
-      type === "digital-products" && selectedTab === "digital-product",
-    then: (schema) =>
-      schema
-        .required("PDF file is required")
-        .test("fileType", "File must be a PDF", (value) => {
-          return (
-            value && value instanceof File && value.type === "application/pdf"
-          );
-        }),
-    otherwise: (schema) => schema.optional().nullable(),
-  }),
-  exclusiveContent: Yup.array().when(["type", "selectedTab"], {
-    is: (type: string, selectedTab: string) =>
-      type === "digital-products" && selectedTab === "exclusive-content",
-    then: (schema) =>
-      schema
-        .of(
-          Yup.object().shape({
-            season: Yup.string().required("Season is required"),
-            episodes: Yup.array().of(
-              Yup.object().shape({
-                episode: Yup.string().required("Episode number is required"),
-                title: Yup.string().required("Episode title is required"),
-                description: Yup.string().required(
-                  "Episode description is required"
-                ),
-                video: Yup.mixed()
-                  .required("Video file is required")
-                  .test(
-                    "fileType",
-                    "File must be a video (mp4, mov, avi)",
-                    (value) => {
+const serviceValidationSchema = Yup.object().shape(
+  {
+    title: Yup.string()
+      .min(3, "Title must be at least 3 characters")
+      .max(100, "Title cannot exceed 100 characters")
+      .required("Service title is required"),
+    shortDescription: Yup.string()
+      .min(10, "Short description must be at least 10 characters")
+      .max(200, "Short description cannot exceed 200 characters")
+      .required("Short description is required"),
+    longDescription: Yup.string().when("type", {
+      is: (type: string) => ["1-1Call", "priorityDM"].includes(type),
+      then: (schema) =>
+        schema
+          .min(20, "Long description must be at least 20 characters")
+          .required("Long description is required"),
+      otherwise: (schema) => schema.optional(),
+    }),
+    duration: Yup.number().when("type", {
+      is: (type: string) => ["1-1Call", "priorityDM"].includes(type),
+      then: (schema) =>
+        schema
+          .typeError("Duration must be a number")
+          .min(5, "Duration must be at least 5 minutes")
+          .required("Duration is required"),
+      otherwise: (schema) => schema.optional(),
+    }),
+    amount: Yup.number()
+      .typeError("Amount must be a number")
+      .min(0, "Amount cannot be negative")
+      .required("Amount is required"),
+    oneToOneType: Yup.string().when("type", {
+      is: "1-1Call",
+      then: (schema) =>
+        schema
+          .oneOf(["chat", "video"], "Select a valid 1:1 call type")
+          .required("1:1 call type is required"),
+      otherwise: (schema) => schema.optional(),
+    }),
+    pdfFile: Yup.mixed().when(["type", "digitalProductType"], {
+      is: (type: string, digitalProductType: string) =>
+        type === "DigitalProducts" && digitalProductType === "documents",
+      then: (schema) =>
+        schema
+          .test("fileType", "File must be a PDF", (value) => {
+            return (
+              !value ||
+              (value instanceof File && value.type === "application/pdf")
+            );
+          })
+          .optional(),
+      otherwise: (schema) => schema.optional().nullable(),
+    }),
+    exclusiveContent: Yup.array().when(["type", "digitalProductType"], {
+      is: (type: string, digitalProductType: string) =>
+        type === "DigitalProducts" && digitalProductType === "videoTutorials",
+      then: (schema) =>
+        schema
+          .of(
+            Yup.object().shape({
+              season: Yup.string().required("Season is required"),
+              episodes: Yup.array().of(
+                Yup.object().shape({
+                  episode: Yup.string().required("Episode number is required"),
+                  title: Yup.string().required("Episode title is required"),
+                  description: Yup.string().required(
+                    "Episode description is required"
+                  ),
+                  video: Yup.mixed().test(
+                    "videoOrUrl",
+                    "Either a video file or video URL is required",
+                    (value, context) => {
+                      const { videoUrl } = context.parent;
                       return (
-                        value &&
-                        value instanceof File &&
-                        [
-                          "video/mp4",
-                          "video/quicktime",
-                          "video/x-msvideo",
-                        ].includes(value.type)
+                        (value && value instanceof File) ||
+                        (videoUrl && typeof videoUrl === "string")
                       );
                     }
                   ),
-              })
-            ),
-          })
-        )
-        .min(1, "At least one season with episodes is required"),
-    otherwise: (schema) => schema.optional().nullable(),
-  }),
-  selectedTab: Yup.string()
-    .oneOf(["digital-product", "exclusive-content", ""])
-    .optional(),
-});
-
-interface ServiceType {
-  id: "1-1-call" | "priority-dm" | "digital-products";
-  title: string;
-  icon: React.ReactNode;
-  description: string;
-}
-
-const serviceTypes: ServiceType[] = [
-  {
-    id: "1-1-call",
-    title: "1:1 Call",
-    icon: <Calendar className="h-8 w-8 text-primary" />,
-    description: "Schedule 1:1 Video Call or Chat",
+                  videoUrl: Yup.string().optional(),
+                })
+              ),
+            })
+          )
+          .min(1, "At least one season with episodes is required"),
+      otherwise: (schema) => schema.optional().nullable(),
+    }),
   },
-  {
-    id: "priority-dm",
-    title: "Priority DM",
-    icon: <MessageSquare className="h-8 w-8 text-primary" />,
-    description: "Setup priority Q&A messages",
-  },
-  {
-    id: "digital-products",
-    title: "Digital Products",
-    icon: <MonitorPlay className="h-8 w-8 text-primary" />,
-    description: "Sell your digital products",
-  },
-];
+  [["type", "digitalProductType"]]
+);
 
-const CreateServices: React.FC = () => {
+const ServiceEditPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [selectedType, setSelectedType] = useState<
-    "1-1-call" | "priority-dm" | "digital-products"
-  >("1-1-call");
   const dispatch = useDispatch();
-  const [oneToOneType, setOneToOneType] = useState<string | null>(null);
+  const [service, setService] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedTab, setSelectedTab] = useState<
-    "digital-product" | "exclusive-content" | ""
-  >("digital-product");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { user, loading } = useSelector((state: RootState) => state.user);
 
   const {
     control,
@@ -204,52 +156,53 @@ const CreateServices: React.FC = () => {
   } = useForm<FormValues>({
     resolver: yupResolver(serviceValidationSchema),
     defaultValues: {
-      type: "1-1-call",
       title: "",
       shortDescription: "",
       longDescription: "",
       duration: undefined,
       amount: undefined,
-      oneToOneType: "",
+      oneToOneType: undefined,
       pdfFile: undefined,
       exclusiveContent: [],
-      selectedTab: "",
     },
   });
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const user = useSelector((state: RootState) => state.user.user);
+  useEffect(() => {
+    const fetchService = async () => {
+      if (!id) return;
+      try {
+        console.log("Fetching service for edit", id);
+        const serviceData = await getServiceById(id);
+        console.log("Service fetched", serviceData);
+        setService(serviceData);
+        reset({
+          title: serviceData.title,
+          shortDescription: serviceData.shortDescription,
+          longDescription: serviceData.longDescription,
+          duration: serviceData.duration,
+          amount: serviceData.amount,
+          oneToOneType: serviceData.oneToOneType,
+          pdfFile: undefined,
+          exclusiveContent: serviceData.exclusiveContent || [],
+        });
+        if (serviceData.fileUrl) {
+          setSelectedFile(null); // File will be re-uploaded if changed
+        }
+      } catch (error: any) {
+        console.error("Error fetching service:", error);
+        toast.error(`Failed to load service: ${error.message}`);
+        navigate("/expert/services");
+      }
+    };
+    fetchService();
+  }, [id, reset, navigate]);
 
-  // Log form errors for debugging
   useEffect(() => {
     if (Object.keys(errors).length > 0) {
       console.log("Form validation errors:", errors);
       toast.error("Please fix the form errors before submitting.");
     }
   }, [errors]);
-
-  useEffect(() => {
-    console.log("Selected Type:", selectedType);
-    console.log("Selected Tab:", selectedTab);
-    // Reset form when selectedType changes
-    reset({
-      type: selectedType,
-      title: "",
-      shortDescription: "",
-      longDescription: "",
-      duration: undefined,
-      amount: undefined,
-      oneToOneType: "",
-      pdfFile: undefined,
-      exclusiveContent: [],
-      selectedTab: selectedType === "digital-products" ? "digital-product" : "",
-    });
-    setSelectedFile(null);
-    setOneToOneType(null);
-    setSelectedTab(
-      selectedType === "digital-products" ? "digital-product" : ""
-    );
-  }, [selectedType, reset]);
 
   const handleButtonClick = () => {
     if (fileInputRef.current) {
@@ -264,7 +217,6 @@ const CreateServices: React.FC = () => {
     const file = e.target.files?.[0];
     if (file && file.type === "application/pdf") {
       if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
         toast.error("File size exceeds 10MB limit.");
         e.target.value = "";
         return;
@@ -330,7 +282,14 @@ const CreateServices: React.FC = () => {
   };
 
   const onSubmit = async (data: FormValues) => {
-    console.log("onSubmit called with data:", data);
+    if (!id) {
+      console.error("Service ID is missing");
+      return;
+    }
+    console.log(
+      "onSubmit called with form data:",
+      JSON.stringify(data, null, 2)
+    );
     try {
       dispatch(setLoading(true));
       const formData = new FormData();
@@ -340,99 +299,97 @@ const CreateServices: React.FC = () => {
       if (!mentorId) {
         throw new Error("Mentor ID not found. Please log in again.");
       }
+
+      // Append basic fields
       formData.append("mentorId", mentorId);
-      formData.append(
-        "type",
-        data.type === "1-1-call"
-          ? "1-1Call"
-          : data.type === "priority-dm"
-          ? "priorityDM"
-          : "DigitalProducts"
-      );
-      formData.append("title", data.title);
-      formData.append("shortDescription", data.shortDescription);
-      formData.append("amount", data.amount.toString());
-      if (data.selectedTab && data.type === "digital-products") {
-        formData.append("selectedTab", data.selectedTab);
-      }
+      formData.append("title", data.title || "");
+      formData.append("shortDescription", data.shortDescription || "");
+      formData.append("amount", data.amount ? data.amount.toString() : "0");
 
-      if (data.type === "1-1-call" || data.type === "priority-dm") {
-        formData.append("duration", data.duration!.toString());
-        formData.append("longDescription", data.longDescription!);
-        if (data.type === "1-1-call") {
-          formData.append("oneToOneType", data.oneToOneType!);
+      // Append type-specific fields
+      if (service.type === "1-1Call" || service.type === "priorityDM") {
+        formData.append(
+          "duration",
+          data.duration ? data.duration.toString() : "0"
+        );
+        formData.append("longDescription", data.longDescription || "");
+        if (service.type === "1-1Call" && data.oneToOneType) {
+          formData.append("oneToOneType", data.oneToOneType);
         }
-      }
-
-      if (
-        data.type === "digital-products" &&
-        data.selectedTab === "digital-product" &&
-        data.pdfFile
+      } else if (
+        service.type === "DigitalProducts" &&
+        service.digitalProductType
       ) {
-        formData.append("digitalProductType", "documents");
-        formData.append("pdfFile", data.pdfFile);
-      }
-
-      if (
-        data.type === "digital-products" &&
-        data.selectedTab === "exclusive-content"
-      ) {
-        formData.append("digitalProductType", "videoTutorials");
-
-        // Add videos individually with a clear naming pattern
-        if (data.exclusiveContent && data.exclusiveContent.length > 0) {
-          // Don't add exclusiveContent directly to formData yet
-          // We'll map the videos with clear references instead
-
-          // Add metadata for each season/episode
+        formData.append("digitalProductType", service.digitalProductType);
+        if (service.digitalProductType === "documents" && data.pdfFile) {
+          formData.append("pdfFile", data.pdfFile);
+        } else if (
+          service.digitalProductType === "videoTutorials" &&
+          data.exclusiveContent &&
+          data.exclusiveContent.length > 0
+        ) {
+          let videoCount = 0;
           data.exclusiveContent.forEach((season, seasonIndex) => {
             season.episodes.forEach((episode, episodeIndex) => {
-              // Add the video file with a unique identifier
               const videoKey = `video_${seasonIndex}_${episodeIndex}`;
-              formData.append(videoKey, episode.video);
-
-              // Add metadata for this video
+              if (episode.video) {
+                formData.append(videoKey, episode.video);
+              }
               formData.append(`${videoKey}_season`, season.season);
               formData.append(`${videoKey}_episode`, episode.episode);
               formData.append(`${videoKey}_title`, episode.title);
               formData.append(`${videoKey}_description`, episode.description);
+              if (episode.videoUrl) {
+                formData.append(`${videoKey}_videoUrl`, episode.videoUrl);
+              }
+              videoCount++;
             });
           });
-
-          // Add the count of videos so the backend knows how many to process
-          formData.append(
-            "videoCount",
-            data.exclusiveContent
-              .reduce((count, season) => count + season.episodes.length, 0)
-              .toString()
-          );
+          formData.append("videoCount", videoCount.toString());
         }
       }
 
-      console.log("Submitting FormData:", formData);
-      await CreateService(formData);
-      toast.success("Service created successfully!");
-      navigate(-1);
+      // Log FormData contents
+      const formDataEntries: { [key: string]: any } = {};
+      for (const [key, value] of formData.entries()) {
+        formDataEntries[key] = value instanceof File ? value.name : value;
+      }
+      console.log(
+        "Submitting FormData entries:",
+        JSON.stringify(formDataEntries, null, 2)
+      );
+
+      await updateService(id, formData);
+      toast.success("Service updated successfully!");
+      navigate("/expert/services");
     } catch (error: any) {
-      console.error("Error creating service:", error);
+      console.error("Error updating service:", error);
       toast.error(
-        `Failed to create service: ${error.message || "Unknown error"}`
+        `Failed to update service: ${error.message || "Unknown error"}`
       );
     } finally {
       dispatch(setLoading(false));
     }
   };
+
+  if (!service) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500 text-lg">Loading service...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-40 py-6 border border-gray-200 bg-white">
       <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" onClick={() => navigate(-1)}>
+        <Button variant="ghost" onClick={() => navigate("/expert/services")}>
           <ArrowLeft className="h-7 w-7" />
         </Button>
-        <h1 className="text-2xl font-bold">Create Service</h1>
+        <h1 className="text-2xl font-bold">Edit Service</h1>
       </div>
 
       <div className="max-w-4xl mx-auto">
-        {/* Display all form errors at the top */}
         {Object.keys(errors).length > 0 && (
           <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
             <p>Please fix the following errors:</p>
@@ -446,52 +403,17 @@ const CreateServices: React.FC = () => {
           </div>
         )}
 
-        <div className="mb-10">
-          <h2 className="text-lg font-semibold mb-4">Select Type</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {serviceTypes.map((type) => (
-              <Card
-                key={type.id}
-                onClick={() => {
-                  setSelectedType(type.id);
-                  setValue("type", type.id);
-                }}
-                className={`cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-[1.03] 
-                  ${
-                    selectedType === type.id
-                      ? "border-2 border-black shadow-md"
-                      : "border border-gray-300 hover:border-black"
-                  }`}
-              >
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  {type.icon}
-                  <h3 className="font-semibold text-lg mt-3">{type.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {type.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          {errors.type && (
-            <p className="text-red-500 text-sm mt-2">{errors.type.message}</p>
-          )}
-        </div>
-
-        {(selectedType === "1-1-call" || selectedType === "priority-dm") && (
+        {(service.type === "1-1Call" || service.type === "priorityDM") && (
           <div className="space-y-6">
-            {selectedType === "1-1-call" && (
+            {service.type === "1-1Call" && (
               <div className="w-full my-8">
                 <div className="flex flex-col items-start gap-4 w-full">
                   <button
-                    onClick={() => {
-                      setOneToOneType("chat");
-                      setValue("oneToOneType", "chat");
-                    }}
+                    onClick={() => setValue("oneToOneType", "chat")}
                     className={`flex justify-between items-center min-w-[400px] w-1/2 px-4 py-3 border rounded-lg bg-[#fdf9e0] 
                       transition-all duration-200
                       ${
-                        oneToOneType === "chat"
+                        watch("oneToOneType") === "chat"
                           ? "border-black font-semibold bg-[#fdf9e0]"
                           : "border-gray-300 hover:border-black"
                       }`}
@@ -502,14 +424,11 @@ const CreateServices: React.FC = () => {
                     </p>
                   </button>
                   <button
-                    onClick={() => {
-                      setOneToOneType("video");
-                      setValue("oneToOneType", "video");
-                    }}
+                    onClick={() => setValue("oneToOneType", "video")}
                     className={`flex justify-between items-center min-w-[400px] w-1/2 px-4 py-3 border rounded-lg bg-[#fdf9e0] 
                       transition-all duration-200
                       ${
-                        oneToOneType === "video"
+                        watch("oneToOneType") === "video"
                           ? "border-black font-semibold bg-[#fdf9e0]"
                           : "border-gray-300 hover:border-black"
                       }`}
@@ -650,160 +569,130 @@ const CreateServices: React.FC = () => {
           </div>
         )}
 
-        {selectedType === "digital-products" && (
-          <Tabs
-            value={selectedTab}
-            onValueChange={(value) => {
-              console.log("Changing selectedTab to:", value);
-              setSelectedTab(
-                value as "digital-product" | "exclusive-content" | ""
-              );
-              setValue("selectedTab", value);
-            }}
-            className="mb-8"
-          >
-            <TabsList className="w-full my-16">
-              <div className="flex flex-col items-start gap-4 w-full">
-                <TabsTrigger
-                  value="digital-product"
-                  className="flex justify-between items-center min-w-[400px] w-1/2 px-4 py-3 border border-gray-300 rounded-lg 
-                    bg-[#fdf9e0] hover:border-black transition-all duration-200
-                    data-[state=active]:border-black data-[state=active]:font-semibold"
-                >
-                  <p>Digital Product</p>
-                  <p className="text-gray-500 text-sm">
-                    E-Book, Guides, Resources
-                  </p>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="exclusive-content"
-                  className="flex justify-between items-center min-w-[400px] w-1/2 px-4 py-3 border border-gray-300 rounded-lg 
-                    bg-[#fdf9e0] hover:border-black transition-all duration-200
-                    data-[state=active]:border-black data-[state=active]:font-semibold"
-                >
-                  <p>Exclusive Content</p>
-                  <p className="text-gray-500 text-sm">Video Tutorials</p>
-                </TabsTrigger>
-              </div>
-            </TabsList>
-
-            <TabsContent value="digital-product">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Title
-                    </Label>
-                    <Controller
-                      control={control}
-                      name="title"
-                      render={({ field }) => (
-                        <Input placeholder="Name of service" {...field} />
-                      )}
-                    />
-                    {errors.title && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.title.message}
-                      </p>
+        {service.type === "DigitalProducts" &&
+          service.digitalProductType === "documents" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Title
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="title"
+                    render={({ field }) => (
+                      <Input placeholder="Name of service" {...field} />
                     )}
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Short Description
-                    </Label>
+                  />
+                  {errors.title && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.title.message}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Short Description
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="shortDescription"
+                    render={({ field }) => (
+                      <Textarea
+                        placeholder="Brief description of your service"
+                        {...field}
+                      />
+                    )}
+                  />
+                  {errors.shortDescription && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.shortDescription.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Amount (₹)
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                      ₹
+                    </span>
                     <Controller
                       control={control}
-                      name="shortDescription"
+                      name="amount"
                       render={({ field }) => (
-                        <Textarea
-                          placeholder="Brief description of your service"
+                        <Input
+                          type="number"
+                          className="pl-8"
+                          placeholder="0"
                           {...field}
+                          onChange={(e) => {
+                            const value = e.target.value
+                              ? parseInt(e.target.value, 10)
+                              : undefined;
+                            field.onChange(value);
+                          }}
                         />
                       )}
                     />
-                    {errors.shortDescription && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.shortDescription.message}
-                      </p>
-                    )}
                   </div>
+                  {errors.amount && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.amount.message}
+                    </p>
+                  )}
                 </div>
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Amount (₹)
-                    </Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2">
-                        ₹
-                      </span>
-                      <Controller
-                        control={control}
-                        name="amount"
-                        render={({ field }) => (
-                          <Input
-                            type="number"
-                            className="pl-8"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : undefined;
-                              field.onChange(value);
-                            }}
-                          />
-                        )}
-                      />
-                    </div>
-                    {errors.amount && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.amount.message}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Upload File
-                    </Label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Upload File
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      className="bg-black text-white"
+                      onClick={handleButtonClick}
+                    >
+                      Upload PDF
+                    </Button>
+                    {(selectedFile || service.fileUrl) && (
                       <Button
                         variant="outline"
-                        className="bg-black text-white"
-                        onClick={handleButtonClick}
+                        onClick={() => setIsPDFModalOpen(true)}
                       >
-                        Upload PDF
+                        View PDF
                       </Button>
-                      {selectedFile && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsPDFModalOpen(true)}
-                        >
-                          View PDF
-                        </Button>
-                      )}
-                    </div>
-                    <span className="text-sm text-muted-foreground text-gray-500">
-                      {selectedFile ? selectedFile.name : "No file selected"}
-                    </span>
-                    {errors.pdfFile && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.pdfFile.message}
-                      </p>
                     )}
                   </div>
+                  <span className="text-sm text-muted-foreground text-gray-500">
+                    {selectedFile
+                      ? selectedFile.name
+                      : service.fileUrl
+                      ? "Existing PDF"
+                      : "No file selected"}
+                  </span>
+                  {errors.pdfFile && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.pdfFile.message}
+                    </p>
+                  )}
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="exclusive-content">
+        {service.type === "DigitalProducts" &&
+          service.digitalProductType === "videoTutorials" && (
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
@@ -923,7 +812,7 @@ const CreateServices: React.FC = () => {
                                     {ep.description}
                                   </p>
                                   <p className="text-xs text-gray-500">
-                                    {ep.video.name}
+                                    {ep.video ? ep.video.name : ep.videoUrl}
                                   </p>
                                 </div>
                                 <Button
@@ -948,21 +837,26 @@ const CreateServices: React.FC = () => {
                   )}
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
-        )}
+            </div>
+          )}
 
-        <Button
-          onClick={() => {
-            console.log("Create button clicked");
-            handleSubmit(onSubmit)();
-          }}
-          disabled={isSubmitting}
-          className="!my-14 w-full bg-black text-white text-lg p-8 disabled:opacity-50"
-          size="lg"
-        >
-          {isSubmitting ? "Creating..." : "Create"}
-        </Button>
+        <div className="flex gap-4 !my-14">
+          <Button
+            variant="outline"
+            className="w-full text-lg p-8"
+            onClick={() => navigate("/expert/services")}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            disabled={isSubmitting}
+            className="w-full bg-black text-white text-lg p-8 disabled:opacity-50"
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </div>
       </div>
 
       <UploadVideoModal
@@ -977,9 +871,10 @@ const CreateServices: React.FC = () => {
         isOpen={isPDFModalOpen}
         onClose={() => setIsPDFModalOpen(false)}
         pdfFile={selectedFile}
+        pdfUrl={service.fileUrl}
       />
     </div>
   );
 };
 
-export default CreateServices;
+export default ServiceEditPage;
