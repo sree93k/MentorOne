@@ -33,4 +33,6 @@ mentorRoutes.get(
   authenticate,
   mentorController.getPresignedUrl
 );
+
+mentorRoutes.get("/allServices", authenticate, mentorController.getAllServices);
 export default mentorRoutes;

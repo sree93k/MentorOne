@@ -1,8 +1,8 @@
-import { Document, ObjectId } from "mongoose";
+import mongoose from "mongoose";
 
-export interface EService extends Document {
-  _id: ObjectId;
-  mentorId: ObjectId;
+export interface EService {
+  _id: string;
+  mentorId: mongoose.Types.ObjectId;
   type: "1-1Call" | "priorityDM" | "DigitalProducts";
   title: string;
   amount: number;
@@ -12,15 +12,19 @@ export interface EService extends Document {
   oneToOneType?: "chat" | "video";
   digitalProductType?: "documents" | "videoTutorials";
   fileUrl?: string;
-  exclusiveContent?: Array<{
+  exclusiveContent?: {
     season: string;
-    episodes: Array<{
+    episodes: {
       episode: string;
       title: string;
       description: string;
       videoUrl: string;
-    }>;
-  }>;
-  createdAt: Date;
-  updatedAt: Date;
+    }[];
+  }[];
+  stats?: {
+    views: number;
+    bookings: number;
+    earnings: number;
+    conversions: string;
+  };
 }
