@@ -342,3 +342,45 @@ export const CreateService = async (formData: FormData) => {
     throw new Error(`Failed to create service: ${error.message}`);
   }
 };
+
+interface Service {
+  _id: string;
+  title: string;
+  type: "1-1Call" | "priorityDM" | "DigitalProducts";
+  duration?: number;
+  amount: number;
+  shortDescription: string;
+  digitalProductType?: "documents" | "videoTutorials";
+  stats?: {
+    views: number;
+    bookings: number;
+    earnings: number;
+    conversions: string;
+  };
+}
+
+export const getAllServices = async (): Promise<Service[]> => {
+  try {
+    console.log("MentorServiceAPI.getAllServices step 1: Making API call");
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get("/expert/allServices", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log(
+      "MentorServiceAPI.getAllServices step 2: API response",
+      response
+    );
+    return response.data.data; // Matches backend ApiResponse structure
+  } catch (error: any) {
+    console.error("MentorServiceAPI.getAllServices error:", error);
+    throw new Error("Failed to fetch services");
+  }
+};

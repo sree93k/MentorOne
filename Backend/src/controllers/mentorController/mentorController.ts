@@ -107,110 +107,6 @@ class mentorController {
       next(error);
     }
   };
-  // public createService = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> => {
-  //   try {
-  //     console.log("createService controller step 1");
-
-  //     const formData = req.body;
-  //     const files = req.files as Express.Multer.File[];
-  //     console.log("Received createService data:", formData, files);
-  //     console.log("createService controller step 2");
-  //     const mentorId = formData.mentorId;
-  //     const type = formData.type;
-  //     const title = formData.title;
-  //     const shortDescription = formData.shortDescription;
-  //     const amount = parseFloat(formData.amount);
-  //     const selectedTab = formData.selectedTab;
-  //     console.log("createService controller step 3");
-  //     if (!mentorId || !type || !title || !shortDescription || !amount) {
-  //       console.log("createService controller step 4");
-  //       throw new ApiError(400, "Missing required fields");
-  //     }
-  //     console.log("createService controller step 5");
-  //     const serviceData: any = {
-  //       mentorId,
-  //       type,
-  //       title,
-  //       shortDescription,
-  //       amount,
-  //     };
-  //     console.log("createService controller step 6");
-  //     if (type === "1-1Call" || type === "priorityDM") {
-  //       console.log("createService controller step 7");
-  //       const duration = parseInt(formData.duration);
-  //       const longDescription = formData.longDescription;
-  //       if (!duration || !longDescription) {
-  //         console.log("createService controller step 8");
-  //         throw new ApiError(400, "Duration and long description are required");
-  //       }
-  //       console.log("createService controller step 9");
-  //       serviceData.duration = duration;
-  //       serviceData.longDescription = longDescription;
-  //       console.log("createService controller step 10");
-  //       if (type === "1-1Call") {
-  //         console.log("createService controller step 11");
-  //         const oneToOneType = formData.oneToOneType;
-  //         if (!oneToOneType) {
-  //           console.log("createService controller step 12");
-  //           throw new ApiError(400, "One-to-one type is required");
-  //         }
-  //         serviceData.oneToOneType = oneToOneType;
-  //       }
-  //     }
-  //     console.log("createService controller step 13");
-  //     if (type === "DigitalProducts") {
-  //       console.log("createService controller step 14");
-  //       const digitalProductType = formData.digitalProductType;
-  //       if (!digitalProductType) {
-  //         console.log("createService controller step 15");
-  //         throw new ApiError(400, "Digital product type is required");
-  //       }
-  //       serviceData.digitalProductType = digitalProductType;
-  //       console.log("createService controller step 16");
-  //       if (digitalProductType === "documents") {
-  //         console.log("createService controller step 17");
-  //         const fileUrl = formData.fileUrl;
-  //         if (!fileUrl) {
-  //           console.log("createService controller step 18");
-  //           throw new ApiError(400, "File URL is required for documents");
-  //         }
-  //         serviceData.fileUrl = fileUrl;
-  //       }
-  //       console.log("createService controller step 19");
-  //       if (digitalProductType === "videoTutorials") {
-  //         console.log("createService controller step 20");
-  //         const exclusiveContent = JSON.parse(
-  //           formData.exclusiveContent || "[]"
-  //         );
-  //         if (!exclusiveContent.length) {
-  //           console.log("createService controller step 21");
-  //           throw new ApiError(
-  //             400,
-  //             "Exclusive content is required for video tutorials"
-  //           );
-  //         }
-  //         console.log("createService controller step 22");
-  //         serviceData.exclusiveContent = exclusiveContent;
-  //       }
-  //     }
-  //     console.log("createService controller step 23");
-  //     // Save to MongoDB (assuming a Service model)
-  //     // Replace with your actual service creation logic
-  //     console.log("Saving service to MongoDB:", serviceData);
-  //     // await Service.create(serviceData);
-  //     console.log("createService controller step 24");
-  //     res.json(
-  //       new ApiResponse(201, serviceData, "Service created successfully")
-  //     );
-  //   } catch (error) {
-  //     console.log("createService controller step 25");
-  //     next(error);
-  //   }
-  // };
 
   public generatePresignedUrl = async (
     req: Request,
@@ -267,6 +163,32 @@ class mentorController {
       res.json({ url });
     } catch (error) {
       console.log("getPresignedUrl ocntroller step 6");
+      next(error);
+    }
+  };
+  public getAllServices = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("getAllServices controller step 1");
+      const userId = req?.user?.id;
+      if (!userId) {
+        console.log("getAllServices controller step 2: No user ID");
+        throw new ApiError(401, "User ID is required");
+      }
+      console.log("getAllServices controller step 2: User ID", userId);
+
+      const services = await this.MentorProfileService.getAllServices(userId);
+      console.log(
+        "getAllServices controller step 3: Services fetched",
+        services
+      );
+
+      res.json(new ApiResponse(200, services, "Services fetched successfully"));
+    } catch (error) {
+      console.log("getAllServices controller step 4");
       next(error);
     }
   };

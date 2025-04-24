@@ -9,4 +9,5 @@ export interface inMentorProfileService {
   //   files: Express.Multer.File[]
   // ): Promise<EService | null>;
   createService(formData: Record<string, any>): Promise<EService | null>;
+  getAllServices(userId: string): Promise<EService[]>;
 }
