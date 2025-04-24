@@ -51,17 +51,41 @@ class UploadController {
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    console.log("uploadImage auth step 1 ...", req.file);
+    try {
+      if (!req.file) {
+        res.status(400).json({ message: "No file uploaded" });
+        return;
+      }
+      console.log("uploadImage conmtroller step 1:", req.file);
 
-    const url = this.uploadService?.uploadImage(req.file);
-    console.log("uploadImage auth step 1 ..", url);
+      const file = req.file as Express.MulterS3.File;
+      const url = file.location; // S3 URL
+      const key = file.key; // S3 key
+      console.log("uploadImage conmtroller step 12", file, url, key);
 
-    res.status(200).json({ imageUrl: url });
+      // Get user ID from authenticate middleware
+      const userId = req.user?.id; // Assuming authenticate sets req.user
+      if (!userId) {
+        res.status(401).json({ message: "User not authenticated" });
+        return;
+      }
+
+      // Update profile picture in database and delete old S3 image if exists
+      const response = await this.uploadService.updateProfileImage(
+        file,
+        userId
+      );
+      console.log("uploadImage conmtroller step final repsonse is :", response);
+      // Respond with the expected format
+      res.status(200).json({ profilePicture: url });
+    } catch (error) {
+      next(error);
+    }
   };
 }
 
 export default new UploadController();
+
 // import { Request, Response, NextFunction } from "express";
 // import { inUploadService } from "../../services/interface/inUploadService";
 // import imUploadService from "../../services/implementations/imUploadService";
@@ -73,38 +97,38 @@ export default new UploadController();
 //     this.uploadService = new imUploadService();
 //   }
 
-//   public uploadImage = async (
-//     req: Request,
-//     res: Response,
-//     next: NextFunction
-//   ): Promise<void> => {
-//     try {
-//       if (!req.file) {
-//         res.status(400).json({ message: "No file uploaded" });
-//         return;
-//       }
-//       console.log("uploadImage step 1:", req.file);
-
-//       const file = req.file as Express.MulterS3.File;
-//       const url = file.location; // S3 URL
-//       const key = file.key; // S3 key
-
-//       // Get user ID from authenticate middleware
-//       const userId = req.user?.id; // Assuming authenticate sets req.user
-//       if (!userId) {
-//         res.status(401).json({ message: "User not authenticated" });
-//         return;
-//       }
-
-//       // Update profile picture in database and delete old S3 image if exists
-//       await this.uploadService.updateProfileImage(file, userId);
-
-//       // Respond with the expected format
-//       res.status(200).json({ profilePicture: url });
-//     } catch (error) {
-//       next(error);
+// public uploadImage = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     if (!req.file) {
+//       res.status(400).json({ message: "No file uploaded" });
+//       return;
 //     }
-//   };
+//     console.log("uploadImage step 1:", req.file);
+
+//     const file = req.file as Express.MulterS3.File;
+//     const url = file.location; // S3 URL
+//     const key = file.key; // S3 key
+
+//     // Get user ID from authenticate middleware
+//     const userId = req.user?.id; // Assuming authenticate sets req.user
+//     if (!userId) {
+//       res.status(401).json({ message: "User not authenticated" });
+//       return;
+//     }
+
+//     // Update profile picture in database and delete old S3 image if exists
+//     await this.uploadService.updateProfileImage(file, userId);
+
+//     // Respond with the expected format
+//     res.status(200).json({ profilePicture: url });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 //   // Optional: Keep uploadProfileImage if you plan to use it elsewhere
 //   public uploadProfileImage = async (

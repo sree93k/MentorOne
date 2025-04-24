@@ -13,6 +13,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
+import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,7 +27,7 @@ import { Label } from "@/components/ui/label";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { CreateService } from "@/services/mentorService";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import toast from "react-hot-toast";
 
@@ -183,6 +185,7 @@ const CreateServices: React.FC = () => {
   const [selectedType, setSelectedType] = useState<
     "1-1-call" | "priority-dm" | "digital-products"
   >("1-1-call");
+  const dispatch = useDispatch();
   const [oneToOneType, setOneToOneType] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
@@ -439,6 +442,7 @@ const CreateServices: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     console.log("onSubmit called with data:", data);
     try {
+      dispatch(setLoading(true));
       const formData = new FormData();
       const mentorId = user?._id;
       console.log("Mentor ID:", mentorId);
@@ -524,6 +528,8 @@ const CreateServices: React.FC = () => {
       toast.error(
         `Failed to create service: ${error.message || "Unknown error"}`
       );
+    } finally {
+      dispatch(setLoading(false));
     }
   };
   return (

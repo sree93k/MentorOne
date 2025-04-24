@@ -230,13 +230,15 @@ class menteeController {
     try {
       console.log("profileData mentee controller step1");
       const id = req?.user?.id;
+      console.log("id is ", id);
+
       const response = await this.MenteeProfileService.userProfielData(id);
       if (!response) {
-        console.log("mentee copntroller editUserProfile step 6");
+        console.log("mentee copntroller editUserProfile step 6", response);
         res.status(404).json(new ApiResponse(404, null, "User not found"));
         return;
       }
-      console.log("mentee copntroller editUserProfile step 7");
+      console.log("mentee copntroller editUserProfile step 7", response);
       res
         .status(200)
         .json(new ApiResponse(200, response, "Profile updated successfully"));
