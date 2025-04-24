@@ -35,4 +35,12 @@ mentorRoutes.get(
 );
 
 mentorRoutes.get("/allServices", authenticate, mentorController.getAllServices);
+mentorRoutes.get("/service/:id", authenticate, mentorController.getServiceById);
+mentorRoutes.put(
+  "/updateService/:id",
+  authenticate,
+  upload.any(),
+  mentorController.updateService
+);
+
 export default mentorRoutes;

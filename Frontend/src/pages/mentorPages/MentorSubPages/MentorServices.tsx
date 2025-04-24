@@ -5,7 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChartNoAxesCombined } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import toast from "react-hot-toast";
-import { getAllServices } from "@/services/mentorService"; // Import the service
+import { getAllServices } from "@/services/mentorService";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 
 interface Service {
   _id: string;
@@ -14,7 +17,19 @@ interface Service {
   duration?: number;
   amount: number;
   shortDescription: string;
+  longDescription?: string;
+  oneToOneType?: "chat" | "video";
   digitalProductType?: "documents" | "videoTutorials";
+  fileUrl?: string;
+  exclusiveContent?: Array<{
+    season: string;
+    episodes: Array<{
+      episode: string;
+      title: string;
+      description: string;
+      videoUrl: string;
+    }>;
+  }>;
   stats?: {
     views: number;
     bookings: number;
@@ -28,32 +43,34 @@ const MentorService: React.FC = () => {
   const [visibleStatsCardId, setVisibleStatsCardId] = useState<string | null>(
     null
   );
-  const [loading, setLoading] = useState<boolean>(true);
+  const dispatch = useDispatch();
   const statsRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-
-  // Fetch services on mount
+  const { user, error, loading, isAuthenticated } = useSelector(
+    (state: RootState) => state.user
+  );
   useEffect(() => {
     const fetchServices = async () => {
       try {
+        dispatch(setLoading(true));
+
         console.log("fetchServices step 1: Fetching services");
         const response = await getAllServices();
         console.log("fetchServices step 2: Services fetched", response);
         setServices(response);
-        setLoading(false);
       } catch (error: any) {
         console.error("fetchServices error:", error);
         toast.error(
           "Failed to fetch services: " + (error.message || "Unknown error")
         );
-        setLoading(false);
+      } finally {
+        dispatch(setLoading(false));
       }
     };
 
     fetchServices();
   }, []);
 
-  // Toggle stats visibility
   const toggleStats = (serviceId: string) => {
     setVisibleStatsCardId((prevId) =>
       prevId === serviceId ? null : serviceId
@@ -64,7 +81,6 @@ const MentorService: React.FC = () => {
     console.log("visibleStatsCardId >>", visibleStatsCardId);
   }, [visibleStatsCardId]);
 
-  // Handle clicks outside stats card or button
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       console.log("handleClickOutside step 1");
@@ -86,7 +102,6 @@ const MentorService: React.FC = () => {
     };
   }, [visibleStatsCardId]);
 
-  // Render service card
   const renderServiceCard = (service: Service) => (
     <Card key={service._id} className="border-none shadow-none">
       <div className="flex flex-row w-full border-none">
@@ -96,8 +111,13 @@ const MentorService: React.FC = () => {
         >
           <div className="border border-black min-w-[500px] p-6">
             <div className="flex items-start">
-              <div>
-                <h3 className="text-lg font-semibold">{service.title}</h3>
+              <div className="w-full">
+                <div className="flex flex-row justify-between">
+                  <h3 className="text-lg font-semibold">{service.title}</h3>
+                  <h1 className="text-sm font-semibold text-gray-500">
+                    {service.type}
+                  </h1>
+                </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   {service.type === "1-1Call" && service.duration
                     ? `${service.duration} Mins | ₹${service.amount}`
@@ -111,7 +131,7 @@ const MentorService: React.FC = () => {
                       }`
                     : ""}
                 </div>
-                <p className="mt-2">{service.shortDescription}</p>
+                <p className="mt-2 text-gray-500">{service.shortDescription}</p>
               </div>
             </div>
             <div className="flex items-center justify-between w-full mt-5">
@@ -119,8 +139,9 @@ const MentorService: React.FC = () => {
                 variant="outline"
                 size="sm"
                 className="rounded border-black text-black hover:bg-black hover:text-white transition-colors duration-200"
+                asChild
               >
-                Edit
+                <Link to={`/expert/editService/${service._id}`}>Edit</Link>
               </Button>
               <Button ref={buttonRef} onClick={() => toggleStats(service._id)}>
                 <ChartNoAxesCombined size={36} />
@@ -176,6 +197,12 @@ const MentorService: React.FC = () => {
     </Card>
   );
 
+  const renderNoServices = () => (
+    <div className="flex justify-center items-center h-64">
+      <p className="text-gray-500 text-lg">No services found...</p>
+    </div>
+  );
+
   return (
     <div className="mx-40 py-3">
       <div className="flex items-center justify-between mb-8">
@@ -186,9 +213,11 @@ const MentorService: React.FC = () => {
       </div>
 
       {loading ? (
-        <p>Loading services...</p>
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-500 text-lg">Loading services...</p>
+        </div>
       ) : services.length === 0 ? (
-        <p>No services found. Create a new service to get started.</p>
+        renderNoServices()
       ) : (
         <Tabs defaultValue="all">
           <TabsList className="mb-8 flex justify-start gap-2">
@@ -247,30 +276,49 @@ const MentorService: React.FC = () => {
           </TabsList>
 
           <TabsContent value="all">
-            <div className="space-y-4 max-w-[800px] w-full">
-              {services.map(renderServiceCard)}
-            </div>
+            {services.length > 0 ? (
+              <div className="space-y-4 max-w-[800px] w-full">
+                {services.map(renderServiceCard)}
+              </div>
+            ) : (
+              renderNoServices()
+            )}
           </TabsContent>
           <TabsContent value="call">
-            <div className="space-y-4 max-w-[800px] w-full">
-              {services
-                .filter((service) => service.type === "1-1Call")
-                .map(renderServiceCard)}
-            </div>
+            {services.filter((service) => service.type === "1-1Call").length >
+            0 ? (
+              <div className="space-y-4 max-w-[800px] w-full">
+                {services
+                  .filter((service) => service.type === "1-1Call")
+                  .map(renderServiceCard)}
+              </div>
+            ) : (
+              renderNoServices()
+            )}
           </TabsContent>
           <TabsContent value="priority">
-            <div className="space-y-4 max-w-[800px] w-full">
-              {services
-                .filter((service) => service.type === "priorityDM")
-                .map(renderServiceCard)}
-            </div>
+            {services.filter((service) => service.type === "priorityDM")
+              .length > 0 ? (
+              <div className="space-y-4 max-w-[800px] w-full">
+                {services
+                  .filter((service) => service.type === "priorityDM")
+                  .map(renderServiceCard)}
+              </div>
+            ) : (
+              renderNoServices()
+            )}
           </TabsContent>
           <TabsContent value="digitalProducts">
-            <div className="space-y-4 max-w-[800px] w-full">
-              {services
-                .filter((service) => service.type === "DigitalProducts")
-                .map(renderServiceCard)}
-            </div>
+            {services.filter((service) => service.type === "DigitalProducts")
+              .length > 0 ? (
+              <div className="space-y-4 max-w-[800px] w-full">
+                {services
+                  .filter((service) => service.type === "DigitalProducts")
+                  .map(renderServiceCard)}
+              </div>
+            ) : (
+              renderNoServices()
+            )}
           </TabsContent>
         </Tabs>
       )}

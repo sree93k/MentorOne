@@ -20,4 +20,39 @@ export default class ServiceRepository implements inServiceRepository {
       throw new ApiError(500, `Failed to fetch services: ${error.message}`);
     }
   }
+
+  async getServiceById(serviceId: string): Promise<EService | null> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+      }
+
+      const service = await Service.findById(serviceId);
+      return service as EService | null;
+    } catch (error: any) {
+      console.error("Error in ServiceRepository.getServiceById:", error);
+      throw new ApiError(500, `Failed to fetch service: ${error.message}`);
+    }
+  }
+
+  async updateService(
+    serviceId: string,
+    serviceData: Partial<EService>
+  ): Promise<EService | null> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+      }
+
+      const updatedService = await Service.findByIdAndUpdate(
+        serviceId,
+        { $set: serviceData },
+        { new: true, runValidators: true }
+      );
+      return updatedService as EService | null;
+    } catch (error: any) {
+      console.error("Error in ServiceRepository.updateService:", error);
+      throw new ApiError(500, `Failed to update service: ${error.message}`);
+    }
+  }
 }
