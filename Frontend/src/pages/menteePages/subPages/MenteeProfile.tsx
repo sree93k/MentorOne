@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import * as Yup from "yup";
 import { userProfileData } from "@/services/menteeService";
-import ConfirmationModal from "@/components/modal/ConfirmationModal";
+
 import { CircleCheckBig, Ban, CircleDashed } from "lucide-react";
 
 // Define the EditableField component props
@@ -367,12 +367,16 @@ const MenteeProfile: React.FC = () => {
       toast.error("No image selected to upload");
       return;
     }
-    setIsUploading(true);
+    dispatch(setLoading(true));
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
       console.log("FormData entries:", [...formData.entries()]);
+      console.log("mentee rpofile poage formdata image", formData);
+
       const response = await uploadProfileImage(formData);
+      console.log("response of image uplaodi us ", response);
+
       const newProfilePictureUrl = response.profilePicture;
       if (newProfilePictureUrl) {
         setPreviewUrl(newProfilePictureUrl);
@@ -382,12 +386,13 @@ const MenteeProfile: React.FC = () => {
         }));
       }
       toast.success("Profile image uploaded successfully");
+      dispatch(setUser(response.data.data));
       setSelectedFile(null);
     } catch (error) {
       toast.error("Failed to upload image");
       console.error(error);
     } finally {
-      setIsUploading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -745,8 +750,8 @@ const MenteeProfile: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Loading Modal for Image Upload */}
+      {/* 
+      Loading Modal for Image Upload
       <Dialog open={isUploading} onOpenChange={setIsUploading}>
         <DialogContent className="sm:max-w-[425px]">
           <div className="flex flex-col items-center justify-center p-6">
@@ -761,7 +766,7 @@ const MenteeProfile: React.FC = () => {
             </p>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       {/* Tabs Section */}
       <div className="bg-white rounded-b-xl p-24 min-h-screen">

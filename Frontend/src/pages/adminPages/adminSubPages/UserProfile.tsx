@@ -184,18 +184,16 @@ const UserProfile: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col pl-24">
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto p-6">
-          <div className="mb-6 flex items-center">
-            <Link to="/admin/allUsers">
-              <div className="flex h-8 w-8 items-center justify-start rounded-full border">
-                <ArrowLeft className="h-6 w-8" />
+        <div className="max-w-6xl mx-auto p-2">
+          <div className="rounded-md border p-8 bg-white">
+            <div className="mb-6 flex items-start gap-6 ">
+              <div className="mb-6 flex items-center">
+                <Link to="/admin/allUsers">
+                  <div className="flex h-8 w-8 items-center justify-start rounded-full border">
+                    <ArrowLeft className="h-6 w-8" />
+                  </div>
+                </Link>
               </div>
-            </Link>
-            <h1 className="ml-4 text-2xl font-semibold">{`${user.firstName} ${user.lastName}`}</h1>
-          </div>
-
-          <div className="rounded-md border p-10">
-            <div className="mb-6 flex items-start gap-6">
               <Avatar className="h-24 w-24 rounded-full">
                 <AvatarImage src={user.profilePicture} alt={user.firstName} />
                 <AvatarFallback>{user.firstName?.charAt(0)}</AvatarFallback>

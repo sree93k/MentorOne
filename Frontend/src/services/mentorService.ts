@@ -3,6 +3,134 @@ import { userAxiosInstance } from "./instances/userInstance";
 const api = userAxiosInstance;
 
 //============================
+
+// Other unrelated functions (kept for completeness)
+interface UpdateUserDataPayload {
+  userType: string;
+  schoolName?: string;
+  currentClass?: string;
+  course?: string;
+  specialization?: string;
+  collegeName?: string;
+  startYear?: string;
+  endYear?: string;
+  experience?: string;
+  jobRole?: string;
+  company?: string;
+  currentlyWorking?: boolean;
+  city: string;
+  careerGoal?: string;
+  interestedCareer?: string[];
+  selectedOptions?: string[];
+  skills?: string[];
+  bio?: string;
+  linkedinUrl?: string;
+  youtubeLink?: string;
+  personalWebsite?: string;
+  introVideo?: string;
+  featuredArticle?: string;
+  mentorMotivation?: string;
+  greatestAchievement?: string;
+  imageUrl?: string;
+}
+//============================
+export const uploadImage = async (imageFile: File): Promise<string> => {
+  try {
+    console.log("image upload stepp1", imageFile);
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    console.log("image upload stepp1.5", accessToken);
+    console.log("image upload stepp2");
+    const formData = new FormData();
+    console.log("image upload stepp3", formData);
+    console.log("image upload stepp3.5", imageFile);
+    formData.append("image", imageFile);
+    console.log("image upload stepp4......", formData);
+    const response = await api.post("/user/upload_image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log("image upload stepp5");
+    console.log("Image upload response:", response.data);
+    return response.data.imageUrl; // Adjust based on your backend's response structure
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
+  }
+};
+//============================
+export const uploadMentorWelcomeForm = async (
+  formData: UpdateUserDataPayload,
+  id: string
+) => {
+  try {
+    console.log("mentor welcome service 1", formData, id);
+
+    const accessToken = localStorage.getItem("accessToken");
+    console.log("mentor welcome service 2", accessToken);
+    if (!accessToken) {
+      console.log("mentor welcome service 3 error no access toekn");
+      throw new Error("No access token found. Please log in again.");
+    }
+    console.log("mentor welcome service 3", accessToken);
+    // const payload = { ...formData, id, mentorActivated: true };
+    const payload1 = { ...formData, id };
+    console.log("mentor welcome service 4", payload1);
+    const { imageFile, ...payload } = payload1;
+    console.log("Payload to API: sending...........", payload);
+
+    const response = await api.put("/expert/welcomeform", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log("API response:...........", response);
+    console.log("API response inner data:", response.data.data);
+    return response.data.data; // Return updated user data
+  } catch (error) {
+    console.error("Error updating user data:", error);
+    throw error;
+  }
+};
+//============================
+export const getUserDetails = async (userId: string) => {
+  console.log("mentor profile service step1", userId);
+
+  const response = await api.get(`/expert/profile/${userId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }, // Add auth if needed
+  });
+  console.log("mentor profile service step2 response", response);
+  return response.data; // Expected: { firstName, lastName, email, etc. }
+};
+
+//updateMentorDatas
+export const updateMentorDatas = async (payload: any) => {
+  try {
+    console.log("user servcie is updateUserProfile1?????", payload);
+    const accessToken = localStorage.getItem("accessToken");
+    const response = await api.put("/expert/update_mentor", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("user servcie is updateUserProfile 2", response);
+    const updateData = response.data.data;
+    console.log("user servcie is updateUserProfile 3", updateData);
+    return updateData;
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    throw error;
+  }
+};
+
 const uploadToS3WithPresignedUrl = async (
   file: File,
   folder: string
@@ -78,97 +206,6 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
   }
 };
 
-//============================
-// export const CreateService = async (formData: FormData) => {
-//   try {
-//     console.log("CreateService service step 1", formData);
-
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     const type = formData.get("type") as string;
-//     const digitalProductType = formData.get("digitalProductType") as
-//       | string
-//       | null;
-//     let pdfUrl: string | null = null;
-//     let exclusiveContent: any[] = [];
-
-//     if (type === "DigitalProducts" && digitalProductType === "documents") {
-//       const pdfFile = formData.get("pdfFile") as File;
-//       if (pdfFile) {
-//         console.log("Uploading PDF:", pdfFile.name);
-//         pdfUrl = await uploadToS3WithPresignedUrl(pdfFile, "pdfs");
-//         console.log("Uploaded PDF URL:", pdfUrl);
-//         formData.delete("pdfFile");
-//         formData.append("fileUrl", pdfUrl);
-//       }
-//     }
-
-//     if (type === "DigitalProducts" && digitalProductType === "videoTutorials") {
-//       let seasonIndex = 0;
-//       while (formData.get(`exclusiveContent[${seasonIndex}][season]`)) {
-//         const season = formData.get(
-//           `exclusiveContent[${seasonIndex}][season]`
-//         ) as string;
-//         const episodes: any[] = [];
-//         let episodeIndex = 0;
-//         while (
-//           formData.get(
-//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`
-//           )
-//         ) {
-//           const episode = formData.get(
-//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][episode]`
-//           ) as string;
-//           const title = formData.get(
-//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][title]`
-//           ) as string;
-//           const description = formData.get(
-//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][description]`
-//           ) as string;
-//           const video = formData.get(
-//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`
-//           ) as File;
-
-//           if (!video) {
-//             throw new Error(`Missing video file for episode ${episodeIndex}`);
-//           }
-
-//           console.log("Uploading video:", video.name);
-//           const videoUrl = await uploadToS3WithPresignedUrl(video, "videos");
-//           console.log("Uploaded video URL:", videoUrl);
-//           episodes.push({ episode, title, description, videoUrl });
-
-//           formData.delete(
-//             `exclusiveContent[${seasonIndex}][episodes][${episodeIndex}][video]`
-//           );
-//           episodeIndex++;
-//         }
-//         exclusiveContent.push({ season, episodes });
-//         seasonIndex++;
-//       }
-//       formData.delete("exclusiveContent");
-//       formData.append("exclusiveContent", JSON.stringify(exclusiveContent));
-//     }
-//     console.log("formdatA FEORE TO CREATE SERVICE..", formData);
-
-//     console.log("Sending service creation request with FormData:", formData);
-//     const response = await api.post("/expert/createService", formData, {
-//       headers: {
-//         "Content-Type": "multipart/form-data",
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-
-//     console.log("Service creation response:", response.data);
-//     return response.data;
-//   } catch (error: any) {
-//     console.error("Error creating service:", error);
-//     throw new Error(`Failed to create service: ${error.message}`);
-//   }
-// };
 export const CreateService = async (formData: FormData) => {
   try {
     console.log("CreateService service step 1", formData);
@@ -303,126 +340,5 @@ export const CreateService = async (formData: FormData) => {
   } catch (error: any) {
     console.error("Error creating service:", error);
     throw new Error(`Failed to create service: ${error.message}`);
-  }
-};
-// Other unrelated functions (kept for completeness)
-interface UpdateUserDataPayload {
-  userType: string;
-  schoolName?: string;
-  currentClass?: string;
-  course?: string;
-  specialization?: string;
-  collegeName?: string;
-  startYear?: string;
-  endYear?: string;
-  experience?: string;
-  jobRole?: string;
-  company?: string;
-  currentlyWorking?: boolean;
-  city: string;
-  careerGoal?: string;
-  interestedCareer?: string[];
-  selectedOptions?: string[];
-  skills?: string[];
-  bio?: string;
-  linkedinUrl?: string;
-  youtubeLink?: string;
-  personalWebsite?: string;
-  introVideo?: string;
-  featuredArticle?: string;
-  mentorMotivation?: string;
-  greatestAchievement?: string;
-  imageUrl?: string;
-}
-//============================
-export const uploadImage = async (imageFile: File): Promise<string> => {
-  try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-    const formData = new FormData();
-    formData.append("image", imageFile);
-    const response = await api.post("/user/upload_image", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    return response.data.imageUrl;
-  } catch (error: any) {
-    console.error("Error uploading image:", error);
-    throw new Error(`Failed to upload image: ${error.message}`);
-  }
-};
-//============================
-export const uploadMentorWelcomeForm = async (
-  formData: UpdateUserDataPayload,
-  id: string
-) => {
-  try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-    const payload = { ...formData, id };
-    const { imageFile, ...restPayload } = payload;
-    const response = await api.put("/expert/welcomeform", restPayload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data.data;
-  } catch (error: any) {
-    console.error("Error updating user data:", error);
-    throw new Error(`Failed to update user data: ${error.message}`);
-  }
-};
-//============================
-export const getUserDetails = async (userId: string) => {
-  try {
-    const response = await api.get(`/expert/profile/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    console.error("Error fetching user details:", error);
-    throw new Error(`Failed to fetch user details: ${error.message}`);
-  }
-};
-//============================
-export const updateUserDetails = async (userId: string, data: any) => {
-  try {
-    const response = await api.put(`/expert/profileupdate/${userId}`, data, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    console.error("Error updating user details:", error);
-    throw new Error(`Failed to update user details: ${error.message}`);
-  }
-};
-//============================
-export const updateMentorDatas = async (payload: any) => {
-  try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-    const response = await api.put("/expert/update_mentor", payload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data.data;
-  } catch (error: any) {
-    console.error("Error updating profile:", error);
-    throw new Error(`Failed to update profile: ${error.message}`);
   }
 };

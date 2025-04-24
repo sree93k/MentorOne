@@ -15,7 +15,7 @@ userPrivateRoute.post(
   uploadController.uploadProfileImage
 );
 
-userPrivateRoute.post(
+userPrivateRoute.put(
   "/update_profile_image",
   authenticate,
   upload.single("image"),

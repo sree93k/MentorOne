@@ -5,14 +5,17 @@ import { Input } from "@/components/ui/input";
 import SreeImg from "@/assets/Sree.jpeg";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import { getUserDetails, updateUserDetails } from "@/services/mentorService";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
+import { getUserDetails } from "@/services/mentorService";
 import { updateUserProfile, updateUserPassword } from "@/services/userServices";
 import toast from "react-hot-toast";
 import { CircleCheckBig, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { XIcon, SearchIcon } from "lucide-react";
 import { Pencil, UploadIcon, Loader2 } from "lucide-react";
-import { setUser } from "@/redux/slices/userSlice"; // Adjust based on your Redux setup
+import { uploadProfileImage } from "@/services/uploadService";
+// Adjust based on your Redux setup
 import * as Yup from "yup"; // For validation schema
 import { Textarea } from "@/components/ui/textarea";
 // Define EditableFieldProps interface
@@ -175,7 +178,7 @@ const MentorProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -191,8 +194,10 @@ const MentorProfile: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFormValid, setIsFormValid] = useState(false);
 
-  const user = useSelector((state: RootState) => state.user.user);
-
+  // const user = useSelector((state: RootState) => state.user.user);
+  const { user, error, loading, isAuthenticated } = useSelector(
+    (state: RootState) => state.user
+  );
   const presetSkills = [
     "Javascript",
     "Node JS",
@@ -250,10 +255,10 @@ const MentorProfile: React.FC = () => {
           console.error("Failed to fetch user details", error);
           toast.error("Failed to load profile data.");
         } finally {
-          setLoading(false);
+          dispatch(setLoading(false));
         }
       } else {
-        setLoading(false);
+        dispatch(setLoading(false));
         toast.error("User not found. Please log in again.");
       }
     };
@@ -300,21 +305,26 @@ const MentorProfile: React.FC = () => {
   };
 
   // Mock uploadProfileImage function (replace with actual implementation)
-  const uploadProfileImage = async (formData: FormData) => {
-    // Simulate API call
-    return { profilePicture: "https://example.com/new-image.jpg" };
-  };
+  // const uploadProfileImage = async (formData: FormData) => {
+  //   // Simulate API call
+  //   return { profilePicture: "https://example.com/new-image.jpg" };
+  // };
 
   const handleImageSave = async () => {
     if (!selectedFile) {
       toast.error("No image selected to upload");
       return;
     }
-    setIsUploading(true);
+    dispatch(setLoading(true));
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
+      console.log("FormData entries:", [...formData.entries()]);
+      console.log("mentee rpofile poage formdata image", formData);
+
       const response = await uploadProfileImage(formData);
+      console.log("response of image uplaodi us ", response);
+
       const newProfilePictureUrl = response.profilePicture;
       if (newProfilePictureUrl) {
         setPreviewUrl(newProfilePictureUrl);
@@ -322,17 +332,46 @@ const MentorProfile: React.FC = () => {
           ...prev,
           profilePicture: newProfilePictureUrl,
         }));
-        await updateProfileField("profilePicture", newProfilePictureUrl);
       }
       toast.success("Profile image uploaded successfully");
+      dispatch(setUser(response.data.data));
       setSelectedFile(null);
     } catch (error) {
       toast.error("Failed to upload image");
       console.error(error);
     } finally {
-      setIsUploading(false);
+      dispatch(setLoading(false));
     }
   };
+
+  // const handleImageSave = async () => {
+  //   if (!selectedFile) {
+  //     toast.error("No image selected to upload");
+  //     return;
+  //   }
+  //   setIsUploading(true);
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("image", selectedFile);
+  //     const response = await uploadProfileImage(formData);
+  //     const newProfilePictureUrl = response.profilePicture;
+  //     if (newProfilePictureUrl) {
+  //       setPreviewUrl(newProfilePictureUrl);
+  //       setProfileData((prev) => ({
+  //         ...prev,
+  //         profilePicture: newProfilePictureUrl,
+  //       }));
+  //       await updateProfileField("profilePicture", newProfilePictureUrl);
+  //     }
+  //     toast.success("Profile image uploaded successfully");
+  //     setSelectedFile(null);
+  //   } catch (error) {
+  //     toast.error("Failed to upload image");
+  //     console.error(error);
+  //   } finally {
+  //     setIsUploading(false);
+  //   }
+  // };
 
   const handleEdit = (field: string) => {
     setEditingField(field);
@@ -457,9 +496,9 @@ const MentorProfile: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="px-24 p-6">Loading profile data...</div>;
-  }
+  // if (loading) {
+  //   return <div className="px-24 p-6">Loading profile data...</div>;
+  // }
 
   if (!profileData) {
     return <div className="px-24 p-6">No profile data found.</div>;
@@ -471,11 +510,21 @@ const MentorProfile: React.FC = () => {
         <div className="flex items-end gap-6">
           <div className="relative">
             <div className="flex flex-row justify-center items-center gap-4 mb-3">
-              <img
-                src={previewUrl || SreeImg}
-                alt="Profile"
-                className="w-24 h-24 rounded-full border-4 border-white"
-              />
+              <Avatar className="h-24 w-24">
+                {isImageLoading ? (
+                  <AvatarFallback className="bg-gray-100 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
+                  </AvatarFallback>
+                ) : previewUrl ? (
+                  <AvatarImage src={previewUrl} />
+                ) : user?.profilePicture ? (
+                  <AvatarImage src={user.profilePicture} />
+                ) : (
+                  <AvatarFallback className="bg-gray-100">
+                    <UploadIcon className="h-8 w-8 text-gray-400" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
               <div className="flex gap-2">
                 <input
                   type="file"
