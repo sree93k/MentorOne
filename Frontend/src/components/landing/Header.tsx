@@ -14,25 +14,35 @@ import { useTheme } from "../../utils/ThemeProvider";
 import { Menu } from "lucide-react";
 import Logo1 from "../../assets/logo.png";
 import LogoName1 from "../../assets/brandlogo.png";
+import Logo2 from "../../assets/logoDark.png";
+import LogoName2 from "../../assets/logonameDark.png";
 import ThemeToggle from "../users/ThemeToggle";
 const pages = ["About", "Blog", "Community"];
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const { setTheme } = useTheme();
+  const { theme } = useTheme();
 
   const handleGetStarted = () => {
     navigate("/login");
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-50 dark:bg-gray-900 dark:text-white">
+    <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-50 dark:bg-black dark:text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-[70px]">
           {/* Logo Section */}
           <div className="flex items-center gap-2">
-            <img src={Logo1} alt="Logo" className="w-14 h-auto" />
-            <img src={LogoName1} alt="Brand" className="w-40 h-auto" />
+            <img
+              src={theme === "dark" ? Logo2 : Logo1}
+              alt="Logo"
+              className="w-14 h-auto"
+            />
+            <img
+              src={theme === "dark" ? LogoName2 : LogoName1}
+              alt="Brand"
+              className="w-40 h-auto"
+            />
           </div>
 
           {/* Mobile Menu */}
@@ -57,7 +67,7 @@ const Header: React.FC = () => {
                 <DropdownMenuItem>
                   <Button
                     variant="default"
-                    className="w-full bg-black text-white hover:bg-gray-800"
+                    className="w-full bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 "
                     onClick={handleGetStarted}
                   >
                     Get Started

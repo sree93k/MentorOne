@@ -440,7 +440,7 @@ const UserProfile: React.FC = () => {
                     <span className="w-1/3 mb-2 text-sm font-medium text-gray-500">
                       Skills
                     </span>
-                    <div className="flex flex-wrap gap-2">
+                    {/* <div className="flex flex-wrap gap-2">
                       {(
                         mentorData?.skills ||
                         user?.skills?.split(",") ||
@@ -454,7 +454,7 @@ const UserProfile: React.FC = () => {
                           {skill}
                         </Badge>
                       ))}
-                    </div>
+                    </div> */}
                   </div>
                   <div className="flex py-2">
                     <span className="w-1/3 text-sm font-medium text-gray-500">

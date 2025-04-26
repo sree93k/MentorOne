@@ -6,7 +6,7 @@ import { inUserRepository } from "../interface/inUserRepository";
 import mongoose from "mongoose";
 import { ApiError } from "../../middlewares/errorHandler"; // Adjust the import path as necessary
 import { log } from "winston";
-
+import Service from "../../models/serviceModel";
 export default class UserRepository implements inUserRepository {
   //create user
   async createUser(user: Partial<EUsers>): Promise<EUsers | null> {
@@ -307,6 +307,199 @@ export default class UserRepository implements inUserRepository {
     } catch (error) {
       console.error("Error in updateUser:", error);
       return null;
+    }
+  }
+
+  async getAllMentors(serviceType?: string): Promise<EUsers[]> {
+    try {
+      console.log("getAllMentors repo step 1", { serviceType });
+      let mentorIds: string[] = [];
+
+      // Filter by serviceType if provided
+      if (serviceType && serviceType !== "All") {
+        const services = await Service.find({ type: serviceType }).lean();
+        mentorIds = services.map((s) => s.mentorId.toString());
+        console.log(
+          "getAllMentors repo step 2: Found mentorIds for service",
+          mentorIds
+        );
+      }
+
+      const query = {
+        mentorId: { $exists: true, $ne: null },
+        ...(mentorIds.length && { _id: { $in: mentorIds } }),
+      };
+
+      const mentors = await Users.find(query)
+        .populate({
+          path: "mentorId",
+          select: "bio skills isApproved",
+        })
+        .populate({
+          path: "schoolDetails",
+          select: "schoolName city",
+        })
+        .populate({
+          path: "collegeDetails",
+          select: "collegeName city",
+        })
+        .populate({
+          path: "professionalDetails",
+          select: "company jobRole city",
+        })
+        .lean();
+
+      console.log("getAllMentors repo step 3: Found mentors", mentors.length);
+
+      return mentors.map((mentor, index) => {
+        console.log(`getAllMentors repo step 4: Mapping mentor ${index + 1}`, {
+          _id: mentor._id,
+          firstName: mentor.firstName,
+          lastName: mentor.lastName,
+          category: mentor.category,
+          skills: mentor.skills,
+          mentorId: mentor.mentorId,
+          schoolDetails: mentor.schoolDetails,
+          collegeDetails: mentor.collegeDetails,
+          professionalDetails: mentor.professionalDetails,
+        });
+
+        let company = "Unknown";
+        let companyBadge = "N/A";
+        let jobRole = "Mentor";
+
+        if (mentor.category === "professional" && mentor.professionalDetails) {
+          company = mentor.professionalDetails.company || "Unknown";
+          companyBadge = mentor.professionalDetails.company || "N/A";
+          jobRole = mentor.professionalDetails.jobRole || "Mentor";
+        } else if (mentor.category === "college" && mentor.collegeDetails) {
+          company = mentor.collegeDetails.collegeName || "Unknown";
+          companyBadge = mentor.collegeDetails.collegeName || "N/A";
+        } else if (mentor.category === "school" && mentor.schoolDetails) {
+          company = mentor.schoolDetails.schoolName || "Unknown";
+          companyBadge = mentor.schoolDetails.schoolName || "N/A";
+        }
+
+        return {
+          _id: mentor._id.toString(),
+          name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
+          role: mentor.skills?.length ? mentor.skills.join(", ") : jobRole,
+          company,
+          profileImage: mentor.profilePicture || undefined,
+          companyBadge,
+          isBlocked: mentor.isBlocked,
+          isApproved: mentor.mentorId?.isApproved || "Pending",
+        };
+      });
+    } catch (error: any) {
+      console.error("getAllMentors repo step 5: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+    }
+  }
+
+  async getMentorById(mentorId: string): Promise<EUsers> {
+    try {
+      console.log("getMentorById repo step 1", { mentorId });
+      const mentor = await Users.findOne({
+        _id: mentorId,
+        mentorId: { $exists: true, $ne: null },
+      })
+        .populate({
+          path: "mentorId",
+          select: "bio skills isApproved",
+        })
+        .populate({
+          path: "schoolDetails",
+          select: "schoolName city",
+        })
+        .populate({
+          path: "collegeDetails",
+          select: "collegeName city",
+        })
+        .populate({
+          path: "professionalDetails",
+          select: "company jobRole city",
+        })
+        .lean();
+
+      if (!mentor) {
+        console.log("getMentorById repo step 2: Mentor not found");
+        throw new ApiError(404, "Mentor not found");
+      }
+
+      const services = await Service.find({ mentorId }).lean();
+      console.log("getMentorById repo step 3: Found services", services.length);
+
+      console.log("getMentorById repo step 4: Mapping mentor", {
+        _id: mentor._id,
+        firstName: mentor.firstName,
+        lastName: mentor.lastName,
+        category: mentor.category,
+        skills: mentor.skills,
+        mentorId: mentor.mentorId,
+        schoolDetails: mentor.schoolDetails,
+        collegeDetails: mentor.collegeDetails,
+        professionalDetails: mentor.professionalDetails,
+      });
+
+      let company = "Unknown";
+      let companyBadge = "N/A";
+      let jobRole = "Mentor";
+
+      if (mentor.category === "professional" && mentor.professionalDetails) {
+        company = mentor.professionalDetails.company || "Unknown";
+        companyBadge = mentor.professionalDetails.company || "N/A";
+        jobRole = mentor.professionalDetails.jobRole || "Mentor";
+      } else if (mentor.category === "college" && mentor.collegeDetails) {
+        company = mentor.collegeDetails.collegeName || "Unknown";
+        companyBadge = mentor.collegeDetails.collegeName || "N/A";
+      } else if (mentor.category === "school" && mentor.schoolDetails) {
+        company = mentor.schoolDetails.schoolName || "Unknown";
+        companyBadge = mentor.schoolDetails.schoolName || "N/A";
+      }
+
+      return {
+        _id: mentor._id.toString(),
+        name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
+        role: mentor.skills?.length ? mentor.skills.join(", ") : jobRole,
+        company,
+        profileImage: mentor.profilePicture || undefined,
+        companyBadge,
+        isBlocked: mentor.isBlocked,
+        isApproved: mentor.mentorId?.isApproved || "Pending",
+        bio: mentor.mentorId?.bio,
+        skills: mentor.mentorId?.skills,
+        services: services.map((s) => ({
+          type: s.type,
+          title: s.title || "Untitled Service",
+          description: s.description || "No description available",
+          duration: s.duration || "N/A",
+          price: s.price || 0,
+        })),
+        education: {
+          schoolName: mentor.schoolDetails?.schoolName,
+          collegeName: mentor.collegeDetails?.collegeName,
+          city: mentor.schoolDetails?.city || mentor.collegeDetails?.city,
+        },
+        workExperience: mentor.professionalDetails
+          ? {
+              company: mentor.professionalDetails.company,
+              jobRole: mentor.professionalDetails.jobRole,
+              city: mentor.professionalDetails.city,
+            }
+          : undefined,
+      };
+    } catch (error: any) {
+      console.error("getMentorById repo step 5: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw error instanceof ApiError
+        ? error
+        : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
     }
   }
 }

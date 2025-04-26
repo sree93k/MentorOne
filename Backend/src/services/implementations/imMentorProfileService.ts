@@ -509,4 +509,54 @@ export default class MentorProfileService implements inMentorProfileService {
       throw error;
     }
   }
+
+  async getAllMentors(serviceType?: string): Promise<EUsers[]> {
+    try {
+      console.log("getAllMentors service step 1", { serviceType });
+      let mentors = await this.UserRepository.getAllMentors(serviceType);
+      console.log(
+        "getAllMentors service step 2: Mentors fetched",
+        mentors.length
+      );
+
+      // Filter by isBlocked and isApproved
+      mentors = mentors.filter(
+        (mentor) => !mentor.isBlocked && mentor?.isApproved === "Approved"
+      );
+      console.log(
+        "getAllMentors service step 3: Filtered by isBlocked and isApproved",
+        mentors.length
+      );
+
+      return mentors;
+    } catch (error: any) {
+      console.log("getAllMentors service step 4: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+    }
+  }
+
+  async getMentorById(mentorId: string): Promise<EUsers> {
+    try {
+      console.log("getMentorById service step 1", { mentorId });
+      const mentor = await this.UserRepository.getMentorById(mentorId);
+      console.log("getMentorById service step 2: Mentor fetched", mentor);
+
+      if (mentor.isBlocked) {
+        throw new ApiError(403, "Mentor is blocked");
+      }
+
+      return mentor;
+    } catch (error: any) {
+      console.log("getMentorById service step 3: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw error instanceof ApiError
+        ? error
+        : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
+    }
+  }
 }

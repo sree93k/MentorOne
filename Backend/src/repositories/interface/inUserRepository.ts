@@ -28,4 +28,6 @@ export interface inUserRepository {
     mentorId: string;
     imageUrl: string;
   }): Promise<EUsers | null>;
+  getAllMentors(serviceType?: string): Promise<EUsers[]>;
+  getMentorById(mentorId: string): Promise<EUsers>;
 }

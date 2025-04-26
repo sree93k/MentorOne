@@ -22,12 +22,14 @@ import toast, { Toaster } from "react-hot-toast";
 import { Mail, Lock, User, Phone } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
 import {
   setUser,
   setIsAuthenticated,
   setAccessToken,
   setCurrentTab,
+  setLoading,
 } from "@/redux/slices/userSlice";
 export function SignupForm({
   className,
@@ -44,10 +46,12 @@ export function SignupForm({
   const [gender, setGender] = useState("");
   const [phone, setPhoneNumber] = useState("");
   const [errors, setErrors] = useState<TUserSignUpError>({}); // Add errors state
-  const [loading, setLoading] = useState(false); // Add loading state
+  // Add loading state
   const [verifying, setVerifying] = useState(false);
-
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const { loading } = useSelector((state: RootState) => state.user);
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUsername(value);
@@ -59,7 +63,7 @@ export function SignupForm({
       setErrors((prev) => ({ ...prev, username: undefined }));
     }
   };
-  const dispatch = useDispatch();
+
   const handleChange =
     (field: keyof TUserSignUpError) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,7 +103,7 @@ export function SignupForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    dispatch(setLoading(true));
 
     if (validateForm()) {
       const userData = {
@@ -125,11 +129,13 @@ export function SignupForm({
       } catch (error) {
         console.error("Error:", error);
         toast.error("An error occurred. Please try again.");
+      } finally {
+        dispatch(setLoading(false));
       }
     } else {
       toast.error("Please fill valid input data.");
     }
-    setLoading(false);
+    dispatch(setLoading(false));
   };
 
   return (
