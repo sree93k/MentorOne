@@ -1,6 +1,5 @@
-import mongoose, { Schema, model, Document, ObjectId } from "mongoose";
+import mongoose, { Schema, model, Document } from "mongoose";
 import { EUsers } from "../entities/userEntity";
-import { required } from "joi";
 
 // Define the schema
 const UsersSchema: Schema<EUsers> = new Schema(
@@ -25,7 +24,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
     },
     password: {
       type: String,
-      required: [false, "Password is required"],
+      required: false,
     },
     phone: {
       type: Number,
@@ -38,7 +37,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
     gender: {
       type: String,
       enum: ["male", "female"],
-      required: [false, "Gender is required"],
+      required: false,
     },
     role: {
       type: [String],
@@ -69,7 +68,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
     category: {
       type: String,
       enum: ["school", "college", "professional"],
-      required: [false, "Category is required"],
+      required: false,
     },
     schoolDetails: {
       type: Schema.Types.ObjectId,
@@ -87,7 +86,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
     },
     professionalDetails: {
       type: Schema.Types.ObjectId,
-      ref: "CollegeExperience",
+      ref: "WorkExperience", // Fixed from "CollegeExperience"
       required: function (this: EUsers) {
         return this.category === "professional";
       },
@@ -107,10 +106,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
       },
       required: false,
     },
-    // goals: {
-    //   type: Schema.Types.ObjectId,
-    //   required: false,
-    // },
     previousSchools: {
       type: [Schema.Types.ObjectId],
       required: false,
@@ -158,7 +153,7 @@ const UsersSchema: Schema<EUsers> = new Schema(
       required: false,
     },
     bookings: {
-      type: Schema.Types.Mixed, // To be defined later
+      type: Schema.Types.Mixed,
       required: false,
     },
     subscription: {
@@ -190,7 +185,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
   }
 );
 
-// Create the model
 const Users = model<EUsers>("Users", UsersSchema);
 
 export default Users;

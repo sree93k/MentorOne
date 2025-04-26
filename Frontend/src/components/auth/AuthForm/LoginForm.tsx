@@ -47,7 +47,9 @@ export function LoginForm({
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { mentorActivated } = useSelector((state: RootState) => state.user);
+  const { mentorActivated, loading } = useSelector(
+    (state: RootState) => state.user
+  );
 
   useEffect(() => {
     console.log("hi useeffect is", mentorActivated);
@@ -76,7 +78,7 @@ export function LoginForm({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    dispatch(setLoading(true));
 
     try {
       if (!validateForm()) {
@@ -100,6 +102,7 @@ export function LoginForm({
       dispatch(setIsAuthenticated(true));
       dispatch(setAccessToken(accessToken));
       dispatch(setCurrentTab(tab));
+
       dispatch(setMentorActivated(userFound.mentorActivated));
       localStorage.setItem("accessToken", accessToken);
       toast.success(`Welcome, ${userFound.firstName || "User"}!`);
@@ -117,7 +120,7 @@ export function LoginForm({
           : errorMessage
       );
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 

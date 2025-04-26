@@ -125,49 +125,92 @@ export const userProfileData = async () => {
   }
 };
 
-// export const uploadProfileImage = async (
-//   formData: FormData,
-//   accessToken: string
-// ) => {
-//   try {
-//     if (!accessToken) throw new Error("No access token available");
-//     console.log("Starting image upload:", formData, accessToken);
-//     const response = await api.put("/seeker/upload_profile_image", formData, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//         "Content-Type": "multipart/form-data",
-//       },
-//     });
-//     console.log("Image upload response:", response.data);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error uploading profile image:", error);
-//     if (error.response?.status === 401) {
-//       toast.error("Session expired. Please log in again.");
-//       // Optionally redirect to login
-//       // window.location.href = "/login";
-//     }
-//     throw error;
-//   }
-// };
+interface Mentor {
+  _id: string;
+  name: string;
+  role: string;
+  company: string;
+  profileImage?: string;
+  companyBadge: string;
+  isBlocked: boolean;
+  isApproved: string;
+  bio?: string;
+  skills?: string[];
+  services?: {
+    type: string;
+    title: string;
+    description: string;
+    duration: string;
+    price: number;
+  }[];
+  education?: {
+    schoolName?: string;
+    collegeName?: string;
+    city?: string;
+  };
+  workExperience?: {
+    company: string;
+    jobRole: string;
+    city?: string;
+  };
+}
 
-//profileEdit
-// export const updateUserProfile = async (payload: any) => {
-//   try {
-//     console.log("mentee servcie is updateUserProfile1?????", payload);
-//     const accessToken = localStorage.getItem("accessToken");
-//     const response = await api.put("/seeker/profileEdit", payload, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//         "Content-Type": "application/json",
-//       },
-//     });
-//     console.log("mentee servcie is updateUserProfile 2", response);
-//     const updateData = response.data.data;
-//     console.log("mentee servcie is updateUserProfile 3", updateData);
-//     return updateData;
-//   } catch (error) {
-//     console.error("Error updating profile:", error);
-//     throw error;
-//   }
-// };
+interface ApiResponse {
+  status: number;
+  data: Mentor[] | Mentor;
+  message: string;
+}
+
+export const getAllMentors = async (filter?: string): Promise<Mentor[]> => {
+  try {
+    console.log("getAllMentors: Fetching mentors from /seeker/allMentors", {
+      filter,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const params = filter && filter !== "All" ? { serviceType: filter } : {};
+    const response = await userAxiosInstance.get<ApiResponse>(
+      "/seeker/allMentors",
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params,
+      }
+    );
+    console.log("getAllMentors: Response received", response.data.data);
+    return response.data.data as Mentor[];
+  } catch (error: any) {
+    console.error("getAllMentors error:", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    throw new Error(`Failed to fetch mentors: ${error.message}`);
+  }
+};
+
+export const getMentorById = async (mentorId: string): Promise<Mentor> => {
+  try {
+    console.log("getMentorById: Fetching mentor from /seeker/mentor", {
+      mentorId,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await userAxiosInstance.get<ApiResponse>(
+      `/seeker/mentor/${mentorId}`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    console.log("getMentorById: Response received", response.data.data);
+    return response.data.data as Mentor;
+  } catch (error: any) {
+    console.error("getMentorById error:", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    throw new Error(`Failed to fetch mentor: ${error.message}`);
+  }
+};

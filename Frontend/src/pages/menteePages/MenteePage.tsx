@@ -16,7 +16,7 @@ const MenteeSidebar = lazy(() => import("@/components/mentee/MenteeSidebar"));
 const MenteeDashboard = lazy(() => import("./subPages/MenteeDashboard"));
 const MenteeProfile = lazy(() => import("./subPages/MenteeProfile"));
 const MentorsPage = lazy(() => import("./subPages/MentorsPage"));
-const MentorProfile = lazy(() => import("./subPages/MentorsProfile"));
+
 const CoursePage = lazy(() => import("./subPages/CoursePage"));
 const BlogPage = lazy(() => import("../usersPage/BlogPage"));
 const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
@@ -35,7 +35,7 @@ const MenteePage = () => {
             <Route path="/menteecourses" element={<CoursePage />} />
             <Route path="/payment" element={<MenteeBillingPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
-            <Route path="/mentorprofile" element={<MentorProfilePage />} />
+            <Route path="/mentorprofile/:id" element={<MentorProfilePage />} />
             <Route path="/mentorservice" element={<MentorServicePage />} />
             <Route path="/mentors" element={<MentorsList />} />
             <Route path="/courses" element={<MenteeCourses />} />

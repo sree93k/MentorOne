@@ -12,6 +12,8 @@ import { inUploadService } from "../../services/interface/inUploadService";
 import imUploadService from "../../services/implementations/imUploadService";
 import { inMenteeProfileService } from "../../services/interface/inMenteeProfileService";
 import imMenteeProfileService from "../../services/implementations/imMenteeProfileService";
+import { inMentorProfileService } from "../../services/interface/inMentorProfileService";
+import imMentorProfileService from "../../services/implementations/imMentorProfileService";
 // import {inMenteeService} from '../../services/interface's
 import axios from "axios";
 import sharp from "sharp";
@@ -22,7 +24,7 @@ class menteeController {
   private userService: inUserService;
   private uploadService: inUploadService;
   private MenteeProfileService: inMenteeProfileService;
-
+  private MentorProfileService: inMentorProfileService;
   private options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -36,6 +38,7 @@ class menteeController {
     this.userService = new imUserService();
     this.uploadService = new imUploadService();
     this.MenteeProfileService = new imMenteeProfileService();
+    this.MentorProfileService = new imMentorProfileService();
   }
 
   public uploadWelcomeForm = async (
@@ -69,40 +72,6 @@ class menteeController {
     }
   };
 
-  //   public uploadWelcomeForm = async (
-  //     req: Request,
-  //     res: Response,
-  //     next: NextFunction
-  //   ): Promise<void> => {
-  //     try {
-  //       console.log("mnetee controller uploadWelcomeForm step 1");
-  //       console.log(req.body);
-  //       console.log("mnetee controller uploadWelcomeForm step 2");
-  //       const userId = req.body?.id;
-  //       console.log("mnetee controller uploadWelcomeForm step 3");
-  //       if (!userId) {
-  //         console.log("mnetee controller uploadWelcomeForm step 4 errro");
-  //         throw new ApiError(400, "User ID is required");
-  //       }
-  //       console.log("mnetee controller uploadWelcomeForm step 5");
-  //       const response = await this.MenteeProfileService.welcomeData(
-  //         req.body,
-  //         userId
-  //       );
-  //       console.log("mnetee controller uploadWelcomeForm step 6", response);
-
-  //       if (res.headersSent) {
-  //         console.log("Headers already sent before sending response");
-  //         return;
-  //       }
-  //       res.status(200).json(new ApiResponse(200, response));
-  //       console.log("mnetee controller uploadWelcomeForm step 7");
-  //       return;
-  //     } catch (error) {
-  //       console.log("mnetee controller uploadWelcomeForm step 8 errro ctach");
-  //       next(error);
-  //     }
-  //   };
   public uploadProfileImage = async (
     req: Request & { user?: { id: string } },
     res: Response,
@@ -156,46 +125,6 @@ class menteeController {
     }
   };
 
-  //editUserProfile
-  // public editUserProfile = async (
-  //   req: Request & { user?: { id: string } },
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> => {
-  //   try {
-  //     console.log("mentee copntroller editUserProfile step 1", req.user);
-
-  //     const id = req.user?.id;
-  //     if (!id) {
-  //       console.log("mentee copntroller editUserProfile step 2");
-  //       res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
-  //       return;
-  //     }
-  //     console.log("mentee copntroller editUserProfile step 3");
-  //     const payload = req.body;
-  //     console.log("mentee copntroller editUserProfile step 4", payload);
-  //     const updatedUser = await this.MenteeProfileService.editUserProfile(
-  //       id,
-  //       payload
-  //     );
-  //     console.log("mentee copntroller editUserProfile step 5", updatedUser);
-  //     if (!updatedUser) {
-  //       console.log("mentee copntroller editUserProfile step 6");
-  //       res.status(404).json(new ApiResponse(404, null, "User not found"));
-  //       return;
-  //     }
-  //     console.log("mentee copntroller editUserProfile step 7");
-  //     res
-  //       .status(200)
-  //       .json(
-  //         new ApiResponse(200, updatedUser, "Profile updated successfully")
-  //       );
-  //   } catch (error) {
-  //     console.log("mentee copntroller editUserProfile step 8 errror", error);
-  //     next(error);
-  //   }
-  // };
-
   public deleteAccount = async (
     req: Request & { user?: { id: string } },
     res: Response,
@@ -232,6 +161,10 @@ class menteeController {
       const id = req?.user?.id;
       console.log("id is ", id);
 
+      if (!id) {
+        res.status(400).json(new ApiResponse(400, null, "User ID is required"));
+        return;
+      }
       const response = await this.MenteeProfileService.userProfielData(id);
       if (!response) {
         console.log("mentee copntroller editUserProfile step 6", response);
@@ -243,6 +176,48 @@ class menteeController {
         .status(200)
         .json(new ApiResponse(200, response, "Profile updated successfully"));
     } catch (error) {
+      next(error);
+    }
+  };
+
+  public getAllMentors = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("getAllMentors controller step 1");
+      const { serviceType } = req.query;
+      const mentors = await this.MentorProfileService.getAllMentors(
+        serviceType as string
+      );
+      console.log("getAllMentors controller step 2: Mentors", mentors);
+      res.json(new ApiResponse(200, mentors, "Mentors fetched successfully"));
+    } catch (error: any) {
+      console.log("getAllMentors controller step 3: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      next(error);
+    }
+  };
+
+  public getMentorById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("getMentorById controller step 1");
+      const { id } = req.params;
+      const mentor = await this.MentorProfileService.getMentorById(id);
+      console.log("getMentorById controller step 2: Mentor", mentor);
+      res.json(new ApiResponse(200, mentor, "Mentor fetched successfully"));
+    } catch (error: any) {
+      console.log("getMentorById controller step 3: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
       next(error);
     }
   };

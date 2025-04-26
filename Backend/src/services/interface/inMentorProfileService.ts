@@ -15,4 +15,6 @@ export interface inMentorProfileService {
     serviceId: string,
     formData: Record<string, any>
   ): Promise<EService | null>;
+  getAllMentors(serviceType?: string): Promise<EUsers[]>;
+  getMentorById(mentorId: string): Promise<EUsers>;
 }
