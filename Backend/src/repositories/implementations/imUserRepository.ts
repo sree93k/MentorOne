@@ -470,6 +470,9 @@ export default class UserRepository implements inUserRepository {
         education.city = mentor.schoolDetails.city;
       }
 
+      console.log("the user datat in repo is 1 ", mentor);
+      console.log("the user datat in repo is 2", services);
+
       return {
         userData: mentor._id.toString(),
         mentorData: mentor.mentorId?._id.toString() || mentor._id.toString(),
@@ -486,13 +489,14 @@ export default class UserRepository implements inUserRepository {
             : "Pending",
         bio: mentor.mentorId?.bio || "No bio available",
         skills: mentor.mentorId?.skills || [],
-        services: services.map((s) => ({
-          type: s.type,
-          title: s.title || "Untitled Service",
-          description: s.description || "No description available",
-          duration: s.duration || "N/A",
-          price: s.amount || 0,
-        })),
+        // services: services.map((s) => ({
+        //   type: s.type,
+        //   title: s.title || "Untitled Service",
+        //   description: s.description || "No description available",
+        //   duration: s.duration || "N/A",
+        //   price: s.amount || 0,
+        // })),
+        services: services,
         education: Object.keys(education).length ? education : undefined,
         workExperience,
       };

@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useStripe } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
-import { createCheckoutSession } from "@/services/userServices";
+import { createCheckoutSession } from "@/services/paymentServcie";
 
 interface CheckoutButtonProps {
   serviceId: string;
@@ -31,6 +31,9 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
 }) => {
   const stripe = useStripe();
 
+  useEffect(() => {
+    console.log("stripe page tsx laoding.....");
+  });
   const handleCheckout = async () => {
     if (!stripe) {
       toast.error("Stripe.js has not loaded.");
@@ -38,6 +41,7 @@ const CheckoutButton: React.FC<CheckoutButtonProps> = ({
     }
 
     try {
+      console.log("stripe page handleCheckout. step 1");
       const response = await createCheckoutSession({
         serviceId,
         mentorId,

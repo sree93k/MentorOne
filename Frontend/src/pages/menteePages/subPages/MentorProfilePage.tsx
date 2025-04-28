@@ -253,7 +253,7 @@ export default function MentorProfile() {
                       title={service.title}
                       description={service.description}
                       duration={service.duration}
-                      price={`₹${service.price}`}
+                      price={`₹${service.amount}`}
                       onClick={() =>
                         navigate("/seeker/mentorservice", {
                           state: { service, mentor },
@@ -278,7 +278,7 @@ interface ServiceCardProps {
   title: string;
   description: string;
   duration?: string;
-  price: string;
+  amount: string;
   onClick: () => void;
 }
 

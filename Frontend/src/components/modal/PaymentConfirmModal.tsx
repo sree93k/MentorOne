@@ -24,7 +24,7 @@ interface Service {
   _id: string;
   title: string;
   duration: string | number;
-  price: number;
+  amount: number;
 }
 
 interface Mentor {
@@ -35,8 +35,8 @@ interface Mentor {
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  service: Service;
-  mentor: Mentor;
+  service: Service | null;
+  mentor: Mentor | null;
   selectedDate: string | null;
   selectedTime: string | null;
   menteeId: string;
@@ -83,8 +83,21 @@ export default function PaymentModal({
       .catch((error) => console.error("Stripe initialization failed:", error));
   }, []);
 
-  const platformCharge = Math.round(service.price * 0.15);
-  const totalAmount = service.price + platformCharge;
+  // Validate service and mentor
+  useEffect(() => {
+    if (isOpen && (!service || !mentor)) {
+      console.error("Missing service or mentor:", { service, mentor });
+      toast.error("Service or mentor information is missing");
+      onClose();
+    }
+  }, [isOpen, service, mentor, onClose]);
+
+  if (!service || !mentor) {
+    return null; // Prevent rendering if invalid props
+  }
+
+  const platformCharge = Math.round(service.amount * 0.15);
+  const totalAmount = service.amount + platformCharge;
 
   const formattedDate = selectedDate
     ? new Date(selectedDate).toLocaleDateString("en-GB", {
@@ -147,13 +160,20 @@ export default function PaymentModal({
     setLoading(true);
 
     try {
+      console.log("servuce ane mentor step1 :s", service);
+      console.log("servuce ane mentor step2 :m", mentor);
+      if (!service._id || !mentor.userData) {
+        console.error("Invalid service or mentor ID:", { service, mentor });
+        throw new Error("Service or mentor ID is missing");
+      }
+
       const slotIndex = selectedTime ? timeToSlotIndex(selectedTime) : -1;
       if (slotIndex === -1) throw new Error("Invalid time slot selected");
 
       const payload = {
         amount: totalAmount,
         serviceId: service._id,
-        mentorId: mentor._id,
+        mentorId: mentor.userData,
         menteeId,
         bookingDate: selectedDate || "",
         startTime,
@@ -264,7 +284,7 @@ export default function PaymentModal({
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>{service.title}</span>
-                <span>₹{service.price}</span>
+                <span>₹{service.amount}</span>
               </div>
               <div className="flex justify-between">
                 <span>Platform Charge</span>
