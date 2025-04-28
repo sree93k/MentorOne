@@ -1,4 +1,4 @@
-import { error } from "console";
+import { error, profile } from "console";
 
 import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
@@ -316,7 +316,7 @@ export default class UserRepository implements inUserRepository {
       let mentorIds: string[] = [];
 
       // Filter by serviceType if provided
-      if (serviceType && serviceType !== "All") {
+      if (serviceType && serviceType.toLowerCase() !== "all") {
         const services = await Service.find({ type: serviceType }).lean();
         mentorIds = services.map((s) => s.mentorId.toString());
         console.log(
@@ -337,11 +337,11 @@ export default class UserRepository implements inUserRepository {
         })
         .populate({
           path: "schoolDetails",
-          select: "schoolName city",
+          select: "schoolName city class",
         })
         .populate({
           path: "collegeDetails",
-          select: "collegeName city",
+          select: "collegeName city course specializedIn",
         })
         .populate({
           path: "professionalDetails",
@@ -352,43 +352,45 @@ export default class UserRepository implements inUserRepository {
       console.log("getAllMentors repo step 3: Found mentors", mentors.length);
 
       return mentors.map((mentor, index) => {
-        console.log(`getAllMentors repo step 4: Mapping mentor ${index + 1}`, {
-          _id: mentor._id,
-          firstName: mentor.firstName,
-          lastName: mentor.lastName,
-          category: mentor.category,
-          skills: mentor.skills,
-          mentorId: mentor.mentorId,
-          schoolDetails: mentor.schoolDetails,
-          collegeDetails: mentor.collegeDetails,
-          professionalDetails: mentor.professionalDetails,
-        });
+        let role = "N/A";
+        let work = "N/A";
+        let badge = "N/A";
+        let workRole = "N/A";
 
-        let company = "Unknown";
-        let companyBadge = "N/A";
-        let jobRole = "Mentor";
-
-        if (mentor.category === "professional" && mentor.professionalDetails) {
-          company = mentor.professionalDetails.company || "Unknown";
-          companyBadge = mentor.professionalDetails.company || "N/A";
-          jobRole = mentor.professionalDetails.jobRole || "Mentor";
+        if (mentor.professionalDetails) {
+          role = "Professional";
+          work = mentor.professionalDetails.company || "Unknown";
+          badge = mentor.professionalDetails.jobRole || "N/A";
+          workRole = mentor.professionalDetails.jobRole || "Professional";
         } else if (mentor.category === "college" && mentor.collegeDetails) {
-          company = mentor.collegeDetails.collegeName || "Unknown";
-          companyBadge = mentor.collegeDetails.collegeName || "N/A";
+          role = "College Student";
+          work = mentor.collegDetails.collegeName || "Unknown";
+          badge = mentor.collegeDetails.course || "N/A";
+          workRole = mentor.collegeDetails.specializedIn || "N/A";
         } else if (mentor.category === "school" && mentor.schoolDetails) {
-          company = mentor.schoolDetails.schoolName || "Unknown";
-          companyBadge = mentor.schoolDetails.schoolName || "N/A";
+          role = "School Student";
+          work = mentor.schoolDetails.schoolName || "Unknown";
+          badge = mentor.schoolDetails.schoolName || "N/A";
+          workRole = mentor.schoolDetails.class
+            ? String(mentor.schoolDetails.class)
+            : "N/A";
         }
 
         return {
-          _id: mentor._id.toString(),
+          userId: mentor?._id.toString(),
+          mentorId: mentor.mentorId?._id.toString(),
           name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
-          role: mentor.skills?.length ? mentor.skills.join(", ") : jobRole,
-          company,
+          bio: mentor.mentorId?.bio,
+          role,
+          work,
+          workRole,
           profileImage: mentor.profilePicture || undefined,
-          companyBadge,
+          badge,
           isBlocked: mentor.isBlocked,
-          isApproved: mentor.mentorId?.isApproved || "Pending",
+          isApproved:
+            mentor.mentorId && "isApproved" in mentor.mentorId
+              ? mentor.mentorId.isApproved
+              : "Pending",
         };
       });
     } catch (error: any) {
@@ -413,11 +415,11 @@ export default class UserRepository implements inUserRepository {
         })
         .populate({
           path: "schoolDetails",
-          select: "schoolName city",
+          select: "schoolName city class",
         })
         .populate({
           path: "collegeDetails",
-          select: "collegeName city",
+          select: "collegeName city course specializedIn",
         })
         .populate({
           path: "professionalDetails",
@@ -430,67 +432,69 @@ export default class UserRepository implements inUserRepository {
         throw new ApiError(404, "Mentor not found");
       }
 
-      const services = await Service.find({ mentorId }).lean();
+      const services = await Service.find({ mentorId: mentor._id }).lean();
       console.log("getMentorById repo step 3: Found services", services.length);
 
-      console.log("getMentorById repo step 4: Mapping mentor", {
-        _id: mentor._id,
-        firstName: mentor.firstName,
-        lastName: mentor.lastName,
-        category: mentor.category,
-        skills: mentor.skills,
-        mentorId: mentor.mentorId,
-        schoolDetails: mentor.schoolDetails,
-        collegeDetails: mentor.collegeDetails,
-        professionalDetails: mentor.professionalDetails,
-      });
+      let role = "N/A";
+      let work = "N/A";
+      let badge = "N/A";
+      let workRole = "N/A";
+      let education: EUsers["education"] = {};
+      let workExperience: EUsers["workExperience"] = undefined;
 
-      let company = "Unknown";
-      let companyBadge = "N/A";
-      let jobRole = "Mentor";
-
-      if (mentor.category === "professional" && mentor.professionalDetails) {
-        company = mentor.professionalDetails.company || "Unknown";
-        companyBadge = mentor.professionalDetails.company || "N/A";
-        jobRole = mentor.professionalDetails.jobRole || "Mentor";
+      if (mentor.professionalDetails) {
+        role = "Professional";
+        work = mentor.professionalDetails.company || "Unknown";
+        badge = mentor.professionalDetails.company || "N/A";
+        workRole = mentor.professionalDetails.jobRole || "Professional";
+        workExperience = {
+          company: mentor.professionalDetails.company || "Unknown",
+          jobRole: mentor.professionalDetails.jobRole || "Professional",
+          city: mentor.professionalDetails.city,
+        };
       } else if (mentor.category === "college" && mentor.collegeDetails) {
-        company = mentor.collegeDetails.collegeName || "Unknown";
-        companyBadge = mentor.collegeDetails.collegeName || "N/A";
+        role = "College Student";
+        work = mentor.collegeDetails.collegeName || "Unknown";
+        badge = mentor.collegeDetails.course || "N/A";
+        workRole = mentor.collegeDetails.specializedIn || "N/A";
+        education.collegeName = mentor.collegeDetails.collegeName;
+        education.city = mentor.collegeDetails.city;
       } else if (mentor.category === "school" && mentor.schoolDetails) {
-        company = mentor.schoolDetails.schoolName || "Unknown";
-        companyBadge = mentor.schoolDetails.schoolName || "N/A";
+        role = "School Student";
+        work = mentor.schoolDetails.schoolName || "Unknown";
+        badge = mentor.schoolDetails.schoolName || "N/A";
+        workRole = mentor.schoolDetails.class
+          ? String(mentor.schoolDetails.class)
+          : "N/A";
+        education.schoolName = mentor.schoolDetails.schoolName;
+        education.city = mentor.schoolDetails.city;
       }
 
       return {
-        _id: mentor._id.toString(),
+        userData: mentor._id.toString(),
+        mentorData: mentor.mentorId?._id.toString() || mentor._id.toString(),
         name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
-        role: mentor.skills?.length ? mentor.skills.join(", ") : jobRole,
-        company,
+        role,
+        work,
+        workRole,
         profileImage: mentor.profilePicture || undefined,
-        companyBadge,
-        isBlocked: mentor.isBlocked,
-        isApproved: mentor.mentorId?.isApproved || "Pending",
-        bio: mentor.mentorId?.bio,
-        skills: mentor.mentorId?.skills,
+        badge,
+        isBlocked: mentor.isBlocked || false,
+        isApproved:
+          mentor.mentorId && "isApproved" in mentor.mentorId
+            ? mentor.mentorId.isApproved
+            : "Pending",
+        bio: mentor.mentorId?.bio || "No bio available",
+        skills: mentor.mentorId?.skills || [],
         services: services.map((s) => ({
           type: s.type,
           title: s.title || "Untitled Service",
           description: s.description || "No description available",
           duration: s.duration || "N/A",
-          price: s.price || 0,
+          price: s.amount || 0,
         })),
-        education: {
-          schoolName: mentor.schoolDetails?.schoolName,
-          collegeName: mentor.collegeDetails?.collegeName,
-          city: mentor.schoolDetails?.city || mentor.collegeDetails?.city,
-        },
-        workExperience: mentor.professionalDetails
-          ? {
-              company: mentor.professionalDetails.company,
-              jobRole: mentor.professionalDetails.jobRole,
-              city: mentor.professionalDetails.city,
-            }
-          : undefined,
+        education: Object.keys(education).length ? education : undefined,
+        workExperience,
       };
     } catch (error: any) {
       console.error("getMentorById repo step 5: Error", {

@@ -7,4 +7,6 @@ export interface inMenteeProfileService {
   userProfielData(
     id: string
   ): Promise<{ user: Omit<EUsers, "password">[] } | null>;
+  getAllMentors(): Promise<EUsers[]>;
+  getMentorById(mentorId: string): Promise<EUsers>;
 }

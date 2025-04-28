@@ -25,7 +25,7 @@ export const authenticate = (
     res.status(401).send("Access denied");
     return;
   }
-  console.log("autheticte start 4");
+  console.log("autheticte start 4 token is ", token);
   try {
     const decoded = verifyAccessToken(token);
     req.user = decoded;

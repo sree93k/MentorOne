@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BookingConfirmProps {
-  onConfirm: () => void;
+  onConfirm: (date: string, time: string) => void;
 }
 
 export default function BookingConfirm({ onConfirm }: BookingConfirmProps) {
@@ -34,7 +33,7 @@ export default function BookingConfirm({ onConfirm }: BookingConfirmProps) {
 
   const handleConfirmClick = () => {
     if (selectedDate && selectedTime) {
-      onConfirm();
+      onConfirm(selectedDate, selectedTime);
     }
   };
 

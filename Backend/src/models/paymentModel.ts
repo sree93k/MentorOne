@@ -1,17 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-interface IPayment extends Document {
-  bookingId: mongoose.Types.ObjectId;
-  serviceId: mongoose.Types.ObjectId;
-  menteeId: mongoose.Types.ObjectId;
-  amount: number;
-  status: "pending" | "completed" | "failed" | "refunded";
-  transactionId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const PaymentSchema = new Schema<IPayment>({
+const PaymentSchema = new Schema({
   bookingId: {
     type: Schema.Types.ObjectId,
     ref: "Booking",
@@ -39,3 +28,5 @@ const PaymentSchema = new Schema<IPayment>({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
+
+export default mongoose.model("Payment", PaymentSchema);

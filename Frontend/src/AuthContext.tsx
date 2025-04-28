@@ -118,3 +118,125 @@
 //   }
 //   return context;
 // };
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+export type UserRole = "admin" | "mentor" | "mentee";
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("authCOntext step1 ");
+
+    const checkAuth = async () => {
+      try {
+        console.log("authCOntext step2 ");
+        const token = localStorage.getItem("accessToken");
+        console.log("authCOntext step3 ", token);
+        if (token) {
+          // TODO: Replace with actual API call to validate token
+          const response = await fetch("/api/auth/validate", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          console.log("authCOntext step4 ", response);
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(userData);
+          } else {
+            localStorage.removeItem("accessToken");
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        localStorage.removeItem("accessToken");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      // TODO: Replace with actual login API call
+      console.log("authCOntext login step1 ");
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      console.log("authCOntext login step2 ", response);
+      if (!response.ok) {
+        throw new Error("Invalid credentials");
+      }
+      const { user, token } = await response.json();
+      localStorage.setItem("accessToken", token);
+      setUser(user);
+    } catch (error) {
+      console.error("Login failed:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      setLoading(true);
+      // TODO: Optional - Call logout API if needed
+      localStorage.removeItem("accessToken");
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        isAuthenticated: !!user,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

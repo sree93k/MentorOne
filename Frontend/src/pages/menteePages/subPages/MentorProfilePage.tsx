@@ -2,39 +2,37 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Linkedin, Youtube, Twitter, Clock } from "lucide-react";
 import {
-  Search,
-  ArrowLeft,
-  Linkedin,
-  Youtube,
-  Twitter,
-  Clock,
-  ChevronDown,
-} from "lucide-react";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import DummyImage from "@/assets/DummyProfile.jpg";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { toast } from "react-hot-toast";
 import { getMentorById } from "@/services/menteeService";
-
+// import { useAuth } from "@/contexts/AuthContext";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
 interface Mentor {
   _id: string;
+  userData: string;
+  mentorData: string;
   name: string;
   role: string;
-  company: string;
+  work: string;
+  workRole: string;
   profileImage?: string;
-  companyBadge: string;
+  badge: string;
   isBlocked: boolean;
   isApproved: string;
   bio?: string;
   skills?: string[];
-  services?: {
+  services: {
+    _id: string;
     type: string;
     title: string;
     description: string;
@@ -58,11 +56,25 @@ export default function MentorProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // const { user, loading: authLoading } = useAuth();
+
+  const { user, error, loading, isAuthenticated } = useSelector(
+    (state: RootState) => state.user
+  );
 
   useEffect(() => {
+    if (loading) return; // Wait for auth check
+
+    if (!user) {
+      toast.error("Please log in to view mentor profiles.");
+      navigate("/login");
+      return;
+    }
+
     const fetchMentor = async () => {
       if (!id) {
         toast.error("Mentor ID is missing.");
+        navigate("/seeker/mentors");
         return;
       }
       setIsLoading(true);
@@ -71,16 +83,16 @@ export default function MentorProfile() {
         setMentor(mentorData);
       } catch (error: any) {
         console.error("Failed to fetch mentor:", error);
-
         toast.error("Failed to load mentor details. Please try again.");
+        navigate("/seeker/mentors");
       } finally {
         setIsLoading(false);
       }
     };
     fetchMentor();
-  }, [id]);
+  }, [id, user, loading, navigate]);
 
-  if (isLoading) {
+  if (loading || isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -97,7 +109,6 @@ export default function MentorProfile() {
       </div>
       <div className="flex-1 max-w-screen-xl mx-auto w-full p-2">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left Profile Section */}
           <div className="bg-black text-white p-6 flex flex-col">
             <div className="flex flex-col items-center mb-6">
               <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
@@ -109,7 +120,7 @@ export default function MentorProfile() {
               </div>
               <h2 className="text-2xl font-bold">{mentor.name}</h2>
               <p className="text-gray-300">
-                {mentor.role} @ {mentor.company}
+                {mentor.role} @ {mentor.work}
               </p>
               <div className="flex gap-2 mt-4">
                 <div className="bg-white rounded-full p-1">
@@ -124,64 +135,92 @@ export default function MentorProfile() {
               </div>
             </div>
 
-            <ProfileSection title="About">
-              <p className="text-sm">{mentor.bio || "No bio available."}</p>
-            </ProfileSection>
-
-            <ProfileSection title="Skills">
-              <div className="flex flex-wrap gap-2">
-                {mentor.skills?.length ? (
-                  mentor.skills.map((skill, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="bg-gray-200"
-                    >
-                      {skill}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-sm">No skills listed.</p>
-                )}
-              </div>
-            </ProfileSection>
-
-            <ProfileSection title="Education">
-              {mentor.education ? (
-                <div>
-                  {mentor.education.schoolName && (
-                    <p className="text-sm">
-                      School: {mentor.education.schoolName},{" "}
-                      {mentor.education.city}
-                    </p>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem
+                value="about"
+                className="border-t border-gray-700 pt-4"
+              >
+                <AccordionTrigger className="font-bold">About</AccordionTrigger>
+                <AccordionContent className="mt-2">
+                  <p className="text-sm">{mentor.bio || "No bio available."}</p>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="skills"
+                className="border-t border-gray-700 pt-4"
+              >
+                <AccordionTrigger className="font-bold">
+                  Skills
+                </AccordionTrigger>
+                <AccordionContent className="mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {mentor.skills?.length ? (
+                      mentor.skills.map((skill, index) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-gray-200"
+                        >
+                          {skill}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm">No skills listed.</p>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="education"
+                className="border-t border-gray-700 pt-4"
+              >
+                <AccordionTrigger className="font-bold">
+                  Education
+                </AccordionTrigger>
+                <AccordionContent className="mt-2">
+                  {mentor.education ? (
+                    <div>
+                      {mentor.education.schoolName && (
+                        <p className="text-sm">
+                          School: {mentor.education.schoolName},{" "}
+                          {mentor.education.city}
+                        </p>
+                      )}
+                      {mentor.education.collegeName && (
+                        <p className="text-sm">
+                          College: {mentor.education.collegeName},{" "}
+                          {mentor.education.city}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm">No education details available.</p>
                   )}
-                  {mentor.education.collegeName && (
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="work-experience"
+                className="border-t border-gray-700 pt-4"
+              >
+                <AccordionTrigger className="font-bold">
+                  Work Experience
+                </AccordionTrigger>
+                <AccordionContent className="mt-2">
+                  {mentor.workExperience ? (
                     <p className="text-sm">
-                      College: {mentor.education.collegeName},{" "}
-                      {mentor.education.city}
+                      {mentor.workExperience.jobRole} at{" "}
+                      {mentor.workExperience.company}
+                      {mentor.workExperience.city &&
+                        `, ${mentor.workExperience.city}`}
                     </p>
+                  ) : (
+                    <p className="text-sm">No work experience listed.</p>
                   )}
-                </div>
-              ) : (
-                <p className="text-sm">No education details available.</p>
-              )}
-            </ProfileSection>
-
-            <ProfileSection title="Work Experience">
-              {mentor.workExperience ? (
-                <p className="text-sm">
-                  {mentor.workExperience.jobRole} at{" "}
-                  {mentor.workExperience.company}
-                  {mentor.workExperience.city &&
-                    `, ${mentor.workExperience.city}`}
-                </p>
-              ) : (
-                <p className="text-sm">No work experience listed.</p>
-              )}
-            </ProfileSection>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
 
-          {/* Right Services Section */}
           <div className="md:col-span-2">
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
               <h3 className="font-medium mb-4">Services Available</h3>
@@ -215,6 +254,11 @@ export default function MentorProfile() {
                       description={service.description}
                       duration={service.duration}
                       price={`₹${service.price}`}
+                      onClick={() =>
+                        navigate("/seeker/mentorservice", {
+                          state: { service, mentor },
+                        })
+                      }
                     />
                   ))
                 ) : (
@@ -229,31 +273,13 @@ export default function MentorProfile() {
   );
 }
 
-interface ProfileSectionProps {
-  title: string;
-  children?: React.ReactNode;
-}
-
-function ProfileSection({ title, children }: ProfileSectionProps) {
-  return (
-    <Collapsible className="mb-4 border-t border-gray-700 pt-4">
-      <div className="flex justify-between items-center">
-        <h3 className="font-bold">{title}</h3>
-        <CollapsibleTrigger className="text-gray-400">
-          <ChevronDown className="h-5 w-5" />
-        </CollapsibleTrigger>
-      </div>
-      <CollapsibleContent className="mt-2">{children}</CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 interface ServiceCardProps {
   type: string;
   title: string;
   description: string;
   duration?: string;
   price: string;
+  onClick: () => void;
 }
 
 function ServiceCard({
@@ -262,8 +288,8 @@ function ServiceCard({
   description,
   duration,
   price,
+  onClick,
 }: ServiceCardProps) {
-  const navigate = useNavigate();
   return (
     <div className="bg-white rounded-lg border p-4">
       <Badge
@@ -286,7 +312,7 @@ function ServiceCard({
         <Button
           variant="outline"
           className="rounded-full bg-gray-200 border-gray-300"
-          onClick={() => navigate("/seeker/mentorservice")}
+          onClick={onClick}
         >
           {price}
         </Button>

@@ -3,6 +3,7 @@ import multer from "multer";
 import uploadController from "../../controllers/userController/uploadController";
 import { authenticate } from "../../middlewares/authenticateuser";
 import userController from "../../controllers/userController/userController";
+import paymentController from "../../controllers/paymentController/paymentController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
@@ -32,6 +33,24 @@ userPrivateRoute.put(
   "/resetPassword",
   authenticate,
   userController.resetPassword
+);
+
+userPrivateRoute.post(
+  "/payment/create-checkout-session",
+  authenticate,
+  paymentController.createCheckoutSession
+);
+
+userPrivateRoute.post(
+  "/payment/create-payment-intent",
+  authenticate,
+  paymentController.createPaymentIntent
+);
+
+userPrivateRoute.post(
+  "/payment/save-booking",
+  authenticate,
+  paymentController.saveBooking
 );
 
 export default userPrivateRoute;

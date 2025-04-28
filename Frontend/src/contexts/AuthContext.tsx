@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export type UserRole = "admin" | "mentor" | "mentee";
 
@@ -15,69 +17,73 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  refreshToken: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
 
   useEffect(() => {
-    // Check for stored auth token and validate it
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem("auth_token");
         if (token) {
-          // TODO: Validate token with backend
-          // For now, we'll use mock data
-          const mockUser = {
-            id: "1",
-            email: "user@example.com",
-            name: "John Doe",
-            role: "mentor" as UserRole,
-          };
-          setUser(mockUser);
+          const response = await axios.get(
+            `${API_BASE_URL}/api/auth/validate`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const { id, email, name, role } = response.data.user;
+          setUser({ id, email, name, role });
+        } else {
+          setUser(null);
+          navigate("/login");
         }
       } catch (error) {
         console.error("Auth check failed:", error);
         localStorage.removeItem("auth_token");
+        localStorage.removeItem("refresh_token");
+        setUser(null);
+        navigate("/login");
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [navigate]);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // TODO: Implement actual login API call
-      // For demonstration, we'll simulate an API call with credentials
-      console.log(
-        `Attempting login with email: ${email} and password: ${password.length} characters`
-      );
-
-      // Simulate API validation
-      if (!email || !password) {
-        throw new Error("Email and password are required");
-      }
-
-      // Mock successful authentication
-      const mockUser = {
-        id: "1",
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email,
-        name: "John Doe",
-        role: "mentor" as UserRole,
-      };
-      localStorage.setItem("auth_token", "mock_token");
-      setUser(mockUser);
-    } catch (error) {
+        password,
+      });
+      const { user, accessToken, refreshToken } = response.data;
+      localStorage.setItem("auth_token", accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
+      setUser({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      });
+      navigate("/seeker/dashboard");
+    } catch (error: any) {
       console.error("Login failed:", error);
-      throw error;
+      throw new Error(error.response?.data?.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
@@ -87,12 +93,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setLoading(true);
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("refresh_token");
       setUser(null);
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
       throw error;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (!refreshToken) {
+        throw new Error("No refresh token available");
+      }
+      const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+        refreshToken,
+      });
+      const { accessToken, newRefreshToken } = response.data;
+      localStorage.setItem("auth_token", accessToken);
+      localStorage.setItem("refresh_token", newRefreshToken);
+      const userResponse = await axios.get(
+        `${API_BASE_URL}/api/auth/validate`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      const { id, email, name, role } = userResponse.data.user;
+      setUser({ id, email, name, role });
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate("/login");
+      throw error;
     }
   };
 
@@ -104,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         login,
         logout,
         isAuthenticated: !!user,
+        refreshToken,
       }}
     >
       {children}
