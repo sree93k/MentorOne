@@ -59,6 +59,7 @@ class PaymentController {
       slotIndex,
     } = req.body;
 
+    console.log("createCheckoutSession request:", req.body);
     try {
       const checkoutSession = await this.paymentService.createCheckoutSession({
         serviceId,
@@ -71,9 +72,18 @@ class PaymentController {
         day,
         slotIndex,
       });
-      res.json({ id: checkoutSession.id });
-    } catch (error) {
-      next(error);
+      res.json({ sessionId: checkoutSession.id }); // Changed from { id: ... } to { sessionId: ... }
+    } catch (error: any) {
+      console.error("Error in createCheckoutSession controller:", error);
+      if (error instanceof ApiError) {
+        res.status(error.statusCode).json({ error: error.message });
+      } else if (error.type === "StripeInvalidRequestError") {
+        res
+          .status(400)
+          .json({ error: error.message || "Invalid request to Stripe API" });
+      } else {
+        res.status(500).json({ error: "Failed to create checkout session" });
+      }
     }
   };
 

@@ -17,7 +17,6 @@ import imMentorProfileService from "../../services/implementations/imMentorProfi
 // import {inMenteeService} from '../../services/interface's
 import axios from "axios";
 import sharp from "sharp";
-
 class menteeController {
   private userAuthService: inUserAuthService;
   private OTPServices: inOTPService;

@@ -42,7 +42,11 @@ export default class PaymentService implements inPaymentService {
         slotIndex === undefined
       ) {
         console.error("Missing required fields:", params);
-        throw new ApiError(400, "Missing required fields", "Invalid input");
+        throw new ApiError(
+          400,
+          "Missing required fields: serviceId and mentorId are required",
+          "Invalid input"
+        );
       }
 
       if (amount <= 0) {
@@ -52,25 +56,25 @@ export default class PaymentService implements inPaymentService {
 
       // Validate schedule
       console.log("Querying Schedule:", { mentorId, day, slotIndex });
-      const schedule = await Schedule.findOne({
-        mentorId,
-        day,
-        "slots.index": slotIndex,
-        "slots.isAvailable": true,
-      }).lean();
-      console.log("Schedule result:", schedule);
-      if (!schedule) {
-        console.error("Schedule not found or slot unavailable:", {
-          mentorId,
-          day,
-          slotIndex,
-        });
-        throw new ApiError(
-          400,
-          "Selected slot is not available",
-          "Invalid schedule"
-        );
-      }
+      // const schedule = await Schedule.findOne({
+      //   mentorId,
+      //   day,
+      //   "slots.index": slotIndex,
+      //   "slots.isAvailable": true,
+      // }).lean();
+      // console.log("Schedule result:", schedule);
+      // if (!schedule) {
+      //   console.error("Schedule not found or slot unavailable:", {
+      //     mentorId,
+      //     day,
+      //     slotIndex,
+      //   });
+      //   throw new ApiError(
+      //     400,
+      //     "Selected slot is not available",
+      //     "Invalid schedule"
+      //   );
+      // }
 
       console.log("Calling stripe.checkout.sessions.create");
       const session = await stripe.checkout.sessions.create({
@@ -112,11 +116,7 @@ export default class PaymentService implements inPaymentService {
       return session;
     } catch (error: any) {
       console.error("Detailed error in createCheckoutSession:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to create checkout session",
-        "Error during checkout session creation"
-      );
+      throw error; // Propagate the original error (ApiError with 400 status)
     }
   }
 

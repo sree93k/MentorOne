@@ -58,7 +58,7 @@ export default function BookingDetails({
           className="rounded-full border-gray-400 flex items-center gap-2"
           onClick={onConfirmClick}
         >
-          ₹{service.price}
+          ₹{service.amount}
           <svg
             width="16"
             height="16"

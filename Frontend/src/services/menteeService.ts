@@ -204,6 +204,7 @@ export const getMentorById = async (mentorId: string): Promise<Mentor> => {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
+    console.log("getMentorById: Response received", response);
     console.log("getMentorById: Response received", response.data.data);
     return response.data.data as Mentor;
   } catch (error: any) {
