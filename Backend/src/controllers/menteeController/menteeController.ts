@@ -188,9 +188,9 @@ class menteeController {
     try {
       console.log("getAllMentors controller step 1");
       const { serviceType } = req.query;
-      const mentors = await this.MentorProfileService.getAllMentors(
-        serviceType as string
-      );
+      console.log("the service query is ", serviceType);
+
+      const mentors = await this.MenteeProfileService.getAllMentors();
       console.log("getAllMentors controller step 2: Mentors", mentors);
       res.json(new ApiResponse(200, mentors, "Mentors fetched successfully"));
     } catch (error: any) {
@@ -210,7 +210,7 @@ class menteeController {
     try {
       console.log("getMentorById controller step 1");
       const { id } = req.params;
-      const mentor = await this.MentorProfileService.getMentorById(id);
+      const mentor = await this.MenteeProfileService.getMentorById(id);
       console.log("getMentorById controller step 2: Mentor", mentor);
       res.json(new ApiResponse(200, mentor, "Mentor fetched successfully"));
     } catch (error: any) {

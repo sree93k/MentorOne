@@ -58,6 +58,13 @@ const BookingSchema = new Schema({
     enum: ["confirmed", "rescheduled", "cancelled"],
     default: "confirmed",
   },
+  paymentDetails: {
+    paymentIntentId: { type: String },
+    amount: { type: Number },
+    currency: { type: String },
+    status: { type: String },
+    createdAt: { type: Date },
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -67,3 +74,5 @@ const BookingSchema = new Schema({
     default: Date.now,
   },
 });
+
+export default mongoose.model("Booking", BookingSchema);

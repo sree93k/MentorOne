@@ -7,15 +7,20 @@ import DummyProfileImg from "@/assets/DummyProfile.jpg";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAllMentors } from "@/services/menteeService";
-import { toast } from "react-hot-toast"; // Fixed import
+import { toast } from "react-hot-toast";
 
 interface Mentor {
-  _id: string;
+  userId: string;
+  mentorId: string;
   name: string;
+  bio?: string;
   role: string;
-  company: string;
+  work: string;
+  workRole: string;
   profileImage?: string;
-  companyBadge: string;
+  badge: string;
+  isBlocked: boolean;
+  isApproved: boolean | "Pending";
 }
 
 const MentorsList: React.FC = () => {
@@ -112,38 +117,44 @@ const MentorsList: React.FC = () => {
           ) : mentors.length === 0 ? (
             <p className="text-gray-500 text-center">No mentors found.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
               {mentors.map((mentor) => (
                 <div
-                  key={mentor._id}
-                  className="bg-white rounded-lg overflow-hidden shadow max-w-[280px] cursor-pointer"
+                  key={mentor.userId}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100 cursor-pointer"
                   onClick={() =>
-                    navigate(`/seeker/mentorprofile/${mentor._id}`)
+                    navigate(`/seeker/mentorprofile/${mentor.userId}`)
                   }
                 >
-                  <div className="relative w-full h-40 bg-red-400">
-                    {!loadedImages[mentor._id] && (
-                      <Skeleton className="w-full h-40 rounded-t-lg absolute top-0 left-0 z-0 animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200" />
+                  <div className="relative w-full h-[250px] bg-gray-100">
+                    {!loadedImages[mentor.userId] && (
+                      <Skeleton className="absolute inset-0 w-full h-full animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200" />
                     )}
                     <img
                       src={mentor.profileImage || DummyProfileImg}
                       alt={mentor.name}
-                      width={300}
-                      height={200}
-                      onLoad={() => handleImageLoad(mentor._id)}
-                      className={`w-full h-40 object-cover rounded-t-lg transition-opacity duration-500 ${
-                        loadedImages[mentor._id] ? "opacity-100" : "opacity-0"
+                      onLoad={() => handleImageLoad(mentor.userId)}
+                      className={`w-full h-full object-cover transition-opacity duration-500 ${
+                        loadedImages[mentor.userId]
+                          ? "opacity-100"
+                          : "opacity-0"
                       }`}
                     />
-                    <Badge className="absolute bottom-2 left-2 bg-white text-black z-10">
-                      {mentor.companyBadge}
+                    <Badge className="absolute top-2 left-2 bg-white text-black px-2 py-1 rounded-md text-xs shadow">
+                      {mentor.role}
                     </Badge>
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg">{mentor.name}</h3>
-                    <p className="text-gray-600">{mentor.role}</p>
-                    <p className="text-gray-500 text-sm">
-                      {mentor.role} @ {mentor.company}
+
+                  <div className="p-4 bg-gray-50">
+                    <h3 className="font-semibold text-lg text-gray-800">
+                      {mentor.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      {mentor.bio}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {mentor.workRole} <span className="text-gray-400">@</span>{" "}
+                      {mentor.work}
                     </p>
                   </div>
                 </div>
