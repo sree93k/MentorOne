@@ -1,4 +1,3 @@
-// src/pages/mentorPages/MentorSubPages/CalendarPage.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -112,11 +111,11 @@ interface DaySchedule {
 interface Schedule {
   _id: string;
   mentorId?: string;
+  scheduleName?: string; // Added to support name field
   weeklySchedule: DaySchedule[];
   createdAt?: string;
   updatedAt?: string;
 }
-
 interface BlockedDate {
   _id: string;
   date: string;
@@ -287,6 +286,120 @@ export default function CalendarPage() {
     setIsEditingNotice(false);
   };
 
+  // const handleCreateSchedule = async (name: string) => {
+  //   if (!mentorId) {
+  //     toast.error("Mentor ID not found.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const newSchedule = await createSchedule(mentorId, {
+  //       name,
+  //       days: [
+  //         "Monday",
+  //         "Tuesday",
+  //         "Wednesday",
+  //         "Thursday",
+  //         "Friday",
+  //         "Saturday",
+  //         "Sunday",
+  //       ].map((day) => ({
+  //         day,
+  //         times: ["12:00"],
+  //         available: false,
+  //       })),
+  //     });
+  //     setSchedules([...schedules, newSchedule]);
+  //     setIsCreateScheduleModalOpen(false);
+  //     toast.success("Schedule created successfully");
+  //   } catch (error) {
+  //     console.error("Error creating schedule:", error);
+  //     toast.error("Failed to create schedule");
+  //   }
+  // };
+
+  // const toggleDayAvailability = async (
+  //   scheduleId: string,
+  //   dayIndex: number
+  // ) => {
+  //   if (!mentorId) {
+  //     toast.error("Mentor ID not found.");
+  //     return;
+  //   }
+
+  //   const schedule = schedules.find((s) => s._id === scheduleId);
+  //   if (!schedule) return;
+
+  //   const updatedWeeklySchedule = schedule.weeklySchedule.map((day, i) =>
+  //     i === dayIndex
+  //       ? {
+  //           ...day,
+  //           slots: day.slots.map((slot) => ({
+  //             ...slot,
+  //             isAvailable: !day.slots[0].isAvailable, // Toggle all slots
+  //           })),
+  //         }
+  //       : day
+  //   );
+
+  //   try {
+  //     const updatedSchedule = await updateSchedule(mentorId, scheduleId, {
+  //       weeklySchedule: updatedWeeklySchedule,
+  //     });
+  //     setSchedules(
+  //       schedules.map((s) => (s._id === scheduleId ? updatedSchedule : s))
+  //     );
+  //     toast.success("Day availability updated");
+  //   } catch (error) {
+  //     console.error("Error updating day availability:", error);
+  //     toast.error("Failed to update day availability");
+  //   }
+  // };
+
+  // const addDayTime = async (scheduleId: string, dayIndex: number) => {
+  //   if (!mentorId) {
+  //     toast.error("Mentor ID not found.");
+  //     return;
+  //   }
+
+  //   const schedule = schedules.find((s) => s._id === scheduleId);
+  //   if (!schedule) return;
+
+  //   const day = schedule.weeklySchedule[dayIndex];
+  //   if (day.slots.length >= 3) {
+  //     toast.error("Cannot add more than 3 time slots");
+  //     return;
+  //   }
+
+  //   const lastSlot = day.slots[day.slots.length - 1] || {
+  //     startTime: "12:00",
+  //     endTime: "13:00",
+  //   };
+  //   const newStartHour = parseInt(lastSlot.startTime.split(":")[0]) + 1;
+  //   const newSlot = {
+  //     index: day.slots.length,
+  //     startTime: `${newStartHour.toString().padStart(2, "0")}:00`,
+  //     endTime: `${(newStartHour + 1).toString().padStart(2, "0")}:00`,
+  //     isAvailable: day.slots[0]?.isAvailable || false,
+  //   };
+
+  //   const updatedWeeklySchedule = schedule.weeklySchedule.map((d, i) =>
+  //     i === dayIndex ? { ...d, slots: [...d.slots, newSlot] } : d
+  //   );
+
+  //   try {
+  //     const updatedSchedule = await updateSchedule(mentorId, scheduleId, {
+  //       weeklySchedule: updatedWeeklySchedule,
+  //     });
+  //     setSchedules(
+  //       schedules.map((s) => (s._id === scheduleId ? updatedSchedule : s))
+  //     );
+  //     toast.success("Time slot added");
+  //   } catch (error) {
+  //     console.error("Error adding time slot:", error);
+  //     toast.error("Failed to add time slot");
+  //   }
+  // };
   const handleCreateSchedule = async (name: string) => {
     if (!mentorId) {
       toast.error("Mentor ID not found.");
@@ -295,19 +408,18 @@ export default function CalendarPage() {
 
     try {
       const newSchedule = await createSchedule(mentorId, {
-        name,
-        days: [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday",
+        scheduleName: name,
+        weeklySchedule: [
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
         ].map((day) => ({
           day,
-          times: ["12:00"],
-          available: false,
+          slots: [], // Empty slots array
         })),
       });
       setSchedules([...schedules, newSchedule]);
@@ -335,10 +447,19 @@ export default function CalendarPage() {
       i === dayIndex
         ? {
             ...day,
-            slots: day.slots.map((slot) => ({
-              ...slot,
-              isAvailable: !day.slots[0].isAvailable, // Toggle all slots
-            })),
+            slots: day.slots.length
+              ? day.slots.map((slot) => ({
+                  ...slot,
+                  isAvailable: !day.slots[0].isAvailable, // Toggle all slots
+                }))
+              : [
+                  {
+                    index: 0,
+                    startTime: "12:00",
+                    endTime: "13:00",
+                    isAvailable: true,
+                  },
+                ], // Add default slot if empty
           }
         : day
     );
@@ -381,7 +502,7 @@ export default function CalendarPage() {
       index: day.slots.length,
       startTime: `${newStartHour.toString().padStart(2, "0")}:00`,
       endTime: `${(newStartHour + 1).toString().padStart(2, "0")}:00`,
-      isAvailable: day.slots[0]?.isAvailable || false,
+      isAvailable: day.slots[0]?.isAvailable || true, // Default to true if no slots
     };
 
     const updatedWeeklySchedule = schedule.weeklySchedule.map((d, i) =>
@@ -401,7 +522,6 @@ export default function CalendarPage() {
       toast.error("Failed to add time slot");
     }
   };
-
   const removeDayTime = async (
     scheduleId: string,
     dayIndex: number,
@@ -1010,8 +1130,8 @@ export default function CalendarPage() {
                   {schedules.map((schedule) => (
                     <AccordionItem key={schedule._id} value={schedule._id}>
                       <AccordionTrigger className="text-left w-full text-lg font-medium flex items-center justify-between px-4 py-3 hover:bg-muted rounded-md">
-                        {/* Schedule {schedule._id.slice(-6)} */}
-                        {schedule.scheduleName}
+                        {schedule.scheduleName ||
+                          `Schedule ${schedule._id.slice(-6)}`}
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="flex justify-end mb-4 gap-2">

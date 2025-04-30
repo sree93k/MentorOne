@@ -80,59 +80,51 @@ export class CalendarRepository {
       "saturday",
     ];
 
-    // Create a map of input days for easy lookup
-    const dayMap = data.days.reduce((acc, dayData) => {
-      const normalizedDay = dayData.day.toLowerCase();
-      if (validDays.includes(normalizedDay)) {
-        acc[normalizedDay] = dayData;
-      }
-      return acc;
-    }, {} as Record<string, ScheduleData["days"][0]>);
+    let weeklySchedule;
 
-    // Generate weeklySchedule with 7 days
-    const weeklySchedule = validDays.map((day) => {
-      const dayData = dayMap[day] || { times: ["12:00"], available: false };
-      const baseTime = dayData.times[0] || "12:00"; // Use first time or default
+    if (data.weeklySchedule) {
+      // Use provided weeklySchedule, ensuring all days are included
+      const providedDays = data.weeklySchedule.reduce((acc, d) => {
+        acc[d.day] = d;
+        return acc;
+      }, {} as Record<string, ScheduleData["weeklySchedule"][0]>);
 
-      // Generate 3 slots by incrementing the base time
-      const slots = Array.from({ length: 3 }, (_, index) => {
-        const startHour = parseInt(baseTime.split(":")[0]) + index;
-        const startTime = `${startHour.toString().padStart(2, "0")}:00`;
-        const endTime = `${(startHour + 1).toString().padStart(2, "0")}:00`;
-        return {
-          index,
-          startTime,
-          endTime,
-          isAvailable: dayData.available,
-        };
-      });
-
-      return { day, slots };
-    });
-    console.log("data name is ", data.name);
+      weeklySchedule = validDays.map((day) => ({
+        day,
+        slots: providedDays[day]?.slots || [], // Use provided slots or empty array
+      }));
+    } else {
+      throw new Error("weeklySchedule must be provided");
+    }
 
     const schedule = await Schedule.create({
       mentorId: new mongoose.Types.ObjectId(mentorId),
+      scheduleName: data.scheduleName || "Default Schedule",
       weeklySchedule,
-      scheduleName: data.name,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     console.log("calender repo createSchedule step2", schedule);
-    return schedule; // Return single schedule object
+    return schedule;
   }
 
-  async updateSchedule(scheduleId: string, data: Partial<ScheduleData>) {
-    return await Schedule.findByIdAndUpdate(
+  async updateSchedule(scheduleId: string, data: ScheduleData) {
+    console.log("calender repo updateSchedule step1", scheduleId, data);
+    const updatedSchedule = await Schedule.findByIdAndUpdate(
       scheduleId,
-      { $set: { weeklySchedule: data?.days, updatedAt: new Date() } },
+      { $set: { weeklySchedule: data?.weeklySchedule, updatedAt: new Date() } },
       { new: true }
     );
+    console.log("calender repo updateSchedule step2", updatedSchedule);
+    return updatedSchedule;
   }
 
   async deleteSchedule(scheduleId: string) {
-    return await Schedule.findByIdAndDelete(scheduleId);
+    console.log("calender repo deleteSchedule step1", scheduleId);
+    const result = await Schedule.findByIdAndDelete(scheduleId);
+    console.log("calender repo deleteSchedule step2", result);
+    return result;
   }
 
   async getBlockedDates(mentorId: string) {
