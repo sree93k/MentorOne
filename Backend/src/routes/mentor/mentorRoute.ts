@@ -44,31 +44,38 @@ mentorRoutes.put(
 );
 
 mentorRoutes.get(
-  "/mentors/:mentorId/calendar",
+  "/:mentorId/calendar",
+  authenticate,
   mentorController.getMentorCalendar.bind(mentorController)
 );
 mentorRoutes.put(
-  "/mentors/:mentorId/policy",
+  "/:mentorId/policy",
+  authenticate,
   mentorController.updatePolicy.bind(mentorController)
 );
 mentorRoutes.post(
-  "/mentors/:mentorId/schedules",
+  "/:mentorId/schedules",
+  authenticate,
   mentorController.createSchedule.bind(mentorController)
 );
 mentorRoutes.put(
-  "/mentors/:mentorId/schedules/:scheduleId",
+  "/:mentorId/schedules/:scheduleId",
+  authenticate,
   mentorController.updateSchedule.bind(mentorController)
 );
 mentorRoutes.delete(
-  "/mentors/:mentorId/schedules/:scheduleId",
+  "/:mentorId/schedules/:scheduleId",
+  authenticate,
   mentorController.deleteSchedule.bind(mentorController)
 );
 mentorRoutes.post(
-  "/mentors/:mentorId/blocked-dates",
+  "/:mentorId/blocked-dates",
+  authenticate,
   mentorController.addBlockedDates.bind(mentorController)
 );
 mentorRoutes.delete(
-  "/mentors/:mentorId/blocked-dates/:blockedDateId",
+  "/:mentorId/blocked-dates/:blockedDateId",
+  authenticate,
   mentorController.removeBlockedDate.bind(mentorController)
 );
 export default mentorRoutes;

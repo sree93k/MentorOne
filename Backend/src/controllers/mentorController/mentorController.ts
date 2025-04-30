@@ -285,14 +285,19 @@ class mentorController {
 
   async updatePolicy(req: Request, res: Response) {
     try {
+      console.log("mentorcontorller updatePolicy step 1");
+
       const mentorId = req.params.mentorId;
       const policyData = req.body;
+      console.log("mentorcontorller updatePolicy step 2", mentorId, policyData);
       const updatedPolicy = await this.calendarService.updatePolicy(
         mentorId,
         policyData
       );
+      console.log("mentorcontorller updatePolicy step 3", updatedPolicy);
       res.status(200).json(updatedPolicy);
     } catch (error) {
+      console.log("mentorcontorller updatePolicy step 4 error", error);
       res.status(500).json({ message: "Error updating policy", error });
     }
   }
