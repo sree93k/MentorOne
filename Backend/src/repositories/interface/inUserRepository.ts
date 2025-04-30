@@ -19,6 +19,7 @@ export interface inUserRepository {
     userType: string;
     experienceId: string;
     menteeId: string;
+    role: string[];
   }): Promise<EUsers | null>;
 
   mentorUpdate(data: {
@@ -27,6 +28,7 @@ export interface inUserRepository {
     experienceId: string;
     mentorId: string;
     imageUrl: string;
+    role: string[];
   }): Promise<EUsers | null>;
   getAllMentors(serviceType?: string): Promise<EUsers[]>;
   getMentorById(mentorId: string): Promise<EUsers>;

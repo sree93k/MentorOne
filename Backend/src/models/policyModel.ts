@@ -1,18 +1,18 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+import mongoose, { Schema, model, Document } from "mongoose";
+import { EUsers } from "../entities/userEntity";
 
-const MentorPolicySchema = new Schema({
+const PolicySchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
     unique: true, // One policy per mentor
   },
-  rescheduleWindow: {
+  reschedulePeriod: {
     value: { type: Number, required: true, min: 0 },
     unit: { type: String, enum: ["hours", "days"], required: true },
   },
-  bookingWindow: {
+  bookingPeriod: {
     value: { type: Number, required: true, min: 0 },
     unit: { type: String, enum: ["hours", "days"], required: true },
   },
@@ -29,3 +29,7 @@ const MentorPolicySchema = new Schema({
     default: Date.now,
   },
 });
+
+const Policy = model("Policy", PolicySchema);
+
+export default Policy;

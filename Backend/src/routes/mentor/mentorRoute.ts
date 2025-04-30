@@ -43,4 +43,32 @@ mentorRoutes.put(
   mentorController.updateService
 );
 
+mentorRoutes.get(
+  "/mentors/:mentorId/calendar",
+  mentorController.getMentorCalendar.bind(mentorController)
+);
+mentorRoutes.put(
+  "/mentors/:mentorId/policy",
+  mentorController.updatePolicy.bind(mentorController)
+);
+mentorRoutes.post(
+  "/mentors/:mentorId/schedules",
+  mentorController.createSchedule.bind(mentorController)
+);
+mentorRoutes.put(
+  "/mentors/:mentorId/schedules/:scheduleId",
+  mentorController.updateSchedule.bind(mentorController)
+);
+mentorRoutes.delete(
+  "/mentors/:mentorId/schedules/:scheduleId",
+  mentorController.deleteSchedule.bind(mentorController)
+);
+mentorRoutes.post(
+  "/mentors/:mentorId/blocked-dates",
+  mentorController.addBlockedDates.bind(mentorController)
+);
+mentorRoutes.delete(
+  "/mentors/:mentorId/blocked-dates/:blockedDateId",
+  mentorController.removeBlockedDate.bind(mentorController)
+);
 export default mentorRoutes;

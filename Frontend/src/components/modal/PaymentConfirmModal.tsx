@@ -173,7 +173,7 @@ export default function PaymentModal({
       const payload = {
         amount: totalAmount,
         serviceId: service._id,
-        mentorId: mentor.userData,
+        mentorId: mentor?.userData,
         menteeId,
         bookingDate: selectedDate || "",
         startTime,
