@@ -44,29 +44,6 @@ export class CalendarRepository {
     });
   }
 
-  //   async createSchedule(mentorId: string, data: ScheduleData) {
-  //     console.log("calender repo createSchedule step1 ", mentorId, data);
-
-  //     const repsonse = await Schedule.create({
-  //       mentorId: new mongoose.Types.ObjectId(mentorId),
-  //       ...data,
-  //       createdAt: new Date(),
-  //       updatedAt: new Date(),
-  //     });
-  //     console.log("calender repo createSchedule step2", repsonse);
-  //     return response;
-  //   }
-
-  //   async updateSchedule(scheduleId: string, data: ScheduleData) {
-  //     return await Schedule.findByIdAndUpdate(
-  //       scheduleId,
-  //       { $set: { ...data, updatedAt: new Date() } },
-  //       { new: true }
-  //     );
-  //   }
-  //   async deleteSchedule(scheduleId: string) {
-  //     return await Schedule.findByIdAndDelete(scheduleId);
-  //   }
   async createSchedule(mentorId: string, data: ScheduleData) {
     console.log("calender repo createSchedule step1", mentorId, data);
 
@@ -133,13 +110,22 @@ export class CalendarRepository {
     });
   }
 
-  async addBlockedDates(mentorId: string, dates: Date[]) {
-    const blockedDates = dates.map((date) => ({
+  async addBlockedDates(
+    mentorId: string,
+    dates: { date: Date; day: string }[]
+  ) {
+    console.log("calneder repo addBlockedDates step 1", mentorId, dates);
+
+    const blockedDates = dates.map(({ date, day }) => ({
       mentorId: new mongoose.Types.ObjectId(mentorId),
       date,
+      day,
       createdAt: new Date(),
     }));
-    return await BlockedDate.insertMany(blockedDates);
+
+    const response = await BlockedDate.insertMany(blockedDates);
+    console.log("calneder repo addBlockedDates step 2", response);
+    return response;
   }
 
   async removeBlockedDate(blockedDateId: string) {

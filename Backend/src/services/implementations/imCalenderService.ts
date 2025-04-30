@@ -1,3 +1,4 @@
+import { response } from "express";
 import { CalendarRepository } from "../../repositories/implementations/imCalenderRepository";
 
 export class CalendarService {
@@ -13,7 +14,9 @@ export class CalendarService {
       this.repository.getSchedules(mentorId),
       this.repository.getBlockedDates(mentorId),
     ]);
-
+    console.log("getMentorCalendar data policy", policy);
+    console.log("getMentorCalendar data schedules", schedules);
+    console.log("getMentorCalendar data blockedDates", blockedDates);
     return { policy, schedules, blockedDates };
   }
 
@@ -45,7 +48,11 @@ export class CalendarService {
   }
 
   async addBlockedDates(mentorId: string, dates: Date[]) {
-    return await this.repository.addBlockedDates(mentorId, dates);
+    console.log("calnder addBlockedDates sterp 1 ", mentorId, dates);
+
+    const response = await this.repository.addBlockedDates(mentorId, dates);
+    console.log("calnder addBlockedDates sterp 2 ", response);
+    return response;
   }
 
   async removeBlockedDate(blockedDateId: string) {
