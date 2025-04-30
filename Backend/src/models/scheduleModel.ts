@@ -105,17 +105,39 @@ const ScheduleSchema = new Schema({
     ref: "User",
     required: true,
   },
-  weeklySchedule: {
-    type: [DaySchema],
-    validate: [
-      (v: any[]) => v.length === 7,
-      "Must contain 7 days (Sunday to Saturday)",
-    ],
-  },
-  scheduleName: {
-    type: String,
-    required: true,
-  },
+  // weeklySchedule: {
+  //   type: [DaySchema],
+  //   validate: [
+  //     (v: any[]) => v.length === 7,
+  //     "Must contain 7 days (Sunday to Saturday)",
+  //   ],
+  // },
+  weeklySchedule: [
+    {
+      day: {
+        type: String,
+        required: true,
+        enum: [
+          "sunday",
+          "monday",
+          "tuesday",
+          "wednesday",
+          "thursday",
+          "friday",
+          "saturday",
+        ],
+      },
+      slots: [
+        {
+          index: { type: Number, required: true },
+          startTime: { type: String, required: true },
+          endTime: { type: String, required: true },
+          isAvailable: { type: Boolean, default: false },
+        },
+      ],
+    },
+  ],
+  scheduleName: { type: String, default: "Default Schedule" },
   createdAt: {
     type: Date,
     default: Date.now,
