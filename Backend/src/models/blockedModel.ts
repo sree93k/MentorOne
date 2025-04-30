@@ -1,39 +1,9 @@
-// import mongoose, { Schema, model, Document } from "mongoose";
-
-// interface EBlockedDate extends Document {
-//   mentorId: mongoose.Types.ObjectId;
-//   date: Date;
-//   createdAt: Date;
-// }
-
-// const BlockedDateSchema = new Schema<EBlockedDate>({
-//   mentorId: {
-//     type: Schema.Types.ObjectId,
-//     ref: "User",
-//     required: true,
-//   },
-//   date: {
-//     type: Date,
-//     required: true,
-//   },
-//   createdAt: {
-//     type: Date,
-//     default: Date.now,
-//   },
-// });
-
-// // TTL index on the `date` field to expire at the end of the day
-// BlockedDateSchema.index(
-//   { date: 1 },
-//   { expireAfterSeconds: 86400 } // Expire 24 hours after the `date` timestamp
-// );
-
-// export default model<EBlockedDate>("BlockedDate", BlockedDateSchema);
 import mongoose, { Schema, model, Document } from "mongoose";
 
 interface EBlockedDate extends Document {
   mentorId: mongoose.Types.ObjectId;
   date: Date;
+  day: String;
   createdAt: Date;
 }
 
@@ -45,6 +15,10 @@ const BlockedDateSchema = new Schema<EBlockedDate>({
   },
   date: {
     type: Date,
+    required: true,
+  },
+  day: {
+    type: String,
     required: true,
   },
   createdAt: {

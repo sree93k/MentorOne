@@ -1013,7 +1013,38 @@ export const deleteSchedule = async (mentorId: string, scheduleId: string) => {
   }
 };
 
-export const addBlockedDates = async (mentorId: string, dates: string[]) => {
+// export const addBlockedDates = async (mentorId: string, dates: string[]) => {
+//   try {
+//     console.log(
+//       "addBlockedDates step 1: Adding blocked dates",
+//       mentorId,
+//       dates
+//     );
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+//     const response = await api.post(
+//       `/expert/${mentorId}/blocked-dates`,
+//       { dates },
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+//     console.log("addBlockedDates step 2: Blocked dates added", response.data);
+//     return response.data;
+//   } catch (error: any) {
+//     console.error("addBlockedDates error:", error);
+//     throw new Error(`Failed to add blocked dates: ${error.message}`);
+//   }
+// };
+export const addBlockedDates = async (
+  mentorId: string,
+  dates: { date: string; day: string }[]
+) => {
   try {
     console.log(
       "addBlockedDates step 1: Adding blocked dates",

@@ -354,10 +354,13 @@ class mentorController {
     try {
       const mentorId = req.params.mentorId;
       const { dates } = req.body;
+      console.log("mentor controller addBlockedDates step 1", mentorId, dates);
+
       const blockedDates = await this.calendarService.addBlockedDates(
         mentorId,
         dates
       );
+      console.log("mentor controller addBlockedDates step 2", blockedDates);
       res.status(201).json(blockedDates);
     } catch (error) {
       res.status(500).json({ message: "Error adding blocked dates", error });

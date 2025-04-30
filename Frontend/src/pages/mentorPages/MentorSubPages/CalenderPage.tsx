@@ -39,6 +39,7 @@ import {
   addBlockedDates,
   removeBlockedDate,
 } from "@/services/mentorService";
+import { v4 as uuidv4 } from "uuid";
 
 interface RootState {
   user: {
@@ -111,14 +112,16 @@ interface DaySchedule {
 interface Schedule {
   _id: string;
   mentorId?: string;
-  scheduleName?: string; // Added to support name field
+  scheduleName?: string;
   weeklySchedule: DaySchedule[];
   createdAt?: string;
   updatedAt?: string;
 }
+
 interface BlockedDate {
   _id: string;
   date: string;
+  day: string; // e.g., "Sunday", "Monday", etc.
 }
 
 export default function CalendarPage() {
@@ -175,7 +178,19 @@ export default function CalendarPage() {
           fetchedPolicy.noticePeriod || { value: 0, unit: "minutes" }
         );
         setSchedules(data.schedules || []);
-        setBlockedDates(data.blockedDates || []);
+        // Ensure blocked dates have day field
+        const formattedBlockedDates = (data.blockedDates || []).map(
+          (bd: any) => ({
+            _id: bd._id,
+            date: bd.date,
+            day:
+              bd.day ||
+              new Date(bd.date).toLocaleDateString("en-US", {
+                weekday: "long",
+              }),
+          })
+        );
+        setBlockedDates(formattedBlockedDates);
       } catch (error) {
         console.log("fetchCalendar page useffect error");
         console.error("Error fetching calendar:", error);
@@ -286,120 +301,6 @@ export default function CalendarPage() {
     setIsEditingNotice(false);
   };
 
-  // const handleCreateSchedule = async (name: string) => {
-  //   if (!mentorId) {
-  //     toast.error("Mentor ID not found.");
-  //     return;
-  //   }
-
-  //   try {
-  //     const newSchedule = await createSchedule(mentorId, {
-  //       name,
-  //       days: [
-  //         "Monday",
-  //         "Tuesday",
-  //         "Wednesday",
-  //         "Thursday",
-  //         "Friday",
-  //         "Saturday",
-  //         "Sunday",
-  //       ].map((day) => ({
-  //         day,
-  //         times: ["12:00"],
-  //         available: false,
-  //       })),
-  //     });
-  //     setSchedules([...schedules, newSchedule]);
-  //     setIsCreateScheduleModalOpen(false);
-  //     toast.success("Schedule created successfully");
-  //   } catch (error) {
-  //     console.error("Error creating schedule:", error);
-  //     toast.error("Failed to create schedule");
-  //   }
-  // };
-
-  // const toggleDayAvailability = async (
-  //   scheduleId: string,
-  //   dayIndex: number
-  // ) => {
-  //   if (!mentorId) {
-  //     toast.error("Mentor ID not found.");
-  //     return;
-  //   }
-
-  //   const schedule = schedules.find((s) => s._id === scheduleId);
-  //   if (!schedule) return;
-
-  //   const updatedWeeklySchedule = schedule.weeklySchedule.map((day, i) =>
-  //     i === dayIndex
-  //       ? {
-  //           ...day,
-  //           slots: day.slots.map((slot) => ({
-  //             ...slot,
-  //             isAvailable: !day.slots[0].isAvailable, // Toggle all slots
-  //           })),
-  //         }
-  //       : day
-  //   );
-
-  //   try {
-  //     const updatedSchedule = await updateSchedule(mentorId, scheduleId, {
-  //       weeklySchedule: updatedWeeklySchedule,
-  //     });
-  //     setSchedules(
-  //       schedules.map((s) => (s._id === scheduleId ? updatedSchedule : s))
-  //     );
-  //     toast.success("Day availability updated");
-  //   } catch (error) {
-  //     console.error("Error updating day availability:", error);
-  //     toast.error("Failed to update day availability");
-  //   }
-  // };
-
-  // const addDayTime = async (scheduleId: string, dayIndex: number) => {
-  //   if (!mentorId) {
-  //     toast.error("Mentor ID not found.");
-  //     return;
-  //   }
-
-  //   const schedule = schedules.find((s) => s._id === scheduleId);
-  //   if (!schedule) return;
-
-  //   const day = schedule.weeklySchedule[dayIndex];
-  //   if (day.slots.length >= 3) {
-  //     toast.error("Cannot add more than 3 time slots");
-  //     return;
-  //   }
-
-  //   const lastSlot = day.slots[day.slots.length - 1] || {
-  //     startTime: "12:00",
-  //     endTime: "13:00",
-  //   };
-  //   const newStartHour = parseInt(lastSlot.startTime.split(":")[0]) + 1;
-  //   const newSlot = {
-  //     index: day.slots.length,
-  //     startTime: `${newStartHour.toString().padStart(2, "0")}:00`,
-  //     endTime: `${(newStartHour + 1).toString().padStart(2, "0")}:00`,
-  //     isAvailable: day.slots[0]?.isAvailable || false,
-  //   };
-
-  //   const updatedWeeklySchedule = schedule.weeklySchedule.map((d, i) =>
-  //     i === dayIndex ? { ...d, slots: [...d.slots, newSlot] } : d
-  //   );
-
-  //   try {
-  //     const updatedSchedule = await updateSchedule(mentorId, scheduleId, {
-  //       weeklySchedule: updatedWeeklySchedule,
-  //     });
-  //     setSchedules(
-  //       schedules.map((s) => (s._id === scheduleId ? updatedSchedule : s))
-  //     );
-  //     toast.success("Time slot added");
-  //   } catch (error) {
-  //     console.error("Error adding time slot:", error);
-  //     toast.error("Failed to add time slot");
-  //   }
-  // };
   const handleCreateSchedule = async (name: string) => {
     if (!mentorId) {
       toast.error("Mentor ID not found.");
@@ -419,7 +320,7 @@ export default function CalendarPage() {
           "saturday",
         ].map((day) => ({
           day,
-          slots: [], // Empty slots array
+          slots: [],
         })),
       });
       setSchedules([...schedules, newSchedule]);
@@ -450,7 +351,7 @@ export default function CalendarPage() {
             slots: day.slots.length
               ? day.slots.map((slot) => ({
                   ...slot,
-                  isAvailable: !day.slots[0].isAvailable, // Toggle all slots
+                  isAvailable: !day.slots[0].isAvailable,
                 }))
               : [
                   {
@@ -459,7 +360,7 @@ export default function CalendarPage() {
                     endTime: "13:00",
                     isAvailable: true,
                   },
-                ], // Add default slot if empty
+                ],
           }
         : day
     );
@@ -502,7 +403,7 @@ export default function CalendarPage() {
       index: day.slots.length,
       startTime: `${newStartHour.toString().padStart(2, "0")}:00`,
       endTime: `${(newStartHour + 1).toString().padStart(2, "0")}:00`,
-      isAvailable: day.slots[0]?.isAvailable || true, // Default to true if no slots
+      isAvailable: day.slots[0]?.isAvailable || true,
     };
 
     const updatedWeeklySchedule = schedule.weeklySchedule.map((d, i) =>
@@ -522,6 +423,7 @@ export default function CalendarPage() {
       toast.error("Failed to add time slot");
     }
   };
+
   const removeDayTime = async (
     scheduleId: string,
     dayIndex: number,
@@ -541,7 +443,7 @@ export default function CalendarPage() {
             ...d,
             slots: d.slots
               .filter((_, ti) => ti !== timeIndex)
-              .map((slot, idx) => ({ ...slot, index: idx })), // Reindex slots
+              .map((slot, idx) => ({ ...slot, index: idx })),
           }
         : d
     );
@@ -629,7 +531,7 @@ export default function CalendarPage() {
     toast.success("Schedule saved");
   };
 
-  const handleBlockDates = async (dates: Date[]) => {
+  const handleBlockDates = async (date: { date: Date; dayOfWeek: string }) => {
     if (!mentorId) {
       toast.error("Mentor ID not found.");
       return;
@@ -637,27 +539,29 @@ export default function CalendarPage() {
 
     try {
       console.log(
-        "Adding blocked dates:",
-        dates.map((d) => d.toISOString())
+        `Adding blocked date: ${date.date.toISOString()} (${date.dayOfWeek})`
       );
-      const newBlockedDates = await addBlockedDates(
-        mentorId,
-        dates.map((d) => d.toISOString())
-      );
+      const newBlockedDates = await addBlockedDates(mentorId, [
+        { date: date.date.toISOString(), day: date.dayOfWeek },
+      ]);
       console.log("Received new blocked dates:", newBlockedDates);
       setBlockedDates((prev) => {
         const updatedDates = [
           ...prev.filter((d) => !d._id.startsWith("temp-")),
-          ...newBlockedDates,
+          ...newBlockedDates.map((bd: any) => ({
+            _id: bd._id,
+            date: bd.date,
+            day: bd.day || date.dayOfWeek,
+          })),
         ];
         console.log("Updated blockedDates state:", updatedDates);
         return updatedDates;
       });
       setIsBlockDatesModalOpen(false);
-      toast.success("Blocked dates added successfully");
+      toast.success("Blocked date added successfully");
     } catch (error) {
-      console.error("Error adding blocked dates:", error);
-      toast.error("Failed to add blocked dates");
+      console.error("Error adding blocked date:", error);
+      toast.error("Failed to add blocked date");
     }
   };
 
@@ -1107,7 +1011,8 @@ export default function CalendarPage() {
                     variant="outline"
                     className="border border-gray-400 rounded-full"
                   >
-                    Schedule {schedule._id.slice(-6)}
+                    {schedule.scheduleName ||
+                      `Schedule ${schedule._id.slice(-6)}`}
                   </Button>
                 ))}
               </div>
@@ -1209,6 +1114,9 @@ export default function CalendarPage() {
                               const isAvailable = day.slots.length
                                 ? day.slots.every((slot) => slot.isAvailable)
                                 : false;
+                              const isDayBlocked = blockedDates.some(
+                                (bd) => bd.day.toLowerCase() === normalizedDay
+                              );
 
                               return (
                                 <tr key={dayName} className="border-b">
@@ -1218,7 +1126,8 @@ export default function CalendarPage() {
                                         id={`${schedule._id}-${day.day}`}
                                         checked={isAvailable}
                                         disabled={
-                                          editingSchedule !== schedule._id
+                                          editingSchedule !== schedule._id ||
+                                          isDayBlocked
                                         }
                                         onCheckedChange={() =>
                                           toggleDayAvailability(
@@ -1228,7 +1137,8 @@ export default function CalendarPage() {
                                         }
                                         className={`peer shrink-0 rounded-sm border bg-white
                                           ${
-                                            editingSchedule === schedule._id
+                                            editingSchedule === schedule._id &&
+                                            !isDayBlocked
                                               ? "cursor-pointer"
                                               : "cursor-not-allowed"
                                           }
@@ -1240,13 +1150,30 @@ export default function CalendarPage() {
                                       />
                                       <Label
                                         htmlFor={`${schedule._id}-${day.day}`}
+                                        className={
+                                          isDayBlocked ? "text-red-600" : ""
+                                        }
                                       >
                                         {dayName}
+                                        {isDayBlocked && (
+                                          <Ban
+                                            size={16}
+                                            color="#cc141d"
+                                            strokeWidth={1.75}
+                                            className="inline ml-2"
+                                          />
+                                        )}
                                       </Label>
                                     </div>
                                   </td>
                                   <td className="py-2">
-                                    {isAvailable ? (
+                                    {isDayBlocked ? (
+                                      <Ban
+                                        size={24}
+                                        color="#cc141d"
+                                        strokeWidth={1.75}
+                                      />
+                                    ) : isAvailable ? (
                                       <CircleCheckBig
                                         size={24}
                                         color="#198041"
@@ -1261,20 +1188,21 @@ export default function CalendarPage() {
                                     )}
                                   </td>
                                   <td className="py-2">
-                                    {editingSchedule === schedule._id && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="bg-white"
-                                        onClick={() =>
-                                          addDayTime(schedule._id, index)
-                                        }
-                                        disabled={day.slots.length >= 3}
-                                      >
-                                        <Plus className="h-4 w-4 mr-1" />
-                                        Add Time
-                                      </Button>
-                                    )}
+                                    {editingSchedule === schedule._id &&
+                                      !isDayBlocked && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-white"
+                                          onClick={() =>
+                                            addDayTime(schedule._id, index)
+                                          }
+                                          disabled={day.slots.length >= 3}
+                                        >
+                                          <Plus className="h-4 w-4 mr-1" />
+                                          Add Time
+                                        </Button>
+                                      )}
                                   </td>
                                   {[0, 1, 2].map((timeIndex) => (
                                     <td
@@ -1282,7 +1210,8 @@ export default function CalendarPage() {
                                       className="py-2"
                                     >
                                       {editingSchedule === schedule._id &&
-                                      day.slots[timeIndex] ? (
+                                      day.slots[timeIndex] &&
+                                      !isDayBlocked ? (
                                         <div className="flex items-center relative">
                                           <div className="relative">
                                             <button
@@ -1381,7 +1310,8 @@ export default function CalendarPage() {
                         className="flex items-center justify-between border px-2 py-1"
                       >
                         <span className="text-sm">
-                          {new Date(date.date).toLocaleDateString()}
+                          {new Date(date.date).toLocaleDateString()} (
+                          {date.day || "N/A"})
                         </span>
                         <Button
                           variant="ghost"
@@ -1418,10 +1348,20 @@ export default function CalendarPage() {
             const existing = blockedDates.find(
               (bd) => new Date(bd.date).toDateString() === d.toDateString()
             );
+            const dayOfWeek = [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ][d.getDay()];
             return (
               existing || {
-                _id: `temp-${Date.now()}-${Math.random()}`,
+                _id: `temp-${uuidv4()}`,
                 date: d.toISOString(),
+                day: dayOfWeek,
               }
             );
           });
