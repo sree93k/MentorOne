@@ -26,7 +26,10 @@ export default class PaymentService implements inPaymentService {
       slotIndex,
     } = params;
 
-    console.log("createCheckoutSession params:", params);
+    console.log(
+      "payment serviuce createCheckoutSession params: step 1",
+      params
+    );
 
     try {
       // Validate inputs
@@ -48,7 +51,7 @@ export default class PaymentService implements inPaymentService {
           "Invalid input"
         );
       }
-
+      console.log("payment serviuce createCheckoutSession params: step 2");
       if (amount <= 0) {
         console.error("Invalid amount:", amount);
         throw new ApiError(400, "Amount must be positive", "Invalid amount");
@@ -75,7 +78,7 @@ export default class PaymentService implements inPaymentService {
       //     "Invalid schedule"
       //   );
       // }
-
+      console.log("payment serviuce createCheckoutSession params: step 3");
       console.log("Calling stripe.checkout.sessions.create");
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],

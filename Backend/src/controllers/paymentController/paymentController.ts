@@ -16,18 +16,22 @@ class PaymentController {
     res: Response,
     next: NextFunction
   ) => {
+    console.log("payemntController handleStripeError step 1");
     if (
       error.type === "StripeInvalidRequestError" &&
       error.code === "payment_intent_unexpected_state"
     ) {
+      console.log("payemntController handleStripeError step 2");
       res.status(400).json({
         error:
           "This PaymentIntent has already succeeded and cannot be confirmed again.",
       });
+      console.log("payemntController handleStripeError step 3");
     } else if (
       error.type === "StripeInvalidRequestError" &&
       error.code === "resource_missing"
     ) {
+      console.log("payemntController handleStripeError step 4");
       res
         .status(404)
         .json(
@@ -38,6 +42,7 @@ class PaymentController {
           )
         );
     } else {
+      console.log("payemntController handleStripeError step 5 errro ", error);
       next(error);
     }
   };
@@ -59,8 +64,12 @@ class PaymentController {
       slotIndex,
     } = req.body;
 
-    console.log("createCheckoutSession request:", req.body);
+    console.log(
+      "payemntcontroller createCheckoutSession request: step 1",
+      req.body
+    );
     try {
+      console.log("payemntcontroller createCheckoutSession request: step 2");
       const checkoutSession = await this.paymentService.createCheckoutSession({
         serviceId,
         mentorId,
@@ -72,12 +81,24 @@ class PaymentController {
         day,
         slotIndex,
       });
+      console.log(
+        "payemntcontroller createCheckoutSession request: step 3",
+        checkoutSession
+      );
       res.json({ sessionId: checkoutSession.id }); // Changed from { id: ... } to { sessionId: ... }
     } catch (error: any) {
+      console.log(
+        "payemntcontroller createCheckoutSession request: step 4 error",
+        error
+      );
       console.error("Error in createCheckoutSession controller:", error);
       if (error instanceof ApiError) {
         res.status(error.statusCode).json({ error: error.message });
       } else if (error.type === "StripeInvalidRequestError") {
+        console.log(
+          "payemntcontroller createCheckoutSession request: step 5 errror",
+          error
+        );
         res
           .status(400)
           .json({ error: error.message || "Invalid request to Stripe API" });
@@ -105,6 +126,8 @@ class PaymentController {
     } = req.body;
 
     try {
+      console.log("payemntcontroller createPaymentIntent step 1");
+
       const paymentIntent = await this.paymentService.createPaymentIntent({
         amount,
         serviceId,
@@ -116,8 +139,11 @@ class PaymentController {
         day,
         slotIndex,
       });
+      console.log("payemntcontroller createPaymentIntent step 2");
       res.json({ data: { clientSecret: paymentIntent.client_secret } });
+      console.log("payemntcontroller createPaymentIntent step 3");
     } catch (error) {
+      console.log("payemntcontroller createPaymentIntent step 4", error);
       this.handleStripeError(error, res, next);
     }
   };
@@ -141,6 +167,7 @@ class PaymentController {
     } = req.body;
 
     try {
+      console.log("payemntcontroller saveBooking step 1");
       const result = await this.paymentService.saveBookingAndPayment({
         sessionId: paymentIntentId,
         serviceId,
@@ -153,6 +180,7 @@ class PaymentController {
         slotIndex,
         amount,
       });
+      console.log("payemntcontroller saveBooking step 2");
       res.json(new ApiResponse(200, result, "Booking and payment saved"));
     } catch (error) {
       next(error);

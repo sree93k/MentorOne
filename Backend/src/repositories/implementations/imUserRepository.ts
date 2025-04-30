@@ -176,12 +176,13 @@ export default class UserRepository implements inUserRepository {
     userType: string;
     experienceId: string;
     menteeId: string;
+    role: string[];
   }): Promise<EUsers | null> {
     try {
       console.log("Repo updateUser step1");
 
-      const { id, userType, experienceId, menteeId } = data;
-      let updateData: any = { activated: true, menteeId: menteeId }; // Common fields
+      const { id, userType, experienceId, menteeId, role } = data;
+      let updateData: any = { activated: true, menteeId: menteeId, role: role }; // Common fields
 
       console.log("Repo updateUser step2");
       // Fetch user (optional, for validation)
@@ -244,9 +245,10 @@ export default class UserRepository implements inUserRepository {
     experienceId: string;
     mentorId: string;
     imageUrl: string;
+    role: string[];
   }): Promise<EUsers | null> {
     try {
-      const { id, userType, experienceId, imageUrl, mentorId } = data;
+      const { id, userType, experienceId, imageUrl, mentorId, role } = data;
       console.log(
         "Repo updateUser step1",
         id,
@@ -259,6 +261,7 @@ export default class UserRepository implements inUserRepository {
         mentorActivated: true,
         imageUrl: imageUrl,
         mentorId: mentorId,
+        role: role,
       }; // Common fields
 
       console.log("Repo updateUser step2", updateData);

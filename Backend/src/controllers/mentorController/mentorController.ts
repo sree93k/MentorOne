@@ -12,7 +12,7 @@ import { inUploadService } from "../../services/interface/inUploadService";
 import imUploadService from "../../services/implementations/imUploadService";
 import { inMentorProfileService } from "../../services/interface/inMentorProfileService";
 import imMentorProfileService from "../../services/implementations/imMentorProfileService";
-
+import { CalendarService } from "../../services/implementations/imCalenderService";
 import axios from "axios";
 import sharp from "sharp";
 
@@ -22,6 +22,7 @@ class mentorController {
   private userService: inUserService;
   private uploadService: inUploadService;
   private MentorProfileService: inMentorProfileService;
+  private calendarService: CalendarService;
 
   private options = {
     httpOnly: true,
@@ -36,6 +37,7 @@ class mentorController {
     this.userService = new imUserService();
     this.uploadService = new imUploadService();
     this.MentorProfileService = new imMentorProfileService();
+    this.calendarService = new CalendarService();
   }
 
   public uploadWelcomeForm = async (
@@ -270,5 +272,91 @@ class mentorController {
       next(error);
     }
   };
+
+  async getMentorCalendar(req: Request, res: Response) {
+    try {
+      const mentorId = req.params.mentorId;
+      const calendar = await this.calendarService.getMentorCalendar(mentorId);
+      res.status(200).json(calendar);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching calendar", error });
+    }
+  }
+
+  async updatePolicy(req: Request, res: Response) {
+    try {
+      const mentorId = req.params.mentorId;
+      const policyData = req.body;
+      const updatedPolicy = await this.calendarService.updatePolicy(
+        mentorId,
+        policyData
+      );
+      res.status(200).json(updatedPolicy);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating policy", error });
+    }
+  }
+
+  async createSchedule(req: Request, res: Response) {
+    try {
+      const mentorId = req.params.mentorId;
+      const scheduleData = req.body;
+      const newSchedule = await this.calendarService.createSchedule(
+        mentorId,
+        scheduleData
+      );
+      res.status(201).json(newSchedule);
+    } catch (error) {
+      res.status(500).json({ message: "Error creating schedule", error });
+    }
+  }
+
+  async updateSchedule(req: Request, res: Response) {
+    try {
+      const scheduleId = req.params.scheduleId;
+      const scheduleData = req.body;
+      const updatedSchedule = await this.calendarService.updateSchedule(
+        scheduleId,
+        scheduleData
+      );
+      res.status(200).json(updatedSchedule);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating schedule", error });
+    }
+  }
+
+  async deleteSchedule(req: Request, res: Response) {
+    try {
+      const scheduleId = req.params.scheduleId;
+      await this.calendarService.deleteSchedule(scheduleId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting schedule", error });
+    }
+  }
+
+  async addBlockedDates(req: Request, res: Response) {
+    try {
+      const mentorId = req.params.mentorId;
+      const { dates } = req.body;
+      const blockedDates = await this.calendarService.addBlockedDates(
+        mentorId,
+        dates
+      );
+      res.status(201).json(blockedDates);
+    } catch (error) {
+      res.status(500).json({ message: "Error adding blocked dates", error });
+    }
+  }
+
+  async removeBlockedDate(req: Request, res: Response) {
+    try {
+      const blockedDateId = req.params.blockedDateId;
+      await this.calendarService.removeBlockedDate(blockedDateId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Error removing blocked date", error });
+    }
+  }
 }
 export default new mentorController();

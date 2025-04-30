@@ -9,6 +9,5 @@ const userRoutes = Router();
 userRoutes.use("/auth", userAuthRoute);
 userRoutes.get("/validate_session", userController.validateSuccessResponse);
 userRoutes.use("/", userPrivateRoute);
-// userRoutes.use('/',authenticateUser,userPrivateRoute)
 
 export default userRoutes;

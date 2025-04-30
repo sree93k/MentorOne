@@ -25,6 +25,48 @@ export default class AdminService implements inAdminService {
     this.MentorRepository = new MentorRepository();
   }
 
+  // async fetchAllUsers(
+  //   page: number,
+  //   limit: number,
+  //   role?: string,
+  //   status?: string
+  // ): Promise<{ users: Omit<EUsers, "password">[]; total: number } | null> {
+  //   try {
+  //     // Manually access the original Mongoose model from BaseRepository
+  //     // @ts-ignore if TS complains, or access it via a getter if needed
+  //     console.log("all userws service ************************************");
+
+  //     const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
+
+  //     // Do population here using the model
+  //     let allUsers = await rawModel.find().populate("mentorId").exec();
+  //     console.log("all users new list>>>>>>>>>>>>>", allUsers);
+
+  //     if (role) {
+  //       allUsers = allUsers.filter((user: any) => user.role.includes(role));
+  //     }
+
+  //     if (status) {
+  //       allUsers = allUsers.filter((user: any) =>
+  //         status === "Blocked" ? user.isBlocked : !user.isBlocked
+  //       );
+  //     }
+
+  //     const total = allUsers.length;
+  //     const startIndex = (page - 1) * limit;
+  //     const paginatedUsers = allUsers.slice(startIndex, startIndex + limit);
+
+  //     const usersWithoutPassword = paginatedUsers.map((user: any) => {
+  //       const { password, ...userWithoutPassword } = user.toObject();
+  //       return userWithoutPassword;
+  //     });
+
+  //     return { users: usersWithoutPassword, total };
+  //   } catch (error) {
+  //     console.error("Error in fetchAllUsers:", error);
+  //     return null;
+  //   }
+  // }
   async fetchAllUsers(
     page: number,
     limit: number,
@@ -32,29 +74,43 @@ export default class AdminService implements inAdminService {
     status?: string
   ): Promise<{ users: Omit<EUsers, "password">[]; total: number } | null> {
     try {
-      // Manually access the original Mongoose model from BaseRepository
-      // @ts-ignore if TS complains, or access it via a getter if needed
+      console.log("all users service ************************************");
       const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
 
-      // Do population here using the model
-      let allUsers = await rawModel.find().populate("mentorId").exec();
+      // Build MongoDB query
+      const query: any = {};
+
+      // Role filter
+      if (role) {
+        if (role === "mentee") {
+          query.role = { $eq: ["mentee"] }; // Exact match for ["mentee"]
+        } else if (role === "mentor") {
+          query.role = { $eq: ["mentor"] }; // Exact match for ["mentor"]
+        } else if (role === "both") {
+          query.role = { $all: ["mentor", "mentee"] }; // Match arrays containing both
+        }
+      }
+
+      // Status filter
+      if (status) {
+        query.isBlocked = status === "Blocked" ? true : false;
+      }
+
+      // Fetch total count
+      const total = await rawModel.countDocuments(query);
+
+      // Fetch paginated users with population
+      const allUsers = await rawModel
+        .find(query)
+        .populate("mentorId")
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec();
+
       console.log("all users new list>>>>>>>>>>>>>", allUsers);
 
-      if (role) {
-        allUsers = allUsers.filter((user: any) => user.role.includes(role));
-      }
-
-      if (status) {
-        allUsers = allUsers.filter((user: any) =>
-          status === "Blocked" ? user.isBlocked : !user.isBlocked
-        );
-      }
-
-      const total = allUsers.length;
-      const startIndex = (page - 1) * limit;
-      const paginatedUsers = allUsers.slice(startIndex, startIndex + limit);
-
-      const usersWithoutPassword = paginatedUsers.map((user: any) => {
+      // Remove password from response
+      const usersWithoutPassword = allUsers.map((user: any) => {
         const { password, ...userWithoutPassword } = user.toObject();
         return userWithoutPassword;
       });

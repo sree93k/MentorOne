@@ -14,35 +14,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 // Initialize Stripe with the publishable key
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-    "pk_test_51RI4FgFsFOD99qS8Y20Dtcig0jF0WQONBXTy4GYIqAC9hgXnuCgzLpuEBmJ8YPCgC1D8SNrYFj0lnO2iczlwghcl00efCUTVEX"
-);
-
-interface Service {
-  _id: string;
-  type: string;
-  title: string;
-  description: string;
-  duration: string;
-  price: number;
-}
-
-interface Mentor {
-  _id: string;
-  userData: string;
-  mentorId: string;
-  name: string;
-  role: string;
-  work: string;
-  workRole: string;
-  profileImage?: string;
-  badge: string;
-  isBlocked: boolean;
-  isApproved: string;
-  bio?: string;
-  skills?: string[];
-}
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export default function MentorServicePage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);

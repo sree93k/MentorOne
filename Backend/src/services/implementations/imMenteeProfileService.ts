@@ -128,11 +128,15 @@ export default class MenteeProfileService implements inMenteeProfileService {
       );
       if (experience && createMentee) {
         console.log("welcomedata service step 9....formdata");
+        const updatedRoles = Array.from(
+          new Set([...(user.role || []), "mentee"])
+        );
         const userUpdate = await this.UserRepository.updateUser({
           id,
           userType: experience.userType,
           experienceId: experience?._id.toString(), // Convert ObjectId to string
-          menteeId: createMentee?._id?.toString(), // Convert ObjectId to string
+          menteeId: createMentee?._id?.toString(),
+          role: updatedRoles, // Convert ObjectId to string
         });
         console.log(
           "welcomedata service step 10.final sevice rturn",

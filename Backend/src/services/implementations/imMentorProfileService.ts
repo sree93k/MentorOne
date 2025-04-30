@@ -161,6 +161,9 @@ export default class MentorProfileService implements inMentorProfileService {
 
       console.log("welcomedata service step 8....formdata", experience);
       if (experience) {
+        const updatedRoles = Array.from(
+          new Set([...(user.role || []), "mentor"])
+        );
         console.log("welcomedata service step 9....formdata");
         const userUpdate = await this.UserRepository.mentorUpdate({
           id,
@@ -168,6 +171,7 @@ export default class MentorProfileService implements inMentorProfileService {
           experienceId: experience._id.toString(),
           mentorId: newMentor?._id?.toString() || "",
           imageUrl: imageUrl,
+          role: updatedRoles,
         });
         console.log(
           "welcomedata service step 10....final sevice rturn",
