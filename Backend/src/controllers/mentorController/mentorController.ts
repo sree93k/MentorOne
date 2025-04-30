@@ -304,14 +304,24 @@ class mentorController {
 
   async createSchedule(req: Request, res: Response) {
     try {
+      console.log("mentorcontroller createSchedule step1");
+
       const mentorId = req.params.mentorId;
       const scheduleData = req.body;
+      console.log(
+        "mentorcontroller createSchedule step2",
+        mentorId,
+        scheduleData
+      );
       const newSchedule = await this.calendarService.createSchedule(
         mentorId,
         scheduleData
       );
+      console.log("mentorcontroller createSchedule step3", newSchedule);
       res.status(201).json(newSchedule);
     } catch (error) {
+      console.log("mentorcontroller createSchedule step4", error);
+
       res.status(500).json({ message: "Error creating schedule", error });
     }
   }
