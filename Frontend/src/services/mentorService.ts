@@ -892,7 +892,7 @@ export const getMentorCalendar = async (mentorId: string) => {
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    const response = await api.get(`/mentors/${mentorId}/calendar`, {
+    const response = await api.get(`/expert/${mentorId}/calendar`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
@@ -913,7 +913,7 @@ export const updatePolicy = async (mentorId: string, policyData: any) => {
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    const response = await api.put(`/mentors/${mentorId}/policy`, policyData, {
+    const response = await api.put(`/expert/${mentorId}/policy`, policyData, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
@@ -939,7 +939,7 @@ export const createSchedule = async (mentorId: string, scheduleData: any) => {
       throw new Error("No access token found. Please log in again.");
     }
     const response = await api.post(
-      `/mentors/${mentorId}/schedules`,
+      `/expert/${mentorId}/schedules`,
       scheduleData,
       {
         headers: {
@@ -973,7 +973,7 @@ export const updateSchedule = async (
       throw new Error("No access token found. Please log in again.");
     }
     const response = await api.put(
-      `/mentors/${mentorId}/schedules/${scheduleId}`,
+      `/expert/${mentorId}/schedules/${scheduleId}`,
       scheduleData,
       {
         headers: {
@@ -1001,7 +1001,7 @@ export const deleteSchedule = async (mentorId: string, scheduleId: string) => {
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    await api.delete(`/mentors/${mentorId}/schedules/${scheduleId}`, {
+    await api.delete(`/expert/${mentorId}/schedules/${scheduleId}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -1025,7 +1025,7 @@ export const addBlockedDates = async (mentorId: string, dates: string[]) => {
       throw new Error("No access token found. Please log in again.");
     }
     const response = await api.post(
-      `/mentors/${mentorId}/blocked-dates`,
+      `/expert/${mentorId}/blocked-dates`,
       { dates },
       {
         headers: {
@@ -1056,7 +1056,7 @@ export const removeBlockedDate = async (
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    await api.delete(`/mentors/${mentorId}/blocked-dates/${blockedDateId}`, {
+    await api.delete(`/expert/${mentorId}/blocked-dates/${blockedDateId}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

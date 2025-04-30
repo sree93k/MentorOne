@@ -199,6 +199,8 @@ export default function CalendarPage() {
 
   // Save handlers for each field
   const handleSaveReschedule = async () => {
+    console.log("handleSaveReschedule page step 1 ", mentorId);
+
     if (!mentorId) {
       toast.error("Mentor ID not found.");
       return;
@@ -210,7 +212,8 @@ export default function CalendarPage() {
     };
     try {
       console.log("Saving reschedule policy:", updatedPolicy);
-      await updatePolicy(mentorId, updatedPolicy);
+      const resposnse = await updatePolicy(mentorId, updatedPolicy);
+      console.log("handleSaveReschedule page step 2 updatePolicy", resposnse);
       setPolicy(updatedPolicy);
       setIsEditingReschedule(false);
       toast.success("Reschedule policy updated successfully");
@@ -232,7 +235,8 @@ export default function CalendarPage() {
     };
     try {
       console.log("Saving booking policy:", updatedPolicy);
-      await updatePolicy(mentorId, updatedPolicy);
+      const resposnse = await updatePolicy(mentorId, updatedPolicy);
+      console.log("handleSaveBooking page step 2 updatePolicy", resposnse);
       setPolicy(updatedPolicy);
       setIsEditingBooking(false);
       toast.success("Booking policy updated successfully");
@@ -254,7 +258,8 @@ export default function CalendarPage() {
     };
     try {
       console.log("Saving notice policy:", updatedPolicy);
-      await updatePolicy(mentorId, updatedPolicy);
+      const resposnse = await updatePolicy(mentorId, updatedPolicy);
+      console.log("handleSaveNotice page step 2 updatePolicy", resposnse);
       setPolicy(updatedPolicy);
       setIsEditingNotice(false);
       toast.success("Notice policy updated successfully");
