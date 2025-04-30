@@ -930,7 +930,7 @@ export const updatePolicy = async (mentorId: string, policyData: any) => {
 export const createSchedule = async (mentorId: string, scheduleData: any) => {
   try {
     console.log(
-      "createSchedule step 1: Creating schedule",
+      "createSchedule step 1: Creating schedule........step 1",
       mentorId,
       scheduleData
     );
@@ -948,7 +948,7 @@ export const createSchedule = async (mentorId: string, scheduleData: any) => {
         },
       }
     );
-    console.log("createSchedule step 2: Schedule created", response.data);
+    console.log("createSchedule step 2: Schedule created", response);
     return response.data;
   } catch (error: any) {
     console.error("createSchedule error:", error);

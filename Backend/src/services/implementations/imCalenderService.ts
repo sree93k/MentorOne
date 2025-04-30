@@ -21,8 +21,22 @@ export class CalendarService {
     return await this.repository.updatePolicy(mentorId, data);
   }
 
-  async createSchedule(mentorId: string, data: any) {
-    return await this.repository.createSchedule(mentorId, data);
+  // async createSchedule(mentorId: string, data: any) {
+  //   console.log("calender servcice createSchedule step 1", mentorId, data);
+
+  //   const response = await this.repository.createSchedule(mentorId, data);
+  //   console.log("calender servcice createSchedule step 2", response);
+  //   return response;
+  // }
+
+  async createSchedule(mentorId: string, data: ScheduleData) {
+    console.log("calender service createSchedule step 1", mentorId, data);
+    if (!data.days || data.days.length === 0) {
+      throw new Error("No valid days provided");
+    }
+    const schedule = await this.repository.createSchedule(mentorId, data);
+    console.log("calender service createSchedule step 2", schedule);
+    return schedule; // Single schedule object
   }
 
   async updateSchedule(scheduleId: string, data: any) {
