@@ -32,4 +32,10 @@ menteeRoutes.delete(
   authenticate,
   bookingController.deleteBooking
 );
+
+menteeRoutes.get(
+  "/seeker/getbookings",
+  authenticate,
+  menteeController.getBookings.bind(menteeController)
+);
 export default menteeRoutes;

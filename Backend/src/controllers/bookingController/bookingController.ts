@@ -61,18 +61,22 @@ class BookingController {
     res: Response,
     next: NextFunction
   ) => {
-    async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      console.log("booking controller get bookings step 1");
+
       const menteeId = req?.user?.id;
-      try {
-        const bookings = await this.bookingService.getBookingsByMentee(
-          menteeId
-        );
-        res.json(bookings);
-      } catch (error: any) {
-        console.error("Error fetching bookings:", error);
-        next(error);
+      console.log("booking controller get bookings step 2", menteeId);
+      if (!menteeId) {
+        throw new ApiError(400, "Mentee ID is required");
       }
-    };
+      const bookings = await this.bookingService.getBookingsByMentee(menteeId);
+      console.log("booking controller get bookings step 3", bookings);
+      res.json(bookings);
+    } catch (error: any) {
+      console.log("booking controller get bookings step error", error);
+      console.error("Error fetching bookings:", error);
+      next(error);
+    }
   };
 
   public deleteBooking = async (

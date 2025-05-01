@@ -118,11 +118,14 @@ export const updateSlot = async (
 
 export const getBookings = async () => {
   try {
+    console.log("bookingservice getBookings.. step 1");
+
     const response = await api.get(`/seeker/bookings`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
       },
     });
+    console.log("bookingservice getBookings.. step 2", response);
     return response.data;
   } catch (error: any) {
     console.error("Error fetching bookings:", error);
