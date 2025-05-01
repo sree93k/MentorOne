@@ -39,7 +39,4 @@ export interface inPaymentService {
     params: CreateCheckoutSessionParams
   ): Promise<Stripe.PaymentIntent>;
   constructEvent(payload: Buffer, signature: string): Promise<Stripe.Event>;
-  saveBookingAndPayment(
-    params: SaveBookingAndPaymentParams
-  ): Promise<{ booking: any; payment: any }>;
 }

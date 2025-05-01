@@ -4,6 +4,10 @@ import { stripeMiddleware } from "../../middlewares/stripeMiddleware";
 
 const webhookRoute = Router();
 
-webhookRoute.post("/", stripeMiddleware, webhookController.handleWebhook);
+webhookRoute.post(
+  "/webhook",
+  stripeMiddleware,
+  webhookController.handleWebhook
+);
 
 export default webhookRoute;

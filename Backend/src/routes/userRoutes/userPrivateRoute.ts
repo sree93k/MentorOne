@@ -47,10 +47,15 @@ userPrivateRoute.post(
   paymentController.createPaymentIntent
 );
 
-userPrivateRoute.post(
-  "/payment/save-booking",
-  authenticate,
-  paymentController.saveBooking
-);
+// userPrivateRoute.post(
+//   "/payment/save-booking",
+//   authenticate,
+//   paymentController.saveBooking
+// );
 
+userPrivateRoute.get(
+  "/payment/verify-session/:sessionId",
+  authenticate,
+  paymentController.verifySession
+);
 export default userPrivateRoute;

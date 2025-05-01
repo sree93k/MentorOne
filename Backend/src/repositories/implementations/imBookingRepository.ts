@@ -19,6 +19,14 @@ export default class BookingRepository {
     }
   }
 
+  async findBySessionId(sessionId: string) {
+    try {
+      return await Booking.findOne({ "paymentDetails.sessionId": sessionId });
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to find booking", error.message);
+    }
+  }
+
   async findByMentee(menteeId: string) {
     try {
       return await Booking.find({ menteeId }).populate("serviceId mentorId");

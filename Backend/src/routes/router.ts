@@ -11,5 +11,5 @@ router.use("/admin", adminRoutes);
 router.use("/user", userRoutes);
 router.use("/seeker", seekerRoutes);
 router.use("/expert", expertRoutes);
-router.use("/webhook", webhookRoute);
+router.use("/stripe/api", webhookRoute);
 export { router };
