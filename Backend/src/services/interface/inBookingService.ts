@@ -14,4 +14,5 @@ export interface inBookingService {
   getBookingsByMentee(menteeId: string): Promise<any[]>;
   getBookingsByMentor(mentorId: string): Promise<any[]>;
   cancelBooking(bookingId: string): Promise<void>;
+  verifyBookingBySessionId(sessionId: string): Promise<any>;
 }

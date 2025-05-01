@@ -8,7 +8,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
-import { saveBooking } from "@/services/paymentServcie";
+import { saveBooking } from "@/services/bookingService";
 
 interface PaymentFormProps {
   service: { _id: string; title: string; amount: number };
@@ -210,7 +210,7 @@ export default function PaymentForm({
 
       if (bookingResponse.booking) {
         toast.success("Booking confirmed!");
-        navigate("/seeker/dashboard");
+        navigate("/seeker/bookings");
         onClose();
       } else {
         throw new Error("Failed to save booking");
