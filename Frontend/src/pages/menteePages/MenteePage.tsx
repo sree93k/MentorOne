@@ -2,7 +2,7 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import MenteeBillingPage from "./subPages/MenteePayment";
-import BookingsPage from "../../components/mentee/MentorCard";
+import BookingsPage from "./subPages/MenteeBookings";
 import MentorProfilePage from "./subPages/MentorProfilePage";
 import MentorServicePage from "./subPages/MentorServicePage";
 import MentorsList from "./subPages/MentorsList";

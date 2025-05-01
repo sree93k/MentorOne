@@ -81,16 +81,17 @@ import mongoose, { Schema } from "mongoose";
 const BookingSchema = new Schema({
   serviceId: {
     type: Schema.Types.ObjectId,
+    ref: "Service",
     required: true,
   },
   mentorId: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Users",
     required: true,
   },
   menteeId: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Users",
     required: true,
   },
   day: {
@@ -117,18 +118,17 @@ const BookingSchema = new Schema({
     required: true,
     match: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/,
   },
-  endTime: {
-    type: String,
-    required: true,
-    match: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/,
-  },
+  // endTime: {
+  //   type: String,
+  //   match: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/,
+  // },
   bookingDate: {
     type: Date,
     required: true,
   },
   status: {
     type: String,
-    enum: ["confirmed", "rescheduled", "cancelled"],
+    enum: ["confirmed", "rescheduled", "cancelled", "completed"],
     default: "confirmed",
   },
   paymentDetails: {
