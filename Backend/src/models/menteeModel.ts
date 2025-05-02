@@ -6,6 +6,7 @@ const MenteeSchema = new Schema<EMentee>({
   careerGoals: { type: String, required: true },
   interestedNewcareer: { type: [String], required: true },
   Bookings: { type: [Schema.Types.ObjectId], required: false },
+  isOnline: { type: Boolean, default: false },
 });
 
 const Mentee = mongoose.model<EMentee>("Mentee", MenteeSchema);

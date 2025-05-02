@@ -19,7 +19,12 @@ import { logout } from "@/services/userAuthService";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import WelcomeModalForm1 from "./MenteeWelcomeModal";
-import { setUser, resetUser, setActivated } from "@/redux/slices/userSlice"; // Import action to update user
+import {
+  setUser,
+  resetUser,
+  setActivated,
+  setDashboard,
+} from "@/redux/slices/userSlice"; // Import action to update user
 import { uploadMenteeWelcomeForm } from "@/services/menteeService";
 import Notification from "../users/Notification";
 import logo from "@/assets/logo.png";
@@ -101,6 +106,7 @@ const MenteeSidebar: React.FC = () => {
   );
   const isActivated = useSelector((state: RootState) => state.user.activated);
   useEffect(() => {
+    dispatch(setDashboard("mentee"));
     console.log(
       "is activated is >>>>>>>>>mentee>>>>>>>>>>>>>>>>>s",
       isActivated

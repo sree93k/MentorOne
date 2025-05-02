@@ -69,14 +69,14 @@ const MentorsList: React.FC = () => {
     <div className="flex min-h-screen bg-white">
       <div className="flex-1">
         <div className="p-4">
-          <div className="relative max-w-md mx-auto">
+          {/* <div className="relative max-w-md mx-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
               type="text"
               placeholder="Search mentors..."
               className="pl-10"
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center gap-3 p-4">

@@ -76,89 +76,30 @@ export const updateUserProfile = async (payload: any) => {
   }
 };
 
-// // Create Payment Intent (for in-page payment)
-// export const createPaymentIntent = async (payload: {
-//   amount: number;
-//   serviceId: string;
-//   mentorId: string;
-//   menteeId: string;
-//   bookingDate: string;
-//   startTime: string;
-//   endTime: string;
-//   day: string;
-//   slotIndex: number;
-// }) => {
-//   try {
-//     const accessToken = localStorage.getItem("auth_token");
-//     const response = await api.post(
-//       "/user/payment/create-payment-intent",
-//       payload,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//       }
-//     );
-//     return response.data;
-//   } catch (error: any) {
-//     console.error("Create payment intent error:", error);
-//     throw error?.response?.data || error;
-//   }
-// };
+interface ChatHistoryResponse {
+  data: string; // Replace `any` with the actual structure of the chat history data if known
+}
 
-// // Save Booking (for in-page payment)
-// export const saveBooking = async (payload: {
-//   serviceId: string;
-//   mentorId: string;
-//   menteeId: string;
-//   bookingDate: string;
-//   startTime: string;
-//   endTime: string;
-//   day: string;
-//   slotIndex: number;
-//   paymentIntentId: string;
-//   amount: number;
-// }) => {
-//   try {
-//     const accessToken = localStorage.getItem("auth_token");
-//     const response = await api.post("/user/payment/save-booking", payload, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-//     return response.data;
-//   } catch (error: any) {
-//     console.error("Save booking error:", error);
-//     throw error?.response?.data || error;
-//   }
-// };
+export const getChatHistory = async (
+  dashboard: string
+): Promise<ChatHistoryResponse> => {
+  try {
+    console.log("user servcie getChatHistory step 1");
 
-// // Create Checkout Session (for Stripe Checkout, optional)
-// export const createCheckoutSession = async (payload: {
-//   serviceId: string;
-//   mentorId: string;
-//   menteeId: string;
-//   amount: number;
-//   bookingDate: string;
-//   startTime: string;
-//   endTime: string;
-//   day: string;
-//   slotIndex: number;
-// }) => {
-//   try {
-//     const accessToken = localStorage.getItem("auth_token");
-//     const response = await api.post(
-//       "/user/payment/create-checkout-session",
-//       payload,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//       }
-//     );
-//     return response.data;
-//   } catch (error: any) {
-//     console.error("Create checkout session error:", error);
-//     throw error?.response?.data || error;
-//   }
-// };
+    console.log("dahsboard is ", dashboard);
+    // dashboard will be either "mentee" or "mentor"
+    const response = await api.get(`/user/${dashboard}/chat-history/`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("user servcie getChatHistory step 2", response);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error fetching chat history:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch chat history"
+    );
+  }
+};

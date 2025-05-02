@@ -85,7 +85,7 @@ export const decodedRefreshToken = (
 
     console.log("decode refrsh token step 5", decoded);
     req.user = { ...decoded, rawToken: refreshToken };
-    console.log("decode refrsh token step 6");
+    console.log("decode refrsh token step 6", req.user);
     next();
   } catch (err) {
     console.log("decode refrsh token step 7 error");

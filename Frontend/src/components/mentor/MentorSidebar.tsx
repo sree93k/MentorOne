@@ -27,6 +27,7 @@ import {
   setUser,
   resetUser,
   setMentorActivated,
+  setDashboard,
 } from "@/redux/slices/userSlice";
 import { uploadMentorWelcomeForm, uploadImage } from "@/services/mentorService";
 import logo from "@/assets/Logo2.png";
@@ -129,8 +130,9 @@ const MentorSidebar: React.FC = () => {
       "is activated is >>>>>>>>>>mentor>>>>>>>>>>>>>>>>s",
       isActivated
     );
+    dispatch(setDashboard("mentor"));
     console.log("users", user);
-  }, [isActivated]);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
