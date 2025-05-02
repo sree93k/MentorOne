@@ -3,7 +3,6 @@
 // import { createAdapter } from "@socket.io/redis-adapter";
 // import jwt from "jsonwebtoken";
 // import mongoose from "mongoose";
-// import { ExtendedError } from "socket.io/dist/namespace";
 
 // interface UserPayload {
 //   id: string;
@@ -37,7 +36,7 @@
 //   console.log("Redis adapter connected");
 
 //   // Socket.IO Authentication
-//   io.use((socket: CustomSocket, next: (err?: ExtendedError) => void) => {
+//   io.use((socket: CustomSocket, next: (err?: Error) => void) => {
 //     const token = socket.handshake.auth.token;
 //     if (!token) {
 //       return next(new Error("Authentication error: No token provided"));
@@ -178,7 +177,9 @@ import { Server, Socket } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import ChatService from "../services/implementations/imChatService";
+import MessageService from "../services/implementations/imMessageService";
+import UserRepository from "../repositories/implementations/imUserRepository";
 
 interface UserPayload {
   id: string;
@@ -211,6 +212,11 @@ export const initializeSocket = async (httpServer: any) => {
   io.adapter(createAdapter(pubClient, subClient));
   console.log("Redis adapter connected");
 
+  // Initialize services and repositories
+  const chatService = new ChatService();
+  const messageService = new MessageService();
+  const userRepository = new UserRepository();
+
   // Socket.IO Authentication
   io.use((socket: CustomSocket, next: (err?: Error) => void) => {
     const token = socket.handshake.auth.token;
@@ -231,6 +237,23 @@ export const initializeSocket = async (httpServer: any) => {
   });
 
   // Socket.IO Connection Handling
+  //   io.on("connection", async (socket: CustomSocket) => {
+  //     const userId = socket.data.user?.id;
+  //     const role = socket.data.user?.role;
+  //     if (!userId || !role) return socket.disconnect();
+
+  //     console.log(`User connected: ${userId} as ${role}`);
+
+  //     // Update online status
+  //     await userRepository.updateOnlineStatus(userId, role, true);
+  //     await pubClient.set(`user:${userId}:online`, "true", { EX: 3600 });
+
+  //     // Join role-specific chat rooms
+  //     const chats = await chatService.getChatsByUserAndRole(userId, role);
+  //     chats.forEach((chat) => {
+  //       socket.join(`chat_${chat._id}`);
+  //       console.log(`User ${userId} joined chat: ${chat._id} as ${role}`);
+  //     });
   io.on("connection", async (socket: CustomSocket) => {
     const userId = socket.data.user?.id;
     const role = socket.data.user?.role;
@@ -238,65 +261,41 @@ export const initializeSocket = async (httpServer: any) => {
 
     console.log(`User connected: ${userId} as ${role}`);
 
-    // Update online status in MongoDB
-    if (role === "mentor") {
-      await mongoose
-        .model("Mentor")
-        .findByIdAndUpdate(userId, { isOnline: true });
-    } else if (role === "mentee") {
-      await mongoose
-        .model("Mentee")
-        .findByIdAndUpdate(userId, { isOnline: true });
-    }
-
-    // Cache online status in Redis (expires in 1 hour)
+    // Update online status
+    await userRepository.updateOnlineStatus(userId, role, true);
     await pubClient.set(`user:${userId}:online`, "true", { EX: 3600 });
 
     // Join role-specific chat rooms
-    const chats = await mongoose.model("Chat").find({
-      "roles.userId": userId,
-      "roles.role": role,
-    });
+    const chats = await chatService.getChatsByUserAndRole(userId, role);
+    console.log(
+      `User ${userId} joining chats:`,
+      chats.map((c) => c._id.toString())
+    );
     chats.forEach((chat) => {
       socket.join(`chat_${chat._id}`);
       console.log(`User ${userId} joined chat: ${chat._id} as ${role}`);
     });
-
     // Emit online status to all clients
     io.emit("userStatus", { userId, role, isOnline: true });
 
     // Send message
     socket.on("sendMessage", async ({ chatId, content }, callback) => {
+      console.log("Received sendMessage event:", { chatId, content, userId });
       try {
-        const chat = await mongoose.model("Chat").findById(chatId);
-        if (
-          !chat ||
-          !chat.users.includes(new mongoose.Types.ObjectId(userId))
-        ) {
-          return callback({ error: "Unauthorized or chat not found" });
-        }
-
-        const message = new (mongoose.model("Message"))({
-          sender: userId,
-          content,
-          chat: chatId,
-          readBy: [userId],
-        });
-
-        await message.save();
-        await mongoose
-          .model("Chat")
-          .findByIdAndUpdate(chatId, { latestMessage: message._id });
-
-        const populatedMessage = await mongoose
-          .model("Message")
-          .findById(message._id)
-          .populate("sender", "firstName lastName profilePicture")
-          .populate("readBy", "firstName lastName");
-
-        io.to(`chat_${chatId}`).emit("receiveMessage", populatedMessage);
-        callback({ success: true, message: populatedMessage });
+        const message = await messageService.sendMessage(
+          chatId,
+          userId,
+          content
+        );
+        console.log("Message created:", message);
+        const populatedMessage = await messageService.getMessagesByChatId(
+          chatId
+        );
+        const latestMessage = populatedMessage[populatedMessage.length - 1];
+        io.to(`chat_${chatId}`).emit("receiveMessage", latestMessage);
+        callback({ success: true, message: latestMessage });
       } catch (error: any) {
+        console.error("Error in sendMessage:", error.message, error.stack);
         callback({ error: error.message });
       }
     });
@@ -304,14 +303,10 @@ export const initializeSocket = async (httpServer: any) => {
     // Fetch chat history
     socket.on("getChatHistory", async ({ chatId }, callback) => {
       try {
-        const messages = await mongoose
-          .model("Message")
-          .find({ chat: chatId })
-          .populate("sender", "firstName lastName profilePicture")
-          .populate("readBy", "firstName lastName")
-          .sort({ createdAt: 1 });
+        const messages = await messageService.getMessagesByChatId(chatId);
         callback({ success: true, messages });
       } catch (error: any) {
+        console.error("Error fetching chat history:", error);
         callback({ error: error.message });
       }
     });
@@ -319,29 +314,17 @@ export const initializeSocket = async (httpServer: any) => {
     // Mark messages as read
     socket.on("markAsRead", async ({ chatId }, callback) => {
       try {
-        await mongoose
-          .model("Message")
-          .updateMany(
-            { chat: chatId, readBy: { $ne: userId } },
-            { $addToSet: { readBy: userId } }
-          );
+        await messageService.markMessagesAsRead(chatId, userId);
         callback({ success: true });
       } catch (error: any) {
+        console.error("Error marking messages as read:", error);
         callback({ error: error.message });
       }
     });
 
     socket.on("disconnect", async () => {
       console.log(`User disconnected: ${userId}`);
-      if (role === "mentor") {
-        await mongoose
-          .model("Mentor")
-          .findByIdAndUpdate(userId, { isOnline: false });
-      } else if (role === "mentee") {
-        await mongoose
-          .model("Mentee")
-          .findByIdAndUpdate(userId, { isOnline: false });
-      }
+      await userRepository.updateOnlineStatus(userId, role, false);
       await pubClient.del(`user:${userId}:online`);
       io.emit("userStatus", { userId, role, isOnline: false });
     });

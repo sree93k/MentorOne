@@ -513,4 +513,17 @@ export default class UserRepository implements inUserRepository {
         : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
     }
   }
+
+  async updateOnlineStatus(
+    userId: string,
+    role: "mentor" | "mentee",
+    isOnline: boolean
+  ): Promise<void> {
+    try {
+      const modelName = role === "mentor" ? "Mentor" : "Mentee";
+      await mongoose.model(modelName).findByIdAndUpdate(userId, { isOnline });
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to update online status", error.message);
+    }
+  }
 }

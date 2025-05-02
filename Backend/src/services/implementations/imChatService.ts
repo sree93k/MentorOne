@@ -1,16 +1,18 @@
 import ChatRepository from "../../repositories/implementations/imChatRepository";
-import Booking from "../../models/bookingModel";
+import BookingRepository from "../../repositories/implementations/imBookingRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 
 export default class ChatService {
   private chatRepository: ChatRepository;
+  private bookingRepository: BookingRepository;
 
   constructor() {
     this.chatRepository = new ChatRepository();
+    this.bookingRepository = new BookingRepository();
   }
 
   async createChat(bookingId: string, menteeId: string, mentorId: string) {
-    const booking = await Booking.findById(bookingId);
+    const booking = await this.bookingRepository.findById(bookingId);
     if (!booking) {
       throw new ApiError(404, "Booking not found");
     }

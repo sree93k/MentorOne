@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Policy from "../../models/policyModel";
-import Schedule from "../../models/ScheduleModel"; // Use consistent casing
+import Schedule from "../../models/scheduleModel"; // Use consistent casing
 import BlockedDate from "../../models/blockedModel";
 import { response } from "express";
 
