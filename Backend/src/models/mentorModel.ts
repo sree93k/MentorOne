@@ -92,6 +92,7 @@ const MentorSchema: Schema<EMentor> = new Schema(
       type: [Schema.Types.ObjectId],
       required: false,
     },
+    isOnline: { type: Boolean, default: false },
   },
 
   {

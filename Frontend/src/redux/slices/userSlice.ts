@@ -24,6 +24,7 @@ interface InitialState {
   accessToken: string;
   currentTab: string;
   formData: object;
+  dashboard: string;
   pageTitle: string;
   tempData: object;
 }
@@ -39,6 +40,7 @@ const initialState: InitialState = {
   accessToken: "",
   currentTab: "",
   formData: {},
+  dashboard: "",
   pageTitle: "User Panel",
   tempData: {},
 };
@@ -80,6 +82,9 @@ const userSlice = createSlice({
     setFormData(state, action) {
       state.formData = action.payload;
     },
+    setDashboard(state, action) {
+      state.dashboard = action.payload;
+    },
     resetUser: () => initialState,
   },
 });
@@ -94,6 +99,7 @@ export const {
   setCurrentTab,
   setAccessToken,
   setFormData,
+  setDashboard,
   resetUser,
 } = userSlice.actions;
 export default userSlice.reducer;

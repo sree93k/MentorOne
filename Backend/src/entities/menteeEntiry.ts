@@ -6,4 +6,5 @@ export interface EMentee extends Document {
   careerGoals: string | null;
   interestedNewcareer: string[] | null;
   Bookings: ObjectId[] | null;
+  isOnline: Boolean | null;
 }

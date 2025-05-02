@@ -22,6 +22,7 @@ export interface EMentor extends Document {
   mentorPolicyId: ObjectId | null;
   followers: ObjectId[] | null;
   topTestimonials: ObjectId[] | null;
+  isOnline: Boolean | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
