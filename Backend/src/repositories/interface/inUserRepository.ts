@@ -32,4 +32,9 @@ export interface inUserRepository {
   }): Promise<EUsers | null>;
   getAllMentors(serviceType?: string): Promise<EUsers[]>;
   getMentorById(mentorId: string): Promise<EUsers>;
+  updateOnlineStatus(
+    userId: string,
+    role: "mentor" | "mentee",
+    isOnline: boolean
+  ): Promise<void>;
 }

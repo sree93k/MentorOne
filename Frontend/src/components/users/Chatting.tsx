@@ -83,8 +83,9 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     });
 
     socketInstance.on("receiveMessage", (message) => {
+      console.log("Received message:", message);
       setChatHistories((prev) => {
-        const chatId = message.chat;
+        const chatId = message.chat.toString();
         const formattedMessage: ChatMessage = {
           _id: message._id,
           content: message.content,
@@ -200,12 +201,23 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   };
 
   const handleSendMessage = () => {
-    if (!socket || !activeChatId || newMessage.trim() === "") return;
+    console.log("handleSendMessage called", {
+      socket,
+      activeChatId,
+      newMessage,
+    });
+    if (!socket || !activeChatId || newMessage.trim() === "") {
+      console.warn(
+        "Cannot send message: invalid socket, chatId, or empty message"
+      );
+      return;
+    }
 
     socket.emit(
       "sendMessage",
       { chatId: activeChatId, content: newMessage },
       (response: any) => {
+        console.log("sendMessage response:", response);
         if (response.error) {
           console.error("Failed to send message:", response.error);
         }

@@ -76,25 +76,37 @@ export const updateUserProfile = async (payload: any) => {
   }
 };
 
-interface ChatHistoryResponse {
-  data: string; // Replace `any` with the actual structure of the chat history data if known
+interface ChatUser {
+  id: string;
+  name: string;
+  avatar: string;
+  bookingId: string;
+  lastMessage?: string;
+  timestamp?: string;
+  unread?: number;
+  isOnline?: boolean;
 }
 
+interface ChatHistoryResponse {
+  data: ChatUser[];
+  message: string;
+  status: number;
+}
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
   try {
-    console.log("user servcie getChatHistory step 1");
-
-    console.log("dahsboard is ", dashboard);
-    // dashboard will be either "mentee" or "mentor"
-    const response = await api.get(`/user/${dashboard}/chat-history/`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("user servcie getChatHistory step 2", response);
+    console.log("user service getChatHistory step 1, dashboard:", dashboard);
+    const response = await userAxiosInstance.get<ChatHistoryResponse>(
+      `/user/${dashboard}/chat-history`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("user service getChatHistory step 2, response:", response.data);
     return response.data;
   } catch (error: any) {
     console.error("Error fetching chat history:", error);

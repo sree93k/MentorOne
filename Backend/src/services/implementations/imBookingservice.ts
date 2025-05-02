@@ -1,6 +1,9 @@
 import { inBookingService, BookingParams } from "../interface/inBookingService";
 import BookingRepository from "../../repositories/implementations/imBookingRepository";
 import PaymentRepository from "../../repositories/implementations/imPaymentRepository";
+import ChatRepository from "../../repositories/implementations/imChatRepository";
+import ServiceRepository from "../../repositories/implementations/imServiceRepository";
+import ChatService from "./imChatService";
 import { ApiError } from "../../middlewares/errorHandler";
 
 interface SaveBookingAndPaymentParams {
@@ -19,10 +22,16 @@ interface SaveBookingAndPaymentParams {
 export default class BookingService implements inBookingService {
   private bookingRepository: BookingRepository;
   private paymentRepository: PaymentRepository;
+  private chatRepository: ChatRepository;
+  private serviceRepository: ServiceRepository;
+  private chatService: ChatService;
 
   constructor() {
     this.bookingRepository = new BookingRepository();
     this.paymentRepository = new PaymentRepository();
+    this.chatRepository = new ChatRepository();
+    this.serviceRepository = new ServiceRepository();
+    this.chatService = new ChatService();
   }
 
   async createBooking(params: BookingParams): Promise<any> {
@@ -54,7 +63,7 @@ export default class BookingService implements inBookingService {
 
   async saveBookingAndPayment(
     params: SaveBookingAndPaymentParams
-  ): Promise<{ booking: any; payment: any }> {
+  ): Promise<{ booking: any; payment: any; chat?: any }> {
     const {
       sessionId,
       serviceId,
@@ -71,6 +80,11 @@ export default class BookingService implements inBookingService {
     console.log("saveBookingAndPayment params:", params);
 
     try {
+      // Fetch the service to check its type
+      const service = await this.serviceRepository.getServiceById(serviceId);
+      if (!service) {
+        throw new ApiError(404, "Service not found", "Invalid service ID");
+      }
       // Create booking
       const booking = await this.createBooking({
         serviceId,
@@ -92,10 +106,21 @@ export default class BookingService implements inBookingService {
         transactionId: sessionId,
       });
 
+      // Create chat for "chat" type services
+      let chat;
+      if (service.oneToOneType === "chat") {
+        chat = await this.chatService.createChat(
+          booking._id.toString(),
+          menteeId,
+          mentorId
+        );
+        console.log("Created chat:", chat._id);
+      }
+
       console.log("Saved booking:", booking._id);
       console.log("Saved payment:", payment._id);
 
-      return { booking, payment };
+      return { booking, payment, chat };
     } catch (error: any) {
       console.error("Detailed error in saveBookingAndPayment:", error);
       throw new ApiError(
