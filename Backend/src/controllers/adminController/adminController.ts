@@ -28,35 +28,6 @@ class AdminController {
     }
   };
 
-  // public getAllUsers = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> => {
-  //   try {
-  //     console.log("adminController all users step1", req.query);
-  //     const { page = 1, limit = 10, role, status } = req.query;
-
-  //     const response = await this.adminService.fetchAllUsers(
-  //       Number(page),
-  //       Number(limit),
-  //       role as string | undefined,
-  //       status as string | undefined
-  //     );
-  //     console.log("adminController all users step2", response);
-  //     if (response) {
-  //       console.log("adminController all users step3 success response");
-  //       res
-  //         .status(200)
-  //         .json(new ApiResponse(200, response, "Users fetched successfully"));
-  //     } else {
-  //       console.log("adminController all users step4 no response");
-  //       res.status(404).json(new ApiResponse(404, null, "No users found"));
-  //     }
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // };
   public getAllUsers = async (
     req: Request,
     res: Response,

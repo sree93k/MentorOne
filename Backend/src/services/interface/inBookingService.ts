@@ -9,10 +9,25 @@ export interface BookingParams {
   slotIndex: number;
 }
 
+interface SaveBookingAndPaymentParams {
+  sessionId: string;
+  serviceId: string;
+  mentorId: string;
+  menteeId: string;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+  day: string;
+  slotIndex: number;
+  amount: number;
+}
 export interface inBookingService {
   createBooking(params: BookingParams): Promise<any>;
   getBookingsByMentee(menteeId: string): Promise<any[]>;
   getBookingsByMentor(mentorId: string): Promise<any[]>;
   cancelBooking(bookingId: string): Promise<void>;
   verifyBookingBySessionId(sessionId: string): Promise<any>;
+  saveBookingAndPayment(
+    params: SaveBookingAndPaymentParams
+  ): Promise<{ booking: any; payment: any; chat?: any }>;
 }
