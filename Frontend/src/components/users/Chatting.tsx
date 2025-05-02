@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Pattern from "@/assets/pattern-2.svg?url";
 import { io, Socket } from "socket.io-client";
-import { getChatHistory } from "@/services/userServices";
+import { getChatHistory } from "../../services/userServices";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 
@@ -58,34 +58,69 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     [chatId: string]: ChatMessage[];
   }>({});
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, dashboard } = useSelector((state: RootState) => state.user);
-  const userId = user?.id;
+  const userId = user?._id;
   const role = user?.role;
 
   // Initialize Socket.IO
   useEffect(() => {
+    console.log("user id iis", userId);
+
+    const token = localStorage.getItem("accessToken");
+    console.log("Socket.IO auth token:", token?.substring(0, 20) + "...");
+    try {
+      if (token) {
+        const decoded = JSON.parse(atob(token.split(".")[1]));
+        console.log("Decoded JWT payload:", decoded);
+      }
+    } catch (e) {
+      console.error("Failed to decode JWT:", e);
+      setError("Invalid authentication token");
+    }
+
+    console.log(
+      "Initializing Socket.IO with VITE_API_URL:",
+      import.meta.env.VITE_API_URL
+    );
     const socketInstance = io(import.meta.env.VITE_API_URL, {
       auth: {
-        token: localStorage.getItem("accessToken"),
+        token,
       },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     setSocket(socketInstance);
 
     socketInstance.on("connect", () => {
       console.log("Connected to Socket.IO server");
+      setError(null);
     });
 
     socketInstance.on("connect_error", (error) => {
-      console.error("Socket.IO connection error:", error.message);
+      console.error("Socket.IO connection error:", error.message, error);
+      setError(`Failed to connect to chat server: ${error.message}`);
+    });
+
+    socketInstance.on("reconnect_attempt", (attempt) => {
+      console.log("Socket.IO reconnect attempt:", attempt);
+    });
+
+    socketInstance.on("reconnect_failed", () => {
+      console.error("Socket.IO reconnect failed");
+      setError("Failed to reconnect to chat server");
     });
 
     socketInstance.on("receiveMessage", (message) => {
       console.log("Received message:", message);
       setChatHistories((prev) => {
         const chatId = message.chat.toString();
+        console.log("Processing message for chatId:", chatId);
         const formattedMessage: ChatMessage = {
           _id: message._id,
           content: message.content,
@@ -102,6 +137,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     });
 
     socketInstance.on("userStatus", ({ userId, isOnline }) => {
+      console.log("User status update:", { userId, isOnline });
       setChatUsers((prev) =>
         prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
       );
@@ -120,23 +156,30 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     const fetchChatHistory = async () => {
       if (!dashboard) {
         console.warn("Dashboard not set, skipping chat history fetch");
+        setError("Please select a dashboard (mentor or mentee)");
         return;
       }
 
       try {
+        setError(null);
+        console.log("Fetching chat history for dashboard:", dashboard);
         const response = await getChatHistory(dashboard);
+        console.log("Chat history response:", response);
         const updatedChatUsers = response.data.map((user: ChatUser) => ({
           ...user,
-          isOnline: false, // Initialize as false, updated via socket
+          isOnline: false,
         }));
         setChatUsers(updatedChatUsers);
-        setFilteredChatUsers(updatedChatUsers); // Initialize filtered list
+        setFilteredChatUsers(updatedChatUsers);
         if (updatedChatUsers.length > 0) {
           setSelectedUser(updatedChatUsers[0]);
           setActiveChatId(updatedChatUsers[0].id);
+        } else {
+          setError("No chats available");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch chat history:", error);
+        setError(error.message || "Failed to fetch chat history");
       }
     };
 
@@ -159,11 +202,13 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
   // Fetch messages for selected chat
   useEffect(() => {
-    if (socket && activeChatId) {
+    if (socket && activeChatId && socket.connected) {
+      console.log("Fetching messages for chatId:", activeChatId);
       socket.emit(
         "getChatHistory",
         { chatId: activeChatId },
         (response: any) => {
+          console.log("getChatHistory response:", response);
           if (response.success) {
             setChatHistories((prev) => ({
               ...prev,
@@ -178,12 +223,29 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                 senderId: msg.sender._id,
               })),
             }));
-            socket.emit("markAsRead", { chatId: activeChatId });
+            socket.emit(
+              "markAsRead",
+              { chatId: activeChatId },
+              (response: any) => {
+                console.log("markAsRead response:", response);
+                if (!response.success) {
+                  console.error(
+                    "Failed to mark messages as read:",
+                    response.error
+                  );
+                  setError(response.error || "Failed to mark messages as read");
+                }
+              }
+            );
           } else {
             console.error("Failed to fetch chat history:", response.error);
+            setError(response.error || "Failed to load chat messages");
           }
         }
       );
+    } else if (socket && !socket.connected) {
+      console.warn("Cannot fetch chat history: Socket.IO not connected");
+      setError("Chat server disconnected, please try again later");
     }
   }, [socket, activeChatId, userId]);
 
@@ -196,8 +258,10 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   }, [chatHistories[activeChatId || ""]]);
 
   const handleUserClick = (user: ChatUser) => {
+    console.log("Selected user:", user);
     setSelectedUser(user);
     setActiveChatId(user.id);
+    setError(null);
   };
 
   const handleSendMessage = () => {
@@ -210,6 +274,13 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       console.warn(
         "Cannot send message: invalid socket, chatId, or empty message"
       );
+      setError("Cannot send message: please select a chat and enter a message");
+      return;
+    }
+
+    if (!socket.connected) {
+      console.warn("Socket.IO not connected, cannot send message");
+      setError("Chat server disconnected, please try again later");
       return;
     }
 
@@ -218,13 +289,14 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       { chatId: activeChatId, content: newMessage },
       (response: any) => {
         console.log("sendMessage response:", response);
-        if (response.error) {
+        if (response.success) {
+          setNewMessage("");
+        } else {
           console.error("Failed to send message:", response.error);
+          setError(response.error || "Failed to send message");
         }
       }
     );
-
-    setNewMessage("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -235,16 +307,23 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && socket && activeChatId) {
+    if (file && socket && activeChatId && socket.connected) {
       socket.emit(
         "sendMessage",
         { chatId: activeChatId, content: `Sent file: ${file.name}` },
         (response: any) => {
+          console.log("File sendMessage response:", response);
           if (response.error) {
             console.error("Failed to send file message:", response.error);
+            setError(response.error || "Failed to send file");
           }
         }
       );
+    } else {
+      console.warn(
+        "Cannot send file: Socket.IO not connected or invalid state"
+      );
+      setError("Cannot send file: chat server disconnected or invalid state");
     }
   };
 
@@ -277,42 +356,51 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
             </div>
             <ScrollArea className="h-[calc(100vh-200px)] mr-2">
               <div className="space-y-2">
-                {filteredChatUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => handleUserClick(user)}
-                    className={`w-full flex items-center space-x-4 p-4 rounded-lg hover:bg-accent ${
-                      selectedUser?.id === user.id ? "bg-accent" : ""
-                    }`}
-                    style={{ backgroundColor: "#333333" }}
-                  >
-                    <Avatar>
-                      <AvatarImage src={user.avatar} />
-                      <AvatarFallback>{user.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-left">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-300">
-                          {user.name}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {user.timestamp}
-                        </span>
+                {error && (
+                  <p className="text-center text-sm text-red-500">{error}</p>
+                )}
+                {filteredChatUsers.length > 0 ? (
+                  filteredChatUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleUserClick(user)}
+                      className={`w-full flex items-center space-x-4 p-4 rounded-lg hover:bg-accent ${
+                        selectedUser?.id === user.id ? "bg-accent" : ""
+                      }`}
+                      style={{ backgroundColor: "#333333" }}
+                    >
+                      <Avatar>
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 text-left">
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-300">
+                            {user.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {user.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-400 truncate">
+                          {user.lastMessage}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.isOnline ? "Online" : "Offline"}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-400 truncate">
-                        {user.lastMessage}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {user.isOnline ? "Online" : "Offline"}
-                      </p>
-                    </div>
-                    {user.unread && (
-                      <span className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
-                        {user.unread}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                      {user.unread && (
+                        <span className="bg-primary text-primary-foreground rounded-full px-2 py-1 text-xs">
+                          {user.unread}
+                        </span>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground">
+                    No chats found
+                  </p>
+                )}
               </div>
             </ScrollArea>
           </div>
@@ -354,6 +442,9 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                     backgroundSize: "auto",
                   }}
                 >
+                  {error && (
+                    <p className="text-center text-sm text-red-500">{error}</p>
+                  )}
                   <div className="space-y-4">
                     {(chatHistories[activeChatId || ""] || []).map(
                       (message) => (
@@ -427,6 +518,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                   <p className="text-sm text-muted-foreground">
                     Choose a conversation from the left to start chatting
                   </p>
+                  {error && <p className="text-sm text-red-500">{error}</p>}
                 </div>
               </div>
             )}
