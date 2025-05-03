@@ -249,3 +249,85 @@ export const getTutorialById = async (tutorialId: string) => {
     );
   }
 };
+
+export const checkBookingStatus = async (serviceId: string) => {
+  try {
+    console.log("menteeService checkBookingStatus.. step 1", serviceId);
+    const response = await api.get(`/seeker/check-booking/${serviceId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    });
+    console.log("menteeService checkBookingStatus.. step 2", response);
+    return response.data.data.isBooked;
+  } catch (error: any) {
+    console.error("Error checking booking status:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to check booking status"
+    );
+  }
+};
+
+export const getVideoUrl = async (key: string) => {
+  try {
+    console.log("menteeService getVideoUrl.. step 1", key);
+    const response = await api.get(
+      `/seeker/video-url/${encodeURIComponent(key)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+    console.log("menteeService getVideoUrl.. step 2", response);
+    return response.data.data.url;
+  } catch (error: any) {
+    console.error("Error fetching video URL:", error);
+    throw new Error(error.response?.data?.error || "Failed to fetch video URL");
+  }
+};
+export const initiatePayment = async (serviceId: string, amount: number) => {
+  try {
+    console.log("menteeService initiatePayment.. step 1", serviceId, amount);
+    const response = await api.post(
+      `/seeker/initiate-payment`,
+      { serviceId, amount },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+    console.log("menteeService initiatePayment.. step 2", response);
+    return response.data.data; // Expecting { sessionId, url }
+  } catch (error: any) {
+    console.error("Error initiating payment:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to initiate payment"
+    );
+  }
+};
+
+export const createBooking = async (
+  serviceId: string,
+  mentorId: string,
+  sessionId: string
+) => {
+  try {
+    console.log("menteeService createBooking.. step 1", serviceId, sessionId);
+    const response = await api.post(
+      `/seeker/book-service`,
+      { serviceId, mentorId, sessionId },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+    console.log("menteeService createBooking.. step 2", response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error creating booking:", error);
+    throw new Error(error.response?.data?.error || "Failed to create booking");
+  }
+};
