@@ -16,12 +16,17 @@ import {
   Paperclip,
   Send,
   MoreVertical,
+  CircleSmall,
+  Check,
+  CheckCheck,
 } from "lucide-react";
 import Pattern from "@/assets/pattern-2.svg?url";
 import { io, Socket } from "socket.io-client";
 import { getChatHistory } from "../../services/userServices";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import axios from "axios";
 
 interface ChatProps {
   open: boolean;
@@ -34,6 +39,7 @@ interface ChatMessage {
   timestamp: string;
   sender: "user" | "other";
   senderId: string;
+  status?: "sent" | "delivered" | "read"; // For ticks
 }
 
 interface ChatUser {
@@ -59,8 +65,10 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   }>({});
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const { user, dashboard } = useSelector((state: RootState) => state.user);
   const userId = user?._id;
   const role = user?.role;
@@ -130,9 +138,30 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
           }),
           sender: message.sender._id === userId ? "user" : "other",
           senderId: message.sender._id,
+          status: message.sender._id === userId ? "sent" : "delivered",
         };
         const updated = [...(prev[chatId] || []), formattedMessage];
         return { ...prev, [chatId]: updated };
+      });
+    });
+
+    socketInstance.on("messageDelivered", ({ messageId, chatId }) => {
+      console.log("Message delivered:", { messageId, chatId });
+      setChatHistories((prev) => {
+        const updatedMessages = (prev[chatId] || []).map((msg) =>
+          msg._id === messageId ? { ...msg, status: "delivered" } : msg
+        );
+        return { ...prev, [chatId]: updatedMessages };
+      });
+    });
+
+    socketInstance.on("messageRead", ({ messageId, chatId }) => {
+      console.log("Message read:", { messageId, chatId });
+      setChatHistories((prev) => {
+        const updatedMessages = (prev[chatId] || []).map((msg) =>
+          msg._id === messageId ? { ...msg, status: "read" } : msg
+        );
+        return { ...prev, [chatId]: updatedMessages };
       });
     });
 
@@ -221,6 +250,9 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                 }),
                 sender: msg.sender._id === userId ? "user" : "other",
                 senderId: msg.sender._id,
+                status:
+                  msg.status ||
+                  (msg.sender._id === userId ? "sent" : "delivered"),
               })),
             }));
             socket.emit(
@@ -249,21 +281,74 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     }
   }, [socket, activeChatId, userId]);
 
-  // Scroll to bottom
+  // Close emoji picker when clicking outside
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  // useEffect(() => {
+  //   if (chatContainerRef.current) {
+  //     chatContainerRef.current.scrollTop =
+  //       chatContainerRef.current.scrollHeight;
+  //   }
+  // }, [chatHistories[activeChatId || ""]]);
+  // const handleUserClick = (user: ChatUser) => {
+  //   console.log("Selected user:", user);
+  //   setSelectedUser(user);
+  //   setActiveChatId(user.id);
+  //   setError(null);
+  // };
+  // Replace the Scroll to bottom useEffect (lines ~216–224)
+  // Replace the Scroll to bottom useEffect (lines ~215–224)
+  // useEffect(() => {
+  //   if (chatContainerRef.current) {
+  //     setTimeout(() => {
+  //       chatContainerRef.current!.scrollTop =
+  //         chatContainerRef.current!.scrollHeight;
+  //       console.log("Scrolled to bottom on chat selection or message update");
+  //     }, 300); // Increased delay for DOM rendering
+  //   }
+  // }, [activeChatId, chatHistories[activeChatId || ""]]);
+
+  // Add a new useEffect after the existing scroll useEffect (after line ~224)
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      requestAnimationFrame(() => {
+        chatContainerRef.current!.scrollTop =
+          chatContainerRef.current!.scrollHeight;
+        console.log(
+          "Scrolled to bottom (chat opened or updated)",
+          chatHistories[activeChatId || ""]?.map((m) => ({
+            content: m.content,
+            timestamp: m.timestamp,
+          }))
+        );
+      });
     }
-  }, [chatHistories[activeChatId || ""]]);
+  }, [activeChatId, chatHistories[activeChatId || ""]]);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [activeChatId, chatHistories[activeChatId || ""]]);
+  // Replace the handleUserClick function (lines ~226–236)
   const handleUserClick = (user: ChatUser) => {
     console.log("Selected user:", user);
     setSelectedUser(user);
     setActiveChatId(user.id);
     setError(null);
   };
-
   const handleSendMessage = () => {
     console.log("handleSendMessage called", {
       socket,
@@ -305,20 +390,48 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setNewMessage((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && socket && activeChatId && socket.connected) {
-      socket.emit(
-        "sendMessage",
-        { chatId: activeChatId, content: `Sent file: ${file.name}` },
-        (response: any) => {
-          console.log("File sendMessage response:", response);
-          if (response.error) {
-            console.error("Failed to send file message:", response.error);
-            setError(response.error || "Failed to send file");
+      if (!file.type.startsWith("image/")) {
+        setError("Please select an image file");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/upload`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "multipart/form-data",
+            },
           }
-        }
-      );
+        );
+        const imageUrl = response.data.url;
+        socket.emit(
+          "sendMessage",
+          { chatId: activeChatId, content: imageUrl },
+          (response: any) => {
+            console.log("Image sendMessage response:", response);
+            if (response.error) {
+              console.error("Failed to send image message:", response.error);
+              setError(response.error || "Failed to send image");
+            }
+          }
+        );
+      } catch (error: any) {
+        console.error("Failed to upload image:", error);
+        setError(error.message || "Failed to upload image");
+      }
     } else {
       console.warn(
         "Cannot send file: Socket.IO not connected or invalid state"
@@ -329,6 +442,22 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  const isImageUrl = (content: string) => {
+    return /\.(png|jpg|jpeg|gif)$/i.test(content);
+  };
+
+  const renderMessageStatus = (status?: string) => {
+    if (!status) return null;
+    if (status === "sent") {
+      return <Check className="h-4 w-4 text-gray-400" />;
+    } else if (status === "delivered") {
+      return <CheckCheck className="h-4 w-4 text-gray-400" />;
+    } else if (status === "read") {
+      return <CheckCheck className="h-4 w-4 text-blue-500" />;
+    }
+    return null;
   };
 
   return (
@@ -376,17 +505,16 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       <div className="flex-1 text-left">
                         <div className="flex justify-between">
                           <span className="font-medium text-gray-300">
-                            {user.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {user.timestamp}
+                            {user.name.slice(0, user.name.indexOf(" "))}
                           </span>
                         </div>
                         <p className="text-sm text-gray-400 truncate">
                           {user.lastMessage}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {user.isOnline ? "Online" : "Offline"}
+                          {user.isOnline ? (
+                            <CircleSmall color="#13c91f" />
+                          ) : null}
                         </p>
                       </div>
                       {user.unread && (
@@ -469,20 +597,45 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                                   : undefined,
                             }}
                           >
-                            <p className="text-sm">{message.content}</p>
-                            <span className="text-xs opacity-70 mt-1 block text-white">
-                              {message.timestamp}
-                            </span>
+                            {isImageUrl(message.content) ? (
+                              <img
+                                src={message.content}
+                                alt="Chat image"
+                                className="max-w-[200px] rounded-lg"
+                              />
+                            ) : (
+                              <p className="text-sm">{message.content}</p>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs opacity-70 mt-1 text-white">
+                                {message.timestamp}
+                              </span>
+                              {message.sender === "user" &&
+                                renderMessageStatus(message.status)}
+                            </div>
                           </div>
                         </div>
                       )
                     )}
+                    <div ref={bottomRef} />
                   </div>
                 </ScrollArea>
 
-                <div className="p-4 border-t">
+                <div className="p-4 border-t relative">
+                  {showEmojiPicker && (
+                    <div
+                      ref={emojiPickerRef}
+                      className="absolute bottom-16 left-0 z-10"
+                    >
+                      <EmojiPicker onEmojiClick={handleEmojiClick} />
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowEmojiPicker((prev) => !prev)}
+                    >
                       <Smile className="h-5 w-5" />
                     </Button>
                     <Button
@@ -496,6 +649,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       type="file"
                       ref={fileInputRef}
                       className="hidden"
+                      accept="image/*"
                       onChange={handleFileUpload}
                     />
                     <Input

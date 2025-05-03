@@ -196,6 +196,44 @@ class menteeController {
       next(error);
     }
   };
+
+  public getAllTutorials = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("mnetee controller getAllTutorials step 1");
+      const tutorials = await this.bookingService.getAllVideoTutorials();
+      console.log("mnetee controller getAllTutorials step 2", tutorials);
+      res.json(
+        new ApiResponse(200, tutorials, "Video tutorials fetched successfully")
+      );
+    } catch (error: any) {
+      console.log("mnetee controller getAllTutorials step 3 error ", error);
+      next(error);
+    }
+  };
+
+  public getTutorialById = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      // if (!mongoose.Types.ObjectId.isValid(id)) {
+      //   throw new ApiError(400, "Invalid tutorial ID");
+      // }
+      const tutorial = await this.bookingService.getTutorialById(id);
+      if (!tutorial) {
+        throw new ApiError(404, "Tutorial not found");
+      }
+      res.json(new ApiResponse(200, tutorial, "Tutorial fetched successfully"));
+    } catch (error: any) {
+      next(error);
+    }
+  };
 }
 
 export default new menteeController();
