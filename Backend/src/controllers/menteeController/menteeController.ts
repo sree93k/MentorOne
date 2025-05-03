@@ -581,23 +581,60 @@ class menteeController {
     }
   };
 
+  // public getVideoUrl = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     const { key } = req.params;
+  //     if (!key) {
+  //       throw new ApiError(400, "Video key is required");
+  //     }
+  //     const url = await this.uploadService.S3generatePresignedUrlForGet(
+  //       decodeURIComponent(key)
+  //     );
+  //     res.json(
+  //       new ApiResponse(200, { url }, "Video URL generated successfully")
+  //     );
+  //   } catch (error: any) {
+  //     next(error);
+  //   }
+  // };
+
   public getVideoUrl = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { key } = req.params;
+      let { key } = req.params;
       if (!key) {
         throw new ApiError(400, "Video key is required");
       }
-      const url = await this.uploadService.S3generatePresignedUrlForGet(
-        decodeURIComponent(key)
-      );
+
+      // Decode and validate key
+      key = decodeURIComponent(key);
+      console.log("Received key:", key);
+      const bucketUrl = "https://mentorone-app.s3.ap-south-1.amazonaws.com/";
+      if (key.startsWith(bucketUrl)) {
+        key = key.replace(bucketUrl, "");
+        console.log("Stripped key:", key);
+      }
+      if (key.includes("http://") || key.includes("https://")) {
+        throw new ApiError(
+          400,
+          "Invalid key: Provide S3 object key, not full URL"
+        );
+      }
+
+      const url = await this.uploadService.S3generatePresignedUrlForGet(key);
+      console.log("Generated presigned URL:", url);
       res.json(
         new ApiResponse(200, { url }, "Video URL generated successfully")
       );
     } catch (error: any) {
+      console.error("Error in getVideoUrl:", error);
       next(error);
     }
   };
