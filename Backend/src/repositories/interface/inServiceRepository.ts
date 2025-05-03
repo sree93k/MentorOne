@@ -7,4 +7,6 @@ export interface inServiceRepository {
     serviceId: string,
     serviceData: Partial<EService>
   ): Promise<EService | null>;
+  getAllVideoTutorials(): Promise<any[]>;
+  getTutorialById(tutorialId: string): Promise<any>;
 }

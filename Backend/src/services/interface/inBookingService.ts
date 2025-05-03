@@ -30,4 +30,6 @@ export interface inBookingService {
   saveBookingAndPayment(
     params: SaveBookingAndPaymentParams
   ): Promise<{ booking: any; payment: any; chat?: any }>;
+  getAllVideoTutorials(): Promise<any[]>;
+  getTutorialById(tutorialId: string): Promise<any>;
 }

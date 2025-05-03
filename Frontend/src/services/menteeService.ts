@@ -215,3 +215,37 @@ export const getMentorById = async (mentorId: string): Promise<Mentor> => {
     throw new Error(`Failed to fetch mentor: ${error.message}`);
   }
 };
+
+export const getAllTutorials = async () => {
+  try {
+    console.log("bookingservice getAllTutorials.. step 1");
+    const response = await api.get(`/seeker/alltutorials`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    });
+    console.log("bookingservice getAllTutorials.. step 2", response);
+    return response.data.data; // Return the tutorials array
+  } catch (error: any) {
+    console.error("Error fetching tutorials:", error);
+    throw new Error(error.response?.data?.error || "Failed to fetch tutorials");
+  }
+};
+
+export const getTutorialById = async (tutorialId: string) => {
+  try {
+    console.log("menteeService getTutorialById.. step 1", tutorialId);
+    const response = await api.get(`/seeker/exclusivecontent/${tutorialId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    });
+    console.log("menteeService getTutorialById.. step 2", response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error fetching tutorial by ID:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch tutorial details"
+    );
+  }
+};

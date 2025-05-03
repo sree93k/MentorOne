@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
+
 import MenteeBillingPage from "./subPages/MenteePayment";
 import BookingsPage from "./subPages/MenteeBookings";
 import MentorProfilePage from "./subPages/MentorProfilePage";
@@ -32,13 +33,13 @@ const MenteePage = () => {
             <Route path="/dashboard" element={<MenteeDashboard />} />
             <Route path="/profile" element={<MenteeProfile />} />
             <Route path="/mentor" element={<MentorsPage />} />
-            <Route path="/menteecourses" element={<CoursePage />} />
+            <Route path="/menteecourses" element={<MenteeCourses />} />
             <Route path="/payment" element={<MenteeBillingPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/mentorprofile/:id" element={<MentorProfilePage />} />
             <Route path="/mentorservice" element={<MentorServicePage />} />
             <Route path="/mentors" element={<MentorsList />} />
-            <Route path="/courses" element={<MenteeCourses />} />
+            <Route path="/courses" element={<CoursePage />} />
             <Route path="/digitalcontent/:id" element={<DigitalProducts />} />
             <Route path="/tutorials/:id" element={<VideoTutorialPage />} />
             <Route path="/checkout" element={<StripeCheckoutPage />} />

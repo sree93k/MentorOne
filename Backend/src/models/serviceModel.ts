@@ -5,7 +5,7 @@ const ServiceSchema: Schema = new Schema(
   {
     mentorId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Users",
       required: true,
     },
     type: {

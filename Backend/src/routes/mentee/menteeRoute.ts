@@ -38,4 +38,17 @@ menteeRoutes.get(
   authenticate,
   menteeController.getBookings.bind(menteeController)
 );
+
+menteeRoutes.get(
+  "/alltutorials",
+  authenticate,
+  menteeController.getAllTutorials.bind(menteeController)
+);
+
+menteeRoutes.get(
+  "/exclusivecontent/:id",
+  authenticate,
+  menteeController.getTutorialById.bind(menteeController)
+);
+
 export default menteeRoutes;

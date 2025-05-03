@@ -159,4 +159,38 @@ export default class BookingService implements inBookingService {
     }
     return booking;
   }
+
+  async getAllVideoTutorials(): Promise<any[]> {
+    try {
+      console.log("bookingservice getAllVideoTutorials step 1");
+      const tutorials = await this.serviceRepository.getAllVideoTutorials();
+      console.log("bookingservice getAllVideoTutorials step 2", tutorials);
+      return tutorials;
+    } catch (error: any) {
+      console.log("bookingservice getAllVideoTutorials step errror", error);
+      console.error("Error fetching video tutorials:", error);
+      throw new ApiError(
+        500,
+        error.message || "Failed to fetch video tutorials"
+      );
+    }
+  }
+
+  async getTutorialById(tutorialId: string): Promise<any> {
+    try {
+      console.log("bookingservice getTutorialById step 1", tutorialId);
+      const tutorial = await this.serviceRepository.getTutorialById(tutorialId);
+      console.log("bookingservice getTutorialById step 2", tutorial);
+      if (!tutorial) {
+        throw new ApiError(404, "Tutorial not found");
+      }
+      return tutorial;
+    } catch (error: any) {
+      console.error("Error fetching tutorial by ID:", error);
+      throw new ApiError(
+        500,
+        error.message || "Failed to fetch tutorial details"
+      );
+    }
+  }
 }
