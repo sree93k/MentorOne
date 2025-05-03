@@ -1,5 +1,5 @@
-// import { useState } from "react";
-// import { Search, User, ChevronDown, ArrowLeft } from "lucide-react";
+// import { useState, useEffect } from "react";
+// import { ArrowLeft } from "lucide-react";
 // import { Input } from "@/components/ui/input";
 // import { Button } from "@/components/ui/button";
 // import { useParams, useNavigate } from "react-router-dom";
@@ -9,89 +9,94 @@
 //   AccordionItem,
 //   AccordionTrigger,
 // } from "@/components/ui/accordion";
-// import DummyImage from "@/assets/Sree.jpeg";
+// import {
+//   getTutorialById,
+//   checkBookingStatus,
+//   initiatePayment,
+//   createBooking,
+// } from "@/services/menteeService";
+// import { loadStripe } from "@stripe/stripe-js";
 
-// interface Episode {
-//   id: string;
-//   title: string;
-//   description: string;
-// }
-
-// interface Season {
-//   id: number;
-//   title: string;
-//   episodes: Episode[];
-// }
+// const stripePromise = loadStripe("your-publishable-key-here"); // Replace with your Stripe publishable key
 
 // export default function DigitalProducts() {
 //   const { id } = useParams<{ id: string }>();
-//   const [enrolled, setEnrolled] = useState(false);
+//   const [tutorial, setTutorial] = useState<any>(null);
+//   const [isBooked, setIsBooked] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 //   const navigate = useNavigate();
 
-//   const seasons: Season[] = [
-//     {
-//       id: 1,
-//       title: "Season 1",
-//       episodes: [
-//         {
-//           id: "ep-01",
-//           title: "How Javascript Works & Execution Context",
-//           description:
-//             "Understanding how Javascript works behind the scene, inside the JS Engine will make you a better developer",
-//         },
-//         {
-//           id: "ep-02",
-//           title: "How Javascript Works & Execution Context",
-//           description:
-//             "Understanding how Javascript works behind the scene, inside the JS Engine will make you a better developer",
-//         },
-//         {
-//           id: "ep-03",
-//           title: "How Javascript Works & Execution Context",
-//           description:
-//             "Understanding how Javascript works behind the scene, inside the JS Engine will make you a better developer",
-//         },
-//         {
-//           id: "ep-04",
-//           title: "How Javascript Works & Execution Context",
-//           description:
-//             "Understanding how Javascript works behind the scene, inside the JS Engine will make you a better developer",
-//         },
-//       ],
-//     },
-//     {
-//       id: 2,
-//       title: "Season 2",
-//       episodes: [
-//         {
-//           id: "ep-05",
-//           title: "How Javascript Works & Execution Context",
-//           description:
-//             "Understanding how Javascript works behind the scene, inside the JS Engine will make you a better developer",
-//         },
-//         {
-//           id: "ep-06",
-//           title: "How Javascript Works & Execution Context",
-//           description:
-//             "Understanding how Javascript works behind the scene, inside the JS Engine will make you a better developer",
-//         },
-//       ],
-//     },
-//   ];
+//   useEffect(() => {
+//     const fetchTutorialAndBookingStatus = async () => {
+//       if (!id) {
+//         setError("Tutorial ID is missing");
+//         return;
+//       }
+//       try {
+//         const [tutorialData, bookingStatus] = await Promise.all([
+//           getTutorialById(id),
+//           checkBookingStatus(id),
+//         ]);
+//         setTutorial(tutorialData);
+//         setIsBooked(bookingStatus);
+//         setError(null);
+//       } catch (err: any) {
+//         console.error("Failed to fetch data:", err);
+//         setError(err.message || "Failed to load tutorial or booking status");
+//       }
+//     };
+//     fetchTutorialAndBookingStatus();
+//   }, [id]);
 
-//   const handleEnrollClick = () => {
-//     setEnrolled(true);
+//   const handleEnrollClick = async () => {
+//     if (!tutorial) return;
+//     try {
+//       const { sessionId, url } = await initiatePayment(id!, tutorial.amount);
+//       const stripe = await stripePromise;
+//       if (stripe) {
+//         const { error } = await stripe.redirectToCheckout({ sessionId });
+//         if (error) {
+//           setError(error.message || "Failed to redirect to payment");
+//         }
+//       }
+//     } catch (err: any) {
+//       setError(err.message || "Failed to initiate payment");
+//     }
 //   };
 
 //   const handleStartLearningClick = () => {
-//     console.log("i dis is", id);
 //     navigate(`/seeker/tutorials/${id}`);
 //   };
+
+//   if (error) {
+//     return (
+//       <div className="flex min-h-screen justify-center items-center">
+//         <p className="text-red-500">{error}</p>
+//       </div>
+//     );
+//   }
+
+//   if (!tutorial) {
+//     return (
+//       <div className="flex min-h-screen justify-center items-center">
+//         <p>Loading...</p>
+//       </div>
+//     );
+//   }
+
+//   const mentorName = `${tutorial.mentorId.firstName} ${
+//     tutorial.mentorId.lastName || ""
+//   }`.trim();
+//   const company =
+//     tutorial.mentorId.professionalDetails?.company || "Unknown Company";
+//   const profilePicture =
+//     tutorial.mentorId.profilePicture ||
+//     "https://www.svgrepo.com/show/192247/man-user.svg";
 
 //   return (
 //     <div className="flex min-h-screen">
 //       <div className="flex-1">
-//         {/* Main Content */}
 //         <main className="flex p-2 gap-8">
 //           <div>
 //             <Button
@@ -99,12 +104,12 @@
 //               className="pl-0"
 //               onClick={() => navigate(-1)}
 //             >
-//               <ArrowLeft className="h-7 w-7 " />
+//               <ArrowLeft className="h-7 w-7" />
 //             </Button>
 //           </div>
 //           <div className="w-2/3 p-8 pt-2 bg-white">
 //             <div className="mb-6">
-//               <h2 className="text-3xl font-bold mb-2">Namaste JavaScript</h2>
+//               <h2 className="text-3xl font-bold mb-2">{tutorial.title}</h2>
 //               <div className="flex items-center">
 //                 <span className="text-red-500 font-bold mr-1">4.7</span>
 //                 <div className="flex">
@@ -133,28 +138,35 @@
 //                 </div>
 //               </div>
 //               <p className="text-gray-700 mt-2">
-//                 Namaste Javascript Video tutorials will dive deep into
-//                 JavaScript and the internals of how code is executed under the
-//                 hood. If you understand the core fundamentals of JavaScript, it
-//                 will help you beco...{" "}
-//                 <button className="text-blue-600 font-medium">Read More</button>
+//                 {tutorial.shortDescription}{" "}
+//                 {tutorial.longDescription && (
+//                   <button
+//                     className="text-blue-600 font-medium"
+//                     onClick={() => alert(tutorial.longDescription)}
+//                   >
+//                     Read More
+//                   </button>
+//                 )}
 //               </p>
 //             </div>
 
 //             <div>
 //               <h3 className="text-xl font-bold mb-4">Course Content</h3>
 //               <Accordion type="single" collapsible className="w-full">
-//                 {seasons.map((season) => (
-//                   <AccordionItem key={season.id} value={`season-${season.id}`}>
+//                 {tutorial.exclusiveContent.map((season: any, index: number) => (
+//                   <AccordionItem
+//                     key={season._id || index}
+//                     value={`season-${season._id || index}`}
+//                   >
 //                     <AccordionTrigger className="bg-gray-100 p-4 px-8 flex justify-between items-center rounded-md hover:no-underline">
 //                       <h1 className="font-medium text-left text-xl">
-//                         {season.title}
+//                         {season.season}
 //                       </h1>
 //                     </AccordionTrigger>
 //                     <AccordionContent className="mt-4 space-y-4">
-//                       {season.episodes.map((episode) => (
+//                       {season.episodes.map((episode: any) => (
 //                         <div
-//                           key={episode.id}
+//                           key={episode._id}
 //                           className="flex gap-4 border-b pb-4"
 //                         >
 //                           <div className="flex-shrink-0 mt-1">
@@ -183,7 +195,7 @@
 //                           </div>
 //                           <div>
 //                             <h5 className="font-medium">
-//                               {episode.id} | {episode.title}
+//                               {episode.episode} | {episode.title}
 //                             </h5>
 //                             <p className="text-sm text-gray-600">
 //                               {episode.description}
@@ -202,15 +214,15 @@
 //             <div className="flex flex-col items-center">
 //               <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
 //                 <img
-//                   src={DummyImage}
-//                   alt="Akshay Saini"
+//                   src={profilePicture}
+//                   alt={mentorName}
 //                   width={128}
 //                   height={128}
 //                   className="object-cover"
 //                 />
 //               </div>
-//               <h3 className="text-xl font-bold mb-1">Akshay Saini</h3>
-//               <p className="text-gray-600 mb-6">Software Engineer at Uber</p>
+//               <h3 className="text-xl font-bold mb-1">{mentorName}</h3>
+//               <p className="text-gray-600 mb-6">{company}</p>
 
 //               <div className="w-full max-w-xs">
 //                 <div className="bg-purple-600 rounded-lg p-4 mb-6 flex items-center justify-center">
@@ -231,34 +243,40 @@
 //                       ))}
 //                     </div>
 //                     <div className="absolute right-0 bottom-0 bg-yellow-300 p-4 rounded-lg">
-//                       <span className="text-3xl font-bold">JS</span>
+//                       <span className="text-3xl font-bold">
+//                         {tutorial.technology?.slice(0, 2).toUpperCase() || "JS"}
+//                       </span>
 //                     </div>
 //                   </div>
 //                 </div>
 
 //                 <div className="mb-4">
 //                   <div className="flex items-center justify-between">
-//                     <span className="text-3xl font-bold">₹ 3400</span>
-//                     <span className="text-gray-500 line-through">₹ 5200</span>
+//                     <span className="text-3xl font-bold">
+//                       ₹{tutorial.amount}
+//                     </span>
+//                     <span className="text-gray-500 line-through">
+//                       ₹{tutorial.amount + 1800}
+//                     </span>
 //                   </div>
 //                   <div className="text-gray-800 font-medium">
-//                     Discount : ₹ 1800 OFF
+//                     Discount: ₹1800 OFF
 //                   </div>
 //                 </div>
 
-//                 {!enrolled ? (
-//                   <Button
-//                     className="w-full py-6 text-lg bg-black hover:bg-gray-800 text-white rounded-full"
-//                     onClick={handleEnrollClick}
-//                   >
-//                     Enroll Now
-//                   </Button>
-//                 ) : (
+//                 {isBooked ? (
 //                   <Button
 //                     className="w-full py-6 text-lg bg-green-700 hover:bg-green-800 text-white rounded-full"
 //                     onClick={handleStartLearningClick}
 //                   >
 //                     Start Learning
+//                   </Button>
+//                 ) : (
+//                   <Button
+//                     className="w-full py-6 text-lg bg-black hover:bg-gray-800 text-white rounded-full"
+//                     onClick={handleEnrollClick}
+//                   >
+//                     Enroll Now
 //                   </Button>
 //                 )}
 //               </div>
@@ -271,49 +289,98 @@
 // }
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getTutorialById } from "@/services/menteeService";
+import {
+  getTutorialById,
+  checkBookingStatus,
+  createBooking,
+} from "@/services/menteeService";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import PaymentModal from "@/components/modal/PaymentConfirmModal"; // Adjust path as needed
 
 export default function DigitalProducts() {
   const { id } = useParams<{ id: string }>();
-  const [enrolled, setEnrolled] = useState(false);
   const [tutorial, setTutorial] = useState<any>(null);
+  const [isBooked, setIsBooked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-    const fetchTutorial = async () => {
+    const fetchTutorialAndBookingStatus = async () => {
       if (!id) {
         setError("Tutorial ID is missing");
         return;
       }
       try {
-        const data = await getTutorialById(id);
-        setTutorial(data);
+        const [tutorialData, bookingStatus] = await Promise.all([
+          getTutorialById(id),
+          checkBookingStatus(id),
+        ]);
+        setTutorial(tutorialData);
+        setIsBooked(bookingStatus);
         setError(null);
       } catch (err: any) {
-        console.error("Failed to fetch tutorial:", err);
-        setError(err.message || "Failed to load tutorial details");
+        console.error("Failed to fetch data:", err);
+        setError(err.message || "Failed to load tutorial or booking status");
       }
     };
-    fetchTutorial();
+    fetchTutorialAndBookingStatus();
   }, [id]);
 
+  useEffect(() => {
+    // Handle payment success redirect
+    const query = new URLSearchParams(location.search);
+    const paymentStatus = query.get("payment");
+    const sessionId = query.get("session_id");
+    if (
+      paymentStatus === "success" &&
+      sessionId &&
+      id &&
+      tutorial &&
+      user?._id
+    ) {
+      const createBookingAfterPayment = async () => {
+        try {
+          await createBooking(id, tutorial.mentorId._id, sessionId);
+          setIsBooked(true);
+          // Clear query params
+          navigate(`/digitalcontent/${id}`, { replace: true });
+        } catch (err: any) {
+          setError(err.message || "Failed to create booking after payment");
+        }
+      };
+      createBookingAfterPayment();
+    } else if (paymentStatus === "cancel") {
+      setError("Payment was cancelled");
+      navigate(`/digitalcontent/${id}`, { replace: true });
+    }
+  }, [location.search, id, tutorial, user, navigate]);
+
   const handleEnrollClick = () => {
-    setEnrolled(true);
+    if (!tutorial || !user?._id) {
+      setError("User or tutorial data is missing");
+      return;
+    }
+    setIsPaymentModalOpen(true);
   };
 
   const handleStartLearningClick = () => {
-    console.log("Tutorial ID:", id);
     navigate(`/seeker/tutorials/${id}`);
+  };
+
+  const handlePaymentModalClose = () => {
+    setIsPaymentModalOpen(false);
   };
 
   if (error) {
@@ -324,7 +391,7 @@ export default function DigitalProducts() {
     );
   }
 
-  if (!tutorial) {
+  if (!tutorial || !user?._id) {
     return (
       <div className="flex min-h-screen justify-center items-center">
         <p>Loading...</p>
@@ -340,6 +407,24 @@ export default function DigitalProducts() {
   const profilePicture =
     tutorial.mentorId.profilePicture ||
     "https://www.svgrepo.com/show/192247/man-user.svg";
+
+  // Prepare data for PaymentModal
+  const service = {
+    _id: tutorial._id,
+    title: tutorial.title,
+    duration: "30 minutes", // Dummy duration for video tutorials
+    amount: tutorial.amount,
+  };
+
+  const mentor = {
+    _id: tutorial.mentorId._id,
+    name: mentorName,
+    userData: tutorial.mentorId._id, // Assuming userData is mentor's _id
+  };
+
+  // Use current date and dummy time for video tutorials
+  const currentDate = new Date().toISOString().split("T")[0]; // e.g., "2025-05-03"
+  const dummyTime = "12:00 PM"; // Matches slotIndex: 1 in PaymentModal
 
   return (
     <div className="flex min-h-screen">
@@ -511,19 +596,19 @@ export default function DigitalProducts() {
                   </div>
                 </div>
 
-                {!enrolled ? (
-                  <Button
-                    className="w-full py-6 text-lg bg-black hover:bg-gray-800 text-white rounded-full"
-                    onClick={handleEnrollClick}
-                  >
-                    Enroll Now
-                  </Button>
-                ) : (
+                {isBooked ? (
                   <Button
                     className="w-full py-6 text-lg bg-green-700 hover:bg-green-800 text-white rounded-full"
                     onClick={handleStartLearningClick}
                   >
                     Start Learning
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full py-6 text-lg bg-black hover:bg-gray-800 text-white rounded-full"
+                    onClick={handleEnrollClick}
+                  >
+                    Enroll Now
                   </Button>
                 )}
               </div>
@@ -531,6 +616,18 @@ export default function DigitalProducts() {
           </div>
         </main>
       </div>
+
+      {tutorial && user?._id && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={handlePaymentModalClose}
+          service={service}
+          mentor={mentor}
+          selectedDate={currentDate} // Current date for video tutorials
+          selectedTime={dummyTime} // Dummy time for video tutorials
+          menteeId={user._id}
+        />
+      )}
     </div>
   );
 }

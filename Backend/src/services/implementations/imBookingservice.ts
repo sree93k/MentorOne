@@ -19,6 +19,13 @@ interface SaveBookingAndPaymentParams {
   amount: number;
 }
 
+interface BookServiceParams {
+  serviceId: string;
+  mentorId: string;
+  menteeId: string;
+  sessionId: string;
+}
+
 export default class BookingService implements inBookingService {
   private bookingRepository: BookingRepository;
   private paymentRepository: PaymentRepository;
@@ -191,6 +198,60 @@ export default class BookingService implements inBookingService {
         500,
         error.message || "Failed to fetch tutorial details"
       );
+    }
+  }
+
+  async checkBookingStatus(
+    menteeId: string,
+    serviceId: string
+  ): Promise<boolean> {
+    try {
+      console.log(
+        "bookingservice checkBookingStatus step 1",
+        menteeId,
+        serviceId
+      );
+      const booking = await this.bookingRepository.findByMenteeAndService(
+        menteeId,
+        serviceId
+      );
+      console.log("bookingservice checkBookingStatus step 2", booking);
+      return !!booking && booking.status === "confirmed";
+    } catch (error: any) {
+      console.error("Error checking booking status:", error);
+      throw new ApiError(
+        500,
+        error.message || "Failed to check booking status"
+      );
+    }
+  }
+
+  async bookService(params: BookServiceParams): Promise<any> {
+    try {
+      console.log("bookingservice bookService step 1", params);
+      const { serviceId, mentorId, menteeId, sessionId } = params;
+      const service = await this.serviceRepository.getServiceById(serviceId);
+      if (!service) {
+        throw new ApiError(404, "Service not found");
+      }
+      const booking = await this.bookingRepository.create({
+        serviceId,
+        mentorId,
+        menteeId,
+        status: "confirmed",
+      });
+      const payment = await this.paymentRepository.create({
+        bookingId: booking._id,
+        menteeId,
+        amount: service.amount,
+        status: "completed",
+        transactionId: sessionId,
+      });
+      console.log("bookingservice bookService step 2", booking, payment);
+      return { booking, payment };
+    } catch (error: any) {
+      console.error("Error booking service:", error);
+      throw new ApiError(500, error.message || "Failed to book service");
     }
   }
 }

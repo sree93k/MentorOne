@@ -51,4 +51,28 @@ menteeRoutes.get(
   menteeController.getTutorialById.bind(menteeController)
 );
 
+menteeRoutes.get(
+  "/check-booking/:serviceId",
+  authenticate,
+  menteeController.checkBookingStatus.bind(menteeController)
+);
+
+menteeRoutes.post(
+  "/initiate-payment",
+  authenticate,
+  menteeController.initiatePayment.bind(menteeController)
+);
+
+menteeRoutes.post(
+  "/book-service",
+  authenticate,
+  menteeController.bookService.bind(menteeController)
+);
+
+menteeRoutes.get(
+  "/video-url/:key",
+  authenticate,
+  menteeController.getVideoUrl.bind(menteeController)
+);
+
 export default menteeRoutes;

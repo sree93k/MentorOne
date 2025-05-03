@@ -14,11 +14,7 @@
 // import { RootState } from "@/redux/store/store";
 // import { createCheckoutSession } from "@/services/paymentServcie";
 
-// // Initialize Stripe
-// const stripePromise = loadStripe(
-//   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ||
-//     "pk_test_51RI4FgFsFOD99qS8Y20Dtcig0jF0WQONBXTy4GYIqAC9hgXnuCgzLpuEBmJ8YPCgC1D8SNrYFj0lnO2iczlwghcl00efCUTVEX"
-// );
+// const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 // interface Service {
 //   _id: string;
@@ -30,6 +26,7 @@
 // interface Mentor {
 //   _id: string;
 //   name: string;
+//   userData: string;
 // }
 
 // interface PaymentModalProps {
@@ -59,7 +56,6 @@
 //     phone: "",
 //   });
 
-//   // Auto-fill form with user data
 //   useEffect(() => {
 //     if (user) {
 //       setFormData({
@@ -72,7 +68,6 @@
 //     }
 //   }, [user]);
 
-//   // Log Stripe initialization
 //   useEffect(() => {
 //     console.log(
 //       "Stripe Publishable Key:",
@@ -83,7 +78,6 @@
 //       .catch((error) => console.error("Stripe initialization failed:", error));
 //   }, []);
 
-//   // Validate service and mentor
 //   useEffect(() => {
 //     if (isOpen && (!service || !mentor)) {
 //       console.error("Missing service or mentor:", { service, mentor });
@@ -93,7 +87,7 @@
 //   }, [isOpen, service, mentor, onClose]);
 
 //   if (!service || !mentor) {
-//     return null; // Prevent rendering if invalid props
+//     return null;
 //   }
 
 //   const platformCharge = Math.round(service.amount * 0.15);
@@ -145,6 +139,7 @@
 //         .minutes.toString()
 //         .padStart(2, "0")}`
 //     : "N/A";
+
 //   const endTime =
 //     selectedTime && service.duration
 //       ? calculateEndTime(selectedTime, service.duration)
@@ -160,8 +155,6 @@
 //     setLoading(true);
 
 //     try {
-//       console.log("servuce ane mentor step1 :s", service);
-//       console.log("servuce ane mentor step2 :m", mentor);
 //       if (!service._id || !mentor.userData) {
 //         console.error("Invalid service or mentor ID:", { service, mentor });
 //         throw new Error("Service or mentor ID is missing");
@@ -173,7 +166,7 @@
 //       const payload = {
 //         amount: totalAmount,
 //         serviceId: service._id,
-//         mentorId: mentor?.userData,
+//         mentorId: mentor.userData,
 //         menteeId,
 //         bookingDate: selectedDate || "",
 //         startTime,
@@ -480,8 +473,8 @@ export default function PaymentModal({
         throw new Error("Service or mentor ID is missing");
       }
 
-      const slotIndex = selectedTime ? timeToSlotIndex(selectedTime) : -1;
-      if (slotIndex === -1) throw new Error("Invalid time slot selected");
+      // Use dummy slotIndex for video tutorials (when selectedTime is null)
+      const slotIndex = selectedTime ? timeToSlotIndex(selectedTime) : 0;
 
       const payload = {
         amount: totalAmount,
