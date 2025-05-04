@@ -102,6 +102,10 @@ export function LoginForm({
       dispatch(setIsAuthenticated(true));
       dispatch(setAccessToken(accessToken));
       dispatch(setCurrentTab(tab));
+      console.log(
+        "logni page userFound.mentorActivated",
+        userFound.mentorActivated
+      );
 
       dispatch(setMentorActivated(userFound.mentorActivated));
       localStorage.setItem("accessToken", accessToken);

@@ -28,8 +28,8 @@ const MentorHeader: React.FC = () => {
         </div>
 
         <div className="flex items gap-8">
-          <span className="text-2xl font-semibold text-gray-600 dark:text-white">
-            Hi, Admin
+          <span className="text-3xl  text-blue-700 dark:text-white">
+            Hi, Admin !
           </span>
 
           {/* <nav className="flex gap-8">

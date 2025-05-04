@@ -13,6 +13,7 @@ import {
   setUser,
   setIsAuthenticated,
   setAccessToken,
+  setMentorActivated,
   setLoading,
 } from "@/redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +44,7 @@ const GoogleAuthButton = () => {
         dispatch(setUser(user));
         dispatch(setIsAuthenticated(true));
         dispatch(setAccessToken(accessToken));
+        dispatch(setMentorActivated(user?.mentorActivated));
         console.log("google auth step4 tsx");
         toast.success("Logged in with Google successfully!");
         console.log("google auth step5 tsx");

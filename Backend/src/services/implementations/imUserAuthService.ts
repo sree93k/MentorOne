@@ -70,65 +70,6 @@ export default class UserAuthService implements inUserAuthService {
     }
   }
 
-  // //login
-  // async login(user: { email: string; password: string }): Promise<{
-  //   accessToken: string;
-  //   refreshToken: string;
-  //   userFound: Omit<EUsers, "password">;
-  // } | null> {
-  //   try {
-  //     console.log("Service - Login attempt for email:", user.email);
-
-  //     if (!user.email) {
-  //       console.log("Service - Error: email is required");
-  //       throw new Error("email is required");
-  //     }
-
-  //     const userFound = await this.UserRepository.findByEmail(user.email);
-  //     console.log("Service - User found:", userFound ? "Yes" : "No");
-
-  //     if (userFound?.isBlocked) {
-  //       console.log("is blocked user", userFound.isBlocked);
-
-  //       throw new Error("Account is Blocked");
-  //     }
-  //     if (
-  //       userFound &&
-  //       user.password &&
-  //       userFound.password &&
-  //       (await bcrypt.compare(user.password, userFound.password))
-  //     ) {
-  //       const id = userFound._id?.toString();
-  //       if (!id) {
-  //         throw new Error("User ID is undefined");
-  //       }
-  //       const accessToken = generateAccessToken({
-  //         id,
-  //         role: userFound.role,
-  //       });
-
-  //       const refreshToken = generateRefreshToken({
-  //         id,
-  //         role: userFound.role,
-  //       });
-
-  //       await this.UserRepository.saveRefreshToken(id, refreshToken);
-
-  //       const userObject = userFound.toObject();
-
-  //       const { password, ...userWithoutPassword } = userObject;
-
-  //       return { accessToken, refreshToken, userFound: userWithoutPassword };
-  //     }
-
-  //     console.log("Service - Login failed");
-  //     return null;
-  //   } catch (error) {
-  //     console.log("login Service - Login attempt error", error);
-
-  //     return error;
-  //   }
-  // }
   async login(user: { email: string; password: string }): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -151,6 +92,13 @@ export default class UserAuthService implements inUserAuthService {
       if (userFound?.isBlocked) {
         console.log("is blocked user", userFound.isBlocked);
         throw new ApiResponse(403, "Account is Blocked");
+      }
+      if (!userFound?.password) {
+        console.log(
+          "is have no passoword..please signin withh google",
+          userFound?.password
+        );
+        throw new ApiResponse(403, "Signin With Google Account");
       }
 
       // Validate credentials
