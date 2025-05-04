@@ -12,6 +12,7 @@ import { EUsers } from "../../entities/userEntity";
 import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
 import { sendMail } from "../../utils/emailService";
+import { Model } from "mongoose";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements inAdminService {
@@ -32,31 +33,43 @@ export default class AdminService implements inAdminService {
   //   status?: string
   // ): Promise<{ users: Omit<EUsers, "password">[]; total: number } | null> {
   //   try {
-  //     // Manually access the original Mongoose model from BaseRepository
-  //     // @ts-ignore if TS complains, or access it via a getter if needed
-  //     console.log("all userws service ************************************");
-
+  //     console.log("all users service ************************************");
   //     const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
 
-  //     // Do population here using the model
-  //     let allUsers = await rawModel.find().populate("mentorId").exec();
+  //     // Build MongoDB query
+  //     const query: any = {};
+
+  //     // Role filter
+  //     if (role) {
+  //       if (role === "mentee") {
+  //         query.role = { $eq: ["mentee"] }; // Exact match for ["mentee"]
+  //       } else if (role === "mentor") {
+  //         query.role = { $eq: ["mentor"] }; // Exact match for ["mentor"]
+  //       } else if (role === "both") {
+  //         query.role = { $all: ["mentor", "mentee"] }; // Match arrays containing both
+  //       }
+  //     }
+
+  //     // Status filter
+  //     if (status) {
+  //       query.isBlocked = status === "Blocked" ? true : false;
+  //     }
+
+  //     // Fetch total count
+  //     const total = await rawModel.countDocuments(query);
+
+  //     // Fetch paginated users with population
+  //     const allUsers = await rawModel
+  //       .find(query)
+  //       .populate("mentorId")
+  //       .skip((page - 1) * limit)
+  //       .limit(limit)
+  //       .exec();
+
   //     console.log("all users new list>>>>>>>>>>>>>", allUsers);
 
-  //     if (role) {
-  //       allUsers = allUsers.filter((user: any) => user.role.includes(role));
-  //     }
-
-  //     if (status) {
-  //       allUsers = allUsers.filter((user: any) =>
-  //         status === "Blocked" ? user.isBlocked : !user.isBlocked
-  //       );
-  //     }
-
-  //     const total = allUsers.length;
-  //     const startIndex = (page - 1) * limit;
-  //     const paginatedUsers = allUsers.slice(startIndex, startIndex + limit);
-
-  //     const usersWithoutPassword = paginatedUsers.map((user: any) => {
+  //     // Remove password from response
+  //     const usersWithoutPassword = allUsers.map((user: any) => {
   //       const { password, ...userWithoutPassword } = user.toObject();
   //       return userWithoutPassword;
   //     });
@@ -67,27 +80,43 @@ export default class AdminService implements inAdminService {
   //     return null;
   //   }
   // }
+  private getModel(): Model<EUsers> {
+    return require("../../models/userModel").default;
+  }
+
+  private getMentorModel(): Model<any> {
+    return require("../../models/mentorModel").default;
+  }
+
   async fetchAllUsers(
     page: number,
     limit: number,
     role?: string,
     status?: string
-  ): Promise<{ users: Omit<EUsers, "password">[]; total: number } | null> {
+  ): Promise<{
+    users: Omit<EUsers, "password">[];
+    total: number;
+    totalMentors: number;
+    totalMentees: number;
+    totalBoth: number;
+    approvalPending: number;
+  } | null> {
     try {
       console.log("all users service ************************************");
       const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
+      const mentorModel = this.getMentorModel();
 
-      // Build MongoDB query
+      // Build MongoDB query for users
       const query: any = {};
 
       // Role filter
       if (role) {
         if (role === "mentee") {
-          query.role = { $eq: ["mentee"] }; // Exact match for ["mentee"]
+          query.role = { $eq: ["mentee"] };
         } else if (role === "mentor") {
-          query.role = { $eq: ["mentor"] }; // Exact match for ["mentor"]
+          query.role = { $eq: ["mentor"] };
         } else if (role === "both") {
-          query.role = { $all: ["mentor", "mentee"] }; // Match arrays containing both
+          query.role = { $all: ["mentor", "mentee"] };
         }
       }
 
@@ -96,8 +125,33 @@ export default class AdminService implements inAdminService {
         query.isBlocked = status === "Blocked" ? true : false;
       }
 
-      // Fetch total count
+      // Fetch total counts for all categories
       const total = await rawModel.countDocuments(query);
+      const totalMentors = await rawModel.countDocuments({
+        ...query,
+        role: { $eq: ["mentor"] },
+      });
+      const totalMentees = await rawModel.countDocuments({
+        ...query,
+        role: { $eq: ["mentee"] },
+      });
+      const totalBoth = await rawModel.countDocuments({
+        ...query,
+        role: { $all: ["mentor", "mentee"] },
+      });
+
+      // Simply count pending mentors directly
+      const approvalPending = await mentorModel.countDocuments({
+        isApproved: "Pending",
+      });
+
+      // Log mentor data for debugging
+      const pendingMentors = await mentorModel
+        .find({ isApproved: "Pending" })
+        .select("_id isApproved")
+        .exec();
+      console.log("admin service pending mentors:", pendingMentors);
+      console.log("admin service approvalPending count:", approvalPending);
 
       // Fetch paginated users with population
       const allUsers = await rawModel
@@ -115,13 +169,19 @@ export default class AdminService implements inAdminService {
         return userWithoutPassword;
       });
 
-      return { users: usersWithoutPassword, total };
+      return {
+        users: usersWithoutPassword,
+        total,
+        totalMentors,
+        totalMentees,
+        totalBoth,
+        approvalPending,
+      };
     } catch (error) {
       console.error("Error in fetchAllUsers:", error);
       return null;
     }
   }
-
   //getuserdata
   async getUserDatas(id: string): Promise<{
     user: EUsers;
@@ -216,24 +276,6 @@ export default class AdminService implements inAdminService {
       return null;
     }
   }
-
-  // async mentorStatusChange(
-  //   id: string,
-  //   status: string,
-  //   reason: string
-  // ): Promise<{ mentorData: EMentor | null } | null> {
-  //   try {
-  //     const updateMentor = await this.MentorRepository.updateField(
-  //       id,
-  //       "isApproved",
-  //       status
-  //     );
-  //     return { mentorData: updateMentor };
-  //   } catch (error) {
-  //     console.error("Error in mentorStatusChange:", error);
-  //     return null;
-  //   }
-  // }
 
   async userStatusChange(
     id: string,
