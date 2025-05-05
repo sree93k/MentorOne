@@ -5,6 +5,7 @@ import ChatRepository from "../../repositories/implementations/imChatRepository"
 import ServiceRepository from "../../repositories/implementations/imServiceRepository";
 import ChatService from "./imChatService";
 import { ApiError } from "../../middlewares/errorHandler";
+import { EService } from "../../entities/serviceEntity";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -252,6 +253,17 @@ export default class BookingService implements inBookingService {
     } catch (error: any) {
       console.error("Error booking service:", error);
       throw new ApiError(500, error.message || "Failed to book service");
+    }
+  }
+  async getServiceById(serviceId: string): Promise<EService | null> {
+    try {
+      console.log("bookingservice getServiceById step 1", serviceId);
+      const service = await this.serviceRepository.getServiceById(serviceId);
+      console.log("bookingservice getServiceById step 2", service);
+      return service;
+    } catch (error: any) {
+      console.error("Error fetching service by ID:", error);
+      throw new ApiError(500, error.message || "Failed to fetch service");
     }
   }
 }

@@ -676,6 +676,59 @@ class menteeController {
       next(error);
     }
   };
+
+  public getDocumentUrl = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { serviceId } = req.params;
+      if (!serviceId) {
+        throw new ApiError(400, "Service ID is required");
+      }
+
+      // Fetch the Service document via BookingService
+      const service = await this.bookingService.getServiceById(serviceId);
+      if (!service) {
+        throw new ApiError(404, "Service not found");
+      }
+      if (
+        service.type !== "DigitalProducts" ||
+        service.digitalProductType !== "documents"
+      ) {
+        throw new ApiError(400, "Service is not a document");
+      }
+      if (!service.fileUrl) {
+        throw new ApiError(404, "PDF file URL not found for this service");
+      }
+
+      // Use fileUrl as the S3 key
+      const pdfKey = service.fileUrl.startsWith(
+        "https://mentorone-app.s3.ap-south-1.amazonaws.com/"
+      )
+        ? service.fileUrl.replace(
+            "https://mentorone-app.s3.ap-south-1.amazonaws.com/",
+            ""
+          )
+        : service.fileUrl;
+
+      // Generate presigned URL
+      const presignedUrl =
+        await this.uploadService.S3generatePresignedUrlForGet(pdfKey);
+
+      res.json({
+        success: true,
+        data: { url: presignedUrl },
+        message: "Presigned URL generated successfully",
+      });
+    } catch (error: any) {
+      console.error("Error generating presigned URL:", error);
+      next(
+        new ApiError(500, "Failed to generate presigned URL", error.message)
+      );
+    }
+  };
 }
 
 export default new menteeController();
