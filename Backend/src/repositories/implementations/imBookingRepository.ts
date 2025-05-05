@@ -54,7 +54,8 @@ export default class BookingRepository {
         })
         .populate({
           path: "serviceId",
-          select: "title technology amount serviceType",
+          select:
+            "title technology amount type digitalProductType oneToOneType",
         });
       console.log("booking repository findByMentee step 2", response);
       return response;

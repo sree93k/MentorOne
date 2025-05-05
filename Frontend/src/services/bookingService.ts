@@ -103,3 +103,24 @@ export const cancelBooking = async (bookingId: string) => {
     throw new Error(error.response?.data?.error || "Failed to cancel booking");
   }
 };
+
+export const getDocumentUrl = async (serviceId: string): Promise<string> => {
+  try {
+    console.log("bookingservice getDocumentUrl step 1", serviceId);
+    const response = await api.get(`/seeker/document/${serviceId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    });
+    console.log("bookingservice getDocumentUrl step 2", response);
+    if (!response.data.success || !response.data.data.url) {
+      throw new Error(response.data.error || "Failed to fetch document URL");
+    }
+    return response.data.data.url;
+  } catch (error: any) {
+    console.error("Error fetching document URL:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch document URL"
+    );
+  }
+};

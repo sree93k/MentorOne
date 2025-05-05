@@ -81,4 +81,10 @@ menteeRoutes.get(
   menteeController.getAllMenteePayments
 );
 
+menteeRoutes.get(
+  "/document/:serviceId",
+  authenticate,
+  menteeController.getDocumentUrl.bind(menteeController)
+);
+
 export default menteeRoutes;
