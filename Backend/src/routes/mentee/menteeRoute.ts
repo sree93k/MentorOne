@@ -75,4 +75,10 @@ menteeRoutes.get(
   menteeController.getVideoUrl.bind(menteeController)
 );
 
+menteeRoutes.get(
+  "/payment/mentee-payments",
+  authenticate,
+  menteeController.getAllMenteePayments
+);
+
 export default menteeRoutes;

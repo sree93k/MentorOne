@@ -166,26 +166,6 @@ export default class MenteeProfileService implements inMenteeProfileService {
     }
   }
 
-  //editUserProfile
-  // public async editUserProfile(
-  //   id: string,
-  //   payload: any
-  // ): Promise<EUsers | null> {
-  //   try {
-  //     console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-
-  //     console.log("service editUserProfile step 1", id, payload);
-
-  //     const updateData = await this.BaseRepository.update(id, payload);
-
-  //     console.log("service editUserProfile step 2", updateData);
-  //     return updateData;
-  //   } catch (error) {
-  //     console.log("error at editUserProfile service...last ", error);
-  //     return null;
-  //   }
-  // }
-
   //deleteAccount
   public async deleteAccount(id: string): Promise<boolean> {
     try {
