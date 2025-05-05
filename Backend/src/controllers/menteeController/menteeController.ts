@@ -255,6 +255,8 @@ import { inMentorProfileService } from "../../services/interface/inMentorProfile
 import imMentorProfileService from "../../services/implementations/imMentorProfileService";
 import BookingService from "../../services/implementations/imBookingservice";
 import { inBookingService } from "../../services/interface/inBookingService";
+import { inPaymentService } from "../../services/interface/inPaymentService";
+import imPaymentService from "../../services/implementations/imPaymentService";
 import sharp from "sharp";
 import stripe from "../../config/stripe";
 
@@ -266,6 +268,7 @@ class menteeController {
   private MenteeProfileService: inMenteeProfileService;
   private MentorProfileService: inMentorProfileService;
   private bookingService: inBookingService;
+  private PaymentService: inPaymentService;
   private options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -281,6 +284,7 @@ class menteeController {
     this.MenteeProfileService = new imMenteeProfileService();
     this.MentorProfileService = new imMentorProfileService();
     this.bookingService = new BookingService();
+    this.PaymentService = new imPaymentService();
   }
 
   public getBookings = async (
@@ -635,6 +639,40 @@ class menteeController {
       );
     } catch (error: any) {
       console.error("Error in getVideoUrl:", error);
+      next(error);
+    }
+  };
+
+  public getAllMenteePayments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      console.log("paymentcontroller getAllMenteePayments step 1");
+      const menteeId = req.user?.id;
+      if (!menteeId) {
+        throw new ApiError(
+          401,
+          "Unauthorized: No mentee ID",
+          "Authentication required"
+        );
+      }
+
+      const paymentData = await this.PaymentService.getAllMenteePayments(
+        menteeId.toString()
+      );
+      console.log("paymentcontroller getAllMenteePayments step 2", paymentData);
+
+      res.json(
+        new ApiResponse(
+          200,
+          "Mentee payments fetched successfully",
+          paymentData
+        )
+      );
+    } catch (error) {
+      console.error("Error in getAllMenteePayments controller:", error);
       next(error);
     }
   };

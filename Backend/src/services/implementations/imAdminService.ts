@@ -26,60 +26,6 @@ export default class AdminService implements inAdminService {
     this.MentorRepository = new MentorRepository();
   }
 
-  // async fetchAllUsers(
-  //   page: number,
-  //   limit: number,
-  //   role?: string,
-  //   status?: string
-  // ): Promise<{ users: Omit<EUsers, "password">[]; total: number } | null> {
-  //   try {
-  //     console.log("all users service ************************************");
-  //     const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
-
-  //     // Build MongoDB query
-  //     const query: any = {};
-
-  //     // Role filter
-  //     if (role) {
-  //       if (role === "mentee") {
-  //         query.role = { $eq: ["mentee"] }; // Exact match for ["mentee"]
-  //       } else if (role === "mentor") {
-  //         query.role = { $eq: ["mentor"] }; // Exact match for ["mentor"]
-  //       } else if (role === "both") {
-  //         query.role = { $all: ["mentor", "mentee"] }; // Match arrays containing both
-  //       }
-  //     }
-
-  //     // Status filter
-  //     if (status) {
-  //       query.isBlocked = status === "Blocked" ? true : false;
-  //     }
-
-  //     // Fetch total count
-  //     const total = await rawModel.countDocuments(query);
-
-  //     // Fetch paginated users with population
-  //     const allUsers = await rawModel
-  //       .find(query)
-  //       .populate("mentorId")
-  //       .skip((page - 1) * limit)
-  //       .limit(limit)
-  //       .exec();
-
-  //     console.log("all users new list>>>>>>>>>>>>>", allUsers);
-
-  //     // Remove password from response
-  //     const usersWithoutPassword = allUsers.map((user: any) => {
-  //       const { password, ...userWithoutPassword } = user.toObject();
-  //       return userWithoutPassword;
-  //     });
-
-  //     return { users: usersWithoutPassword, total };
-  //   } catch (error) {
-  //     console.error("Error in fetchAllUsers:", error);
-  //     return null;
-  //   }
-  // }
   private getModel(): Model<EUsers> {
     return require("../../models/userModel").default;
   }
