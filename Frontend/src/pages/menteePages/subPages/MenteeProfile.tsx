@@ -44,8 +44,28 @@ interface EditableFieldProps {
 const profileSchema = Yup.object().shape({
   firstName: Yup.string()
     .required("First name is required")
-    .min(2, "Too short"),
-  lastName: Yup.string().required("Last name is required").min(2, "Too short"),
+    .min(2, "Too short")
+    .matches(
+      /^[A-Za-z]+$/,
+      "First name must contain only letters (no spaces or numbers)"
+    )
+    .test(
+      "no-whitespace",
+      "First name cannot be empty or whitespace",
+      (value) => value?.trim().length !== 0
+    ),
+  lastName: Yup.string()
+    .required("Last name is required")
+    .min(2, "Too short")
+    .matches(
+      /^[A-Za-z]+$/,
+      "Last name must contain only letters (no spaces or numbers)"
+    )
+    .test(
+      "no-whitespace",
+      "Last name cannot be empty or whitespace",
+      (value) => value?.trim().length !== 0
+    ),
   phone: Yup.string()
     .matches(/^\d{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
