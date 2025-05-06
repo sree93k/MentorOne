@@ -151,7 +151,7 @@ export default function CoursesPage() {
       {error && (
         <p className="text-center text-sm text-red-500 mb-4">{error}</p>
       )}
-
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">Top Courses</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {tutorials.length > 0 ? (
           tutorials.map((tutorial: any, index: number) => (
