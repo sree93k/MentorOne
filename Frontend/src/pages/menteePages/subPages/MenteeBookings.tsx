@@ -11,6 +11,7 @@ interface Booking {
   mentorName: string;
   mentorImage: string;
   mentorId: string;
+  o;
   title: string;
   technology: string;
   date: string;
