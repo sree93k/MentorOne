@@ -299,7 +299,7 @@ const MenteeSidebar: React.FC = () => {
       </nav>
       <div className="absolute bottom-4 w-full px-2">
         {/* User Profile SidebarItem (shown in both expanded and collapsed states) */}
-        {user?.firstName && (
+        {/* {user?.firstName && (
           <SidebarItem
             icon={() => (
               <img
@@ -315,6 +315,31 @@ const MenteeSidebar: React.FC = () => {
                 ? user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)
                 : ""
             }`}
+            isExpanded={isExpanded}
+          />
+        )} */}
+        {user?.firstName && (
+          <SidebarItem
+            icon={() => (
+              <img
+                src={user?.profilePicture || "https://via.placeholder.com/24"}
+                alt="Profile"
+                className="w-6 h-6 rounded-full object-cover"
+              />
+            )}
+            text={
+              <div className="flex flex-col">
+                <span className="font-medium">
+                  {user.firstName.charAt(0).toUpperCase() +
+                    user.firstName.slice(1)}{" "}
+                  {user.lastName
+                    ? user.lastName.charAt(0).toUpperCase() +
+                      user.lastName.slice(1)
+                    : ""}
+                </span>
+                <span className="text-xs text-gray-500">{user.email}</span>
+              </div>
+            }
             isExpanded={isExpanded}
           />
         )}
