@@ -204,13 +204,13 @@ const MenteeSidebar: React.FC = () => {
   };
 
   const handleDropdownSelect = (dashboard: string) => {
-    setCurrentDashboard(dashboard); // Updates the displayed dashboard name in the trigger
+    setCurrentDashboard(dashboard);
     if (dashboard === "Mentee Dashboard") {
-      navigate("/seeker/dashboard"); // Navigate to /seeker/dashboard when Mentee Dashboard is selected
+      navigate("/seeker/dashboard");
     } else if (dashboard === "Mentor Dashboard") {
-      navigate("/expert/dashboard"); // Navigate to /expert/dashboard when Mentor Dashboard is selected
+      navigate("/expert/dashboard");
     }
-    setDropdownOpen(false); // Close the dropdown after selection
+    setDropdownOpen(false);
   };
 
   return (
@@ -286,8 +286,8 @@ const MenteeSidebar: React.FC = () => {
           icon={Wallet}
           text="Payment History"
           isExpanded={isExpanded}
-          active={activeItem === "Bill History"}
-          onClick={() => handleItemClick("Profile Details", "/seeker/payment")}
+          active={activeItem === "Payment History"}
+          onClick={() => handleItemClick("Payment History", "/seeker/payment")}
         />
         <SidebarItem
           icon={Bell}

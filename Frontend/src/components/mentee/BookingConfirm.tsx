@@ -13,11 +13,16 @@ export default function BookingConfirm({ onConfirm }: BookingConfirmProps) {
 
   // Sample dates for the next 5 days
   const dates = [
-    { day: "Mon", date: "10 Mar", fullDate: "2025-03-10" },
-    { day: "Tue", date: "11 Mar", fullDate: "2025-03-11" },
-    { day: "Wed", date: "12 Mar", fullDate: "2025-03-12" },
-    { day: "Thu", date: "13 Mar", fullDate: "2025-03-13" },
-    { day: "Fri", date: "14 Mar", fullDate: "2025-03-14" },
+    { day: "Tue", date: "06 May", fullDate: "2025-05-06" },
+    { day: "Wed", date: "07 May", fullDate: "2025-05-07" },
+    { day: "Thu", date: "08 May", fullDate: "2025-05-08" },
+    { day: "Fri", date: "09 May", fullDate: "2025-05-09" },
+    { day: "Sat", date: "10 May", fullDate: "2025-05-10" },
+    { day: "Sun", date: "11 May", fullDate: "2025-05-11" },
+    { day: "Mon", date: "12 May", fullDate: "2025-05-12" },
+    { day: "Tue", date: "13 May", fullDate: "2025-05-13" },
+    { day: "Wed", date: "14 May", fullDate: "2025-05-14" },
+    { day: "Thu", date: "15 May", fullDate: "2025-05-15" },
   ];
 
   // Sample time slots

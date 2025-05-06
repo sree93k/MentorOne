@@ -93,7 +93,7 @@ export default class UserAuthService implements inUserAuthService {
         console.log("is blocked user", userFound.isBlocked);
         throw new ApiResponse(403, "Account is Blocked");
       }
-      if (!userFound?.password) {
+      if (userFound && !userFound?.password) {
         console.log(
           "is have no passoword..please signin withh google",
           userFound?.password
