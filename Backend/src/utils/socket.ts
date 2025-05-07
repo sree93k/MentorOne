@@ -46,14 +46,159 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// export const initializeSocket = async (httpServer: any) => {
+//   console.log(
+//     "Initializing Socket.IO with CORS origin:",
+//     process.env.FRONTEND_URL || "http://localhost:5173"
+//   );
+//   console.log(
+//     "Using ACCESS_TOKEN_SECRET for Socket.IO:",
+//     process.env.ACCESS_TOKEN_SECRET?.substring(0, 10) + "..."
+//   );
+//   const io = new Server(httpServer, {
+//     cors: {
+//       origin: process.env.FRONTEND_URL || "http://localhost:5173",
+//       methods: ["GET", "POST"],
+//       credentials: true,
+//     },
+//     path: "/socket.io/",
+//   });
+//   console.log("Socket.IO server initialized");
+
+//   // Redis Setup
+//   const pubClient = createClient({ url: process.env.REDIS_URL });
+//   const subClient = pubClient.duplicate();
+
+//   pubClient.on("error", (err) => console.error("Redis Pub Client Error:", err));
+//   subClient.on("error", (err) => console.error("Redis Sub Client Error:", err));
+
+//   await Promise.all([pubClient.connect(), subClient.connect()]);
+//   io.adapter(createAdapter(pubClient, subClient));
+//   console.log("Redis adapter connected");
+
+//   // Initialize services and repositories
+//   const chatService = new ChatService();
+//   const messageService = new MessageService();
+//   const userRepository = new UserRepository();
+
+//   // Socket.IO Authentication
+//   io.use((socket: CustomSocket, next: (err?: Error) => void) => {
+//     const token = socket.handshake.auth.token;
+//     console.log(
+//       "Socket.IO authentication attempt with token:",
+//       token?.substring(0, 20) + "..."
+//     );
+//     if (!token) {
+//       console.error("Authentication error: No token provided");
+//       return next(new Error("Authentication error: No token provided"));
+//     }
+
+//     try {
+//       console.log("Verifying token with ACCESS_TOKEN_SECRET");
+//       //   const decoded = jwt.verify(
+//       //     token,
+//       //     process.env.ACCESS_TOKEN_SECRET!
+//       //   ) as UserPayload;
+//       const decoded = verifyAccessToken(token);
+//       console.log("Socket.IO authentication successful, user:", decoded);
+//       socket.data.user = decoded;
+//       next();
+//     } catch (error: any) {
+//       console.error("Authentication error:", error.message, error.stack);
+//       next(new Error(`Authentication error: ${error.message}`));
+//     }
+//   });
+
+//   // Socket.IO Connection Handling
+//   io.on("connection", async (socket: CustomSocket) => {
+//     const userId = socket.data.user?.id;
+//     const role = socket.data.user?.role;
+//     if (!userId || !role) {
+//       console.error("Invalid user data, disconnecting:", { userId, role });
+//       return socket.disconnect();
+//     }
+
+//     console.log(`User connected: ${userId} as ${role}`);
+
+//     // Update online status
+//     await userRepository.updateOnlineStatus(userId, role, true);
+//     await pubClient.set(`user:${userId}:online`, "true", { EX: 3600 });
+
+//     // Join role-specific chat rooms
+//     const chats = await chatService.getChatsByUserAndRole(userId, role);
+//     console.log(
+//       `User ${userId} joining chats:`,
+//       chats.map((c) => c._id.toString())
+//     );
+//     chats.forEach((chat) => {
+//       socket.join(`chat_${chat._id}`);
+//       console.log(`User ${userId} joined chat: ${chat._id} as ${role}`);
+//     });
+
+//     // Emit online status to all clients
+//     io.emit("userStatus", { userId, role, isOnline: true });
+
+//     // Send message
+//     socket.on("sendMessage", async ({ chatId, content }, callback) => {
+//       console.log("Received sendMessage event:", { chatId, content, userId });
+//       try {
+//         const message = await messageService.sendMessage(
+//           chatId,
+//           userId,
+//           content
+//         );
+//         console.log("Message created:", message);
+//         const populatedMessage = await messageService.getMessagesByChatId(
+//           chatId
+//         );
+//         const latestMessage = populatedMessage[populatedMessage.length - 1];
+//         io.to(`chat_${chatId}`).emit("receiveMessage", latestMessage);
+//         callback({ success: true, message: latestMessage });
+//       } catch (error: any) {
+//         console.error("Error in sendMessage:", error.message, error.stack);
+//         callback({ error: error.message });
+//       }
+//     });
+
+//     // Fetch chat history
+//     socket.on("getChatHistory", async ({ chatId }, callback) => {
+//       console.log("Received getChatHistory event:", { chatId });
+//       try {
+//         const messages = await messageService.getMessagesByChatId(chatId);
+//         callback({ success: true, messages });
+//       } catch (error: any) {
+//         console.error("Error fetching chat history:", error);
+//         callback({ error: error.message });
+//       }
+//     });
+
+//     // Mark messages as read
+//     socket.on("markAsRead", async ({ chatId }, callback) => {
+//       console.log("Received markAsRead event:", { chatId });
+//       try {
+//         await messageService.markMessagesAsRead(chatId, userId);
+//         callback({ success: true });
+//       } catch (error: any) {
+//         console.error("Error marking messages as read:", error);
+//         callback({ error: error.message });
+//       }
+//     });
+
+//     socket.on("disconnect", async () => {
+//       console.log(`User disconnected: ${userId}`);
+//       await userRepository.updateOnlineStatus(userId, role, false);
+//       await pubClient.del(`user:${userId}:online`);
+//       io.emit("userStatus", { userId, role, isOnline: false });
+//     });
+//   });
+
+//   return io;
+// };
+
 export const initializeSocket = async (httpServer: any) => {
   console.log(
     "Initializing Socket.IO with CORS origin:",
     process.env.FRONTEND_URL || "http://localhost:5173"
-  );
-  console.log(
-    "Using ACCESS_TOKEN_SECRET for Socket.IO:",
-    process.env.ACCESS_TOKEN_SECRET?.substring(0, 10) + "..."
   );
   const io = new Server(httpServer, {
     cors: {
@@ -95,10 +240,6 @@ export const initializeSocket = async (httpServer: any) => {
 
     try {
       console.log("Verifying token with ACCESS_TOKEN_SECRET");
-      //   const decoded = jwt.verify(
-      //     token,
-      //     process.env.ACCESS_TOKEN_SECRET!
-      //   ) as UserPayload;
       const decoded = verifyAccessToken(token);
       console.log("Socket.IO authentication successful, user:", decoded);
       socket.data.user = decoded;
@@ -139,26 +280,35 @@ export const initializeSocket = async (httpServer: any) => {
     io.emit("userStatus", { userId, role, isOnline: true });
 
     // Send message
-    socket.on("sendMessage", async ({ chatId, content }, callback) => {
-      console.log("Received sendMessage event:", { chatId, content, userId });
-      try {
-        const message = await messageService.sendMessage(
+    socket.on(
+      "sendMessage",
+      async ({ chatId, content, type = "text" }, callback) => {
+        console.log("Received sendMessage event:", {
           chatId,
+          content,
+          type,
           userId,
-          content
-        );
-        console.log("Message created:", message);
-        const populatedMessage = await messageService.getMessagesByChatId(
-          chatId
-        );
-        const latestMessage = populatedMessage[populatedMessage.length - 1];
-        io.to(`chat_${chatId}`).emit("receiveMessage", latestMessage);
-        callback({ success: true, message: latestMessage });
-      } catch (error: any) {
-        console.error("Error in sendMessage:", error.message, error.stack);
-        callback({ error: error.message });
+        });
+        try {
+          const message = await messageService.sendMessage(
+            chatId,
+            userId,
+            content,
+            type
+          );
+          console.log("Message created:", message);
+          const populatedMessage = await messageService.getMessagesByChatId(
+            chatId
+          );
+          const latestMessage = populatedMessage[populatedMessage.length - 1];
+          io.to(`chat_${chatId}`).emit("receiveMessage", latestMessage);
+          callback({ success: true, message: latestMessage });
+        } catch (error: any) {
+          console.error("Error in sendMessage:", error.message, error.stack);
+          callback({ error: error.message });
+        }
       }
-    });
+    );
 
     // Fetch chat history
     socket.on("getChatHistory", async ({ chatId }, callback) => {

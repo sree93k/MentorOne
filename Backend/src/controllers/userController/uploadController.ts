@@ -4,6 +4,8 @@ import { inUploadService } from "../../services/interface/inUploadService";
 import imUploadService from "../../services/implementations/imUploadService";
 import sharp from "sharp";
 import fs from "fs"; // Add this import
+import { ApiError } from "../../middlewares/errorHandler";
+import ApiResponse from "../../utils/apiResponse";
 
 class UploadController {
   private uploadService: inUploadService;
@@ -79,6 +81,65 @@ class UploadController {
       // Respond with the expected format
       res.status(200).json({ profilePicture: url });
     } catch (error) {
+      next(error);
+    }
+  };
+
+  public generatePresignedUrl = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("generatePresignedUrl controller step 1");
+
+      const { fileName, fileType, folder } = req.query as {
+        fileName: string;
+        fileType: string;
+        folder: string;
+      };
+      console.log("generatePresignedUrl controller step 2");
+      if (!fileName || !fileType || !folder) {
+        console.log("generatePresignedUrl controller step 3");
+        throw new ApiError(
+          400,
+          "Missing fileName, fileType, or folder parameter"
+        );
+      }
+      console.log("generatePresignedUrl controller step 4");
+      const url = await this.uploadService.S3generatePresignedUrl(
+        fileName,
+        fileType,
+        folder
+      );
+      console.log("generatePresignedUrl controller step 5");
+      res.json(url);
+    } catch (error) {
+      console.log("generatePresignedUrl controller step 6");
+      next(error);
+    }
+  };
+
+  public getPresignedUrl = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("getPresignedUrl ocntroller step 1");
+
+      const { key } = req.query as { key: string };
+      console.log("getPresignedUrl ocntroller step 2");
+      if (!key) {
+        console.log("getPresignedUrl ocntroller step 3");
+        throw new ApiError(400, "Missing key parameter");
+      }
+      console.log("getPresignedUrl ocntroller step 4");
+      const url = await this.uploadService.S3generatePresignedUrlForGet(key);
+      console.log("getPresignedUrl ocntroller step 5");
+      res.json({ url });
+    } catch (error) {
+      console.log("getPresignedUrl ocntroller step 6");
       next(error);
     }
   };

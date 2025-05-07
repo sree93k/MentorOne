@@ -115,3 +115,65 @@ export const getChatHistory = async (
     );
   }
 };
+export const uploadToS3WithPresignedUrl = async (
+  file: File,
+  folder: "images" | "audio"
+): Promise<string> => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get("/user/generate-presigned-url", {
+      params: {
+        fileName: file.name,
+        fileType: file.type,
+        folder,
+      },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    const { url, key } = response.data;
+
+    const uploadResponse = await fetch(url, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`S3 upload failed: ${errorText}`);
+    }
+
+    return `https://${import.meta.env.VITE_S3_BUCKET_NAME}.s3.${
+      import.meta.env.VITE_AWS_REGION
+    }.amazonaws.com/${key}`;
+  } catch (error: any) {
+    console.error("Error uploading with presigned URL:", error);
+    throw new Error(`Failed to upload file to S3: ${error.message}`);
+  }
+};
+
+export const getPresignedUrlForView = async (key: string): Promise<string> => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.get("/user/get-presigned-url", {
+      params: { key },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    return response.data.url;
+  } catch (error: any) {
+    console.error("Error fetching presigned URL for view:", error);
+    throw new Error(`Failed to fetch presigned URL: ${error.message}`);
+  }
+};
