@@ -4,7 +4,7 @@ import uploadController from "../../controllers/userController/uploadController"
 import { authenticate } from "../../middlewares/authenticateuser";
 import userController from "../../controllers/userController/userController";
 import paymentController from "../../controllers/paymentController/paymentController";
-import socketController from "../../controllers/socketController/socketController";
+import socketController from "../../controllers/soketController/socketController";
 
 const userPrivateRoute = Router();
 
@@ -61,4 +61,15 @@ userPrivateRoute.get(
   socketController.getChatUsers.bind(socketController)
 );
 
+userPrivateRoute.get(
+  "/generate-presigned-url",
+  authenticate,
+  uploadController.generatePresignedUrl
+);
+
+userPrivateRoute.get(
+  "/get-presigned-url",
+  authenticate,
+  uploadController.getPresignedUrl
+);
 export default userPrivateRoute;
