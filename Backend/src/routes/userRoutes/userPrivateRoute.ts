@@ -5,7 +5,7 @@ import { authenticate } from "../../middlewares/authenticateuser";
 import userController from "../../controllers/userController/userController";
 import paymentController from "../../controllers/paymentController/paymentController";
 import socketController from "../../controllers/soketController/socketController";
-
+import videoCallController from "../../controllers/VideoCallController/videoCallController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
@@ -71,5 +71,23 @@ userPrivateRoute.get(
   "/get-presigned-url",
   authenticate,
   uploadController.getPresignedUrl
+);
+
+// userPrivateRoute.post(
+//   "/video-call/start",
+//   authenticate,
+//   videoCallController.startVideoCall
+// );
+
+userPrivateRoute.post(
+  "/video-call/start",
+  authenticate,
+  videoCallController.startVideoCall.bind(videoCallController)
+);
+
+userPrivateRoute.get(
+  "/video-call/validate/:meetingId",
+  authenticate,
+  videoCallController.validateMeeting
 );
 export default userPrivateRoute;

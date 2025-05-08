@@ -15,6 +15,7 @@ import {
   CalendarDays,
   HandCoins,
   Wallet,
+  Video,
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { LogoutConfirmationModal } from "@/components/modal/Logout";
@@ -365,29 +366,16 @@ const MentorSidebar: React.FC = () => {
           active={activeItem === "Profile Details"}
           onClick={() => handleItemClick("Profile Details", "/expert/profile")}
         />
+        <SidebarItem
+          icon={Video}
+          text="Video Call"
+          isExpanded={isExpanded}
+          active={activeItem === "Video Call"}
+          onClick={() => handleItemClick("Video Call", "/user/meetinghome")}
+        />
       </nav>
       <div className="absolute bottom-4 w-full px-2">
-        {/* User Profile SidebarItem (shown in both expanded and collapsed states) */}
         {/* {user?.firstName && (
-          <SidebarItem
-            icon={() => (
-              <img
-                src={user?.profilePicture || "https://via.placeholder.com/24"} // Fallback image if profilePicture is null
-                alt="Profile"
-                className="w-6 h-6 rounded-full object-cover"
-              />
-            )}
-            text={`${
-              user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
-            } ${
-              user.lastName
-                ? user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)
-                : ""
-            }`}
-            isExpanded={isExpanded}
-          />
-        )} */}
-        {user?.firstName && (
           <SidebarItem
             icon={() => (
               <img
@@ -411,7 +399,7 @@ const MentorSidebar: React.FC = () => {
             }
             isExpanded={isExpanded}
           />
-        )}
+        )} */}
 
         <SidebarItem
           icon={LogOut}
