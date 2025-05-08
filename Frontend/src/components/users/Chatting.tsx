@@ -1182,7 +1182,8 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       setError(`Failed to connect to chat server: ${error.message}`);
     });
 
-    socketInstance.on("receiveMessage", (message) => {
+    socketInstance.on("receiveMessage", async (message) => {
+      console.log("Received message:", { message });
       setChatHistories((prev) => {
         const chatId = message.chat.toString();
         const formattedMessage: ChatMessage = {
@@ -1200,6 +1201,29 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         const updated = [...(prev[chatId] || []), formattedMessage];
         return { ...prev, [chatId]: updated };
       });
+
+      // Fetch presigned URL for media messages
+      if (message.type === "image" || message.type === "audio") {
+        try {
+          const s3Key = getS3Key(message.content);
+          console.log(
+            `Fetching presigned URL for received message ${message._id}:`,
+            s3Key
+          );
+          const presignedUrl = await getMediaUrl(s3Key);
+          setMediaUrls((prev) => ({
+            ...prev,
+            [message._id]: presignedUrl,
+          }));
+        } catch (err: any) {
+          console.error(
+            `Failed to get presigned URL for received message ${message._id}:`,
+            err
+          );
+          setError(`Failed to load media for message ${message._id}`);
+        }
+      }
+
       if (shouldScrollToBottom) {
         scrollToBottom(
           0,
