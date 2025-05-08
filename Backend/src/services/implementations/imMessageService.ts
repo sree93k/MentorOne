@@ -140,7 +140,11 @@ export default class MessageService {
   }
 
   async getMessagesByChatId(chatId: string) {
-    return await this.messageRepository.findByChatId(chatId);
+    console.log("get meesage servcie step 1");
+
+    const response = await this.messageRepository.findByChatId(chatId);
+    console.log("get meesage servcie step 2", response);
+    return response;
   }
 
   async markMessagesAsRead(chatId: string, userId: string) {
