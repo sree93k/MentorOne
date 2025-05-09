@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-interface IVideoCall extends Document {
+export interface IVideoCall extends Document {
   meetingId: string;
   creatorId: string;
   participants: { userId: string; joinedAt: Date }[];

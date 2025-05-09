@@ -45,7 +45,7 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
           <span className="font-medium">MeetUp</span>
         </div>
       </div>
-
+      =
       <div className="flex items-center space-x-2">
         <button
           className={`control-button ${!isAudioOn && "control-button-active"}`}
@@ -114,7 +114,6 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
           <Phone className="w-5 h-5 rotate-135" />
         </button>
       </div>
-
       {showSettings && (
         <div className="absolute bottom-16 right-4 bg-white rounded-lg shadow-elevated p-2 w-48">
           <button className="w-full text-left px-3 py-2 hover:bg-neutral-100 rounded flex items-center">
