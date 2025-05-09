@@ -411,5 +411,29 @@ export const initializeSocket = async (httpServer: any) => {
     });
   });
 
+  // In socket.ts, inside io.on("connection")
+  socket.on(
+    "join-meeting",
+    async ({ meetingId, userId, userName }, callback) => {
+      try {
+        await videoCallService.joinMeeting(meetingId, userId);
+        socket.join(`meeting_${meetingId}`);
+        io.to(`meeting_${meetingId}`).emit("user-joined", {
+          userId,
+          userName,
+        });
+        await pubClient.set(`meeting:${meetingId}:user:${userId}`, userName, {
+          EX: 3600,
+        });
+        callback({ success: true });
+      } catch (error: any) {
+        if (error.status === 403) {
+          socket.emit("meeting-full");
+        }
+        callback({ error: error.message });
+      }
+    }
+  );
+
   return io;
 };

@@ -73,21 +73,34 @@ userPrivateRoute.get(
   uploadController.getPresignedUrl
 );
 
-// userPrivateRoute.post(
-//   "/video-call/start",
-//   authenticate,
-//   videoCallController.startVideoCall
-// );
+// User session validation
+userPrivateRoute.get("/validate_session", authenticate, (req, res) => {
+  res.status(200).json({ valid: true });
+});
 
+// Video call routes
+// Make sure videoCallController methods are properly bound
 userPrivateRoute.post(
-  "/video-call/start",
+  "/video-call/create",
   authenticate,
-  videoCallController.startVideoCall.bind(videoCallController)
+  videoCallController.createMeeting.bind(videoCallController)
 );
 
 userPrivateRoute.get(
   "/video-call/validate/:meetingId",
   authenticate,
-  videoCallController.validateMeeting
+  videoCallController.validateMeeting.bind(videoCallController)
+);
+
+userPrivateRoute.post(
+  "/video-call/join/:meetingId",
+  authenticate,
+  videoCallController.joinMeeting.bind(videoCallController)
+);
+
+userPrivateRoute.post(
+  "/video-call/end/:meetingId",
+  authenticate,
+  videoCallController.endMeeting.bind(videoCallController)
 );
 export default userPrivateRoute;
