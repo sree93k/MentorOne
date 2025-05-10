@@ -91,8 +91,18 @@ const Participants: React.FC<ParticipantsProps> = ({
 }) => {
   if (!isOpen) return null;
   useEffect(() => {
-    console.log("participents", participants);
-  });
+    console.log(
+      "Participants: Current participants:",
+      participants.map((p) => ({
+        id: p.id,
+        name: p.name,
+        hasStream: !!p.stream,
+        audio: p.audio,
+        video: p.video,
+      }))
+    );
+  }, [participants]);
+
   return (
     <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-lg flex flex-col z-10">
       <div className="flex items-center justify-between p-4 border-b">
@@ -121,10 +131,10 @@ const Participants: React.FC<ParticipantsProps> = ({
               </div>
               <span
                 className={`font-medium ${
-                  participant.id === "local" ? "text-blue-700" : ""
+                  participant.id === userId ? "text-blue-700" : ""
                 }`}
               >
-                {participant.name} {participant.id === "local" && "(You)"}
+                {participant.name} {participant.id === userId && "(You)"}
               </span>
             </div>
 
