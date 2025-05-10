@@ -106,7 +106,8 @@ const VideoGrid: React.FC<VideoGridProps> = ({ participants }) => {
     <div
       className={`flex-1 grid ${getGridCols(
         participants.length
-      )} gap-4 p-4 bg-gray-900`}
+      )} gap-4 p-4 bg-gray-900 h-full overflow-auto`}
+      style={{ maxHeight: "calc(100vh - 120px)" }} // Adjust for header/footer
     >
       {participants.map((participant) => (
         <VideoTile key={participant.id} participant={participant} />
@@ -125,19 +126,23 @@ const VideoTile: React.FC<VideoTileProps> = ({ participant }) => {
   useEffect(() => {
     if (participant.stream && videoRef.current) {
       videoRef.current.srcObject = participant.stream;
+      console.log("VideoTile: Set stream for:", participant.id);
     } else if (videoRef.current) {
       videoRef.current.srcObject = null;
+      console.log("VideoTile: Cleared stream for:", participant.id);
     }
-  }, [participant.stream]);
+  }, [participant.stream, participant.id]);
 
   return (
-    <div className="relative max-h-[617px] bg-gray-800 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
+    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video flex items-center justify-center">
       {participant.video && participant.stream ? (
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          muted={participant.id === "local"}
+          muted={
+            participant.id === "local" || participant.id.includes("anonymous")
+          }
           className="w-full h-full object-cover"
         />
       ) : (

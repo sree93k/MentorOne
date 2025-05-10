@@ -44,7 +44,7 @@
 // }
 
 // const VideoCallMeeting: React.FC = () => {
-//   const { id: meetingId } = useParams<{ id: string }>();
+//   const { meetingId } = useParams<{ meetingId: string }>();
 //   const navigate = useNavigate();
 //   const { user } = useSelector((state: RootState) => state.user);
 //   const [socket, setSocket] = useState<Socket | null>(null);
@@ -70,16 +70,33 @@
 //   }, [meetingId]);
 
 //   useEffect(() => {
-//     console.log("meeting id is videocallmeetinh pahe is ", meetingId);
-//   });
+//     console.log("VideoCallMeeting: Meeting ID:", meetingId);
+//     if (!meetingId) {
+//       console.error("VideoCallMeeting: Invalid meetingId");
+//       toast({
+//         title: "Error",
+//         description: "Invalid meeting ID",
+//         variant: "destructive",
+//       });
+//       navigate("/user/meetinghome", { replace: true });
+//       return;
+//     }
+//   }, [meetingId, navigate]);
 
 //   useEffect(() => {
 //     const token = localStorage.getItem("accessToken");
+//     console.log("VideoCallMeeting: Initializing socket with token:", token);
 //     const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
 //       auth: { token },
 //       transports: ["websocket"],
+//       query: { meetingId },
 //     });
-//     const peerInstance = new Peer(userId); // Use default PeerJS cloud server
+//     const peerInstance = new Peer(userId, {
+//       host: "/",
+//       port: 9000, // Adjust if using a custom PeerJS server
+//       path: "/peerjs",
+//       debug: 3, // Enable verbose logging
+//     });
 
 //     setSocket(socketInstance);
 //     setPeer(peerInstance);
@@ -90,6 +107,7 @@
 //           audio: true,
 //           video: true,
 //         });
+//         console.log("VideoCallMeeting: Local stream initialized:", stream);
 //         setLocalStream(stream);
 //         setParticipants([
 //           {
@@ -101,7 +119,10 @@
 //           },
 //         ]);
 //       } catch (error) {
-//         console.error("Error accessing media devices:", error);
+//         console.error(
+//           "VideoCallMeeting: Error accessing media devices:",
+//           error
+//         );
 //         toast({
 //           title: "Media Error",
 //           description:
@@ -114,6 +135,11 @@
 //     initLocalStream();
 
 //     socketInstance.on("connect", () => {
+//       console.log("VideoCallMeeting: Socket connected, joining meeting:", {
+//         meetingId,
+//         userId,
+//         userName: user?.firstName || "Anonymous",
+//       });
 //       socketInstance.emit("join-meeting", {
 //         meetingId,
 //         userId,
@@ -122,38 +148,82 @@
 //     });
 
 //     socketInstance.on("connect_error", (error) => {
+//       console.error("VideoCallMeeting: Socket connect error:", error);
 //       toast({
 //         title: "Connection Error",
 //         description: "Failed to connect to the server. Please try again.",
 //         variant: "destructive",
 //       });
+//       navigate("/user/meetinghome", { replace: true });
 //     });
 
 //     peerInstance.on("open", (id) => {
-//       console.log("PeerJS ID:", id);
+//       console.log("VideoCallMeeting: PeerJS ID:", id);
+//     });
+
+//     peerInstance.on("error", (error) => {
+//       console.error("VideoCallMeeting: PeerJS error:", error);
+//       toast({
+//         title: "PeerJS Error",
+//         description: `PeerJS error: ${error.message || error.type}`,
+//         variant: "destructive",
+//       });
 //     });
 
 //     socketInstance.on("user-joined", ({ userId: remoteUserId, userName }) => {
-//       setParticipants((prev) => [
-//         ...prev,
-//         { id: remoteUserId, name: userName, audio: true, video: true },
-//       ]);
+//       console.log("VideoCallMeeting: User joined:", { remoteUserId, userName });
+//       setParticipants((prev) => {
+//         if (prev.some((p) => p.id === remoteUserId)) {
+//           console.log(
+//             "VideoCallMeeting: User already in participants:",
+//             remoteUserId
+//           );
+//           return prev;
+//         }
+//         const newParticipants = [
+//           ...prev,
+//           { id: remoteUserId, name: userName, audio: true, video: true },
+//         ];
+//         console.log("VideoCallMeeting: Updated participants:", newParticipants);
+//         return newParticipants;
+//       });
 //       initiateCall(remoteUserId);
 //     });
 
 //     peerInstance.on("call", (call) => {
+//       console.log("VideoCallMeeting: Received call from:", call.peer);
 //       call.answer(localStream);
 //       call.on("stream", (remoteStream) => {
-//         setParticipants((prev) =>
-//           prev.map((p) =>
+//         console.log("VideoCallMeeting: Received remote stream for:", call.peer);
+//         setParticipants((prev) => {
+//           const updated = prev.map((p) =>
 //             p.id === call.peer ? { ...p, stream: remoteStream } : p
-//           )
-//         );
+//           );
+//           console.log(
+//             "VideoCallMeeting: Updated participants with stream:",
+//             updated
+//           );
+//           return updated;
+//         });
+//       });
+//       call.on("error", (error) => {
+//         console.error("VideoCallMeeting: Call error:", error);
+//       });
+//       call.on("close", () => {
+//         console.log("VideoCallMeeting: Call closed:", call.peer);
 //       });
 //     });
 
 //     socketInstance.on("user-left", ({ userId: remoteUserId }) => {
-//       setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+//       console.log("VideoCallMeeting: User left:", remoteUserId);
+//       setParticipants((prev) => {
+//         const updated = prev.filter((p) => p.id !== remoteUserId);
+//         console.log(
+//           "VideoCallMeeting: Updated participants after user left:",
+//           updated
+//         );
+//         return updated;
+//       });
 //       if (peerConnections.current[remoteUserId]) {
 //         peerConnections.current[remoteUserId].close();
 //         delete peerConnections.current[remoteUserId];
@@ -161,10 +231,16 @@
 //     });
 
 //     socketInstance.on("message", (message) => {
+//       console.log("VideoCallMeeting: Received message:", message);
 //       setMessages((prev) => [...prev, message]);
 //     });
 
 //     socketInstance.on("reaction", ({ senderId, senderName, reaction }) => {
+//       console.log("VideoCallMeeting: Received reaction:", {
+//         senderId,
+//         senderName,
+//         reaction,
+//       });
 //       toast({
 //         title: `${senderName} reacted`,
 //         description: `Sent a ${reaction} reaction`,
@@ -172,23 +248,53 @@
 //     });
 
 //     const initiateCall = async (remoteUserId: string) => {
+//       console.log("VideoCallMeeting: Initiating call to:", remoteUserId);
 //       const pc = new RTCPeerConnection({
-//         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//         iceServers: [
+//           { urls: "stun:stun.l.google.com:19302" },
+//           // Add TURN server if available
+//           // {
+//           //   urls: "turn:your.turn.server:3478",
+//           //   username: "username",
+//           //   credential: "password",
+//           // },
+//         ],
 //       });
 //       peerConnections.current[remoteUserId] = pc;
 
-//       localStream
-//         ?.getTracks()
-//         .forEach((track) => pc.addTrack(track, localStream));
+//       if (localStream) {
+//         localStream.getTracks().forEach((track) => {
+//           console.log("VideoCallMeeting: Adding track:", track.kind);
+//           pc.addTrack(track, localStream);
+//         });
+//       } else {
+//         console.warn("VideoCallMeeting: No local stream available");
+//       }
+
 //       pc.ontrack = (event) => {
-//         setParticipants((prev) =>
-//           prev.map((p) =>
-//             p.id === remoteUserId ? { ...p, stream: event.streams[0] } : p
-//           )
+//         console.log(
+//           "VideoCallMeeting: Received track from:",
+//           remoteUserId,
+//           event.streams
 //         );
+//         setParticipants((prev) => {
+//           const updated = prev.map((p) =>
+//             p.id === remoteUserId ? { ...p, stream: event.streams[0] } : p
+//           );
+//           console.log(
+//             "VideoCallMeeting: Updated participants with track:",
+//             updated
+//           );
+//           return updated;
+//         });
 //       };
+
 //       pc.onicecandidate = (event) => {
 //         if (event.candidate) {
+//           console.log(
+//             "VideoCallMeeting: Sending ICE candidate to:",
+//             remoteUserId
+//           );
 //           socketInstance.emit("ice-candidate", {
 //             to: remoteUserId,
 //             candidate: event.candidate,
@@ -196,28 +302,70 @@
 //         }
 //       };
 
-//       const offer = await pc.createOffer();
-//       await pc.setLocalDescription(offer);
-//       socketInstance.emit("offer", { to: remoteUserId, offer });
+//       pc.oniceconnectionstatechange = () => {
+//         console.log(
+//           "VideoCallMeeting: ICE connection state:",
+//           pc.iceConnectionState
+//         );
+//         if (pc.iceConnectionState === "failed") {
+//           console.error(
+//             "VideoCallMeeting: ICE connection failed for:",
+//             remoteUserId
+//           );
+//           toast({
+//             title: "Connection Error",
+//             description: "Failed to connect to peer. Trying to reconnect...",
+//             variant: "destructive",
+//           });
+//           pc.restartIce();
+//         }
+//       };
+
+//       try {
+//         const offer = await pc.createOffer();
+//         await pc.setLocalDescription(offer);
+//         console.log("VideoCallMeeting: Sending offer to:", remoteUserId);
+//         socketInstance.emit("offer", { to: remoteUserId, offer });
+//       } catch (error) {
+//         console.error("VideoCallMeeting: Error creating offer:", error);
+//       }
 
 //       socketInstance.on("answer", async ({ from, answer }) => {
 //         if (from === remoteUserId) {
-//           await pc.setRemoteDescription(new RTCSessionDescription(answer));
+//           console.log("VideoCallMeeting: Received answer from:", from);
+//           try {
+//             await pc.setRemoteDescription(new RTCSessionDescription(answer));
+//           } catch (error) {
+//             console.error(
+//               "VideoCallMeeting: Error setting remote description:",
+//               error
+//             );
+//           }
 //         }
 //       });
 
 //       socketInstance.on("ice-candidate", async ({ from, candidate }) => {
 //         if (from === remoteUserId) {
-//           await pc.addIceCandidate(new RTCIceCandidate(candidate));
+//           console.log("VideoCallMeeting: Received ICE candidate from:", from);
+//           try {
+//             await pc.addIceCandidate(new RTCIceCandidate(candidate));
+//           } catch (error) {
+//             console.error(
+//               "VideoCallMeeting: Error adding ICE candidate:",
+//               error
+//             );
+//           }
 //         }
 //       });
 //     };
 
 //     return () => {
+//       console.log("VideoCallMeeting: Cleaning up...");
 //       socketInstance.disconnect();
 //       peerInstance.destroy();
 //       localStream?.getTracks().forEach((track) => track.stop());
 //       Object.values(peerConnections.current).forEach((pc) => pc.close());
+//       peerConnections.current = {};
 //     };
 //   }, [meetingId, userId, user?.firstName, navigate]);
 
@@ -237,6 +385,7 @@
 //         audio: audioTrack.enabled,
 //         video: isVideoOn,
 //       });
+//       console.log("VideoCallMeeting: Toggled audio:", audioTrack.enabled);
 //     }
 //   };
 
@@ -256,6 +405,7 @@
 //         audio: isAudioOn,
 //         video: videoTrack.enabled,
 //       });
+//       console.log("VideoCallMeeting: Toggled video:", videoTrack.enabled);
 //     }
 //   };
 
@@ -278,6 +428,7 @@
 //         setParticipants((prev) =>
 //           prev.map((p) => (p.id === userId ? { ...p, stream } : p))
 //         );
+//         console.log("VideoCallMeeting: Stopped screen sharing");
 //       } else {
 //         const stream = await navigator.mediaDevices.getDisplayMedia({
 //           video: true,
@@ -293,9 +444,10 @@
 //         setParticipants((prev) =>
 //           prev.map((p) => (p.id === userId ? { ...p, stream } : p))
 //         );
+//         console.log("VideoCallMeeting: Started screen sharing");
 //       }
 //     } catch (error) {
-//       console.error("Error toggling screen share:", error);
+//       console.error("VideoCallMeeting: Error toggling screen share:", error);
 //       toast({
 //         title: "Screen Share Error",
 //         description: "Failed to start or stop screen sharing.",
@@ -314,6 +466,7 @@
 //     };
 //     socket?.emit("message", { meetingId, message });
 //     setMessages((prev) => [...prev, message]);
+//     console.log("VideoCallMeeting: Sent message:", message);
 //   };
 
 //   const sendReaction = (reaction: string) => {
@@ -323,11 +476,13 @@
 //       userName: user?.firstName || "You",
 //       reaction,
 //     });
+//     console.log("VideoCallMeeting: Sent reaction:", reaction);
 //   };
 
 //   const leaveMeeting = () => {
 //     socket?.emit("leave-meeting", { meetingId, userId });
 //     navigate(`/user/meeting-end/${meetingId}`);
+//     console.log("VideoCallMeeting: Left meeting");
 //   };
 
 //   return (
@@ -378,9 +533,9 @@
 //         </div>
 //       )}
 
-//       <div className="p-4 flex  items-center justify-between bg-gray-900 text-white">
+//       <div className="p-4 flex items-center justify-between bg-gray-900 text-white">
 //         <div className="flex items-center gap-2">
-//           <span className="text-gray-400">{meetingId}</span>
+//           <span className="text-gray-400">{meetingId || "No Meeting ID"}</span>
 //         </div>
 
 //         <div className="flex items-center gap-2 mx-auto pb-6">
@@ -522,7 +677,7 @@ interface Message {
 }
 
 const VideoCallMeeting: React.FC = () => {
-  const { meetingId } = useParams<{ meetingId: string }>(); // Changed from id to meetingId
+  const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.user);
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -539,8 +694,11 @@ const VideoCallMeeting: React.FC = () => {
   const [showReactions, setShowReactions] = useState(false);
   const peerConnections = useRef<{ [key: string]: RTCPeerConnection }>({});
   const userId = user?._id || "anonymous";
+  const renderCount = useRef(0);
 
   useEffect(() => {
+    renderCount.current += 1;
+    console.log(`VideoCallMeeting: Render count: ${renderCount.current}`);
     document.title = `Meeting: ${meetingId} | MentorOne Meet`;
     return () => {
       document.title = "MentorOne Meet";
@@ -559,15 +717,40 @@ const VideoCallMeeting: React.FC = () => {
       navigate("/user/meetinghome", { replace: true });
       return;
     }
-  }, [meetingId, navigate]);
 
-  useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
-      auth: { token },
-      transports: ["websocket"],
+    if (!token) {
+      console.error("VideoCallMeeting: No accessToken found");
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to join the meeting",
+        variant: "destructive",
+      });
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    console.log(
+      "VideoCallMeeting: Initializing socket with token:",
+      token.substring(0, 20) + "..."
+    );
+    const socketInstance = io(
+      import.meta.env.VITE_SOCKET_URL || "http://localhost:5002",
+      {
+        auth: { token },
+        transports: ["websocket"],
+        path: "/socket.io/",
+        query: { meetingId },
+        reconnectionAttempts: 5,
+      }
+    );
+    const peerId = `${userId}_${Date.now()}`; // Unique peer ID
+    const peerInstance = new Peer(peerId, {
+      host: "localhost",
+      port: 9000,
+      path: "/peerjs",
+      debug: 3,
     });
-    const peerInstance = new Peer(userId); // Use default PeerJS cloud server
 
     setSocket(socketInstance);
     setPeer(peerInstance);
@@ -578,6 +761,7 @@ const VideoCallMeeting: React.FC = () => {
           audio: true,
           video: true,
         });
+        console.log("VideoCallMeeting: Local stream initialized:", stream);
         setLocalStream(stream);
         setParticipants([
           {
@@ -589,7 +773,10 @@ const VideoCallMeeting: React.FC = () => {
           },
         ]);
       } catch (error) {
-        console.error("Error accessing media devices:", error);
+        console.error(
+          "VideoCallMeeting: Error accessing media devices:",
+          error
+        );
         toast({
           title: "Media Error",
           description:
@@ -601,16 +788,69 @@ const VideoCallMeeting: React.FC = () => {
 
     initLocalStream();
 
+    // socketInstance.on("connect", () => {
+    //   console.log("VideoCallMeeting: Socket connected, joining meeting:", {
+    //     meetingId,
+    //     userId,
+    //     userName: user?.firstName || "Anonymous",
+    //   });
+    //   socketInstance.emit(
+    //     "join-meeting",
+    //     {
+    //       meetingId,
+    //       userId,
+    //       userName: user?.firstName || "Anonymous",
+    //     },
+    //     (response: any) => {
+    //       console.log("VideoCallMeeting: Join-meeting response:", response);
+    //       if (!response?.success) {
+    //         console.error(
+    //           "VideoCallMeeting: Failed to join meeting:",
+    //           response?.error
+    //         );
+    //         toast({
+    //           title: "Error",
+    //           description: response?.error || "Failed to join meeting",
+    //           variant: "destructive",
+    //         });
+    //         navigate("/user/meetinghome", { replace: true });
+    //       }
+    //     }
+    //   );
+    // });
     socketInstance.on("connect", () => {
-      socketInstance.emit("join-meeting", {
+      console.log("VideoCallMeeting: Socket connected, joining meeting:", {
         meetingId,
         userId,
         userName: user?.firstName || "Anonymous",
       });
+      socketInstance.emit(
+        "join-meeting",
+        {
+          meetingId,
+          userId,
+          userName: user?.firstName || "Anonymous",
+        },
+        (response: any) => {
+          console.log("VideoCallMeeting: Join-meeting response:", response);
+          if (!response?.success) {
+            console.error(
+              "VideoCallMeeting: Failed to join meeting:",
+              response?.error
+            );
+            toast({
+              title: "Error",
+              description: response?.error || "Failed to join meeting",
+              variant: "destructive",
+            });
+            navigate("/user/meetinghome", { replace: true });
+          }
+        }
+      );
+      console.log("VideoCallMeeting: Emitted join-meeting event");
     });
-
     socketInstance.on("connect_error", (error) => {
-      console.error("Socket connect error:", error);
+      console.error("VideoCallMeeting: Socket connect error:", error);
       toast({
         title: "Connection Error",
         description: "Failed to connect to the server. Please try again.",
@@ -619,31 +859,82 @@ const VideoCallMeeting: React.FC = () => {
       navigate("/user/meetinghome", { replace: true });
     });
 
+    socketInstance.on("error", (error) => {
+      console.error("VideoCallMeeting: Socket error:", error);
+      toast({
+        title: "Socket Error",
+        description: "An error occurred with the server connection.",
+        variant: "destructive",
+      });
+    });
+
     peerInstance.on("open", (id) => {
-      console.log("PeerJS ID:", id);
+      console.log("VideoCallMeeting: PeerJS ID:", id);
+    });
+
+    peerInstance.on("error", (error) => {
+      console.error("VideoCallMeeting: PeerJS error:", error);
+      toast({
+        title: "PeerJS Error",
+        description: `PeerJS error: ${error.message || error.type}`,
+        variant: "destructive",
+      });
     });
 
     socketInstance.on("user-joined", ({ userId: remoteUserId, userName }) => {
-      setParticipants((prev) => [
-        ...prev,
-        { id: remoteUserId, name: userName, audio: true, video: true },
-      ]);
+      console.log("VideoCallMeeting: User joined:", { remoteUserId, userName });
+      setParticipants((prev) => {
+        if (prev.some((p) => p.id === remoteUserId)) {
+          console.log(
+            "VideoCallMeeting: User already in participants:",
+            remoteUserId
+          );
+          return prev;
+        }
+        const newParticipants = [
+          ...prev,
+          { id: remoteUserId, name: userName, audio: true, video: true },
+        ];
+        console.log("VideoCallMeeting: Updated participants:", newParticipants);
+        return newParticipants;
+      });
       initiateCall(remoteUserId);
     });
 
     peerInstance.on("call", (call) => {
-      call.answer(localStream);
+      console.log("VideoCallMeeting: Received call from:", call.peer);
+      call.answer(localStream || undefined);
       call.on("stream", (remoteStream) => {
-        setParticipants((prev) =>
-          prev.map((p) =>
+        console.log("VideoCallMeeting: Received remote stream for:", call.peer);
+        setParticipants((prev) => {
+          const updated = prev.map((p) =>
             p.id === call.peer ? { ...p, stream: remoteStream } : p
-          )
-        );
+          );
+          console.log(
+            "VideoCallMeeting: Updated participants with stream:",
+            updated
+          );
+          return updated;
+        });
+      });
+      call.on("error", (error) => {
+        console.error("VideoCallMeeting: Call error:", error);
+      });
+      call.on("close", () => {
+        console.log("VideoCallMeeting: Call closed:", call.peer);
       });
     });
 
     socketInstance.on("user-left", ({ userId: remoteUserId }) => {
-      setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+      console.log("VideoCallMeeting: User left:", remoteUserId);
+      setParticipants((prev) => {
+        const updated = prev.filter((p) => p.id !== remoteUserId);
+        console.log(
+          "VideoCallMeeting: Updated participants after user left:",
+          updated
+        );
+        return updated;
+      });
       if (peerConnections.current[remoteUserId]) {
         peerConnections.current[remoteUserId].close();
         delete peerConnections.current[remoteUserId];
@@ -651,34 +942,142 @@ const VideoCallMeeting: React.FC = () => {
     });
 
     socketInstance.on("message", (message) => {
+      console.log("VideoCallMeeting: Received message:", message);
       setMessages((prev) => [...prev, message]);
     });
 
     socketInstance.on("reaction", ({ senderId, senderName, reaction }) => {
+      console.log("VideoCallMeeting: Received reaction:", {
+        senderId,
+        senderName,
+        reaction,
+      });
       toast({
         title: `${senderName} reacted`,
         description: `Sent a ${reaction} reaction`,
       });
     });
 
+    socketInstance.on("offer", async ({ from, offer }) => {
+      console.log("VideoCallMeeting: Received offer from:", from);
+      const pc =
+        peerConnections.current[from] ||
+        new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
+      peerConnections.current[from] = pc;
+
+      pc.ontrack = (event) => {
+        console.log(
+          "VideoCallMeeting: Received track from:",
+          from,
+          event.streams
+        );
+        setParticipants((prev) => {
+          const updated = prev.map((p) =>
+            p.id === from ? { ...p, stream: event.streams[0] } : p
+          );
+          console.log(
+            "VideoCallMeeting: Updated participants with track:",
+            updated
+          );
+          return updated;
+        });
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log("VideoCallMeeting: Sending ICE candidate to:", from);
+          socketInstance.emit("ice-candidate", {
+            to: from,
+            candidate: event.candidate,
+          });
+        }
+      };
+
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        if (localStream) {
+          localStream
+            .getTracks()
+            .forEach((track) => pc.addTrack(track, localStream));
+        }
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        console.log("VideoCallMeeting: Sending answer to:", from);
+        socketInstance.emit("answer", { to: from, answer });
+      } catch (error) {
+        console.error("VideoCallMeeting: Error handling offer:", error);
+      }
+    });
+
+    socketInstance.on("answer", async ({ from, answer }) => {
+      console.log("VideoCallMeeting: Received answer from:", from);
+      const pc = peerConnections.current[from];
+      if (pc) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        } catch (error) {
+          console.error(
+            "VideoCallMeeting: Error setting remote description:",
+            error
+          );
+        }
+      }
+    });
+
+    socketInstance.on("ice-candidate", async ({ from, candidate }) => {
+      console.log("VideoCallMeeting: Received ICE candidate from:", from);
+      const pc = peerConnections.current[from];
+      if (pc) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (error) {
+          console.error("VideoCallMeeting: Error adding ICE candidate:", error);
+        }
+      }
+    });
+
     const initiateCall = async (remoteUserId: string) => {
+      console.log("VideoCallMeeting: Initiating call to:", remoteUserId);
       const pc = new RTCPeerConnection({
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
       peerConnections.current[remoteUserId] = pc;
 
-      localStream
-        ?.getTracks()
-        .forEach((track) => pc.addTrack(track, localStream));
+      if (localStream) {
+        localStream.getTracks().forEach((track) => {
+          console.log("VideoCallMeeting: Adding track:", track.kind);
+          pc.addTrack(track, localStream);
+        });
+      } else {
+        console.warn("VideoCallMeeting: No local stream available");
+      }
+
       pc.ontrack = (event) => {
-        setParticipants((prev) =>
-          prev.map((p) =>
-            p.id === remoteUserId ? { ...p, stream: event.streams[0] } : p
-          )
+        console.log(
+          "VideoCallMeeting: Received track from:",
+          remoteUserId,
+          event.streams
         );
+        setParticipants((prev) => {
+          const updated = prev.map((p) =>
+            p.id === remoteUserId ? { ...p, stream: event.streams[0] } : p
+          );
+          console.log(
+            "VideoCallMeeting: Updated participants with track:",
+            updated
+          );
+          return updated;
+        });
       };
+
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          console.log(
+            "VideoCallMeeting: Sending ICE candidate to:",
+            remoteUserId
+          );
           socketInstance.emit("ice-candidate", {
             to: remoteUserId,
             candidate: event.candidate,
@@ -686,28 +1085,42 @@ const VideoCallMeeting: React.FC = () => {
         }
       };
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socketInstance.emit("offer", { to: remoteUserId, offer });
-
-      socketInstance.on("answer", async ({ from, answer }) => {
-        if (from === remoteUserId) {
-          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      pc.oniceconnectionstatechange = () => {
+        console.log(
+          "VideoCallMeeting: ICE connection state:",
+          pc.iceConnectionState
+        );
+        if (pc.iceConnectionState === "failed") {
+          console.error(
+            "VideoCallMeeting: ICE connection failed for:",
+            remoteUserId
+          );
+          toast({
+            title: "Connection Error",
+            description: "Failed to connect to peer. Trying to reconnect...",
+            variant: "destructive",
+          });
+          pc.restartIce();
         }
-      });
+      };
 
-      socketInstance.on("ice-candidate", async ({ from, candidate }) => {
-        if (from === remoteUserId) {
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        }
-      });
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        console.log("VideoCallMeeting: Sending offer to:", remoteUserId);
+        socketInstance.emit("offer", { to: remoteUserId, offer });
+      } catch (error) {
+        console.error("VideoCallMeeting: Error creating offer:", error);
+      }
     };
 
     return () => {
+      console.log("VideoCallMeeting: Cleaning up...");
       socketInstance.disconnect();
       peerInstance.destroy();
       localStream?.getTracks().forEach((track) => track.stop());
       Object.values(peerConnections.current).forEach((pc) => pc.close());
+      peerConnections.current = {};
     };
   }, [meetingId, userId, user?.firstName, navigate]);
 
@@ -727,6 +1140,7 @@ const VideoCallMeeting: React.FC = () => {
         audio: audioTrack.enabled,
         video: isVideoOn,
       });
+      console.log("VideoCallMeeting: Toggled audio:", audioTrack.enabled);
     }
   };
 
@@ -746,6 +1160,7 @@ const VideoCallMeeting: React.FC = () => {
         audio: isAudioOn,
         video: videoTrack.enabled,
       });
+      console.log("VideoCallMeeting: Toggled video:", videoTrack.enabled);
     }
   };
 
@@ -768,6 +1183,7 @@ const VideoCallMeeting: React.FC = () => {
         setParticipants((prev) =>
           prev.map((p) => (p.id === userId ? { ...p, stream } : p))
         );
+        console.log("VideoCallMeeting: Stopped screen sharing");
       } else {
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
@@ -783,9 +1199,10 @@ const VideoCallMeeting: React.FC = () => {
         setParticipants((prev) =>
           prev.map((p) => (p.id === userId ? { ...p, stream } : p))
         );
+        console.log("VideoCallMeeting: Started screen sharing");
       }
     } catch (error) {
-      console.error("Error toggling screen share:", error);
+      console.error("VideoCallMeeting: Error toggling screen share:", error);
       toast({
         title: "Screen Share Error",
         description: "Failed to start or stop screen sharing.",
@@ -804,6 +1221,7 @@ const VideoCallMeeting: React.FC = () => {
     };
     socket?.emit("message", { meetingId, message });
     setMessages((prev) => [...prev, message]);
+    console.log("VideoCallMeeting: Sent message:", message);
   };
 
   const sendReaction = (reaction: string) => {
@@ -813,11 +1231,13 @@ const VideoCallMeeting: React.FC = () => {
       userName: user?.firstName || "You",
       reaction,
     });
+    console.log("VideoCallMeeting: Sent reaction:", reaction);
   };
 
   const leaveMeeting = () => {
     socket?.emit("leave-meeting", { meetingId, userId });
     navigate(`/user/meeting-end/${meetingId}`);
+    console.log("VideoCallMeeting: Left meeting");
   };
 
   return (
