@@ -54,13 +54,42 @@ import { MeetingProvider } from "@/contexts/MeetingContext";
 const BlogPage = lazy(() => import("../pages/usersPage/BlogPage"));
 const BlogPostPage = lazy(() => import("../pages/usersPage/BlogPost"));
 
+// const MeetingRoutesWrapper: React.FC = () => {
+//   return (
+//     <MeetingProvider>
+//       <Routes>
+//         <Route path="/meetinghome" element={<VideoCallHome />} />
+//         <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
+//         <Route path="/meeting/end/:meetingId" element={<VideoCallEndPage />} />
+//         <Route
+//           path="/meeting-join/:meetingId"
+//           element={<VideoCallJoinPage />}
+//         />
+//       </Routes>
+//     </MeetingProvider>
+//   );
+// };
+
+// const UserRouter: React.FC = () => {
+//   return (
+//     <Suspense fallback={<div>Loading...</div>}>
+//       <Routes>
+//         {/* Non-meeting routes */}
+//         <Route path="/blog" element={<BlogPage />} />
+//         <Route path="/blog/:id" element={<BlogPostPage />} />
+
+//         {/* Meeting-related routes wrapped with context */}
+//         <Route path="/*" element={<MeetingRoutesWrapper />} />
+//       </Routes>
+//     </Suspense>
+//   );
+// };
 const MeetingRoutesWrapper: React.FC = () => {
   return (
     <MeetingProvider>
       <Routes>
-        <Route path="/meetinghome" element={<VideoCallHome />} />
         <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
-        <Route path="/meeting/end" element={<VideoCallEndPage />} />
+        <Route path="/meeting-end/:meetingId" element={<VideoCallEndPage />} />
         <Route
           path="/meeting-join/:meetingId"
           element={<VideoCallJoinPage />}
@@ -74,11 +103,9 @@ const UserRouter: React.FC = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
-        {/* Non-meeting routes */}
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:id" element={<BlogPostPage />} />
-
-        {/* Meeting-related routes wrapped with context */}
+        <Route path="/meetinghome" element={<VideoCallHome />} />
         <Route path="/*" element={<MeetingRoutesWrapper />} />
       </Routes>
     </Suspense>

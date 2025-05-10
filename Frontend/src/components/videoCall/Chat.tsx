@@ -108,7 +108,6 @@
 // };
 
 // export default Chat;
-//=====================================================================================
 import React, { useState, useRef, useEffect } from "react";
 import { Send, X } from "lucide-react";
 import { Input } from "@/components/ui/input";

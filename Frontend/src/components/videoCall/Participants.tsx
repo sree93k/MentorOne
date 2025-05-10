@@ -66,14 +66,14 @@
 // };
 
 // export default Participants;
-//=================================================================================
-import React from "react";
+import React, { useEffect } from "react";
 import { Mic, MicOff, Video as VideoIcon, VideoOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Participant {
   id: string;
   name: string;
+  stream?: MediaStream | null;
   audio: boolean;
   video: boolean;
 }
@@ -90,7 +90,9 @@ const Participants: React.FC<ParticipantsProps> = ({
   participants,
 }) => {
   if (!isOpen) return null;
-
+  useEffect(() => {
+    console.log("participents", participants);
+  });
   return (
     <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-lg flex flex-col z-10">
       <div className="flex items-center justify-between p-4 border-b">
