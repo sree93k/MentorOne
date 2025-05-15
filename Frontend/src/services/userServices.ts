@@ -330,12 +330,14 @@ export const validateMeeting = async (meetingId: string): Promise<boolean> => {
 
 export const joinMeeting = async (meetingId: string): Promise<void> => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
+    console.log("user servcie joinMeeting step 1");
 
+    const accessToken = localStorage.getItem("accessToken");
+    console.log("user servcie joinMeeting step 2");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-
+    console.log("user servcie joinMeeting step 3");
     await api.post(
       `/user/video-call/join/${meetingId}`,
       {},
@@ -345,6 +347,7 @@ export const joinMeeting = async (meetingId: string): Promise<void> => {
         },
       }
     );
+    console.log("user servcie joinMeeting step 4");
   } catch (error: any) {
     console.error("Error joining meeting:", error);
     throw new Error(error.response?.data?.message || "Failed to join meeting");

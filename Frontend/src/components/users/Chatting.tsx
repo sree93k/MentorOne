@@ -821,11 +821,11 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
             </div>
             <ScrollArea className="h-[calc(100vh-150px)]">
               <div className="space-y-1 px-2">
-                {error && (
+                {/* {error && (
                   <p className="text-center text-sm text-red-600 p-3 bg-red-50 rounded-md mx-2">
                     {error}
                   </p>
-                )}
+                )} */}
                 {filteredChatUsers.length > 0 ? (
                   filteredChatUsers.map((user) => (
                     <button
@@ -960,11 +960,11 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       }
                     `}
                   </style>
-                  {error && (
+                  {/* {error && (
                     <p className="text-center text-sm text-red-600 p-3 bg-red-50 rounded-md mb-4 shadow-sm">
                       {error}
                     </p>
-                  )}
+                  )} */}
                   {!isMessagesLoaded ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="flex flex-col items-center gap-2">
