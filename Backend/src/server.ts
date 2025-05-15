@@ -11,8 +11,8 @@ import { connectDatabase } from "./config/database";
 import { router } from "./routes/router";
 import cookieParser from "cookie-parser";
 import multer from "multer";
-import { initializeSocket } from "./utils/socket";
-
+import { initializeChatSocket } from "./utils/socket/chat";
+import { initializeVideoSocket } from "./utils/socket/videoCall";
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
   "REFRESH_TOKEN_SECRET",
@@ -33,13 +33,22 @@ for (const envVar of requiredEnvVars) {
 const app = express();
 const httpServer = createServer(app);
 
-// Initialize Socket.IO
-initializeSocket(httpServer)
+// Initialize chat Socket.IO
+initializeChatSocket(httpServer)
   .then(() => {
-    console.log("Socket.IO initialization complete");
+    console.log("Socket.IO initialization chat complete");
   })
   .catch((err) => {
-    console.error("Socket.IO initialization failed:", err);
+    console.error("Socket.IO initialization chat failed:", err);
+  });
+
+// Initialize videocall Socket.IO
+initializeVideoSocket(httpServer)
+  .then(() => {
+    console.log("Socket.IO initialization video complete");
+  })
+  .catch((err) => {
+    console.error("Socket.IO initialization video failed:", err);
   });
 
 // Middleware

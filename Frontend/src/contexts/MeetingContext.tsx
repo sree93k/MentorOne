@@ -26,12 +26,14 @@ interface MeetingContextType {
   isVideoOn: boolean;
   isSharingScreen: boolean;
   isHandRaised: boolean;
+  setLocalStream: (stream: MediaStream | null) => void;
   addParticipant: (participant: Participant) => void;
+  updateParticipant: (id: string, updates: Partial<Participant>) => void;
   removeParticipant: (id: string) => void;
   sendMessage: (text: string) => void;
   toggleAudio: () => void;
   toggleVideo: () => void;
-  toggleScreenShare: () => void;
+  toggleScreenShare: () => Promise<void>;
   toggleRaiseHand: () => void;
   leaveMeeting: () => void;
 }
@@ -45,12 +47,14 @@ const defaultContext: MeetingContextType = {
   isVideoOn: true,
   isSharingScreen: false,
   isHandRaised: false,
+  setLocalStream: () => {},
   addParticipant: () => {},
+  updateParticipant: () => {},
   removeParticipant: () => {},
   sendMessage: () => {},
   toggleAudio: () => {},
   toggleVideo: () => {},
-  toggleScreenShare: () => {},
+  toggleScreenShare: async () => {},
   toggleRaiseHand: () => {},
   leaveMeeting: () => {},
 };
@@ -73,75 +77,52 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isSharingScreen, setIsSharingScreen] = useState(false);
   const [isHandRaised, setIsHandRaised] = useState(false);
 
-  // Initialize local stream when component mounts
   useEffect(() => {
-    const initLocalStream = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: true,
-        });
-        setLocalStream(stream);
-
-        // Add local participant
-        const localParticipant: Participant = {
-          id: "local",
-          name: "You",
-          stream,
-          audio: true,
-          video: true,
-        };
-
-        setParticipants([localParticipant]);
-      } catch (error) {
-        console.error("Error accessing media devices:", error);
-      }
-    };
-
-    initLocalStream();
-
-    // Mock adding additional participants for demo
-    setTimeout(() => {
-      addParticipant({
-        id: "123",
-        name: "John Doe",
-        audio: true,
-        video: true,
-      });
-
-      addParticipant({
-        id: "456",
-        name: "Jane Smith",
-        audio: false,
-        video: true,
-      });
-    }, 2000);
-
-    // Cleanup function
+    setMeetingId(id || "");
     return () => {
       if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
+        console.log("MeetingContext: Cleaning up local stream");
+        localStream.getTracks().forEach((track) => {
+          console.log(`Stopping track: ${track.kind} (${track.id})`);
+          track.stop();
+        });
       }
     };
-  }, []);
+  }, [id, localStream]);
 
   const addParticipant = (participant: Participant) => {
-    setParticipants((prev) => [...prev, participant]);
+    setParticipants((prev) => {
+      if (prev.some((p) => p.id === participant.id)) {
+        console.log(`Participant ${participant.id} already exists`);
+        return prev;
+      }
+      console.log(
+        `Adding participant: ${participant.name} (${participant.id})`
+      );
+      return [...prev, participant];
+    });
+  };
+
+  const updateParticipant = (id: string, updates: Partial<Participant>) => {
+    setParticipants((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
+    );
   };
 
   const removeParticipant = (id: string) => {
+    console.log(`Removing participant: ${id}`);
     setParticipants((prev) => prev.filter((p) => p.id !== id));
   };
 
   const sendMessage = (text: string) => {
+    if (!text.trim()) return;
     const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: "local",
-      senderName: "You",
+      id: `${Date.now()}`,
+      senderId: "local", // This should be updated by the consuming component
+      senderName: "You", // This should be updated by the consuming component
       text,
       timestamp: new Date(),
     };
-
     setMessages((prev) => [...prev, newMessage]);
   };
 
@@ -151,6 +132,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsAudioOn(audioTrack.enabled);
+        console.log(`Audio ${audioTrack.enabled ? "enabled" : "disabled"}`);
       }
     }
   };
@@ -161,74 +143,72 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoOn(videoTrack.enabled);
+        console.log(`Video ${videoTrack.enabled ? "enabled" : "disabled"}`);
       }
     }
   };
 
   const toggleScreenShare = async () => {
-    if (isSharingScreen) {
-      // Stop screen sharing and revert to camera
-      if (localStream) {
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack) {
-          videoTrack.stop();
+    try {
+      if (isSharingScreen) {
+        if (localStream) {
+          localStream.getTracks().forEach((track) => {
+            console.log(`Stopping track: ${track.kind} (${track.id})`);
+            track.stop();
+          });
         }
-      }
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
           video: true,
         });
-        const videoTrack = stream.getVideoTracks()[0];
-
-        if (localStream) {
-          const oldTrack = localStream.getVideoTracks()[0];
-          if (oldTrack) {
-            localStream.removeTrack(oldTrack);
-          }
-          localStream.addTrack(videoTrack);
-        }
-
+        setLocalStream(newStream);
         setIsSharingScreen(false);
-      } catch (error) {
-        console.error("Error accessing camera:", error);
-      }
-    } else {
-      // Start screen sharing
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
+        setIsVideoOn(true);
+        console.log("Switched back to camera stream:", newStream.id);
+      } else {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
         });
-        const screenTrack = stream.getVideoTracks()[0];
-
+        const newStream = new MediaStream();
+        screenStream.getTracks().forEach((track) => {
+          newStream.addTrack(track);
+          track.onended = () => {
+            console.log(`Screen share ended: ${track.id}`);
+            toggleScreenShare();
+          };
+        });
         if (localStream) {
-          const oldTrack = localStream.getVideoTracks()[0];
-          if (oldTrack) {
-            localStream.removeTrack(oldTrack);
+          const audioTrack = localStream.getAudioTracks()[0];
+          if (audioTrack) {
+            newStream.addTrack(audioTrack);
           }
-          localStream.addTrack(screenTrack);
         }
-
-        screenTrack.onended = () => {
-          toggleScreenShare();
-        };
-
+        setLocalStream(newStream);
         setIsSharingScreen(true);
-      } catch (error) {
-        console.error("Error sharing screen:", error);
+        console.log("Started screen sharing with stream:", newStream.id);
       }
+    } catch (error) {
+      console.error("Error toggling screen share:", error);
     }
   };
 
   const toggleRaiseHand = () => {
     setIsHandRaised(!isHandRaised);
+    console.log(`Raise hand ${isHandRaised ? "lowered" : "raised"}`);
   };
 
   const leaveMeeting = () => {
     if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop());
+      localStream.getTracks().forEach((track) => {
+        console.log(`Stopping track: ${track.kind} (${track.id})`);
+        track.stop();
+      });
+      setLocalStream(null);
     }
+    setParticipants([]);
+    setMessages([]);
     navigate(`/user/meeting-end/${meetingId}`);
+    console.log(`Left meeting: ${meetingId}`);
   };
 
   return (
@@ -242,7 +222,9 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({
         isVideoOn,
         isSharingScreen,
         isHandRaised,
+        setLocalStream,
         addParticipant,
+        updateParticipant,
         removeParticipant,
         sendMessage,
         toggleAudio,

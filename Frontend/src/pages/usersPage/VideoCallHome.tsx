@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import Logo from "@/assets/logo6.png";
 import MeetingImage from "@/assets/MeetingImage.jpg"; // Add an image for the right side
 import { startVideoCall } from "@/services/userServices";
+import { joinMeeting } from "@/services/userServices";
 
 const VideoCallHome: React.FC = () => {
   const navigate = useNavigate();
@@ -28,9 +29,10 @@ const VideoCallHome: React.FC = () => {
     }
   };
 
-  const handleJoinMeeting = (e: React.FormEvent) => {
+  const handleJoinMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (meetingCode.trim()) {
+      await joinMeeting(meetingCode);
       navigate(`/user/meeting/${meetingCode}`);
     } else {
       toast({
@@ -40,6 +42,25 @@ const VideoCallHome: React.FC = () => {
       });
     }
   };
+
+  // const handleJoinMeeting = async () => {
+  //   if (meetingCode.trim()) {
+  //     try {
+  //       console.log("homepagehandleJoinMeeting step 1", meetingCode);
+
+  //       await joinMeeting(meetingCode);
+  //       console.log("homepagehandleJoinMeeting step 2");
+  //       navigate(`/user/meeting/${meetingCode}`);
+  //       console.log("homepagehandleJoinMeeting step 3");
+  //     } catch (error: any) {
+  //       toast({
+  //         title: "Error",
+  //         description: error.message || "Failed to join meeting",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-white">

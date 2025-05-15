@@ -84,7 +84,6 @@
 //         default:
 //           console.log(`Unhandled event type ${event.type}`);
 //       }
-
 //       res.sendStatus(200);
 //     } catch (error: any) {
 //       console.error(`Webhook error: ${error.message}`);
@@ -92,7 +91,6 @@
 //     }
 //   };
 // }
-
 // export default new WebhookController();
 import { Request, Response } from "express";
 import imPaymentService from "../../services/implementations/imPaymentService";

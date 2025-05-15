@@ -4,8 +4,9 @@ import uploadController from "../../controllers/userController/uploadController"
 import { authenticate } from "../../middlewares/authenticateuser";
 import userController from "../../controllers/userController/userController";
 import paymentController from "../../controllers/paymentController/paymentController";
-import socketController from "../../controllers/soketController/socketController";
+import socketController from "../../controllers/socketController/socketController";
 import videoCallController from "../../controllers/VideoCallController/videoCallController";
+import chatController from "../../controllers/socketController/socketController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
@@ -58,7 +59,7 @@ userPrivateRoute.get(
 userPrivateRoute.get(
   "/:dashboard/chat-history",
   authenticate,
-  socketController.getChatUsers.bind(socketController)
+  chatController.getChatUsers.bind(chatController)
 );
 
 userPrivateRoute.get(
