@@ -1,172 +1,506 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Video, Mic, Settings, ChevronDown } from "lucide-react";
-import Header from "../../components/videoCall/Header";
+// import { useRef, useState, useEffect } from "react";
+// import { Video, Mic, MicOff, VideoOff, ChevronDown, Users } from "lucide-react";
+// import { Button } from "@/components/ui/button";
+// import { Card, CardContent } from "@/components/ui/card";
+// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import { cn } from "@/lib/utils";
+// import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const JoinMeeting: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+// export default function MeetingJoinPage() {
+//   const videoRef = useRef<HTMLVideoElement>(null);
+//   const [isMicOn, setIsMicOn] = useState(true);
+//   const [isVideoOn, setIsVideoOn] = useState(true);
+//   const [userEmail] = useState("user@example.com");
+//   const [userName] = useState("User");
+//   const [isReady] = useState(true);
+//   const [permissionError, setPermissionError] = useState<string | null>(null);
+
+//   useEffect(() => {
+//     let stream: MediaStream | null = null;
+
+//     const setupStream = async () => {
+//       try {
+//         // Clear any previous error messages
+//         setPermissionError(null);
+
+//         // Only attempt to get media if video or mic is enabled
+//         if (isVideoOn || isMicOn) {
+//           // Check permissions before attempting to access media
+//           const permissions = await Promise.all([
+//             navigator.permissions.query({ name: "camera" as PermissionName }),
+//             navigator.permissions.query({
+//               name: "microphone" as PermissionName,
+//             }),
+//           ]);
+
+//           const [cameraPermission, micPermission] = permissions;
+
+//           if (
+//             cameraPermission.state === "denied" ||
+//             micPermission.state === "denied"
+//           ) {
+//             setPermissionError(
+//               "Camera and/or microphone access is blocked. Please allow access in your browser settings to use video chat."
+//             );
+//             return;
+//           }
+
+//           stream = await navigator.mediaDevices.getUserMedia({
+//             video: isVideoOn,
+//             audio: isMicOn,
+//           });
+
+//           if (videoRef.current) {
+//             videoRef.current.srcObject = stream;
+//           }
+//         } else if (videoRef.current) {
+//           videoRef.current.srcObject = null;
+//         }
+//       } catch (err) {
+//         console.error("Error accessing media devices:", err);
+
+//         // Handle specific permission errors
+//         if (err instanceof Error) {
+//           if (
+//             err.name === "NotAllowedError" ||
+//             err.name === "PermissionDeniedError"
+//           ) {
+//             setPermissionError(
+//               "Please allow camera and microphone access to use video chat. Click the camera icon in your browser's address bar to update permissions."
+//             );
+//           } else {
+//             setPermissionError(
+//               "Unable to access camera or microphone. Please make sure your devices are properly connected and not in use by another application."
+//             );
+//           }
+//         }
+//       }
+//     };
+
+//     setupStream();
+
+//     return () => {
+//       if (stream) {
+//         stream.getTracks().forEach((track) => track.stop());
+//       }
+//     };
+//   }, [isVideoOn, isMicOn]);
+
+//   const handleJoinMeeting = () => {
+//     console.log("Joining meeting...");
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-white flex flex-col">
+//       {/* Header */}
+//       {/* <header className="fixed top-0 left-0 right-0 flex items-center justify-between p-4 bg-white/95 z-10">
+//         <div className="flex items-center gap-2">
+//           <Video className="h-6 w-6 text-primary" />
+//           <span className="text-xl font-medium text-neutral-700">Meet</span>
+//         </div>
+
+//         <div className="flex items-center gap-2">
+//           <span className="text-sm text-neutral-700 hidden md:block">
+//             {userEmail}
+//           </span>
+//           <button className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+//             Switch account
+//           </button>
+//           <Avatar className="h-8 w-8">
+//             <AvatarImage src="" alt={userName} />
+//             <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
+//           </Avatar>
+//         </div>
+//       </header> */}
+
+//       {/* Main Content */}
+//       <main className="flex-1 flex items-center justify-between px-2 pt-10 pb-8">
+//         <div className="w-full max-w-6xl flex flex-col md:flex-row gap-8">
+//           {permissionError && (
+//             <Alert variant="destructive" className="mb-4 w-full">
+//               <AlertDescription>{permissionError}</AlertDescription>
+//             </Alert>
+//           )}
+
+//           {/* Video Preview */}
+//           <div className="relative w-[800px] mx-auto">
+//             <Card className="bg-neutral-100 overflow-hidden">
+//               <CardContent className="p-0 relative aspect-video">
+//                 {isVideoOn ? (
+//                   <video
+//                     ref={videoRef}
+//                     autoPlay
+//                     muted
+//                     playsInline
+//                     className="w-full h-full object-cover"
+//                   />
+//                 ) : (
+//                   <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+//                     <div className="h-24 w-24 rounded-full bg-neutral-600 flex items-center justify-center">
+//                       <span className="text-3xl font-medium text-white">
+//                         {userName.charAt(0).toUpperCase()}
+//                       </span>
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 <div className="absolute top-4 left-4">
+//                   <div className="text-white text-lg font-medium drop-shadow-md">
+//                     {userName}
+//                   </div>
+//                 </div>
+
+//                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
+//                   <Button
+//                     variant="secondary"
+//                     size="icon"
+//                     className={cn(
+//                       "rounded-full h-12 w-12 bg-neutral-800/60 hover:bg-neutral-800/80 text-white border-0",
+//                       !isMicOn && "bg-red-500/80 hover:bg-red-500/90"
+//                     )}
+//                     onClick={() => setIsMicOn(!isMicOn)}
+//                   >
+//                     {isMicOn ? (
+//                       <Mic className="h-5 w-5" />
+//                     ) : (
+//                       <MicOff className="h-5 w-5" />
+//                     )}
+//                   </Button>
+
+//                   <Button
+//                     variant="secondary"
+//                     size="icon"
+//                     className={cn(
+//                       "rounded-full h-12 w-12 bg-neutral-800/60 hover:bg-neutral-800/80 text-white border-0",
+//                       !isVideoOn && "bg-red-500/80 hover:bg-red-500/90"
+//                     )}
+//                     onClick={() => setIsVideoOn(!isVideoOn)}
+//                   >
+//                     {isVideoOn ? (
+//                       <Video className="h-5 w-5" />
+//                     ) : (
+//                       <VideoOff className="h-5 w-5" />
+//                     )}
+//                   </Button>
+//                 </div>
+//               </CardContent>
+//             </Card>
+//           </div>
+
+//           {/* Join Controls */}
+//           <div className="flex flex-col items-center gap-6 mt-8">
+//             <h2 className="text-3xl font-medium text-neutral-800">
+//               Ready to join?
+//             </h2>
+
+//             <p className="text-neutral-600">
+//               {isReady ? "No one else is here" : "Setting up your devices..."}
+//             </p>
+
+//             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+//               <Button
+//                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-6 px-8 rounded-full"
+//                 onClick={handleJoinMeeting}
+//               >
+//                 Join now
+//               </Button>
+//             </div>
+//           </div>
+//         </div>
+//       </main>
+//     </div>
+//   );
+// }
+import { useRef, useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Video, Mic, MicOff, VideoOff, ChevronDown, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "react-hot-toast";
+import { joinMeeting } from "@/services/userServices";
+import { io, Socket } from "socket.io-client";
+
+export default function MeetingJoinPage() {
+  const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
-  const [userName, setUserName] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const [isMicOn, setIsMicOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
-  const [isAudioOn, setIsAudioOn] = useState(true);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [showDeviceSettings, setShowDeviceSettings] = useState(false);
+  const [userEmail] = useState("user@example.com");
+  const [userName] = useState("User");
+  const [isReady] = useState(true);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Request camera and microphone permissions
-    const initializeMedia = async () => {
+    // Initialize Socket.IO for rejection handling
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      toast.error("Please log in to join the meeting.");
+      navigate("/login");
+      return;
+    }
+
+    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+      auth: { token },
+      transports: ["websocket"],
+      path: "/video-socket.io/",
+      query: { meetingId },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+    socketRef.current = socketInstance;
+
+    socketInstance.on("connect", () => {
+      console.log("Socket.IO connected for join page:", socketInstance.id);
+    });
+
+    socketInstance.on("join-rejected", () => {
+      console.log("Join request rejected by creator");
+      toast.error("Your join request was rejected by the meeting creator.");
+      setIsLoading(false);
+      navigate("/user/meetinghome");
+    });
+
+    socketInstance.on("connect_error", (error) => {
+      console.error("Socket.IO connection error:", error.message);
+      toast.error("Failed to connect to the server.");
+      if (error.message.includes("Authentication error")) {
+        localStorage.removeItem("accessToken");
+        navigate("/login");
+      }
+    });
+
+    // Setup media stream
+    const setupStream = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        setStream(mediaStream);
-      } catch (error) {
-        console.error("Error accessing media devices:", error);
+        setPermissionError(null);
+
+        if (isVideoOn || isMicOn) {
+          const permissions = await Promise.all([
+            navigator.permissions.query({ name: "camera" as PermissionName }),
+            navigator.permissions.query({
+              name: "microphone" as PermissionName,
+            }),
+          ]);
+
+          const [cameraPermission, micPermission] = permissions;
+          if (
+            cameraPermission.state === "denied" ||
+            micPermission.state === "denied"
+          ) {
+            setPermissionError(
+              "Camera and/or microphone access is blocked. Please allow access in your browser settings to use video chat."
+            );
+            return;
+          }
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: isVideoOn,
+            audio: isMicOn,
+          });
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } else if (videoRef.current) {
+          videoRef.current.srcObject = null;
+        }
+      } catch (err) {
+        console.error("Error accessing media devices:", err);
+        if (err instanceof Error) {
+          if (
+            err.name === "NotAllowedError" ||
+            err.name === "PermissionDeniedError"
+          ) {
+            setPermissionError(
+              "Please allow camera and microphone access to use video chat. Click the camera icon in your browser's address bar to update permissions."
+            );
+          } else {
+            setPermissionError(
+              "Unable to access camera or microphone. Please make sure your devices are properly connected and not in use by another application."
+            );
+          }
+        }
       }
     };
 
-    initializeMedia();
+    setupStream();
 
-    // Cleanup
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      console.log("Cleaning up MeetingJoinPage");
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => {
+          console.log(`Stopping track: ${track.kind} (${track.id})`);
+          track.stop();
+        });
+        streamRef.current = null;
+      }
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
-  }, []);
+  }, [isVideoOn, isMicOn, navigate, meetingId]);
 
-  const toggleVideo = () => {
-    if (stream) {
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoOn(videoTrack.enabled);
-      }
+  const handleJoinMeeting = async () => {
+    if (!meetingId) {
+      toast.error("Invalid meeting ID.");
+      return;
     }
-  };
 
-  const toggleAudio = () => {
-    if (stream) {
-      const audioTrack = stream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioOn(audioTrack.enabled);
-      }
-    }
-  };
-
-  const handleJoinMeeting = () => {
-    if (userName.trim()) {
-      navigate(`/meeting/${id}`);
+    setIsLoading(true);
+    try {
+      console.log("Sending join request for meeting:", meetingId);
+      await joinMeeting(meetingId);
+      console.log("Join request sent, waiting for admin approval");
+      navigate(`/user/meeting/${meetingId}`, {
+        state: { isVideoOn, isMicOn },
+      });
+    } catch (error: any) {
+      console.error("Error joining meeting:", error);
+      toast.error(error.message || "Failed to send join request.");
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-100">
-      <Header />
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      {/* <header className="fixed top-0 left-0 right-0 flex items-center justify-between p-4 bg-white/95 z-10">
+        <div className="flex items-center gap-2">
+          <Video className="h-6 w-6 text-primary" />
+          <span className="text-xl font-medium text-neutral-700">Meet</span>
+        </div>
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left side - Preview */}
-          <div className="bg-white p-6 rounded-lg shadow-card">
-            <div className="aspect-video bg-neutral-900 rounded-lg overflow-hidden mb-4 relative">
-              {stream && isVideoOn ? (
-                <video
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                  srcObject={stream}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-neutral-800">
-                  <div className="w-24 h-24 rounded-full bg-primary-500 flex items-center justify-center text-white text-3xl">
-                    {userName ? userName.charAt(0).toUpperCase() : "?"}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-neutral-700 hidden md:block">
+            {userEmail}
+          </span>
+          <button className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+            Switch account
+          </button>
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="" alt={userName} />
+            <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
+          </Avatar>
+        </div>
+      </header> */}
+
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-between px-2 pt-10 pb-8">
+        <div className="w-full max-w-6xl flex flex-col md:flex-row gap-8">
+          {permissionError && (
+            <Alert variant="destructive" className="mb-4 w-full">
+              <AlertDescription>{permissionError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Video Preview */}
+          <div className="relative w-[800px] mx-auto">
+            <Card className="bg-neutral-100 overflow-hidden">
+              <CardContent className="p-0 relative aspect-video">
+                {isVideoOn ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                    <div className="h-24 w-24 rounded-full bg-neutral-600 flex items-center justify-center">
+                      <span className="text-3xl font-medium text-white">
+                        {userName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="absolute top-4 left-4">
+                  <div className="text-white text-lg font-medium drop-shadow-md">
+                    {userName}
                   </div>
                 </div>
-              )}
 
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-3">
-                <button
-                  onClick={toggleAudio}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isAudioOn ? "bg-neutral-800/80" : "bg-danger-500"
-                  }`}
-                >
-                  <Mic
-                    className={`w-5 h-5 ${
-                      isAudioOn ? "text-white" : "text-white"
-                    }`}
-                  />
-                </button>
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className={cn(
+                      "rounded-full h-12 w-12 bg-neutral-800/60 hover:bg-neutral-800/80 text-white border-0",
+                      !isMicOn && "bg-red-500/80 hover:bg-red-500/90"
+                    )}
+                    onClick={() => setIsMicOn(!isMicOn)}
+                  >
+                    {isMicOn ? (
+                      <Mic className="h-5 w-5" />
+                    ) : (
+                      <MicOff className="h-5 w-5" />
+                    )}
+                  </Button>
 
-                <button
-                  onClick={toggleVideo}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isVideoOn ? "bg-neutral-800/80" : "bg-danger-500"
-                  }`}
-                >
-                  <Video
-                    className={`w-5 h-5 ${
-                      isVideoOn ? "text-white" : "text-white"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setShowDeviceSettings(!showDeviceSettings)}
-                className="text-primary-500 hover:text-primary-600 font-medium flex items-center"
-              >
-                <Settings className="w-4 h-4 mr-1" />
-                <span>Check audio and video</span>
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </button>
-            </div>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className={cn(
+                      "rounded-full h-12 w-12 bg-neutral-800/60 hover:bg-neutral-800/80 text-white border-0",
+                      !isVideoOn && "bg-red-500/80 hover:bg-red-500/90"
+                    )}
+                    onClick={() => setIsVideoOn(!isVideoOn)}
+                  >
+                    {isVideoOn ? (
+                      <Video className="h-5 w-5" />
+                    ) : (
+                      <VideoOff className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Right side - Join form */}
-          <div className="bg-white p-6 rounded-lg shadow-card flex flex-col">
-            <h1 className="text-2xl font-bold mb-2">Ready to join?</h1>
-            <p className="text-neutral-600 mb-6">No one else is here</p>
+          {/* Join Controls */}
+          <div className="flex flex-col items-center gap-6 mt-8">
+            <h2 className="text-3xl font-medium text-neutral-800">
+              Ready to join?
+            </h2>
 
-            <div className="mb-6">
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-neutral-700 mb-1"
-              >
-                Your name
-              </label>
-              <input
-                type="text"
-                id="name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                placeholder="Enter your name"
-                className="input-field"
-                autoFocus
-              />
-            </div>
+            <p className="text-neutral-600">
+              {isReady ? "No one else is here" : "Setting up your devices..."}
+            </p>
 
-            <div className="flex flex-col space-y-3 mt-auto">
-              <button
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-6 px-8 rounded-full"
                 onClick={handleJoinMeeting}
-                disabled={!userName.trim()}
-                className="btn-primary w-full"
+                disabled={isLoading}
               >
-                Join now
-              </button>
-
-              <button className="btn-secondary w-full">Present</button>
+                {isLoading ? "Requesting..." : "Join now"}
+              </Button>
             </div>
           </div>
         </div>
       </main>
     </div>
   );
-};
-
-export default JoinMeeting;
+}

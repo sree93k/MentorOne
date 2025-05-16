@@ -1,4 +1,4 @@
-// import React from "react";
+// import React, { useEffect } from "react";
 // import { useParams, useNavigate } from "react-router-dom";
 // import { Button } from "@/components/ui/button";
 // import { ShieldCheck } from "lucide-react";
@@ -7,11 +7,71 @@
 //   const { id } = useParams<{ id: string }>();
 //   const navigate = useNavigate();
 
+//   // Check media device status on mount
+//   useEffect(() => {
+//     console.log("VideoCallEndPage: Checking media device status");
+
+//     // Function to check active media streams
+//     const checkMediaStreams = async () => {
+//       try {
+//         // Get all media devices
+//         const devices = await navigator.mediaDevices.enumerateDevices();
+//         const activeDevices = devices.filter(
+//           (device) =>
+//             device.kind === "videoinput" || device.kind === "audioinput"
+//         );
+//         console.log("VideoCallEndPage: Media devices:", activeDevices);
+
+//         // Attempt to access media to check if streams are active
+//         const stream = await navigator.mediaDevices
+//           .getUserMedia({
+//             video: true,
+//             audio: true,
+//           })
+//           .catch((err) => {
+//             console.log(
+//               "VideoCallEndPage: No active media stream (expected):",
+//               err.message
+//             );
+//             return null;
+//           });
+
+//         if (stream) {
+//           console.warn(
+//             "VideoCallEndPage: Found active media stream, stopping tracks"
+//           );
+//           stream.getTracks().forEach((track) => {
+//             console.log(
+//               `VideoCallEndPage: Stopping track: ${track.kind} (${track.id})`
+//             );
+//             track.stop();
+//             track.enabled = false;
+//           });
+//         } else {
+//           console.log(
+//             "VideoCallEndPage: No active media streams, camera and audio are off"
+//           );
+//         }
+//       } catch (error) {
+//         console.error("VideoCallEndPage: Error checking media streams:", error);
+//       }
+//     };
+
+//     checkMediaStreams();
+
+//     // Cleanup on unmount (though not strictly necessary here)
+//     return () => {
+//       console.log("VideoCallEndPage: Component unmounting");
+//     };
+//   }, []);
+
 //   const handleRejoin = () => {
+//     console.log("VideoCallEndPage: Rejoining meeting:", id);
 //     navigate(`/user/meeting/${id}`);
 //   };
 
 //   const handleReturnHome = () => {
+//     console.log("VideoCallEndPage: Navigating to home screen");
 //     navigate("/user/meetinghome");
 //   };
 
@@ -70,7 +130,7 @@
 // };
 
 // export default VideoCallEndPage;
-import React, { useEffect } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck } from "lucide-react";
@@ -78,64 +138,6 @@ import { ShieldCheck } from "lucide-react";
 const VideoCallEndPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
-  // Check media device status on mount
-  useEffect(() => {
-    console.log("VideoCallEndPage: Checking media device status");
-
-    // Function to check active media streams
-    const checkMediaStreams = async () => {
-      try {
-        // Get all media devices
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const activeDevices = devices.filter(
-          (device) =>
-            device.kind === "videoinput" || device.kind === "audioinput"
-        );
-        console.log("VideoCallEndPage: Media devices:", activeDevices);
-
-        // Attempt to access media to check if streams are active
-        const stream = await navigator.mediaDevices
-          .getUserMedia({
-            video: true,
-            audio: true,
-          })
-          .catch((err) => {
-            console.log(
-              "VideoCallEndPage: No active media stream (expected):",
-              err.message
-            );
-            return null;
-          });
-
-        if (stream) {
-          console.warn(
-            "VideoCallEndPage: Found active media stream, stopping tracks"
-          );
-          stream.getTracks().forEach((track) => {
-            console.log(
-              `VideoCallEndPage: Stopping track: ${track.kind} (${track.id})`
-            );
-            track.stop();
-            track.enabled = false;
-          });
-        } else {
-          console.log(
-            "VideoCallEndPage: No active media streams, camera and audio are off"
-          );
-        }
-      } catch (error) {
-        console.error("VideoCallEndPage: Error checking media streams:", error);
-      }
-    };
-
-    checkMediaStreams();
-
-    // Cleanup on unmount (though not strictly necessary here)
-    return () => {
-      console.log("VideoCallEndPage: Component unmounting");
-    };
-  }, []);
 
   const handleRejoin = () => {
     console.log("VideoCallEndPage: Rejoining meeting:", id);
