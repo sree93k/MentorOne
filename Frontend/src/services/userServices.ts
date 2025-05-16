@@ -211,16 +211,17 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
   }
 };
 
-// New function for starting a video call
 // export const startVideoCall = async (): Promise<string> => {
-//   console.log("USERSERVICE  startVideoCall step 1");
 //   try {
+//     console.log("USERSERVICE  startVideoCall step 1");
 //     const accessToken = localStorage.getItem("accessToken");
+
 //     if (!accessToken) {
 //       throw new Error("No access token found. Please log in again.");
 //     }
+
 //     const response = await api.post(
-//       "/user/video-call/start",
+//       "/user/video-call/create",
 //       {},
 //       {
 //         headers: {
@@ -228,32 +229,106 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
 //         },
 //       }
 //     );
+
 //     console.log("USERSERVICE  startVideoCall step 2", response);
+
+//     if (!response.data.success || !response.data.data.meetingId) {
+//       throw new Error("Failed to create meeting room");
+//     }
+
 //     return response.data.data.meetingId;
 //   } catch (error: any) {
-//     console.error("Error starting video call:", error);
+//     console.error("Error creating meeting:", error);
 //     throw new Error(
-//       error.response?.data?.error || "Failed to start video call"
+//       error.response?.data?.message || "Failed to create meeting room"
 //     );
 //   }
 // };
+
 // export const validateMeeting = async (meetingId: string): Promise<boolean> => {
 //   try {
+//     console.log("Validating meeting:", meetingId);
 //     const accessToken = localStorage.getItem("accessToken");
+
 //     if (!accessToken) {
 //       throw new Error("No access token found. Please log in again.");
 //     }
+
 //     const response = await api.get(`/user/video-call/validate/${meetingId}`, {
 //       headers: {
 //         Authorization: `Bearer ${accessToken}`,
 //       },
 //     });
+
+//     console.log("Validation response:", response.data);
+
+//     if (!response.data.success) {
+//       throw new Error(response.data.message || "Failed to validate meeting");
+//     }
+
 //     return response.data.data.isValid;
 //   } catch (error: any) {
 //     console.error("Error validating meeting:", error);
+
+//     // Check for specific error types
+//     if (error.response?.status === 500) {
+//       throw new Error("Server error. Please try again later.");
+//     } else if (error.response?.status === 404) {
+//       return false; // Meeting not found, consider it invalid
+//     }
+
 //     throw new Error(
-//       error.response?.data?.error || "Failed to validate meeting"
+//       error.response?.data?.message || "Failed to validate meeting"
 //     );
+//   }
+// };
+
+// export const joinMeeting = async (meetingId: string): Promise<void> => {
+//   try {
+//     console.log("user servcie joinMeeting step 1");
+
+//     const accessToken = localStorage.getItem("accessToken");
+//     console.log("user servcie joinMeeting step 2");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+//     console.log("user servcie joinMeeting step 3");
+//     await api.post(
+//       `/user/video-call/join/${meetingId}`,
+//       {},
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//         },
+//       }
+//     );
+//     console.log("user servcie joinMeeting step 4");
+//   } catch (error: any) {
+//     console.error("Error joining meeting:", error);
+//     throw new Error(error.response?.data?.message || "Failed to join meeting");
+//   }
+// };
+
+// export const endMeeting = async (meetingId: string): Promise<void> => {
+//   try {
+//     const accessToken = localStorage.getItem("accessToken");
+
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+
+//     await api.post(
+//       `/user/video-call/end/${meetingId}`,
+//       {},
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//         },
+//       }
+//     );
+//   } catch (error: any) {
+//     console.error("Error ending meeting:", error);
+//     throw new Error(error.response?.data?.message || "Failed to end meeting");
 //   }
 // };
 export const startVideoCall = async (): Promise<string> => {
@@ -315,11 +390,10 @@ export const validateMeeting = async (meetingId: string): Promise<boolean> => {
   } catch (error: any) {
     console.error("Error validating meeting:", error);
 
-    // Check for specific error types
     if (error.response?.status === 500) {
       throw new Error("Server error. Please try again later.");
     } else if (error.response?.status === 404) {
-      return false; // Meeting not found, consider it invalid
+      return false;
     }
 
     throw new Error(
@@ -330,14 +404,11 @@ export const validateMeeting = async (meetingId: string): Promise<boolean> => {
 
 export const joinMeeting = async (meetingId: string): Promise<void> => {
   try {
-    console.log("user servcie joinMeeting step 1");
-
+    console.log("user service joinMeeting step 1");
     const accessToken = localStorage.getItem("accessToken");
-    console.log("user servcie joinMeeting step 2");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    console.log("user servcie joinMeeting step 3");
     await api.post(
       `/user/video-call/join/${meetingId}`,
       {},
@@ -347,7 +418,7 @@ export const joinMeeting = async (meetingId: string): Promise<void> => {
         },
       }
     );
-    console.log("user servcie joinMeeting step 4");
+    console.log("user service joinMeeting step 2");
   } catch (error: any) {
     console.error("Error joining meeting:", error);
     throw new Error(error.response?.data?.message || "Failed to join meeting");
