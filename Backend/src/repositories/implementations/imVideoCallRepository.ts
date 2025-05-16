@@ -22,11 +22,26 @@ class VideoCallRepository {
     );
   }
 
+  // async removeParticipant(meetingId: string, userId: string): Promise<void> {
+  //   await VideoCall.updateOne(
+  //     { meetingId },
+  //     { $pull: { participants: { userId } } }
+  //   );
+  // }
   async removeParticipant(meetingId: string, userId: string): Promise<void> {
-    await VideoCall.updateOne(
+    const result = await VideoCall.updateOne(
       { meetingId },
       { $pull: { participants: { userId } } }
     );
+    if (result.modifiedCount === 0) {
+      console.warn(
+        `VideoCallRepository: No participant ${userId} found in meeting ${meetingId}`
+      );
+    } else {
+      console.log(
+        `VideoCallRepository: Removed participant ${userId} from meeting ${meetingId}`
+      );
+    }
   }
   async update(
     meetingId: string,

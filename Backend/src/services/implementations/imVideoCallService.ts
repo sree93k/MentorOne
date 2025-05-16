@@ -49,40 +49,6 @@ class VideoCallService {
     }
   }
 
-  // async joinMeeting(meetingId: string, userId: string): Promise<void> {
-  //   console.log(
-  //     `VideoCallService: Joining meeting ${meetingId} for user ${userId}`
-  //   );
-  //   try {
-  //     const meeting = await this.videoCallRepository.findMeeting(meetingId);
-  //     console.log(`VideoCallService: Meeting found:`, meeting);
-  //     if (!meeting) {
-  //       console.error(`VideoCallService: Meeting not found: ${meetingId}`);
-  //       throw new ApiError(404, "Not Found", `Meeting ${meetingId} not found`);
-  //     }
-
-  //     // Check if user is already a participant
-  //     const isParticipant = meeting.participants.some(
-  //       (p) => p.userId === userId
-  //     );
-  //     if (!isParticipant) {
-  //       await this.videoCallRepository.addParticipant(meetingId, userId);
-  //       console.log(
-  //         `VideoCallService: User ${userId} added to meeting ${meetingId}`
-  //       );
-  //     } else {
-  //       console.log(
-  //         `VideoCallService: User ${userId} is already a participant in meeting ${meetingId}`
-  //       );
-  //     }
-  //   } catch (error: any) {
-  //     console.error(`VideoCallService: Error joining meeting ${meetingId}:`, {
-  //       message: error.message,
-  //       stack: error.stack,
-  //     });
-  //     throw error;
-  //   }
-  // }
   async joinMeeting(
     meetingId: string,
     userId: string,
@@ -141,24 +107,50 @@ class VideoCallService {
       );
     }
   }
+  // async leaveMeeting(meetingId: string, userId: string): Promise<void> {
+  //   console.log(
+  //     `VideoCallService: User ${userId} leaving meeting ${meetingId}`
+  //   );
+  //   try {
+  //     await this.videoCallRepository.removeParticipant(meetingId, userId);
+  //     console.log(
+  //       `VideoCallService: User ${userId} removed from meeting ${meetingId}`
+  //     );
+  //   } catch (error: any) {
+  //     console.error(`VideoCallService: Error leaving meeting ${meetingId}:`, {
+  //       message: error.message,
+  //       stack: error.stack,
+  //     });
+  //     throw error;
+  //   }
+  // }
   async leaveMeeting(meetingId: string, userId: string): Promise<void> {
     console.log(
       `VideoCallService: User ${userId} leaving meeting ${meetingId}`
     );
     try {
+      const meeting = await this.videoCallRepository.findMeeting(meetingId);
+      if (!meeting) {
+        console.warn(`VideoCallService: Meeting ${meetingId} not found`);
+        return;
+      }
       await this.videoCallRepository.removeParticipant(meetingId, userId);
       console.log(
         `VideoCallService: User ${userId} removed from meeting ${meetingId}`
       );
     } catch (error: any) {
-      console.error(`VideoCallService: Error leaving meeting ${meetingId}:`, {
-        message: error.message,
-        stack: error.stack,
-      });
-      throw error;
+      console.error(
+        `VideoCallService: Error leaving meeting ${meetingId}:`,
+        error.message,
+        error.stack
+      );
+      throw new ApiError(
+        500,
+        "Internal Server Error",
+        `Failed to leave meeting: ${error.message}`
+      );
     }
   }
-
   async endMeeting(meetingId: string, userId: string): Promise<void> {
     if (!meetingId || !userId) {
       throw new ApiError(
