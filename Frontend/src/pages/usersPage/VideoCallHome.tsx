@@ -32,6 +32,8 @@ const VideoCallHome: React.FC = () => {
   const handleJoinMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (meetingCode.trim()) {
+      console.log("meeting code is..", meetingCode);
+
       await joinMeeting(meetingCode);
       navigate(`/user/meeting/${meetingCode}`);
     } else {

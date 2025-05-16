@@ -93,12 +93,16 @@ userPrivateRoute.get(
   videoCallController.validateMeeting.bind(videoCallController)
 );
 
+// userPrivateRoute.post(
+//   "/video-call/join/:meetingId",
+//   authenticate,
+//   videoCallController.joinMeeting.bind(videoCallController)
+// );
 userPrivateRoute.post(
   "/video-call/join/:meetingId",
   authenticate,
   videoCallController.joinMeeting.bind(videoCallController)
 );
-
 userPrivateRoute.post(
   "/video-call/end/:meetingId",
   authenticate,
