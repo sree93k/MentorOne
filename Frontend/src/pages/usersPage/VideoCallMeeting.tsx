@@ -1007,6 +1007,7 @@ const VideoCallMeeting: React.FC = () => {
   const pendingJoinsRef = useRef<
     { userId: string; userName: string; peerId: string }[]
   >([]);
+  const pendingCallsRef = useRef<{ call: any; remoteUserId: string }[]>([]);
 
   const userId = user?._id || `anonymous_${Date.now()}`;
   const userName = user?.firstName || "Anonymous";
@@ -1014,6 +1015,7 @@ const VideoCallMeeting: React.FC = () => {
   // Initialize local stream
   const initLocalStream = async () => {
     try {
+      console.log("Initializing local stream...");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
@@ -1029,8 +1031,10 @@ const VideoCallMeeting: React.FC = () => {
           video: true,
         },
       ]);
-      // Process any pending joins
+      console.log("Local stream initialized");
+      // Process pending joins and calls
       processPendingJoins();
+      processPendingCalls();
     } catch (error) {
       console.error("Error accessing media devices:", error);
       toast.error("Failed to access camera or microphone.");
@@ -1084,6 +1088,49 @@ const VideoCallMeeting: React.FC = () => {
     );
   };
 
+  // Process pending calls
+  const processPendingCalls = () => {
+    if (!localStreamRef.current) return;
+
+    const pendingCalls = [...pendingCallsRef.current];
+    pendingCallsRef.current = [];
+    pendingCalls.forEach(({ call, remoteUserId }) => {
+      console.log(`Processing pending call from ${remoteUserId}`);
+      call.answer(localStreamRef.current);
+      peerCallsRef.current[remoteUserId] = call;
+      call.on("stream", (remoteStream) => {
+        console.log(
+          `Received remote stream from ${remoteUserId} via pending call`
+        );
+        setParticipants((prev) => {
+          const participant = prev.find((p) => p.id === remoteUserId);
+          if (participant) {
+            return prev.map((p) =>
+              p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+            );
+          }
+          return [
+            ...prev,
+            {
+              id: remoteUserId,
+              name: `User_${remoteUserId.slice(0, 5)}`,
+              stream: remoteStream,
+              audio: true,
+              video: true,
+            },
+          ];
+        });
+      });
+      call.on("error", (err) => {
+        console.error(`PeerJS call error with ${remoteUserId}:`, err);
+      });
+      call.on("close", () => {
+        console.log(`PeerJS call closed with ${remoteUserId}`);
+        setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+      });
+    });
+  };
+
   useEffect(() => {
     if (!meetingId || !userId) {
       toast.error("Invalid meeting ID or user ID.");
@@ -1104,7 +1151,9 @@ const VideoCallMeeting: React.FC = () => {
       transports: ["websocket"],
       path: "/video-socket.io/",
       query: { meetingId },
+      reconnection: true,
       reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
     socketRef.current = socketInstance;
     setSocket(socketInstance);
@@ -1188,6 +1237,7 @@ const VideoCallMeeting: React.FC = () => {
         });
 
         const call = peerInstance.call(remotePeerId, localStreamRef.current);
+        console.log(`Initiating call to ${remotePeerId}`);
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
           console.log(`Received remote stream from ${remoteUserId}`);
@@ -1204,6 +1254,79 @@ const VideoCallMeeting: React.FC = () => {
           console.log(`PeerJS call closed with ${remoteUserId}`);
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
+      }
+    );
+
+    socketInstance.on(
+      "existing-participants",
+      (
+        existingParticipants: {
+          userId: string;
+          userName: string;
+          peerId: string;
+        }[]
+      ) => {
+        console.log("Received existing participants:", existingParticipants);
+        existingParticipants.forEach(
+          ({
+            userId: remoteUserId,
+            userName: remoteName,
+            peerId: remotePeerId,
+          }) => {
+            if (remoteUserId === userId) return; // Ignore self
+
+            if (!localStreamRef.current || !peerRef.current) {
+              console.log(
+                `Queuing existing participant ${remoteUserId} (local stream or peer not ready)`
+              );
+              pendingJoinsRef.current.push({
+                userId: remoteUserId,
+                userName: remoteName,
+                peerId: remotePeerId,
+              });
+              return;
+            }
+
+            setParticipants((prev) => {
+              if (prev.some((p) => p.id === remoteUserId)) return prev;
+              return [
+                ...prev,
+                {
+                  id: remoteUserId,
+                  name: remoteName,
+                  audio: true,
+                  video: true,
+                },
+              ];
+            });
+
+            const call = peerInstance.call(
+              remotePeerId,
+              localStreamRef.current
+            );
+            console.log(
+              `Initiating call to existing participant ${remotePeerId}`
+            );
+            peerCallsRef.current[remoteUserId] = call;
+            call.on("stream", (remoteStream) => {
+              console.log(`Received remote stream from ${remoteUserId}`);
+              setParticipants((prev) =>
+                prev.map((p) =>
+                  p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+                )
+              );
+            });
+            call.on("error", (err) => {
+              console.error(`PeerJS call error with ${remoteUserId}:`, err);
+            });
+            call.on("close", () => {
+              console.log(`PeerJS call closed with ${remoteUserId}`);
+              setParticipants((prev) =>
+                prev.filter((p) => p.id !== remoteUserId)
+              );
+            });
+          }
+        );
       }
     );
 
@@ -1229,6 +1352,7 @@ const VideoCallMeeting: React.FC = () => {
       console.log(`Received call from ${call.peer}`);
       const remoteUserId = call.peer.split("_")[0];
       if (localStreamRef.current) {
+        console.log(`Answering call from ${remoteUserId}`);
         call.answer(localStreamRef.current);
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
@@ -1262,9 +1386,10 @@ const VideoCallMeeting: React.FC = () => {
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
       } else {
-        console.warn(
-          `No local stream available to answer call from ${remoteUserId}`
+        console.log(
+          `Queuing call from ${remoteUserId} (local stream not ready)`
         );
+        pendingCallsRef.current.push({ call, remoteUserId });
       }
     });
 
@@ -1334,6 +1459,7 @@ const VideoCallMeeting: React.FC = () => {
                     participant.stream &&
                     video.srcObject !== participant.stream
                   ) {
+                    console.log(`Setting stream for ${participant.id}`);
                     video.srcObject = participant.stream;
                   }
                 }}
