@@ -341,13 +341,14 @@
 
 //     socket.on(
 //       "screen-share-status",
-//       ({ meetingId, userId, isSharingScreen }) => {
+//       ({ meetingId, userId, isSharingScreen, screenSharePeerId }) => {
 //         console.log(
-//           `screen-share-status: ${userId} in meeting ${meetingId} - isSharingScreen: ${isSharingScreen}`
+//           `screen-share-status: ${userId} in meeting ${meetingId} - isSharingScreen: ${isSharingScreen}, screenSharePeerId: ${screenSharePeerId}`
 //         );
 //         io.to(`meeting_${meetingId}`).emit("screen-share-status", {
 //           userId,
 //           isSharingScreen,
+//           screenSharePeerId,
 //         });
 //         console.log(
 //           `Broadcasted screen-share-status for ${userId} to meeting ${meetingId}`
@@ -781,6 +782,16 @@ export const initializeVideoSocket = async (httpServer: any) => {
         );
       }
     );
+
+    socket.on("message", ({ meetingId, message }) => {
+      console.log(
+        `message: User ${message.senderId} sent a message in meeting ${meetingId}: ${message.text}`
+      );
+      io.to(`meeting_${meetingId}`).emit("message", message);
+      console.log(
+        `Broadcasted message from ${message.senderId} to meeting ${meetingId}`
+      );
+    });
 
     socket.on("update-peer-id", async ({ meetingId, userId, peerId }) => {
       console.log(

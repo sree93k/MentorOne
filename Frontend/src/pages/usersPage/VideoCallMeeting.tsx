@@ -22,7 +22,6 @@
 //   Heart,
 //   ThumbsUp,
 //   PartyPopper,
-//   CameraOff,
 // } from "lucide-react";
 // import { io, Socket } from "socket.io-client";
 // import Peer from "peerjs";
@@ -42,6 +41,7 @@
 //   audio: boolean;
 //   video: boolean;
 //   isSharingScreen?: boolean;
+//   screenSharePeerId?: string;
 // }
 // interface Message {
 //   id: string;
@@ -64,9 +64,12 @@
 //   const { user } = useSelector((state: RootState) => state.user);
 //   const [socket, setSocket] = useState<Socket | null>(null);
 //   const [peer, setPeer] = useState<Peer | null>(null);
+//   const [screenSharePeer, setScreenSharePeer] = useState<Peer | null>(null);
 //   const [participants, setParticipants] = useState<Participant[]>([]);
 //   const [messages, setMessages] = useState<Message[]>([]);
 //   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+//   const [localScreenShareStream, setLocalScreenShareStream] =
+//     useState<MediaStream | null>(null);
 //   const [isAudioOn, setIsAudioOn] = useState(true);
 //   const [isVideoOn, setIsVideoOn] = useState(true);
 //   const [isSharingScreen, setIsSharingScreen] = useState(false);
@@ -81,12 +84,18 @@
 
 //   const socketRef = useRef<Socket | null>(null);
 //   const peerRef = useRef<Peer | null>(null);
+//   const screenSharePeerRef = useRef<Peer | null>(null);
 //   const localStreamRef = useRef<MediaStream | null>(null);
+//   const localScreenShareStreamRef = useRef<MediaStream | null>(null);
 //   const peerCallsRef = useRef<{ [key: string]: any }>({});
+//   const screenShareCallsRef = useRef<{ [key: string]: any }>({});
 //   const pendingJoinsRef = useRef<
 //     { userId: string; userName: string; peerId: string }[]
 //   >([]);
 //   const pendingCallsRef = useRef<{ call: any; remoteUserId: string }[]>([]);
+//   const pendingScreenShareCallsRef = useRef<
+//     { call: any; remoteUserId: string }[]
+//   >([]);
 
 //   const userId = user?._id || `anonymous_${Date.now()}`;
 //   const userName = user?.firstName || "User";
@@ -102,6 +111,14 @@
 //           track.stop();
 //         });
 //         localStreamRef.current = null;
+//       }
+//       if (localScreenShareStreamRef.current) {
+//         console.log("BeforeUnload: Stopping screen share tracks");
+//         localScreenShareStreamRef.current.getTracks().forEach((track) => {
+//           track.enabled = false;
+//           track.stop();
+//         });
+//         localScreenShareStreamRef.current = null;
 //       }
 //     }, [])
 //   );
@@ -179,7 +196,13 @@
 //           console.log(`Received remote stream from ${remoteUserId}`);
 //           setParticipants((prev) =>
 //             prev.map((p) =>
-//               p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+//               p.id === remoteUserId
+//                 ? {
+//                     ...p,
+//                     stream: remoteStream,
+//                     cameraStream: remoteStream,
+//                   }
+//                 : p
 //             )
 //           );
 //         });
@@ -212,7 +235,13 @@
 //           const participant = prev.find((p) => p.id === remoteUserId);
 //           if (participant) {
 //             return prev.map((p) =>
-//               p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+//               p.id === remoteUserId
+//                 ? {
+//                     ...p,
+//                     stream: remoteStream,
+//                     cameraStream: remoteStream,
+//                   }
+//                 : p
 //             );
 //           }
 //           return [
@@ -221,6 +250,7 @@
 //               id: remoteUserId,
 //               name: `User_${remoteUserId.slice(0, 5)}`,
 //               stream: remoteStream,
+//               cameraStream: remoteStream,
 //               audio: true,
 //               video: true,
 //             },
@@ -233,6 +263,50 @@
 //       call.on("close", () => {
 //         console.log(`PeerJS call closed with ${remoteUserId}`);
 //         setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+//       });
+//     });
+//   };
+
+//   const processPendingScreenShareCalls = () => {
+//     if (!localScreenShareStreamRef.current || !screenSharePeerRef.current)
+//       return;
+
+//     const pendingCalls = [...pendingScreenShareCallsRef.current];
+//     pendingScreenShareCallsRef.current = [];
+//     pendingCalls.forEach(({ call, remoteUserId }) => {
+//       console.log(`Processing pending screen share call from ${remoteUserId}`);
+//       call.answer(localScreenShareStreamRef.current);
+//       screenShareCallsRef.current[remoteUserId] = call;
+//       call.on("stream", (remoteStream) => {
+//         console.log(
+//           `Received screen share stream from ${remoteUserId} via pending call`
+//         );
+//         setParticipants((prev) =>
+//           prev.map((p) =>
+//             p.id === remoteUserId
+//               ? {
+//                   ...p,
+//                   screenShareStream: remoteStream,
+//                 }
+//               : p
+//           )
+//         );
+//       });
+//       call.on("error", (err) => {
+//         console.error(
+//           `PeerJS screen share call error with ${remoteUserId}:`,
+//           err
+//         );
+//       });
+//       call.on("close", () => {
+//         console.log(`PeerJS screen share call closed with ${remoteUserId}`);
+//         setParticipants((prev) =>
+//           prev.map((p) =>
+//             p.id === remoteUserId
+//               ? { ...p, screenShareStream: null, isSharingScreen: false }
+//               : p
+//           )
+//         );
 //       });
 //     });
 //   };
@@ -262,6 +336,24 @@
 //     toast.success(`${request.userName} rejected from the meeting`);
 //   };
 
+//   const updateStreamForAllPeers = (updatedStream: MediaStream) => {
+//     Object.values(peerCallsRef.current).forEach((call) => {
+//       if (call && call.peerConnection) {
+//         const senders = call.peerConnection.getSenders();
+//         updatedStream.getTracks().forEach((track) => {
+//           const sender = senders.find((s) => s.track?.kind === track.kind);
+//           if (sender) {
+//             sender.replaceTrack(track).catch((err: any) => {
+//               console.error(`Error replacing track for ${track.kind}:`, err);
+//             });
+//           } else {
+//             call.peerConnection.addTrack(track, updatedStream);
+//           }
+//         });
+//       }
+//     });
+//   };
+
 //   const toggleAudio = async () => {
 //     if (!localStreamRef.current) return;
 
@@ -280,6 +372,7 @@
 //         audio: audioTrack.enabled,
 //         video: isVideoOn,
 //       });
+//       updateStreamForAllPeers(localStreamRef.current);
 //       console.log(`Audio ${audioTrack.enabled ? "enabled" : "disabled"}`);
 //     } else {
 //       try {
@@ -293,18 +386,7 @@
 //         localStreamRef.current = currentStream;
 //         setLocalStream(currentStream);
 
-//         Object.values(peerCallsRef.current).forEach((call) => {
-//           if (call && call.peerConnection) {
-//             const sender = call.peerConnection
-//               .getSenders()
-//               .find((s) => s.track?.kind === "audio");
-//             if (sender) {
-//               sender.replaceTrack(newAudioTrack);
-//             } else {
-//               call.peerConnection.addTrack(newAudioTrack, currentStream);
-//             }
-//           }
-//         });
+//         updateStreamForAllPeers(currentStream);
 
 //         setIsAudioOn(true);
 //         setParticipants((prev) =>
@@ -344,6 +426,7 @@
 //         audio: isAudioOn,
 //         video: videoTrack.enabled,
 //       });
+//       updateStreamForAllPeers(localStreamRef.current);
 //       console.log(`Video ${videoTrack.enabled ? "enabled" : "disabled"}`);
 //     } else {
 //       try {
@@ -357,18 +440,7 @@
 //         localStreamRef.current = currentStream;
 //         setLocalStream(currentStream);
 
-//         Object.values(peerCallsRef.current).forEach((call) => {
-//           if (call && call.peerConnection) {
-//             const sender = call.peerConnection
-//               .getSenders()
-//               .find((s) => s.track?.kind === "video");
-//             if (sender) {
-//               sender.replaceTrack(newVideoTrack);
-//             } else {
-//               call.peerConnection.addTrack(newVideoTrack, currentStream);
-//             }
-//           }
-//         });
+//         updateStreamForAllPeers(currentStream);
 
 //         setIsVideoOn(true);
 //         setParticipants((prev) =>
@@ -393,89 +465,54 @@
 //   const toggleScreenShare = async () => {
 //     try {
 //       if (isSharingScreen) {
-//         // Stop screen sharing and revert to camera stream
-//         const screenStream = participants.find(
-//           (p) => p.id === userId
-//         )?.screenShareStream;
-//         if (screenStream) {
-//           screenStream.getTracks().forEach((track) => track.stop());
+//         // Stop screen sharing
+//         if (localScreenShareStreamRef.current) {
+//           localScreenShareStreamRef.current
+//             .getTracks()
+//             .forEach((track) => track.stop());
+//           localScreenShareStreamRef.current = null;
+//           setLocalScreenShareStream(null);
 //         }
-//         const cameraStream = participants.find(
-//           (p) => p.id === userId
-//         )?.cameraStream;
-//         if (!cameraStream) {
-//           const newStream = await navigator.mediaDevices.getUserMedia({
-//             audio: isAudioOn,
-//             video: isVideoOn,
-//           });
-//           localStreamRef.current = newStream;
-//           setLocalStream(newStream);
-//           setParticipants((prev: Participant[]) =>
-//             prev.map((p) =>
-//               p.id === userId
-//                 ? {
-//                     id: p.id,
-//                     name: p.name,
-//                     stream: newStream,
-//                     cameraStream: newStream,
-//                     screenShareStream: null,
-//                     audio: p.audio,
-//                     video: p.video,
-//                     isSharingScreen: false,
-//                   }
-//                 : p
-//             )
-//           );
-//         } else {
-//           localStreamRef.current = cameraStream;
-//           setLocalStream(cameraStream);
-//           setParticipants((prev: Participant[]) =>
-//             prev.map((p) =>
-//               p.id === userId
-//                 ? {
-//                     id: p.id,
-//                     name: p.name,
-//                     stream: cameraStream,
-//                     cameraStream: cameraStream,
-//                     screenShareStream: null,
-//                     audio: p.audio,
-//                     video: p.video,
-//                     isSharingScreen: false,
-//                   }
-//                 : p
-//             )
-//           );
-//         }
+//         setParticipants((prev: Participant[]) =>
+//           prev.map((p) =>
+//             p.id === userId
+//               ? {
+//                   ...p,
+//                   screenShareStream: null,
+//                   isSharingScreen: false,
+//                   screenSharePeerId: undefined,
+//                 }
+//               : p
+//           )
+//         );
 //         setIsSharingScreen(false);
-//         const videoTrack = cameraStream?.getVideoTracks()[0];
-//         if (!isVideoOn && videoTrack) {
-//           videoTrack.enabled = false;
+
+//         // Clean up screen share PeerJS instance
+//         if (screenSharePeerRef.current) {
+//           Object.values(screenShareCallsRef.current).forEach((call) => {
+//             if (call) call.close();
+//           });
+//           screenShareCallsRef.current = {};
+//           screenSharePeerRef.current.destroy();
+//           screenSharePeerRef.current = null;
+//           setScreenSharePeer(null);
 //         }
-//         Object.values(peerCallsRef.current).forEach((call) => {
-//           if (call && call.peerConnection) {
-//             const sender = call.peerConnection
-//               .getSenders()
-//               .find((s) => s.track?.kind === "video");
-//             if (sender && videoTrack) {
-//               sender.replaceTrack(videoTrack);
-//             }
-//           }
-//         });
+
 //         socket?.emit("screen-share-status", {
 //           meetingId,
 //           userId,
 //           isSharingScreen: false,
+//           screenSharePeerId: null,
 //         });
-//         console.log("Switched back to camera stream:", cameraStream?.id);
+//         console.log("Stopped screen sharing");
 //       } else {
+//         // Start screen sharing
 //         const screenStream = await navigator.mediaDevices.getDisplayMedia({
 //           video: true,
 //         });
-//         const cameraStream = localStreamRef.current;
-//         const audioTrack = cameraStream?.getAudioTracks()[0];
-//         const newStream = new MediaStream();
+//         localScreenShareStreamRef.current = screenStream;
+//         setLocalScreenShareStream(screenStream);
 //         screenStream.getTracks().forEach((track) => {
-//           newStream.addTrack(track);
 //           track.onended = () => {
 //             console.log(
 //               `Screen share track ended: ${track.kind} (${track.id})`
@@ -483,45 +520,121 @@
 //             toggleScreenShare();
 //           };
 //         });
-//         if (audioTrack) {
-//           newStream.addTrack(audioTrack);
-//         }
-//         localStreamRef.current = newStream;
-//         setLocalStream(newStream);
-//         setIsSharingScreen(true);
-//         const videoTrack = newStream.getVideoTracks()[0];
-//         Object.values(peerCallsRef.current).forEach((call) => {
-//           if (call && call.peerConnection) {
-//             const sender = call.peerConnection
-//               .getSenders()
-//               .find((s) => s.track?.kind === "video");
-//             if (sender && videoTrack) {
-//               sender.replaceTrack(videoTrack);
-//             }
+
+//         // Initialize screen share PeerJS instance
+//         const screenSharePeerId = `${userId}_screen_${Date.now()}`;
+//         const screenSharePeerInstance = new Peer(screenSharePeerId, {
+//           host: import.meta.env.VITE_PEER_HOST || "localhost",
+//           port: parseInt(import.meta.env.VITE_PEER_PORT || "9000"),
+//           path: "/peerjs",
+//           debug: 3,
+//           config: {
+//             iceServers: [
+//               { urls: "stun:stun.l.google.com:19302" },
+//               { urls: "stun:stun1.l.google.com:19302" },
+//               {
+//                 urls: "turn:openrelay.metered.ca:443",
+//                 username: "openrelay.project",
+//                 credential: "openrelay",
+//               },
+//             ],
+//           },
+//         });
+//         screenSharePeerRef.current = screenSharePeerInstance;
+//         setScreenSharePeer(screenSharePeerInstance);
+
+//         screenSharePeerInstance.on("open", (id) => {
+//           console.log("Screen share PeerJS connected:", id);
+//           setParticipants((prev: Participant[]) =>
+//             prev.map((p) =>
+//               p.id === userId
+//                 ? {
+//                     ...p,
+//                     screenShareStream: screenStream,
+//                     isSharingScreen: true,
+//                     screenSharePeerId: id,
+//                   }
+//                 : p
+//             )
+//           );
+//           setIsSharingScreen(true);
+//           socket?.emit("screen-share-status", {
+//             meetingId,
+//             userId,
+//             isSharingScreen: true,
+//             screenSharePeerId: id,
+//           });
+
+//           // Call existing participants with screen share stream
+//           const otherParticipants = participants.filter((p) => p.id !== userId);
+//           otherParticipants.forEach((participant) => {
+//             const call = screenSharePeerInstance.call(
+//               participant.id,
+//               screenStream
+//             );
+//             screenShareCallsRef.current[participant.id] = call;
+//             call.on("error", (err) => {
+//               console.error(
+//                 `Screen share call error with ${participant.id}:`,
+//                 err
+//               );
+//             });
+//             call.on("close", () => {
+//               console.log(`Screen share call closed with ${participant.id}`);
+//             });
+//           });
+
+//           processPendingScreenShareCalls();
+//         });
+
+//         screenSharePeerInstance.on("error", (err) => {
+//           console.error("Screen share PeerJS error:", err);
+//           toast.error(`Screen share PeerJS error: ${err.message || err.type}`);
+//         });
+
+//         screenSharePeerInstance.on("call", (call) => {
+//           const remoteUserId = call.peer.split("_")[0];
+//           console.log(`Received screen share call from ${remoteUserId}`);
+//           if (localScreenShareStreamRef.current) {
+//             call.answer(localScreenShareStreamRef.current);
+//             screenShareCallsRef.current[remoteUserId] = call;
+//             call.on("stream", (remoteStream) => {
+//               console.log(
+//                 `Received screen share stream from ${remoteUserId} via call answer, Stream ID: ${remoteStream.id}`
+//               );
+//               setParticipants((prev) =>
+//                 prev.map((p) =>
+//                   p.id === remoteUserId
+//                     ? { ...p, screenShareStream: remoteStream }
+//                     : p
+//                 )
+//               );
+//             });
+//             call.on("error", (err) => {
+//               console.error(
+//                 `PeerJS screen share call error with ${remoteUserId}:`,
+//                 err
+//               );
+//             });
+//             call.on("close", () => {
+//               console.log(
+//                 `PeerJS screen share call closed with ${remoteUserId}`
+//               );
+//               setParticipants((prev) =>
+//                 prev.map((p) =>
+//                   p.id === remoteUserId
+//                     ? { ...p, screenShareStream: null, isSharingScreen: false }
+//                     : p
+//                 )
+//               );
+//             });
+//           } else {
+//             console.log(
+//               `Queuing screen share call from ${remoteUserId} (local screen share stream not ready)`
+//             );
+//             pendingScreenShareCallsRef.current.push({ call, remoteUserId });
 //           }
 //         });
-//         setParticipants((prev: Participant[]) =>
-//           prev.map((p) =>
-//             p.id === userId
-//               ? {
-//                   id: p.id,
-//                   name: p.name,
-//                   stream: newStream,
-//                   cameraStream: cameraStream ?? null,
-//                   screenShareStream: newStream,
-//                   audio: p.audio,
-//                   video: p.video,
-//                   isSharingScreen: true,
-//                 }
-//               : p
-//           )
-//         );
-//         socket?.emit("screen-share-status", {
-//           meetingId,
-//           userId,
-//           isSharingScreen: true,
-//         });
-//         console.log("Started screen sharing with stream:", newStream.id);
 //       }
 //     } catch (error) {
 //       console.error("Error toggling screen share:", error);
@@ -563,7 +676,16 @@
 //       });
 //       localStreamRef.current = null;
 //     }
+//     if (localScreenShareStreamRef.current) {
+//       localScreenShareStreamRef.current.getTracks().forEach((track) => {
+//         console.log(`Stopping screen share track: ${track.kind} (${track.id})`);
+//         track.enabled = false;
+//         track.stop();
+//       });
+//       localScreenShareStreamRef.current = null;
+//     }
 //     setLocalStream(null);
+//     setLocalScreenShareStream(null);
 //     socket?.emit("leave-meeting", { meetingId, userId });
 //     navigate(`/user/meeting-end/${meetingId}`);
 //   };
@@ -708,14 +830,16 @@
 //         console.log(`Initiating call to ${remotePeerId}`);
 //         peerCallsRef.current[remoteUserId] = call;
 //         call.on("stream", (remoteStream) => {
-//           console.log(`Received remote stream from ${remoteUserId}`);
+//           console.log(
+//             `Received remote stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
+//           );
 //           setParticipants((prev) =>
 //             prev.map((p) =>
 //               p.id === remoteUserId
 //                 ? {
 //                     ...p,
 //                     stream: remoteStream,
-//                     cameraStream: p.cameraStream || remoteStream,
+//                     cameraStream: remoteStream,
 //                   }
 //                 : p
 //             )
@@ -729,14 +853,33 @@
 //           console.log(`PeerJS call closed with ${remoteUserId}`);
 //           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
 //         });
+
+//         // If we're sharing our screen, call the new participant with our screen share stream
+//         if (
+//           isSharingScreen &&
+//           screenSharePeerRef.current &&
+//           localScreenShareStreamRef.current
+//         ) {
+//           const call = screenSharePeerRef.current.call(
+//             remoteUserId,
+//             localScreenShareStreamRef.current
+//           );
+//           screenShareCallsRef.current[remoteUserId] = call;
+//           call.on("error", (err) => {
+//             console.error(`Screen share call error with ${remoteUserId}:`, err);
+//           });
+//           call.on("close", () => {
+//             console.log(`Screen share call closed with ${remoteUserId}`);
+//           });
+//         }
 //       }
 //     );
 
 //     socketInstance.on(
 //       "screen-share-status",
-//       ({ userId: remoteUserId, isSharingScreen }) => {
+//       ({ userId: remoteUserId, isSharingScreen, screenSharePeerId }) => {
 //         console.log(
-//           `Received screen-share-status: ${remoteUserId} - isSharingScreen: ${isSharingScreen}`
+//           `Received screen-share-status: ${remoteUserId} - isSharingScreen: ${isSharingScreen}, screenSharePeerId: ${screenSharePeerId}`
 //         );
 //         setParticipants((prev: Participant[]) =>
 //           prev.map((p) => {
@@ -744,21 +887,64 @@
 //               console.log(
 //                 `Updating participant ${p.name} (ID: ${
 //                   p.id
-//                 }): isSharingScreen=${isSharingScreen}, stream ID=${
-//                   p.stream?.id
-//                 }, cameraStream ID=${p.cameraStream?.id || "none"}`
+//                 }): isSharingScreen=${isSharingScreen}, cameraStream ID=${
+//                   p.cameraStream?.id || "none"
+//                 }, screenShareStream ID=${p.screenShareStream?.id || "none"}`
 //               );
 //               return {
 //                 ...p,
 //                 isSharingScreen,
-//                 screenShareStream: isSharingScreen ? p.stream : null,
-//                 stream: p.stream, // Preserve the current stream
-//                 cameraStream: p.cameraStream || p.stream, // Ensure cameraStream is set
+//                 screenSharePeerId: isSharingScreen
+//                   ? screenSharePeerId
+//                   : undefined,
+//                 screenShareStream: isSharingScreen ? p.screenShareStream : null,
 //               };
 //             }
 //             return p;
 //           })
 //         );
+
+//         if (isSharingScreen && screenSharePeerId && peerRef.current) {
+//           const call = peerRef.current.call(
+//             screenSharePeerId,
+//             localStreamRef.current!
+//           );
+//           screenShareCallsRef.current[remoteUserId] = call;
+//           call.on("stream", (remoteStream) => {
+//             console.log(
+//               `Received screen share stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
+//             );
+//             setParticipants((prev) =>
+//               prev.map((p) =>
+//                 p.id === remoteUserId
+//                   ? { ...p, screenShareStream: remoteStream }
+//                   : p
+//               )
+//             );
+//           });
+//           call.on("error", (err) => {
+//             console.error(
+//               `PeerJS screen share call error with ${remoteUserId}:`,
+//               err
+//             );
+//           });
+//           call.on("close", () => {
+//             console.log(`PeerJS screen share call closed with ${remoteUserId}`);
+//             setParticipants((prev) =>
+//               prev.map((p) =>
+//                 p.id === remoteUserId
+//                   ? { ...p, screenShareStream: null, isSharingScreen: false }
+//                   : p
+//               )
+//             );
+//           });
+//         } else {
+//           // If screen sharing stopped, close the screen share call
+//           if (screenShareCallsRef.current[remoteUserId]) {
+//             screenShareCallsRef.current[remoteUserId].close();
+//             delete screenShareCallsRef.current[remoteUserId];
+//           }
+//         }
 //       }
 //     );
 
@@ -814,10 +1000,18 @@
 //             );
 //             peerCallsRef.current[remoteUserId] = call;
 //             call.on("stream", (remoteStream) => {
-//               console.log(`Received remote stream from ${remoteUserId}`);
+//               console.log(
+//                 `Received remote stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
+//               );
 //               setParticipants((prev) =>
 //                 prev.map((p) =>
-//                   p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+//                   p.id === remoteUserId
+//                     ? {
+//                         ...p,
+//                         stream: remoteStream,
+//                         cameraStream: remoteStream,
+//                       }
+//                     : p
 //                 )
 //               );
 //             });
@@ -842,6 +1036,10 @@
 //       if (peerCallsRef.current[remoteUserId]) {
 //         peerCallsRef.current[remoteUserId].close();
 //         delete peerCallsRef.current[remoteUserId];
+//       }
+//       if (screenShareCallsRef.current[remoteUserId]) {
+//         screenShareCallsRef.current[remoteUserId].close();
+//         delete screenShareCallsRef.current[remoteUserId];
 //       }
 //     });
 
@@ -901,7 +1099,7 @@
 //                   ? {
 //                       ...p,
 //                       stream: remoteStream,
-//                       cameraStream: p.cameraStream || remoteStream,
+//                       cameraStream: remoteStream,
 //                     }
 //                   : p
 //               );
@@ -964,6 +1162,29 @@
 //       });
 //       peerCallsRef.current = {};
 
+//       console.log("Closing all screen share peer connections");
+//       Object.entries(screenShareCallsRef.current).forEach(([userId, call]) => {
+//         try {
+//           if (call) {
+//             if (call.peerConnection) {
+//               const senders = call.peerConnection.getSenders();
+//               senders.forEach((sender) => {
+//                 if (sender.track) {
+//                   sender.track.stop();
+//                 }
+//               });
+//             }
+//             call.close();
+//           }
+//         } catch (err) {
+//           console.error(
+//             `Error closing screen share peer connection for ${userId}:`,
+//             err
+//           );
+//         }
+//       });
+//       screenShareCallsRef.current = {};
+
 //       if (peerRef.current) {
 //         console.log("Destroying peer instance");
 //         try {
@@ -972,6 +1193,16 @@
 //           console.error("Error destroying PeerJS instance:", err);
 //         }
 //         peerRef.current = null;
+//       }
+
+//       if (screenSharePeerRef.current) {
+//         console.log("Destroying screen share peer instance");
+//         try {
+//           screenSharePeerRef.current.destroy();
+//         } catch (err) {
+//           console.error("Error destroying screen share PeerJS instance:", err);
+//         }
+//         screenSharePeerRef.current = null;
 //       }
 
 //       console.log("Stopping all media tracks");
@@ -987,6 +1218,27 @@
 //           }
 //         });
 //         localStreamRef.current = null;
+//       }
+
+//       if (localScreenShareStreamRef.current) {
+//         const tracks = localScreenShareStreamRef.current.getTracks();
+//         console.log(
+//           `Stopping ${tracks.length} tracks from localScreenShareStreamRef`
+//         );
+//         tracks.forEach((track) => {
+//           try {
+//             console.log(
+//               `Stopping screen share track: ${track.kind} (${track.id})`
+//             );
+//             track.stop();
+//           } catch (err) {
+//             console.error(
+//               `Error stopping screen share track ${track.id}:`,
+//               err
+//             );
+//           }
+//         });
+//         localScreenShareStreamRef.current = null;
 //       }
 
 //       try {
@@ -1067,7 +1319,7 @@
 //         </div>
 //       )}
 //       {userId === creatorId && pendingJoinRequests.length > 0 && (
-//         <div className="absolute bottom-4 right-4 bg-gray-800 rounded-lg p-4 z-20 max-w-md w-full">
+//         <div className="absolute bottom-4 right-4 bg-gray-800 rounded-lg p-4 z-20 max-w-sm w-full">
 //           {pendingJoinRequests.map((request) => (
 //             <div
 //               key={request.userId}
@@ -1232,7 +1484,6 @@ import {
   Heart,
   ThumbsUp,
   PartyPopper,
-  CameraOff,
 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import Peer from "peerjs";
@@ -1254,6 +1505,7 @@ interface Participant {
   isSharingScreen?: boolean;
   screenSharePeerId?: string;
 }
+
 interface Message {
   id: string;
   senderId: string;
@@ -1316,7 +1568,6 @@ const VideoCallMeeting: React.FC = () => {
   useBeforeUnload(
     useCallback(() => {
       if (localStreamRef.current) {
-        console.log("BeforeUnload: Stopping media tracks");
         localStreamRef.current.getTracks().forEach((track) => {
           track.enabled = false;
           track.stop();
@@ -1324,7 +1575,6 @@ const VideoCallMeeting: React.FC = () => {
         localStreamRef.current = null;
       }
       if (localScreenShareStreamRef.current) {
-        console.log("BeforeUnload: Stopping screen share tracks");
         localScreenShareStreamRef.current.getTracks().forEach((track) => {
           track.enabled = false;
           track.stop();
@@ -1336,10 +1586,6 @@ const VideoCallMeeting: React.FC = () => {
 
   const initLocalStream = async () => {
     try {
-      console.log("Initializing local stream with:", {
-        initialVideoOn,
-        initialAudioOn,
-      });
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: initialAudioOn,
         video: initialVideoOn,
@@ -1367,7 +1613,6 @@ const VideoCallMeeting: React.FC = () => {
           isSharingScreen: false,
         },
       ]);
-      console.log("Local stream initialized");
       processPendingJoins();
       processPendingCalls();
     } catch (error) {
@@ -1387,9 +1632,6 @@ const VideoCallMeeting: React.FC = () => {
         userName: remoteName,
         peerId: remotePeerId,
       }) => {
-        console.log(
-          `Processing pending join for ${remoteUserId} (${remotePeerId})`
-        );
         setParticipants((prev) => {
           if (prev.some((p) => p.id === remoteUserId)) return prev;
           return [
@@ -1404,7 +1646,6 @@ const VideoCallMeeting: React.FC = () => {
         );
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
-          console.log(`Received remote stream from ${remoteUserId}`);
           setParticipants((prev) =>
             prev.map((p) =>
               p.id === remoteUserId
@@ -1418,11 +1659,9 @@ const VideoCallMeeting: React.FC = () => {
           );
         });
         call.on("error", (err) => {
-          console.error(`PeerJS call error with ${remoteUserId}:`, err);
           toast.error(`Failed to connect to ${remoteName}`);
         });
         call.on("close", () => {
-          console.log(`PeerJS call closed with ${remoteUserId}`);
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
       }
@@ -1435,13 +1674,9 @@ const VideoCallMeeting: React.FC = () => {
     const pendingCalls = [...pendingCallsRef.current];
     pendingCallsRef.current = [];
     pendingCalls.forEach(({ call, remoteUserId }) => {
-      console.log(`Processing pending call from ${remoteUserId}`);
       call.answer(localStreamRef.current);
       peerCallsRef.current[remoteUserId] = call;
       call.on("stream", (remoteStream) => {
-        console.log(
-          `Received remote stream from ${remoteUserId} via pending call`
-        );
         setParticipants((prev) => {
           const participant = prev.find((p) => p.id === remoteUserId);
           if (participant) {
@@ -1472,7 +1707,6 @@ const VideoCallMeeting: React.FC = () => {
         console.error(`PeerJS call error with ${remoteUserId}:`, err);
       });
       call.on("close", () => {
-        console.log(`PeerJS call closed with ${remoteUserId}`);
         setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
       });
     });
@@ -1485,13 +1719,9 @@ const VideoCallMeeting: React.FC = () => {
     const pendingCalls = [...pendingScreenShareCallsRef.current];
     pendingScreenShareCallsRef.current = [];
     pendingCalls.forEach(({ call, remoteUserId }) => {
-      console.log(`Processing pending screen share call from ${remoteUserId}`);
       call.answer(localScreenShareStreamRef.current);
       screenShareCallsRef.current[remoteUserId] = call;
       call.on("stream", (remoteStream) => {
-        console.log(
-          `Received screen share stream from ${remoteUserId} via pending call`
-        );
         setParticipants((prev) =>
           prev.map((p) =>
             p.id === remoteUserId
@@ -1510,7 +1740,6 @@ const VideoCallMeeting: React.FC = () => {
         );
       });
       call.on("close", () => {
-        console.log(`PeerJS screen share call closed with ${remoteUserId}`);
         setParticipants((prev) =>
           prev.map((p) =>
             p.id === remoteUserId
@@ -1547,6 +1776,24 @@ const VideoCallMeeting: React.FC = () => {
     toast.success(`${request.userName} rejected from the meeting`);
   };
 
+  const updateStreamForAllPeers = (updatedStream: MediaStream) => {
+    Object.values(peerCallsRef.current).forEach((call) => {
+      if (call && call.peerConnection) {
+        const senders = call.peerConnection.getSenders();
+        updatedStream.getTracks().forEach((track) => {
+          const sender = senders.find((s) => s.track?.kind === track.kind);
+          if (sender) {
+            sender.replaceTrack(track).catch((err: any) => {
+              console.error(`Error replacing track for ${track.kind}:`, err);
+            });
+          } else {
+            call.peerConnection.addTrack(track, updatedStream);
+          }
+        });
+      }
+    });
+  };
+
   const toggleAudio = async () => {
     if (!localStreamRef.current) return;
 
@@ -1565,7 +1812,7 @@ const VideoCallMeeting: React.FC = () => {
         audio: audioTrack.enabled,
         video: isVideoOn,
       });
-      console.log(`Audio ${audioTrack.enabled ? "enabled" : "disabled"}`);
+      updateStreamForAllPeers(localStreamRef.current);
     } else {
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({
@@ -1578,18 +1825,7 @@ const VideoCallMeeting: React.FC = () => {
         localStreamRef.current = currentStream;
         setLocalStream(currentStream);
 
-        Object.values(peerCallsRef.current).forEach((call) => {
-          if (call && call.peerConnection) {
-            const sender = call.peerConnection
-              .getSenders()
-              .find((s) => s.track?.kind === "audio");
-            if (sender) {
-              sender.replaceTrack(newAudioTrack);
-            } else {
-              call.peerConnection.addTrack(newAudioTrack, currentStream);
-            }
-          }
-        });
+        updateStreamForAllPeers(currentStream);
 
         setIsAudioOn(true);
         setParticipants((prev) =>
@@ -1603,7 +1839,6 @@ const VideoCallMeeting: React.FC = () => {
           audio: true,
           video: isVideoOn,
         });
-        console.log("New audio track added and enabled");
       } catch (error) {
         console.error("Error adding audio track:", error);
         toast.error("Failed to access microphone.");
@@ -1629,7 +1864,7 @@ const VideoCallMeeting: React.FC = () => {
         audio: isAudioOn,
         video: videoTrack.enabled,
       });
-      console.log(`Video ${videoTrack.enabled ? "enabled" : "disabled"}`);
+      updateStreamForAllPeers(localStreamRef.current);
     } else {
       try {
         const newStream = await navigator.mediaDevices.getUserMedia({
@@ -1642,18 +1877,7 @@ const VideoCallMeeting: React.FC = () => {
         localStreamRef.current = currentStream;
         setLocalStream(currentStream);
 
-        Object.values(peerCallsRef.current).forEach((call) => {
-          if (call && call.peerConnection) {
-            const sender = call.peerConnection
-              .getSenders()
-              .find((s) => s.track?.kind === "video");
-            if (sender) {
-              sender.replaceTrack(newVideoTrack);
-            } else {
-              call.peerConnection.addTrack(newVideoTrack, currentStream);
-            }
-          }
-        });
+        updateStreamForAllPeers(currentStream);
 
         setIsVideoOn(true);
         setParticipants((prev) =>
@@ -1667,7 +1891,6 @@ const VideoCallMeeting: React.FC = () => {
           audio: isAudioOn,
           video: true,
         });
-        console.log("New video track added and enabled");
       } catch (error) {
         console.error("Error adding video track:", error);
         toast.error("Failed to access camera.");
@@ -1678,7 +1901,6 @@ const VideoCallMeeting: React.FC = () => {
   const toggleScreenShare = async () => {
     try {
       if (isSharingScreen) {
-        // Stop screen sharing
         if (localScreenShareStreamRef.current) {
           localScreenShareStreamRef.current
             .getTracks()
@@ -1700,7 +1922,6 @@ const VideoCallMeeting: React.FC = () => {
         );
         setIsSharingScreen(false);
 
-        // Clean up screen share PeerJS instance
         if (screenSharePeerRef.current) {
           Object.values(screenShareCallsRef.current).forEach((call) => {
             if (call) call.close();
@@ -1717,9 +1938,7 @@ const VideoCallMeeting: React.FC = () => {
           isSharingScreen: false,
           screenSharePeerId: null,
         });
-        console.log("Stopped screen sharing");
       } else {
-        // Start screen sharing
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
         });
@@ -1727,14 +1946,10 @@ const VideoCallMeeting: React.FC = () => {
         setLocalScreenShareStream(screenStream);
         screenStream.getTracks().forEach((track) => {
           track.onended = () => {
-            console.log(
-              `Screen share track ended: ${track.kind} (${track.id})`
-            );
             toggleScreenShare();
           };
         });
 
-        // Initialize screen share PeerJS instance
         const screenSharePeerId = `${userId}_screen_${Date.now()}`;
         const screenSharePeerInstance = new Peer(screenSharePeerId, {
           host: import.meta.env.VITE_PEER_HOST || "localhost",
@@ -1757,7 +1972,6 @@ const VideoCallMeeting: React.FC = () => {
         setScreenSharePeer(screenSharePeerInstance);
 
         screenSharePeerInstance.on("open", (id) => {
-          console.log("Screen share PeerJS connected:", id);
           setParticipants((prev: Participant[]) =>
             prev.map((p) =>
               p.id === userId
@@ -1778,7 +1992,6 @@ const VideoCallMeeting: React.FC = () => {
             screenSharePeerId: id,
           });
 
-          // Call existing participants with screen share stream
           const otherParticipants = participants.filter((p) => p.id !== userId);
           otherParticipants.forEach((participant) => {
             const call = screenSharePeerInstance.call(
@@ -1801,20 +2014,15 @@ const VideoCallMeeting: React.FC = () => {
         });
 
         screenSharePeerInstance.on("error", (err) => {
-          console.error("Screen share PeerJS error:", err);
           toast.error(`Screen share PeerJS error: ${err.message || err.type}`);
         });
 
         screenSharePeerInstance.on("call", (call) => {
           const remoteUserId = call.peer.split("_")[0];
-          console.log(`Received screen share call from ${remoteUserId}`);
           if (localScreenShareStreamRef.current) {
             call.answer(localScreenShareStreamRef.current);
             screenShareCallsRef.current[remoteUserId] = call;
             call.on("stream", (remoteStream) => {
-              console.log(
-                `Received screen share stream from ${remoteUserId} via call answer, Stream ID: ${remoteStream.id}`
-              );
               setParticipants((prev) =>
                 prev.map((p) =>
                   p.id === remoteUserId
@@ -1830,9 +2038,6 @@ const VideoCallMeeting: React.FC = () => {
               );
             });
             call.on("close", () => {
-              console.log(
-                `PeerJS screen share call closed with ${remoteUserId}`
-              );
               setParticipants((prev) =>
                 prev.map((p) =>
                   p.id === remoteUserId
@@ -1842,9 +2047,6 @@ const VideoCallMeeting: React.FC = () => {
               );
             });
           } else {
-            console.log(
-              `Queuing screen share call from ${remoteUserId} (local screen share stream not ready)`
-            );
             pendingScreenShareCallsRef.current.push({ call, remoteUserId });
           }
         });
@@ -1866,7 +2068,6 @@ const VideoCallMeeting: React.FC = () => {
     };
     socket?.emit("message", { meetingId, message });
     setMessages((prev) => [...prev, message]);
-    console.log("Sent message:", message);
   };
 
   const sendReaction = (reaction: string) => {
@@ -1876,14 +2077,11 @@ const VideoCallMeeting: React.FC = () => {
       description: `You sent a ${reaction} reaction`,
     });
     setShowReactions(false);
-    console.log("Sent reaction:", reaction);
   };
 
   const leaveMeeting = () => {
-    console.log("Leaving meeting, stopping media tracks");
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
-        console.log(`Stopping track: ${track.kind} (${track.id})`);
         track.enabled = false;
         track.stop();
       });
@@ -1891,7 +2089,6 @@ const VideoCallMeeting: React.FC = () => {
     }
     if (localScreenShareStreamRef.current) {
       localScreenShareStreamRef.current.getTracks().forEach((track) => {
-        console.log(`Stopping screen share track: ${track.kind} (${track.id})`);
         track.enabled = false;
         track.stop();
       });
@@ -1899,6 +2096,7 @@ const VideoCallMeeting: React.FC = () => {
     }
     setLocalStream(null);
     setLocalScreenShareStream(null);
+    setMessages([]);
     socket?.emit("leave-meeting", { meetingId, userId });
     navigate(`/user/meeting-end/${meetingId}`);
   };
@@ -1955,17 +2153,14 @@ const VideoCallMeeting: React.FC = () => {
     initLocalStream();
 
     socketInstance.on("connect", () => {
-      console.log("Socket.IO connected:", socketInstance.id);
       socketInstance.emit(
         "join-meeting",
         { meetingId, userId, userName, peerId },
         (response: any) => {
           if (!response?.success) {
-            console.error("Failed to join meeting:", response?.error);
             toast.error(response?.error || "Failed to join meeting.");
             navigate("/user/meetinghome");
           } else {
-            console.log("Joined meeting successfully");
             setCreatorId(response.creatorId);
           }
         }
@@ -1973,7 +2168,6 @@ const VideoCallMeeting: React.FC = () => {
     });
 
     socketInstance.on("connect_error", (error) => {
-      console.error("Socket.IO connection error:", error.message);
       toast.error("Failed to connect to the server.");
       if (error.message.includes("Authentication error")) {
         localStorage.removeItem("accessToken");
@@ -1985,7 +2179,6 @@ const VideoCallMeeting: React.FC = () => {
       "join-request",
       ({ userId: remoteUserId, userName, peerId }) => {
         if (userId !== creatorId) return;
-        console.log(`Join request from ${userName} (${remoteUserId})`);
         setPendingJoinRequests((prev) => {
           const filteredRequests = prev.filter(
             (req) => req.userId !== remoteUserId
@@ -2008,15 +2201,9 @@ const VideoCallMeeting: React.FC = () => {
         userName: remoteName,
         peerId: remotePeerId,
       }) => {
-        console.log(
-          `User joined: ${remoteUserId} (${remoteName}, ${remotePeerId})`
-        );
         if (remoteUserId === userId) return;
 
         if (!localStreamRef.current || !peerRef.current) {
-          console.log(
-            `Queuing join for ${remoteUserId} (local stream or peer not ready)`
-          );
           pendingJoinsRef.current.push({
             userId: remoteUserId,
             userName: remoteName,
@@ -2040,12 +2227,8 @@ const VideoCallMeeting: React.FC = () => {
         });
 
         const call = peerInstance.call(remotePeerId, localStreamRef.current);
-        console.log(`Initiating call to ${remotePeerId}`);
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
-          console.log(
-            `Received remote stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
-          );
           setParticipants((prev) =>
             prev.map((p) =>
               p.id === remoteUserId
@@ -2059,15 +2242,12 @@ const VideoCallMeeting: React.FC = () => {
           );
         });
         call.on("error", (err) => {
-          console.error(`PeerJS call error with ${remoteUserId}:`, err);
           toast.error(`Failed to connect to ${remoteName}`);
         });
         call.on("close", () => {
-          console.log(`PeerJS call closed with ${remoteUserId}`);
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
 
-        // If we're sharing our screen, call the new participant with our screen share stream
         if (
           isSharingScreen &&
           screenSharePeerRef.current &&
@@ -2091,19 +2271,9 @@ const VideoCallMeeting: React.FC = () => {
     socketInstance.on(
       "screen-share-status",
       ({ userId: remoteUserId, isSharingScreen, screenSharePeerId }) => {
-        console.log(
-          `Received screen-share-status: ${remoteUserId} - isSharingScreen: ${isSharingScreen}, screenSharePeerId: ${screenSharePeerId}`
-        );
         setParticipants((prev: Participant[]) =>
           prev.map((p) => {
             if (p.id === remoteUserId) {
-              console.log(
-                `Updating participant ${p.name} (ID: ${
-                  p.id
-                }): isSharingScreen=${isSharingScreen}, cameraStream ID=${
-                  p.cameraStream?.id || "none"
-                }, screenShareStream ID=${p.screenShareStream?.id || "none"}`
-              );
               return {
                 ...p,
                 isSharingScreen,
@@ -2124,9 +2294,6 @@ const VideoCallMeeting: React.FC = () => {
           );
           screenShareCallsRef.current[remoteUserId] = call;
           call.on("stream", (remoteStream) => {
-            console.log(
-              `Received screen share stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
-            );
             setParticipants((prev) =>
               prev.map((p) =>
                 p.id === remoteUserId
@@ -2142,7 +2309,6 @@ const VideoCallMeeting: React.FC = () => {
             );
           });
           call.on("close", () => {
-            console.log(`PeerJS screen share call closed with ${remoteUserId}`);
             setParticipants((prev) =>
               prev.map((p) =>
                 p.id === remoteUserId
@@ -2152,7 +2318,6 @@ const VideoCallMeeting: React.FC = () => {
             );
           });
         } else {
-          // If screen sharing stopped, close the screen share call
           if (screenShareCallsRef.current[remoteUserId]) {
             screenShareCallsRef.current[remoteUserId].close();
             delete screenShareCallsRef.current[remoteUserId];
@@ -2170,7 +2335,6 @@ const VideoCallMeeting: React.FC = () => {
           peerId: string;
         }[]
       ) => {
-        console.log("Received existing participants:", existingParticipants);
         existingParticipants.forEach(
           ({
             userId: remoteUserId,
@@ -2180,9 +2344,6 @@ const VideoCallMeeting: React.FC = () => {
             if (remoteUserId === userId) return;
 
             if (!localStreamRef.current || !peerRef.current) {
-              console.log(
-                `Queuing existing participant ${remoteUserId} (local stream or peer not ready)`
-              );
               pendingJoinsRef.current.push({
                 userId: remoteUserId,
                 userName: remoteName,
@@ -2208,14 +2369,8 @@ const VideoCallMeeting: React.FC = () => {
               remotePeerId,
               localStreamRef.current
             );
-            console.log(
-              `Initiating call to existing participant ${remotePeerId}`
-            );
             peerCallsRef.current[remoteUserId] = call;
             call.on("stream", (remoteStream) => {
-              console.log(
-                `Received remote stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
-              );
               setParticipants((prev) =>
                 prev.map((p) =>
                   p.id === remoteUserId
@@ -2229,11 +2384,9 @@ const VideoCallMeeting: React.FC = () => {
               );
             });
             call.on("error", (err) => {
-              console.error(`PeerJS call error with ${remoteUserId}:`, err);
               toast.error(`Failed to connect to ${remoteName}`);
             });
             call.on("close", () => {
-              console.log(`PeerJS call closed with ${remoteUserId}`);
               setParticipants((prev) =>
                 prev.filter((p) => p.id !== remoteUserId)
               );
@@ -2244,7 +2397,6 @@ const VideoCallMeeting: React.FC = () => {
     );
 
     socketInstance.on("user-left", ({ userId: remoteUserId }) => {
-      console.log(`User left: ${remoteUserId}`);
       setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
       if (peerCallsRef.current[remoteUserId]) {
         peerCallsRef.current[remoteUserId].close();
@@ -2257,12 +2409,20 @@ const VideoCallMeeting: React.FC = () => {
     });
 
     socketInstance.on("message", (message: Message) => {
-      console.log("Received message:", message);
-      setMessages((prev) => [...prev, message]);
+      // Convert timestamp string to Date object if it's a string
+      const convertedMessage = {
+        ...message,
+        timestamp:
+          typeof message.timestamp === "string"
+            ? new Date(message.timestamp)
+            : message.timestamp,
+      };
+      if (message.senderId !== userId) {
+        setMessages((prev) => [...prev, convertedMessage]);
+      }
     });
 
     socketInstance.on("reaction", ({ senderId, senderName, reaction }) => {
-      console.log("Received reaction:", { senderId, senderName, reaction });
       toast({
         title: `${senderName} reacted`,
         description: `Sent a ${reaction} reaction`,
@@ -2272,7 +2432,6 @@ const VideoCallMeeting: React.FC = () => {
     socketInstance.on(
       "update-status",
       ({ userId: remoteUserId, audio, video }) => {
-        console.log("Status update:", { remoteUserId, audio, video });
         setParticipants((prev) =>
           prev.map((p) => (p.id === remoteUserId ? { ...p, audio, video } : p))
         );
@@ -2289,21 +2448,15 @@ const VideoCallMeeting: React.FC = () => {
     });
 
     peerInstance.on("error", (err) => {
-      console.error("PeerJS error:", err);
       toast.error(`PeerJS error: ${err.message || err.type}`);
     });
 
     peerInstance.on("call", (call) => {
-      console.log(`Received call from ${call.peer}`);
       const remoteUserId = call.peer.split("_")[0];
       if (localStreamRef.current) {
-        console.log(`Answering call from ${remoteUserId}`);
         call.answer(localStreamRef.current);
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
-          console.log(
-            `Received remote stream from ${remoteUserId} via call answer, Stream ID: ${remoteStream.id}`
-          );
           setParticipants((prev) => {
             const participant = prev.find((p) => p.id === remoteUserId);
             if (participant) {
@@ -2335,27 +2488,19 @@ const VideoCallMeeting: React.FC = () => {
           console.error(`PeerJS call error with ${remoteUserId}:`, err);
         });
         call.on("close", () => {
-          console.log(`PeerJS call closed with ${remoteUserId}`);
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
       } else {
-        console.log(
-          `Queuing call from ${remoteUserId} (local stream not ready)`
-        );
         pendingCallsRef.current.push({ call, remoteUserId });
       }
     });
 
     return () => {
-      console.log("Component unmounting - thorough cleanup starting");
-
       if (socketRef.current) {
-        console.log("Disconnecting socket");
         socketRef.current.disconnect();
         socketRef.current = null;
       }
 
-      console.log("Closing all peer connections");
       Object.entries(peerCallsRef.current).forEach(([userId, call]) => {
         try {
           if (call) {
@@ -2375,7 +2520,6 @@ const VideoCallMeeting: React.FC = () => {
       });
       peerCallsRef.current = {};
 
-      console.log("Closing all screen share peer connections");
       Object.entries(screenShareCallsRef.current).forEach(([userId, call]) => {
         try {
           if (call) {
@@ -2399,7 +2543,6 @@ const VideoCallMeeting: React.FC = () => {
       screenShareCallsRef.current = {};
 
       if (peerRef.current) {
-        console.log("Destroying peer instance");
         try {
           peerRef.current.destroy();
         } catch (err) {
@@ -2409,7 +2552,6 @@ const VideoCallMeeting: React.FC = () => {
       }
 
       if (screenSharePeerRef.current) {
-        console.log("Destroying screen share peer instance");
         try {
           screenSharePeerRef.current.destroy();
         } catch (err) {
@@ -2418,55 +2560,22 @@ const VideoCallMeeting: React.FC = () => {
         screenSharePeerRef.current = null;
       }
 
-      console.log("Stopping all media tracks");
       if (localStreamRef.current) {
-        const tracks = localStreamRef.current.getTracks();
-        console.log(`Stopping ${tracks.length} tracks from localStreamRef`);
-        tracks.forEach((track) => {
-          try {
-            console.log(`Stopping track: ${track.kind} (${track.id})`);
-            track.stop();
-          } catch (err) {
-            console.error(`Error stopping track ${track.id}:`, err);
-          }
+        localStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
         });
         localStreamRef.current = null;
       }
 
       if (localScreenShareStreamRef.current) {
-        const tracks = localScreenShareStreamRef.current.getTracks();
-        console.log(
-          `Stopping ${tracks.length} tracks from localScreenShareStreamRef`
-        );
-        tracks.forEach((track) => {
-          try {
-            console.log(
-              `Stopping screen share track: ${track.kind} (${track.id})`
-            );
-            track.stop();
-          } catch (err) {
-            console.error(
-              `Error stopping screen share track ${track.id}:`,
-              err
-            );
-          }
+        localScreenShareStreamRef.current.getTracks().forEach((track) => {
+          track.stop();
         });
         localScreenShareStreamRef.current = null;
       }
 
-      try {
-        navigator.mediaDevices
-          .getUserMedia({ audio: false, video: false })
-          .then((s) => s.getTracks().forEach((track) => track.stop()))
-          .catch((e) =>
-            console.log("Expected error from false constraints:", e)
-          );
-      } catch (err) {
-        console.log("Expected error from attempt to force-stop devices:", err);
-      }
-
+      setMessages([]);
       document.title = "MentorOne Meet";
-      console.log("Component unmount cleanup complete");
     };
   }, [
     meetingId,
@@ -2488,6 +2597,7 @@ const VideoCallMeeting: React.FC = () => {
             onClose={() => setIsChatOpen(false)}
             messages={messages}
             sendMessage={sendMessage}
+            currentUserId={userId}
           />
         )}
         {isParticipantsOpen && (
@@ -2532,7 +2642,7 @@ const VideoCallMeeting: React.FC = () => {
         </div>
       )}
       {userId === creatorId && pendingJoinRequests.length > 0 && (
-        <div className="absolute bottom-4 right-4 bg-gray-800 rounded-lg p-4 z-20 max-w-md w-full">
+        <div className="absolute bottom-4 right-4 bg-gray-800 rounded-lg p-4 z-20 max-w-sm w-full">
           {pendingJoinRequests.map((request) => (
             <div
               key={request.userId}
@@ -2544,7 +2654,7 @@ const VideoCallMeeting: React.FC = () => {
               <div className="flex gap-2">
                 <Button
                   variant="default"
-                  className="bg-blue-600 hover:bg-green-700"
+                  className="bg-blue-600 hover:bg-green-700 text-white"
                   onClick={() => handleAdmitUser(request)}
                 >
                   Admit
