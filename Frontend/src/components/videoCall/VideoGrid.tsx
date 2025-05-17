@@ -4,11 +4,12 @@
 // interface Participant {
 //   id: string;
 //   name: string;
-//   stream?: MediaStream;
-//   cameraStream?: MediaStream;
-//   screenShareStream?: MediaStream;
+//   stream?: MediaStream | null;
+//   cameraStream?: MediaStream | null;
+//   screenShareStream?: MediaStream | null;
 //   audio: boolean;
 //   video: boolean;
+//   isSharingScreen?: boolean;
 // }
 
 // interface VideoGridProps {
@@ -23,26 +24,30 @@
 //   console.log("VideoGrid: participants:", participants);
 //   console.log("VideoGrid: currentUserId:", currentUserId);
 
-//   // Check if any participant is sharing their screen
-//   const screenSharingParticipant = participants.find((participant) => {
-//     const videoTracks = participant.stream?.getVideoTracks() || [];
-//     return videoTracks.some((track) => track.label.includes("screen"));
+//   // Log screen-sharing status for debugging
+//   participants.forEach((p) => {
+//     console.log(
+//       `VideoGrid: Participant ${p.name} (ID: ${p.id}) - isSharingScreen: ${p.isSharingScreen}`
+//     );
 //   });
+
+//   // Find the participant who is sharing their screen
+//   const screenSharingParticipant = participants.find(
+//     (participant) => participant.isSharingScreen
+//   );
 
 //   // Extract the screen-sharing stream if it exists
 //   const screenSharingStream = screenSharingParticipant
 //     ? {
 //         id: `${screenSharingParticipant.id}-screen`,
 //         name: `${screenSharingParticipant.name}'s Screen`,
-//         stream:
-//           screenSharingParticipant.screenShareStream ||
-//           screenSharingParticipant.stream,
+//         stream: screenSharingParticipant.screenShareStream,
 //         audio: screenSharingParticipant.audio,
 //         video: true,
 //       }
 //     : null;
 
-//   // Use cameraStream for participant tiles to ensure the camera feed is shown
+//   // Use cameraStream for participant tiles to show camera feeds
 //   const participantsForTiles = participants.map((participant) => ({
 //     ...participant,
 //     stream: participant.cameraStream || participant.stream,
@@ -79,6 +84,9 @@
 //   };
 
 //   if (screenSharingStream) {
+//     console.log(
+//       `VideoGrid: Screen sharing active by ${screenSharingParticipant.name} (ID: ${screenSharingParticipant.id})`
+//     );
 //     // Screen-sharing layout: 80% left (screen share), 20% right (participant tiles in a column)
 //     return (
 //       <div className="flex-1 flex flex-row p-2 bg-gray-900 overflow-hidden">
@@ -157,10 +165,14 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   console.log("VideoGrid: participants:", participants);
   console.log("VideoGrid: currentUserId:", currentUserId);
 
-  // Log screen-sharing status for debugging
+  // Log screen-sharing status and stream details for debugging
   participants.forEach((p) => {
     console.log(
-      `VideoGrid: Participant ${p.name} (ID: ${p.id}) - isSharingScreen: ${p.isSharingScreen}`
+      `VideoGrid: Participant ${p.name} (ID: ${p.id}) - isSharingScreen: ${
+        p.isSharingScreen
+      }, stream ID: ${p.stream?.id || "none"}, cameraStream ID: ${
+        p.cameraStream?.id || "none"
+      }, screenShareStream ID: ${p.screenShareStream?.id || "none"}`
     );
   });
 
@@ -180,11 +192,24 @@ const VideoGrid: React.FC<VideoGridProps> = ({
       }
     : null;
 
-  // Use cameraStream for participant tiles to show camera feeds
-  const participantsForTiles = participants.map((participant) => ({
-    ...participant,
-    stream: participant.cameraStream || participant.stream,
-  }));
+  // Use cameraStream for participant tiles to show camera feeds, fallback to stream only if cameraStream is not available
+  const participantsForTiles = participants.map((participant) => {
+    const tileStream =
+      participant.id === screenSharingParticipant?.id
+        ? participant.cameraStream // For screen-sharing user, use cameraStream
+        : participant.cameraStream || participant.stream; // For others, use cameraStream or fallback to stream
+
+    console.log(
+      `VideoGrid: Tile for ${participant.name} (ID: ${
+        participant.id
+      }) using stream ID: ${tileStream?.id || "none"}`
+    );
+
+    return {
+      ...participant,
+      stream: tileStream,
+    };
+  });
 
   // Calculate grid layout and tile sizing for normal view (no screen sharing)
   const getGridConfig = (count: number) => {
@@ -218,12 +243,12 @@ const VideoGrid: React.FC<VideoGridProps> = ({
 
   if (screenSharingStream) {
     console.log(
-      `VideoGrid: Screen sharing active by ${screenSharingParticipant.name} (ID: ${screenSharingParticipant.id})`
+      `VideoGrid: Screen sharing active by ${screenSharingParticipant.name} (ID: ${screenSharingParticipant.id}), stream ID: ${screenSharingStream.stream?.id}`
     );
-    // Screen-sharing layout: 80% left (screen share), 20% right (participant tiles in a column)
+    // Screen-sharing layout: 70% left (screen share), 30% right (participant tiles in a column)
     return (
       <div className="flex-1 flex flex-row p-2 bg-gray-900 overflow-hidden">
-        {/* Left side: 80% for screen sharing */}
+        {/* Left side: 70% for screen sharing */}
         <div className="w-[80%] h-full pr-2">
           <div className="w-full h-full">
             <VideoTile
@@ -233,7 +258,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
             />
           </div>
         </div>
-        {/* Right side: 20% for participant tiles in a column */}
+        {/* Right side: 30% for participant tiles in a column */}
         <div className="w-[20%] h-full flex flex-col gap-2 overflow-y-auto">
           {participantsForTiles.map((participant) => (
             <div key={participant.id} className="w-full">

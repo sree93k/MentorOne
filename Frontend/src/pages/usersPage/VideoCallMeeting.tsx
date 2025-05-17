@@ -33,22 +33,15 @@
 // import { useSelector } from "react-redux";
 // import { RootState } from "@/redux/store/store";
 
-// // interface Participant {
-// //   id: string;
-// //   name: string;
-// //   stream?: MediaStream;
-// //   audio: boolean;
-// //   video: boolean;
-// // }
 // interface Participant {
 //   id: string;
 //   name: string;
-//   stream?: MediaStream; // Active stream (for compatibility)
-//   cameraStream?: MediaStream; // Camera feed
-//   screenShareStream?: MediaStream; // Screen-sharing feed
+//   stream?: MediaStream | null;
+//   cameraStream?: MediaStream | null;
+//   screenShareStream?: MediaStream | null;
 //   audio: boolean;
 //   video: boolean;
-//   isSharingScreen?: boolean; // Flag to indicate screen sharing
+//   isSharingScreen?: boolean;
 // }
 // interface Message {
 //   id: string;
@@ -113,45 +106,6 @@
 //     }, [])
 //   );
 
-//   // const initLocalStream = async () => {
-//   //   try {
-//   //     console.log("Initializing local stream with:", {
-//   //       initialVideoOn,
-//   //       initialAudioOn,
-//   //     });
-//   //     const stream = await navigator.mediaDevices.getUserMedia({
-//   //       audio: initialAudioOn,
-//   //       video: initialVideoOn,
-//   //     });
-//   //     localStreamRef.current = stream;
-//   //     setLocalStream(stream);
-//   //     setIsAudioOn(initialAudioOn);
-//   //     setIsVideoOn(initialVideoOn);
-
-//   //     if (!initialAudioOn && stream.getAudioTracks()[0]) {
-//   //       stream.getAudioTracks()[0].enabled = false;
-//   //     }
-//   //     if (!initialVideoOn && stream.getVideoTracks()[0]) {
-//   //       stream.getVideoTracks()[0].enabled = false;
-//   //     }
-
-//   //     setParticipants([
-//   //       {
-//   //         id: userId,
-//   //         name: userName,
-//   //         stream,
-//   //         audio: initialAudioOn,
-//   //         video: initialVideoOn,
-//   //       },
-//   //     ]);
-//   //     console.log("Local stream initialized");
-//   //     processPendingJoins();
-//   //     processPendingCalls();
-//   //   } catch (error) {
-//   //     console.error("Error accessing media devices:", error);
-//   //     toast.error("Failed to access camera or microphone.");
-//   //   }
-//   // };
 //   const initLocalStream = async () => {
 //     try {
 //       console.log("Initializing local stream with:", {
@@ -193,6 +147,7 @@
 //       toast.error("Failed to access camera or microphone.");
 //     }
 //   };
+
 //   const processPendingJoins = () => {
 //     if (!localStreamRef.current || !peerRef.current) return;
 
@@ -435,6 +390,184 @@
 //     }
 //   };
 
+//   const toggleScreenShare = async () => {
+//     try {
+//       if (isSharingScreen) {
+//         // Stop screen sharing and revert to camera stream
+//         const screenStream = participants.find(
+//           (p) => p.id === userId
+//         )?.screenShareStream;
+//         if (screenStream) {
+//           screenStream.getTracks().forEach((track) => track.stop());
+//         }
+//         const cameraStream = participants.find(
+//           (p) => p.id === userId
+//         )?.cameraStream;
+//         if (!cameraStream) {
+//           const newStream = await navigator.mediaDevices.getUserMedia({
+//             audio: isAudioOn,
+//             video: isVideoOn,
+//           });
+//           localStreamRef.current = newStream;
+//           setLocalStream(newStream);
+//           setParticipants((prev: Participant[]) =>
+//             prev.map((p) =>
+//               p.id === userId
+//                 ? {
+//                     id: p.id,
+//                     name: p.name,
+//                     stream: newStream,
+//                     cameraStream: newStream,
+//                     screenShareStream: null,
+//                     audio: p.audio,
+//                     video: p.video,
+//                     isSharingScreen: false,
+//                   }
+//                 : p
+//             )
+//           );
+//         } else {
+//           localStreamRef.current = cameraStream;
+//           setLocalStream(cameraStream);
+//           setParticipants((prev: Participant[]) =>
+//             prev.map((p) =>
+//               p.id === userId
+//                 ? {
+//                     id: p.id,
+//                     name: p.name,
+//                     stream: cameraStream,
+//                     cameraStream: cameraStream,
+//                     screenShareStream: null,
+//                     audio: p.audio,
+//                     video: p.video,
+//                     isSharingScreen: false,
+//                   }
+//                 : p
+//             )
+//           );
+//         }
+//         setIsSharingScreen(false);
+//         const videoTrack = cameraStream?.getVideoTracks()[0];
+//         if (!isVideoOn && videoTrack) {
+//           videoTrack.enabled = false;
+//         }
+//         Object.values(peerCallsRef.current).forEach((call) => {
+//           if (call && call.peerConnection) {
+//             const sender = call.peerConnection
+//               .getSenders()
+//               .find((s) => s.track?.kind === "video");
+//             if (sender && videoTrack) {
+//               sender.replaceTrack(videoTrack);
+//             }
+//           }
+//         });
+//         socket?.emit("screen-share-status", {
+//           meetingId,
+//           userId,
+//           isSharingScreen: false,
+//         });
+//         console.log("Switched back to camera stream:", cameraStream?.id);
+//       } else {
+//         const screenStream = await navigator.mediaDevices.getDisplayMedia({
+//           video: true,
+//         });
+//         const cameraStream = localStreamRef.current;
+//         const audioTrack = cameraStream?.getAudioTracks()[0];
+//         const newStream = new MediaStream();
+//         screenStream.getTracks().forEach((track) => {
+//           newStream.addTrack(track);
+//           track.onended = () => {
+//             console.log(
+//               `Screen share track ended: ${track.kind} (${track.id})`
+//             );
+//             toggleScreenShare();
+//           };
+//         });
+//         if (audioTrack) {
+//           newStream.addTrack(audioTrack);
+//         }
+//         localStreamRef.current = newStream;
+//         setLocalStream(newStream);
+//         setIsSharingScreen(true);
+//         const videoTrack = newStream.getVideoTracks()[0];
+//         Object.values(peerCallsRef.current).forEach((call) => {
+//           if (call && call.peerConnection) {
+//             const sender = call.peerConnection
+//               .getSenders()
+//               .find((s) => s.track?.kind === "video");
+//             if (sender && videoTrack) {
+//               sender.replaceTrack(videoTrack);
+//             }
+//           }
+//         });
+//         setParticipants((prev: Participant[]) =>
+//           prev.map((p) =>
+//             p.id === userId
+//               ? {
+//                   id: p.id,
+//                   name: p.name,
+//                   stream: newStream,
+//                   cameraStream: cameraStream ?? null,
+//                   screenShareStream: newStream,
+//                   audio: p.audio,
+//                   video: p.video,
+//                   isSharingScreen: true,
+//                 }
+//               : p
+//           )
+//         );
+//         socket?.emit("screen-share-status", {
+//           meetingId,
+//           userId,
+//           isSharingScreen: true,
+//         });
+//         console.log("Started screen sharing with stream:", newStream.id);
+//       }
+//     } catch (error) {
+//       console.error("Error toggling screen share:", error);
+//       toast.error("Failed to start or stop screen sharing.");
+//     }
+//   };
+
+//   const sendMessage = (text: string) => {
+//     if (!text.trim()) return;
+//     const message: Message = {
+//       id: `${userId}_${Date.now()}`,
+//       senderId: userId,
+//       senderName: userName,
+//       text,
+//       timestamp: new Date(),
+//     };
+//     socket?.emit("message", { meetingId, message });
+//     setMessages((prev) => [...prev, message]);
+//     console.log("Sent message:", message);
+//   };
+
+//   const sendReaction = (reaction: string) => {
+//     socket?.emit("reaction", { meetingId, userId, userName, reaction });
+//     toast({
+//       title: "Reaction sent",
+//       description: `You sent a ${reaction} reaction`,
+//     });
+//     setShowReactions(false);
+//     console.log("Sent reaction:", reaction);
+//   };
+
+//   const leaveMeeting = () => {
+//     console.log("Leaving meeting, stopping media tracks");
+//     if (localStreamRef.current) {
+//       localStreamRef.current.getTracks().forEach((track) => {
+//         console.log(`Stopping track: ${track.kind} (${track.id})`);
+//         track.enabled = false;
+//         track.stop();
+//       });
+//       localStreamRef.current = null;
+//     }
+//     setLocalStream(null);
+//     socket?.emit("leave-meeting", { meetingId, userId });
+//     navigate(`/user/meeting-end/${meetingId}`);
+//   };
+
 //   useEffect(() => {
 //     document.title = `Meeting: ${meetingId} | MentorOne Meet`;
 
@@ -519,7 +652,6 @@
 //         if (userId !== creatorId) return;
 //         console.log(`Join request from ${userName} (${remoteUserId})`);
 //         setPendingJoinRequests((prev) => {
-//           // Remove any existing requests for the same userId
 //           const filteredRequests = prev.filter(
 //             (req) => req.userId !== remoteUserId
 //           );
@@ -534,124 +666,6 @@
 //       }
 //     );
 
-//     // socketInstance.on(
-//     //   "user-joined",
-//     //   ({
-//     //     userId: remoteUserId,
-//     //     userName: remoteName,
-//     //     peerId: remotePeerId,
-//     //   }) => {
-//     //     console.log(
-//     //       `User joined: ${remoteUserId} (${remoteName}, ${remotePeerId})`
-//     //     );
-//     //     if (remoteUserId === userId) return;
-
-//     //     if (!localStreamRef.current || !peerRef.current) {
-//     //       console.log(
-//     //         `Queuing join for ${remoteUserId} (local stream or peer not ready)`
-//     //       );
-//     //       pendingJoinsRef.current.push({
-//     //         userId: remoteUserId,
-//     //         userName: remoteName,
-//     //         peerId: remotePeerId,
-//     //       });
-//     //       return;
-//     //     }
-
-//     //     setParticipants((prev) => {
-//     //       if (prev.some((p) => p.id === remoteUserId)) return prev;
-//     //       return [
-//     //         ...prev,
-//     //         { id: remoteUserId, name: remoteName, audio: true, video: true },
-//     //       ];
-//     //     });
-
-//     //     const call = peerInstance.call(remotePeerId, localStreamRef.current);
-//     //     console.log(`Initiating call to ${remotePeerId}`);
-//     //     peerCallsRef.current[remoteUserId] = call;
-//     //     call.on("stream", (remoteStream) => {
-//     //       console.log(`Received remote stream from ${remoteUserId}`);
-//     //       setParticipants((prev) =>
-//     //         prev.map((p) =>
-//     //           p.id === remoteUserId ? { ...p, stream: remoteStream } : p
-//     //         )
-//     //       );
-//     //     });
-//     //     call.on("error", (err) => {
-//     //       console.error(`PeerJS call error with ${remoteUserId}:`, err);
-//     //       toast.error(`Failed to connect to ${remoteName}`);
-//     //     });
-//     //     call.on("close", () => {
-//     //       console.log(`PeerJS call closed with ${remoteUserId}`);
-//     //       setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
-//     //     });
-//     //   }
-//     // );
-//     // socketInstance.on(
-//     //   "user-joined",
-//     //   ({
-//     //     userId: remoteUserId,
-//     //     userName: remoteName,
-//     //     peerId: remotePeerId,
-//     //   }) => {
-//     //     console.log(
-//     //       `User joined: ${remoteUserId} (${remoteName}, ${remotePeerId})`
-//     //     );
-//     //     if (remoteUserId === userId) return;
-
-//     //     if (!localStreamRef.current || !peerRef.current) {
-//     //       console.log(
-//     //         `Queuing join for ${remoteUserId} (local stream or peer not ready)`
-//     //       );
-//     //       pendingJoinsRef.current.push({
-//     //         userId: remoteUserId,
-//     //         userName: remoteName,
-//     //         peerId: remotePeerId,
-//     //       });
-//     //       return;
-//     //     }
-
-//     //     setParticipants((prev) => {
-//     //       if (prev.some((p) => p.id === remoteUserId)) return prev;
-//     //       return [
-//     //         ...prev,
-//     //         {
-//     //           id: remoteUserId,
-//     //           name: remoteName,
-//     //           audio: true,
-//     //           video: true,
-//     //           isSharingScreen: false,
-//     //         },
-//     //       ];
-//     //     });
-
-//     //     const call = peerInstance.call(remotePeerId, localStreamRef.current);
-//     //     console.log(`Initiating call to ${remotePeerId}`);
-//     //     peerCallsRef.current[remoteUserId] = call;
-//     //     call.on("stream", (remoteStream) => {
-//     //       console.log(`Received remote stream from ${remoteUserId}`);
-//     //       setParticipants((prev) =>
-//     //         prev.map((p) =>
-//     //           p.id === remoteUserId
-//     //             ? {
-//     //                 ...p,
-//     //                 stream: remoteStream,
-//     //                 cameraStream: remoteStream, // Initially, this is the camera stream
-//     //               }
-//     //             : p
-//     //         )
-//     //       );
-//     //     });
-//     //     call.on("error", (err) => {
-//     //       console.error(`PeerJS call error with ${remoteUserId}:`, err);
-//     //       toast.error(`Failed to connect to ${remoteName}`);
-//     //     });
-//     //     call.on("close", () => {
-//     //       console.log(`PeerJS call closed with ${remoteUserId}`);
-//     //       setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
-//     //     });
-//     //   }
-//     // );
 //     socketInstance.on(
 //       "user-joined",
 //       ({
@@ -701,7 +715,7 @@
 //                 ? {
 //                     ...p,
 //                     stream: remoteStream,
-//                     cameraStream: p.cameraStream || remoteStream, // Preserve cameraStream if already set
+//                     cameraStream: p.cameraStream || remoteStream,
 //                   }
 //                 : p
 //             )
@@ -717,41 +731,29 @@
 //         });
 //       }
 //     );
-//     // socketInstance.on(
-//     //   "screen-share-status",
-//     //   ({ userId: remoteUserId, isSharingScreen }) => {
-//     //     console.log(
-//     //       `Screen share status update from ${remoteUserId}: ${isSharingScreen}`
-//     //     );
-//     //     setParticipants((prev) =>
-//     //       prev.map((p) =>
-//     //         p.id === remoteUserId
-//     //           ? {
-//     //               ...p,
-//     //               isSharingScreen,
-//     //               screenShareStream: isSharingScreen ? p.stream : undefined,
-//     //               stream: isSharingScreen ? p.stream : p.cameraStream,
-//     //             }
-//     //           : p
-//     //       )
-//     //     );
-//     //   }
-//     // );
+
 //     socketInstance.on(
 //       "screen-share-status",
 //       ({ userId: remoteUserId, isSharingScreen }) => {
 //         console.log(
-//           `Screen share status update from ${remoteUserId}: ${isSharingScreen}`
+//           `Received screen-share-status: ${remoteUserId} - isSharingScreen: ${isSharingScreen}`
 //         );
 //         setParticipants((prev: Participant[]) =>
 //           prev.map((p) => {
 //             if (p.id === remoteUserId) {
-//               // Update the specific participant's screen-sharing status
+//               console.log(
+//                 `Updating participant ${p.name} (ID: ${
+//                   p.id
+//                 }): isSharingScreen=${isSharingScreen}, stream ID=${
+//                   p.stream?.id
+//                 }, cameraStream ID=${p.cameraStream?.id || "none"}`
+//               );
 //               return {
 //                 ...p,
 //                 isSharingScreen,
 //                 screenShareStream: isSharingScreen ? p.stream : null,
-//                 stream: isSharingScreen ? p.stream : p.cameraStream,
+//                 stream: p.stream, // Preserve the current stream
+//                 cameraStream: p.cameraStream || p.stream, // Ensure cameraStream is set
 //               };
 //             }
 //             return p;
@@ -759,6 +761,7 @@
 //         );
 //       }
 //     );
+
 //     socketInstance.on(
 //       "existing-participants",
 //       (
@@ -879,50 +882,6 @@
 //       toast.error(`PeerJS error: ${err.message || err.type}`);
 //     });
 
-//     // peerInstance.on("call", (call) => {
-//     //   console.log(`Received call from ${call.peer}`);
-//     //   const remoteUserId = call.peer.split("_")[0];
-//     //   if (localStreamRef.current) {
-//     //     console.log(`Answering call from ${remoteUserId}`);
-//     //     call.answer(localStreamRef.current);
-//     //     peerCallsRef.current[remoteUserId] = call;
-//     //     call.on("stream", (remoteStream) => {
-//     //       console.log(
-//     //         `Received remote stream from ${remoteUserId} via call answer`
-//     //       );
-//     //       setParticipants((prev) => {
-//     //         const participant = prev.find((p) => p.id === remoteUserId);
-//     //         if (participant) {
-//     //           return prev.map((p) =>
-//     //             p.id === remoteUserId ? { ...p, stream: remoteStream } : p
-//     //           );
-//     //         }
-//     //         return [
-//     //           ...prev,
-//     //           {
-//     //             id: remoteUserId,
-//     //             name: `User_${remoteUserId.slice(0, 5)}`,
-//     //             stream: remoteStream,
-//     //             audio: true,
-//     //             video: true,
-//     //           },
-//     //         ];
-//     //       });
-//     //     });
-//     //     call.on("error", (err) => {
-//     //       console.error(`PeerJS call error with ${remoteUserId}:`, err);
-//     //     });
-//     //     call.on("close", () => {
-//     //       console.log(`PeerJS call closed with ${remoteUserId}`);
-//     //       setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
-//     //     });
-//     //   } else {
-//     //     console.log(
-//     //       `Queuing call from ${remoteUserId} (local stream not ready)`
-//     //     );
-//     //     pendingCallsRef.current.push({ call, remoteUserId });
-//     //   }
-//     // });
 //     peerInstance.on("call", (call) => {
 //       console.log(`Received call from ${call.peer}`);
 //       const remoteUserId = call.peer.split("_")[0];
@@ -942,7 +901,7 @@
 //                   ? {
 //                       ...p,
 //                       stream: remoteStream,
-//                       cameraStream: p.cameraStream || remoteStream, // Preserve cameraStream
+//                       cameraStream: p.cameraStream || remoteStream,
 //                     }
 //                   : p
 //               );
@@ -1053,264 +1012,6 @@
 //     initialVideoOn,
 //     initialAudioOn,
 //   ]);
-
-//   // const toggleScreenShare = async () => {
-//   //   try {
-//   //     if (isSharingScreen) {
-//   //       if (localStream) {
-//   //         localStream.getTracks().forEach((track) => track.stop());
-//   //       }
-//   //       const newStream = await navigator.mediaDevices.getUserMedia({
-//   //         audio: isAudioOn,
-//   //         video: isVideoOn,
-//   //       });
-//   //       localStreamRef.current = newStream;
-//   //       setLocalStream(newStream);
-//   //       setIsSharingScreen(false);
-//   //       const videoTrack = newStream.getVideoTracks()[0];
-//   //       if (!isVideoOn && videoTrack) {
-//   //         videoTrack.enabled = false;
-//   //       }
-//   //       Object.values(peerCallsRef.current).forEach((call) => {
-//   //         if (call && call.peerConnection) {
-//   //           const sender = call.peerConnection
-//   //             .getSenders()
-//   //             .find((s) => s.track?.kind === "video");
-//   //           if (sender && videoTrack) {
-//   //             sender.replaceTrack(videoTrack);
-//   //           }
-//   //         }
-//   //       });
-//   //       setParticipants((prev) =>
-//   //         prev.map((p) => (p.id === userId ? { ...p, stream: newStream } : p))
-//   //       );
-//   //       console.log("Switched back to camera stream:", newStream.id);
-//   //     } else {
-//   //       const screenStream = await navigator.mediaDevices.getDisplayMedia({
-//   //         video: true,
-//   //       });
-//   //       const audioTrack = localStream?.getAudioTracks()[0];
-//   //       const newStream = new MediaStream();
-//   //       screenStream.getTracks().forEach((track) => {
-//   //         newStream.addTrack(track);
-//   //         track.onended = () => {
-//   //           console.log(
-//   //             `Screen share track ended: ${track.kind} (${track.id})`
-//   //           );
-//   //           toggleScreenShare();
-//   //         };
-//   //       });
-//   //       if (audioTrack) {
-//   //         newStream.addTrack(audioTrack);
-//   //       }
-//   //       localStreamRef.current = newStream;
-//   //       setLocalStream(newStream);
-//   //       setIsSharingScreen(true);
-//   //       const videoTrack = newStream.getVideoTracks()[0];
-//   //       Object.values(peerCallsRef.current).forEach((call) => {
-//   //         if (call && call.peerConnection) {
-//   //           const sender = call.peerConnection
-//   //             .getSenders()
-//   //             .find((s) => s.track?.kind === "video");
-//   //           if (sender && videoTrack) {
-//   //             sender.replaceTrack(videoTrack);
-//   //           }
-//   //         }
-//   //       });
-//   //       setParticipants((prev) =>
-//   //         prev.map((p) => (p.id === userId ? { ...p, stream: newStream } : p))
-//   //       );
-//   //       console.log("Started screen sharing with stream:", newStream.id);
-//   //     }
-//   //   } catch (error) {
-//   //     console.error("Error toggling screen share:", error);
-//   //     toast.error("Failed to start or stop screen sharing.");
-//   //   }
-//   // };
-//   const toggleScreenShare = async () => {
-//     try {
-//       if (isSharingScreen) {
-//         // Stop screen sharing and revert to camera stream
-//         const screenStream = participants.find(
-//           (p) => p.id === userId
-//         )?.screenShareStream;
-//         if (screenStream) {
-//           screenStream.getTracks().forEach((track) => track.stop());
-//         }
-//         const cameraStream = participants.find(
-//           (p) => p.id === userId
-//         )?.cameraStream;
-//         if (!cameraStream) {
-//           const newStream = await navigator.mediaDevices.getUserMedia({
-//             audio: isAudioOn,
-//             video: isVideoOn,
-//           });
-//           localStreamRef.current = newStream;
-//           setLocalStream(newStream);
-//           setParticipants((prev: Participant[]) =>
-//             prev.map((p) =>
-//               p.id === userId
-//                 ? {
-//                     id: p.id,
-//                     name: p.name,
-//                     stream: newStream,
-//                     cameraStream: newStream,
-//                     screenShareStream: null,
-//                     audio: p.audio,
-//                     video: p.video,
-//                     isSharingScreen: false,
-//                   }
-//                 : p
-//             )
-//           );
-//         } else {
-//           localStreamRef.current = cameraStream;
-//           setLocalStream(cameraStream);
-//           setParticipants((prev: Participant[]) =>
-//             prev.map((p) =>
-//               p.id === userId
-//                 ? {
-//                     id: p.id,
-//                     name: p.name,
-//                     stream: cameraStream,
-//                     cameraStream: cameraStream,
-//                     screenShareStream: null,
-//                     audio: p.audio,
-//                     video: p.video,
-//                     isSharingScreen: false,
-//                   }
-//                 : p
-//             )
-//           );
-//         }
-//         setIsSharingScreen(false);
-//         const videoTrack = cameraStream?.getVideoTracks()[0];
-//         if (!isVideoOn && videoTrack) {
-//           videoTrack.enabled = false;
-//         }
-//         Object.values(peerCallsRef.current).forEach((call) => {
-//           if (call && call.peerConnection) {
-//             const sender = call.peerConnection
-//               .getSenders()
-//               .find((s) => s.track?.kind === "video");
-//             if (sender && videoTrack) {
-//               sender.replaceTrack(videoTrack);
-//             }
-//           }
-//         });
-//         // Notify others that screen sharing has stopped
-//         // socket?.emit("screen-share-status", {
-//         //   meetingId,
-//         //   userId,
-//         //   isSharingScreen: false,
-//         // });
-//         socket?.emit("screen-share-status", {
-//           meetingId,
-//           userId,
-//           isSharingScreen,
-//         });
-//         console.log("Switched back to camera stream:", cameraStream?.id);
-//       } else {
-//         // Start screen sharing
-//         const screenStream = await navigator.mediaDevices.getDisplayMedia({
-//           video: true,
-//         });
-//         const cameraStream = localStreamRef.current;
-//         const audioTrack = cameraStream?.getAudioTracks()[0];
-//         const newStream = new MediaStream();
-//         screenStream.getTracks().forEach((track) => {
-//           newStream.addTrack(track);
-//           track.onended = () => {
-//             console.log(
-//               `Screen share track ended: ${track.kind} (${track.id})`
-//             );
-//             toggleScreenShare();
-//           };
-//         });
-//         if (audioTrack) {
-//           newStream.addTrack(audioTrack);
-//         }
-//         localStreamRef.current = newStream;
-//         setLocalStream(newStream);
-//         setIsSharingScreen(true);
-//         const videoTrack = newStream.getVideoTracks()[0];
-//         Object.values(peerCallsRef.current).forEach((call) => {
-//           if (call && call.peerConnection) {
-//             const sender = call.peerConnection
-//               .getSenders()
-//               .find((s) => s.track?.kind === "video");
-//             if (sender && videoTrack) {
-//               sender.replaceTrack(videoTrack);
-//             }
-//           }
-//         });
-//         setParticipants((prev: Participant[]) =>
-//           prev.map((p) =>
-//             p.id === userId
-//               ? {
-//                   id: p.id,
-//                   name: p.name,
-//                   stream: newStream,
-//                   cameraStream: cameraStream ?? null, // Ensure null if cameraStream is undefined
-//                   screenShareStream: newStream,
-//                   audio: p.audio,
-//                   video: p.video,
-//                   isSharingScreen: true,
-//                 }
-//               : p
-//           )
-//         );
-//         // Notify others that screen sharing has started
-//         socket?.emit("screen-share-status", {
-//           meetingId,
-//           userId,
-//           isSharingScreen: true,
-//         });
-//         console.log("Started screen sharing with stream:", newStream.id);
-//       }
-//     } catch (error) {
-//       console.error("Error toggling screen share:", error);
-//       toast.error("Failed to start or stop screen sharing.");
-//     }
-//   };
-//   const sendMessage = (text: string) => {
-//     if (!text.trim()) return;
-//     const message: Message = {
-//       id: `${userId}_${Date.now()}`,
-//       senderId: userId,
-//       senderName: userName,
-//       text,
-//       timestamp: new Date(),
-//     };
-//     socket?.emit("message", { meetingId, message });
-//     setMessages((prev) => [...prev, message]);
-//     console.log("Sent message:", message);
-//   };
-
-//   const sendReaction = (reaction: string) => {
-//     socket?.emit("reaction", { meetingId, userId, userName, reaction });
-//     toast({
-//       title: "Reaction sent",
-//       description: `You sent a ${reaction} reaction`,
-//     });
-//     setShowReactions(false);
-//     console.log("Sent reaction:", reaction);
-//   };
-
-//   const leaveMeeting = () => {
-//     console.log("Leaving meeting, stopping media tracks");
-//     if (localStreamRef.current) {
-//       localStreamRef.current.getTracks().forEach((track) => {
-//         console.log(`Stopping track: ${track.kind} (${track.id})`);
-//         track.enabled = false;
-//         track.stop();
-//       });
-//       localStreamRef.current = null;
-//     }
-//     setLocalStream(null);
-//     socket?.emit("leave-meeting", { meetingId, userId });
-//     navigate(`/user/meeting-end/${meetingId}`);
-//   };
 
 //   return (
 //     <div className="flex flex-col h-screen bg-gray-900">
@@ -1551,6 +1252,7 @@ interface Participant {
   audio: boolean;
   video: boolean;
   isSharingScreen?: boolean;
+  screenSharePeerId?: string;
 }
 interface Message {
   id: string;
@@ -1573,9 +1275,12 @@ const VideoCallMeeting: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.user);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [peer, setPeer] = useState<Peer | null>(null);
+  const [screenSharePeer, setScreenSharePeer] = useState<Peer | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [localScreenShareStream, setLocalScreenShareStream] =
+    useState<MediaStream | null>(null);
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isSharingScreen, setIsSharingScreen] = useState(false);
@@ -1590,12 +1295,18 @@ const VideoCallMeeting: React.FC = () => {
 
   const socketRef = useRef<Socket | null>(null);
   const peerRef = useRef<Peer | null>(null);
+  const screenSharePeerRef = useRef<Peer | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const localScreenShareStreamRef = useRef<MediaStream | null>(null);
   const peerCallsRef = useRef<{ [key: string]: any }>({});
+  const screenShareCallsRef = useRef<{ [key: string]: any }>({});
   const pendingJoinsRef = useRef<
     { userId: string; userName: string; peerId: string }[]
   >([]);
   const pendingCallsRef = useRef<{ call: any; remoteUserId: string }[]>([]);
+  const pendingScreenShareCallsRef = useRef<
+    { call: any; remoteUserId: string }[]
+  >([]);
 
   const userId = user?._id || `anonymous_${Date.now()}`;
   const userName = user?.firstName || "User";
@@ -1611,6 +1322,14 @@ const VideoCallMeeting: React.FC = () => {
           track.stop();
         });
         localStreamRef.current = null;
+      }
+      if (localScreenShareStreamRef.current) {
+        console.log("BeforeUnload: Stopping screen share tracks");
+        localScreenShareStreamRef.current.getTracks().forEach((track) => {
+          track.enabled = false;
+          track.stop();
+        });
+        localScreenShareStreamRef.current = null;
       }
     }, [])
   );
@@ -1688,7 +1407,13 @@ const VideoCallMeeting: React.FC = () => {
           console.log(`Received remote stream from ${remoteUserId}`);
           setParticipants((prev) =>
             prev.map((p) =>
-              p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+              p.id === remoteUserId
+                ? {
+                    ...p,
+                    stream: remoteStream,
+                    cameraStream: remoteStream,
+                  }
+                : p
             )
           );
         });
@@ -1721,7 +1446,13 @@ const VideoCallMeeting: React.FC = () => {
           const participant = prev.find((p) => p.id === remoteUserId);
           if (participant) {
             return prev.map((p) =>
-              p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+              p.id === remoteUserId
+                ? {
+                    ...p,
+                    stream: remoteStream,
+                    cameraStream: remoteStream,
+                  }
+                : p
             );
           }
           return [
@@ -1730,6 +1461,7 @@ const VideoCallMeeting: React.FC = () => {
               id: remoteUserId,
               name: `User_${remoteUserId.slice(0, 5)}`,
               stream: remoteStream,
+              cameraStream: remoteStream,
               audio: true,
               video: true,
             },
@@ -1742,6 +1474,50 @@ const VideoCallMeeting: React.FC = () => {
       call.on("close", () => {
         console.log(`PeerJS call closed with ${remoteUserId}`);
         setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+      });
+    });
+  };
+
+  const processPendingScreenShareCalls = () => {
+    if (!localScreenShareStreamRef.current || !screenSharePeerRef.current)
+      return;
+
+    const pendingCalls = [...pendingScreenShareCallsRef.current];
+    pendingScreenShareCallsRef.current = [];
+    pendingCalls.forEach(({ call, remoteUserId }) => {
+      console.log(`Processing pending screen share call from ${remoteUserId}`);
+      call.answer(localScreenShareStreamRef.current);
+      screenShareCallsRef.current[remoteUserId] = call;
+      call.on("stream", (remoteStream) => {
+        console.log(
+          `Received screen share stream from ${remoteUserId} via pending call`
+        );
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.id === remoteUserId
+              ? {
+                  ...p,
+                  screenShareStream: remoteStream,
+                }
+              : p
+          )
+        );
+      });
+      call.on("error", (err) => {
+        console.error(
+          `PeerJS screen share call error with ${remoteUserId}:`,
+          err
+        );
+      });
+      call.on("close", () => {
+        console.log(`PeerJS screen share call closed with ${remoteUserId}`);
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.id === remoteUserId
+              ? { ...p, screenShareStream: null, isSharingScreen: false }
+              : p
+          )
+        );
       });
     });
   };
@@ -1902,89 +1678,54 @@ const VideoCallMeeting: React.FC = () => {
   const toggleScreenShare = async () => {
     try {
       if (isSharingScreen) {
-        // Stop screen sharing and revert to camera stream
-        const screenStream = participants.find(
-          (p) => p.id === userId
-        )?.screenShareStream;
-        if (screenStream) {
-          screenStream.getTracks().forEach((track) => track.stop());
+        // Stop screen sharing
+        if (localScreenShareStreamRef.current) {
+          localScreenShareStreamRef.current
+            .getTracks()
+            .forEach((track) => track.stop());
+          localScreenShareStreamRef.current = null;
+          setLocalScreenShareStream(null);
         }
-        const cameraStream = participants.find(
-          (p) => p.id === userId
-        )?.cameraStream;
-        if (!cameraStream) {
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            audio: isAudioOn,
-            video: isVideoOn,
-          });
-          localStreamRef.current = newStream;
-          setLocalStream(newStream);
-          setParticipants((prev: Participant[]) =>
-            prev.map((p) =>
-              p.id === userId
-                ? {
-                    id: p.id,
-                    name: p.name,
-                    stream: newStream,
-                    cameraStream: newStream,
-                    screenShareStream: null,
-                    audio: p.audio,
-                    video: p.video,
-                    isSharingScreen: false,
-                  }
-                : p
-            )
-          );
-        } else {
-          localStreamRef.current = cameraStream;
-          setLocalStream(cameraStream);
-          setParticipants((prev: Participant[]) =>
-            prev.map((p) =>
-              p.id === userId
-                ? {
-                    id: p.id,
-                    name: p.name,
-                    stream: cameraStream,
-                    cameraStream: cameraStream,
-                    screenShareStream: null,
-                    audio: p.audio,
-                    video: p.video,
-                    isSharingScreen: false,
-                  }
-                : p
-            )
-          );
-        }
+        setParticipants((prev: Participant[]) =>
+          prev.map((p) =>
+            p.id === userId
+              ? {
+                  ...p,
+                  screenShareStream: null,
+                  isSharingScreen: false,
+                  screenSharePeerId: undefined,
+                }
+              : p
+          )
+        );
         setIsSharingScreen(false);
-        const videoTrack = cameraStream?.getVideoTracks()[0];
-        if (!isVideoOn && videoTrack) {
-          videoTrack.enabled = false;
+
+        // Clean up screen share PeerJS instance
+        if (screenSharePeerRef.current) {
+          Object.values(screenShareCallsRef.current).forEach((call) => {
+            if (call) call.close();
+          });
+          screenShareCallsRef.current = {};
+          screenSharePeerRef.current.destroy();
+          screenSharePeerRef.current = null;
+          setScreenSharePeer(null);
         }
-        Object.values(peerCallsRef.current).forEach((call) => {
-          if (call && call.peerConnection) {
-            const sender = call.peerConnection
-              .getSenders()
-              .find((s) => s.track?.kind === "video");
-            if (sender && videoTrack) {
-              sender.replaceTrack(videoTrack);
-            }
-          }
-        });
+
         socket?.emit("screen-share-status", {
           meetingId,
           userId,
           isSharingScreen: false,
+          screenSharePeerId: null,
         });
-        console.log("Switched back to camera stream:", cameraStream?.id);
+        console.log("Stopped screen sharing");
       } else {
+        // Start screen sharing
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
         });
-        const cameraStream = localStreamRef.current;
-        const audioTrack = cameraStream?.getAudioTracks()[0];
-        const newStream = new MediaStream();
+        localScreenShareStreamRef.current = screenStream;
+        setLocalScreenShareStream(screenStream);
         screenStream.getTracks().forEach((track) => {
-          newStream.addTrack(track);
           track.onended = () => {
             console.log(
               `Screen share track ended: ${track.kind} (${track.id})`
@@ -1992,45 +1733,121 @@ const VideoCallMeeting: React.FC = () => {
             toggleScreenShare();
           };
         });
-        if (audioTrack) {
-          newStream.addTrack(audioTrack);
-        }
-        localStreamRef.current = newStream;
-        setLocalStream(newStream);
-        setIsSharingScreen(true);
-        const videoTrack = newStream.getVideoTracks()[0];
-        Object.values(peerCallsRef.current).forEach((call) => {
-          if (call && call.peerConnection) {
-            const sender = call.peerConnection
-              .getSenders()
-              .find((s) => s.track?.kind === "video");
-            if (sender && videoTrack) {
-              sender.replaceTrack(videoTrack);
-            }
+
+        // Initialize screen share PeerJS instance
+        const screenSharePeerId = `${userId}_screen_${Date.now()}`;
+        const screenSharePeerInstance = new Peer(screenSharePeerId, {
+          host: import.meta.env.VITE_PEER_HOST || "localhost",
+          port: parseInt(import.meta.env.VITE_PEER_PORT || "9000"),
+          path: "/peerjs",
+          debug: 3,
+          config: {
+            iceServers: [
+              { urls: "stun:stun.l.google.com:19302" },
+              { urls: "stun:stun1.l.google.com:19302" },
+              {
+                urls: "turn:openrelay.metered.ca:443",
+                username: "openrelay.project",
+                credential: "openrelay",
+              },
+            ],
+          },
+        });
+        screenSharePeerRef.current = screenSharePeerInstance;
+        setScreenSharePeer(screenSharePeerInstance);
+
+        screenSharePeerInstance.on("open", (id) => {
+          console.log("Screen share PeerJS connected:", id);
+          setParticipants((prev: Participant[]) =>
+            prev.map((p) =>
+              p.id === userId
+                ? {
+                    ...p,
+                    screenShareStream: screenStream,
+                    isSharingScreen: true,
+                    screenSharePeerId: id,
+                  }
+                : p
+            )
+          );
+          setIsSharingScreen(true);
+          socket?.emit("screen-share-status", {
+            meetingId,
+            userId,
+            isSharingScreen: true,
+            screenSharePeerId: id,
+          });
+
+          // Call existing participants with screen share stream
+          const otherParticipants = participants.filter((p) => p.id !== userId);
+          otherParticipants.forEach((participant) => {
+            const call = screenSharePeerInstance.call(
+              participant.id,
+              screenStream
+            );
+            screenShareCallsRef.current[participant.id] = call;
+            call.on("error", (err) => {
+              console.error(
+                `Screen share call error with ${participant.id}:`,
+                err
+              );
+            });
+            call.on("close", () => {
+              console.log(`Screen share call closed with ${participant.id}`);
+            });
+          });
+
+          processPendingScreenShareCalls();
+        });
+
+        screenSharePeerInstance.on("error", (err) => {
+          console.error("Screen share PeerJS error:", err);
+          toast.error(`Screen share PeerJS error: ${err.message || err.type}`);
+        });
+
+        screenSharePeerInstance.on("call", (call) => {
+          const remoteUserId = call.peer.split("_")[0];
+          console.log(`Received screen share call from ${remoteUserId}`);
+          if (localScreenShareStreamRef.current) {
+            call.answer(localScreenShareStreamRef.current);
+            screenShareCallsRef.current[remoteUserId] = call;
+            call.on("stream", (remoteStream) => {
+              console.log(
+                `Received screen share stream from ${remoteUserId} via call answer, Stream ID: ${remoteStream.id}`
+              );
+              setParticipants((prev) =>
+                prev.map((p) =>
+                  p.id === remoteUserId
+                    ? { ...p, screenShareStream: remoteStream }
+                    : p
+                )
+              );
+            });
+            call.on("error", (err) => {
+              console.error(
+                `PeerJS screen share call error with ${remoteUserId}:`,
+                err
+              );
+            });
+            call.on("close", () => {
+              console.log(
+                `PeerJS screen share call closed with ${remoteUserId}`
+              );
+              setParticipants((prev) =>
+                prev.map((p) =>
+                  p.id === remoteUserId
+                    ? { ...p, screenShareStream: null, isSharingScreen: false }
+                    : p
+                )
+              );
+            });
+          } else {
+            console.log(
+              `Queuing screen share call from ${remoteUserId} (local screen share stream not ready)`
+            );
+            pendingScreenShareCallsRef.current.push({ call, remoteUserId });
           }
         });
-        setParticipants((prev: Participant[]) =>
-          prev.map((p) =>
-            p.id === userId
-              ? {
-                  id: p.id,
-                  name: p.name,
-                  stream: newStream,
-                  cameraStream: cameraStream ?? null,
-                  screenShareStream: newStream,
-                  audio: p.audio,
-                  video: p.video,
-                  isSharingScreen: true,
-                }
-              : p
-          )
-        );
-        socket?.emit("screen-share-status", {
-          meetingId,
-          userId,
-          isSharingScreen: true,
-        });
-        console.log("Started screen sharing with stream:", newStream.id);
       }
     } catch (error) {
       console.error("Error toggling screen share:", error);
@@ -2072,7 +1889,16 @@ const VideoCallMeeting: React.FC = () => {
       });
       localStreamRef.current = null;
     }
+    if (localScreenShareStreamRef.current) {
+      localScreenShareStreamRef.current.getTracks().forEach((track) => {
+        console.log(`Stopping screen share track: ${track.kind} (${track.id})`);
+        track.enabled = false;
+        track.stop();
+      });
+      localScreenShareStreamRef.current = null;
+    }
     setLocalStream(null);
+    setLocalScreenShareStream(null);
     socket?.emit("leave-meeting", { meetingId, userId });
     navigate(`/user/meeting-end/${meetingId}`);
   };
@@ -2217,14 +2043,16 @@ const VideoCallMeeting: React.FC = () => {
         console.log(`Initiating call to ${remotePeerId}`);
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
-          console.log(`Received remote stream from ${remoteUserId}`);
+          console.log(
+            `Received remote stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
+          );
           setParticipants((prev) =>
             prev.map((p) =>
               p.id === remoteUserId
                 ? {
                     ...p,
                     stream: remoteStream,
-                    cameraStream: p.cameraStream || remoteStream,
+                    cameraStream: remoteStream,
                   }
                 : p
             )
@@ -2238,14 +2066,33 @@ const VideoCallMeeting: React.FC = () => {
           console.log(`PeerJS call closed with ${remoteUserId}`);
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
+
+        // If we're sharing our screen, call the new participant with our screen share stream
+        if (
+          isSharingScreen &&
+          screenSharePeerRef.current &&
+          localScreenShareStreamRef.current
+        ) {
+          const call = screenSharePeerRef.current.call(
+            remoteUserId,
+            localScreenShareStreamRef.current
+          );
+          screenShareCallsRef.current[remoteUserId] = call;
+          call.on("error", (err) => {
+            console.error(`Screen share call error with ${remoteUserId}:`, err);
+          });
+          call.on("close", () => {
+            console.log(`Screen share call closed with ${remoteUserId}`);
+          });
+        }
       }
     );
 
     socketInstance.on(
       "screen-share-status",
-      ({ userId: remoteUserId, isSharingScreen }) => {
+      ({ userId: remoteUserId, isSharingScreen, screenSharePeerId }) => {
         console.log(
-          `Received screen-share-status: ${remoteUserId} - isSharingScreen: ${isSharingScreen}`
+          `Received screen-share-status: ${remoteUserId} - isSharingScreen: ${isSharingScreen}, screenSharePeerId: ${screenSharePeerId}`
         );
         setParticipants((prev: Participant[]) =>
           prev.map((p) => {
@@ -2253,21 +2100,64 @@ const VideoCallMeeting: React.FC = () => {
               console.log(
                 `Updating participant ${p.name} (ID: ${
                   p.id
-                }): isSharingScreen=${isSharingScreen}, stream ID=${
-                  p.stream?.id
-                }, cameraStream ID=${p.cameraStream?.id || "none"}`
+                }): isSharingScreen=${isSharingScreen}, cameraStream ID=${
+                  p.cameraStream?.id || "none"
+                }, screenShareStream ID=${p.screenShareStream?.id || "none"}`
               );
               return {
                 ...p,
                 isSharingScreen,
-                screenShareStream: isSharingScreen ? p.stream : null,
-                stream: p.stream, // Preserve the current stream
-                cameraStream: p.cameraStream || p.stream, // Ensure cameraStream is set
+                screenSharePeerId: isSharingScreen
+                  ? screenSharePeerId
+                  : undefined,
+                screenShareStream: isSharingScreen ? p.screenShareStream : null,
               };
             }
             return p;
           })
         );
+
+        if (isSharingScreen && screenSharePeerId && peerRef.current) {
+          const call = peerRef.current.call(
+            screenSharePeerId,
+            localStreamRef.current!
+          );
+          screenShareCallsRef.current[remoteUserId] = call;
+          call.on("stream", (remoteStream) => {
+            console.log(
+              `Received screen share stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
+            );
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.id === remoteUserId
+                  ? { ...p, screenShareStream: remoteStream }
+                  : p
+              )
+            );
+          });
+          call.on("error", (err) => {
+            console.error(
+              `PeerJS screen share call error with ${remoteUserId}:`,
+              err
+            );
+          });
+          call.on("close", () => {
+            console.log(`PeerJS screen share call closed with ${remoteUserId}`);
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.id === remoteUserId
+                  ? { ...p, screenShareStream: null, isSharingScreen: false }
+                  : p
+              )
+            );
+          });
+        } else {
+          // If screen sharing stopped, close the screen share call
+          if (screenShareCallsRef.current[remoteUserId]) {
+            screenShareCallsRef.current[remoteUserId].close();
+            delete screenShareCallsRef.current[remoteUserId];
+          }
+        }
       }
     );
 
@@ -2323,10 +2213,18 @@ const VideoCallMeeting: React.FC = () => {
             );
             peerCallsRef.current[remoteUserId] = call;
             call.on("stream", (remoteStream) => {
-              console.log(`Received remote stream from ${remoteUserId}`);
+              console.log(
+                `Received remote stream from ${remoteUserId}, Stream ID: ${remoteStream.id}`
+              );
               setParticipants((prev) =>
                 prev.map((p) =>
-                  p.id === remoteUserId ? { ...p, stream: remoteStream } : p
+                  p.id === remoteUserId
+                    ? {
+                        ...p,
+                        stream: remoteStream,
+                        cameraStream: remoteStream,
+                      }
+                    : p
                 )
               );
             });
@@ -2351,6 +2249,10 @@ const VideoCallMeeting: React.FC = () => {
       if (peerCallsRef.current[remoteUserId]) {
         peerCallsRef.current[remoteUserId].close();
         delete peerCallsRef.current[remoteUserId];
+      }
+      if (screenShareCallsRef.current[remoteUserId]) {
+        screenShareCallsRef.current[remoteUserId].close();
+        delete screenShareCallsRef.current[remoteUserId];
       }
     });
 
@@ -2410,7 +2312,7 @@ const VideoCallMeeting: React.FC = () => {
                   ? {
                       ...p,
                       stream: remoteStream,
-                      cameraStream: p.cameraStream || remoteStream,
+                      cameraStream: remoteStream,
                     }
                   : p
               );
@@ -2473,6 +2375,29 @@ const VideoCallMeeting: React.FC = () => {
       });
       peerCallsRef.current = {};
 
+      console.log("Closing all screen share peer connections");
+      Object.entries(screenShareCallsRef.current).forEach(([userId, call]) => {
+        try {
+          if (call) {
+            if (call.peerConnection) {
+              const senders = call.peerConnection.getSenders();
+              senders.forEach((sender) => {
+                if (sender.track) {
+                  sender.track.stop();
+                }
+              });
+            }
+            call.close();
+          }
+        } catch (err) {
+          console.error(
+            `Error closing screen share peer connection for ${userId}:`,
+            err
+          );
+        }
+      });
+      screenShareCallsRef.current = {};
+
       if (peerRef.current) {
         console.log("Destroying peer instance");
         try {
@@ -2481,6 +2406,16 @@ const VideoCallMeeting: React.FC = () => {
           console.error("Error destroying PeerJS instance:", err);
         }
         peerRef.current = null;
+      }
+
+      if (screenSharePeerRef.current) {
+        console.log("Destroying screen share peer instance");
+        try {
+          screenSharePeerRef.current.destroy();
+        } catch (err) {
+          console.error("Error destroying screen share PeerJS instance:", err);
+        }
+        screenSharePeerRef.current = null;
       }
 
       console.log("Stopping all media tracks");
@@ -2496,6 +2431,27 @@ const VideoCallMeeting: React.FC = () => {
           }
         });
         localStreamRef.current = null;
+      }
+
+      if (localScreenShareStreamRef.current) {
+        const tracks = localScreenShareStreamRef.current.getTracks();
+        console.log(
+          `Stopping ${tracks.length} tracks from localScreenShareStreamRef`
+        );
+        tracks.forEach((track) => {
+          try {
+            console.log(
+              `Stopping screen share track: ${track.kind} (${track.id})`
+            );
+            track.stop();
+          } catch (err) {
+            console.error(
+              `Error stopping screen share track ${track.id}:`,
+              err
+            );
+          }
+        });
+        localScreenShareStreamRef.current = null;
       }
 
       try {
