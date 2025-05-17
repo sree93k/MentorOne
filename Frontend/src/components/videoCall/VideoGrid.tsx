@@ -1,12 +1,148 @@
+// import React from "react";
+// import VideoTile from "./VideoTile";
+
+// interface Participant {
+//   id: string;
+//   name: string;
+//   stream?: MediaStream;
+//   cameraStream?: MediaStream;
+//   screenShareStream?: MediaStream;
+//   audio: boolean;
+//   video: boolean;
+// }
+
+// interface VideoGridProps {
+//   participants: Participant[];
+//   currentUserId: string;
+// }
+
+// const VideoGrid: React.FC<VideoGridProps> = ({
+//   participants,
+//   currentUserId,
+// }) => {
+//   console.log("VideoGrid: participants:", participants);
+//   console.log("VideoGrid: currentUserId:", currentUserId);
+
+//   // Check if any participant is sharing their screen
+//   const screenSharingParticipant = participants.find((participant) => {
+//     const videoTracks = participant.stream?.getVideoTracks() || [];
+//     return videoTracks.some((track) => track.label.includes("screen"));
+//   });
+
+//   // Extract the screen-sharing stream if it exists
+//   const screenSharingStream = screenSharingParticipant
+//     ? {
+//         id: `${screenSharingParticipant.id}-screen`,
+//         name: `${screenSharingParticipant.name}'s Screen`,
+//         stream:
+//           screenSharingParticipant.screenShareStream ||
+//           screenSharingParticipant.stream,
+//         audio: screenSharingParticipant.audio,
+//         video: true,
+//       }
+//     : null;
+
+//   // Use cameraStream for participant tiles to ensure the camera feed is shown
+//   const participantsForTiles = participants.map((participant) => ({
+//     ...participant,
+//     stream: participant.cameraStream || participant.stream,
+//   }));
+
+//   // Calculate grid layout and tile sizing for normal view (no screen sharing)
+//   const getGridConfig = (count: number) => {
+//     let columns: number;
+//     let tileStyle: string;
+//     let isThreeUsers: boolean = false;
+
+//     if (count <= 1) {
+//       columns = 1;
+//       tileStyle = "max-w-[70vw] max-h-[80vh] w-full mx-auto";
+//     } else if (count === 2) {
+//       columns = 2;
+//       tileStyle = "max-w-[55vw] max-h-[65vh] w-full";
+//     } else if (count <= 4) {
+//       columns = 2;
+//       tileStyle = "max-w-[40vw] max-h-[65vh] w-full mx-auto";
+//     } else if (count <= 6) {
+//       columns = 3;
+//       tileStyle = "max-w-[30vw] max-h-[25vh] w-full";
+//     } else {
+//       columns = window.innerWidth >= 1280 ? 4 : 3;
+//       tileStyle = "max-w-[25vw] max-h-[20vh] w-full";
+//     }
+
+//     return {
+//       gridCols: `grid-cols-${columns}`,
+//       tileStyle,
+//       isThreeUsers,
+//     };
+//   };
+
+//   if (screenSharingStream) {
+//     // Screen-sharing layout: 80% left (screen share), 20% right (participant tiles in a column)
+//     return (
+//       <div className="flex-1 flex flex-row p-2 bg-gray-900 overflow-hidden">
+//         {/* Left side: 80% for screen sharing */}
+//         <div className="w-[80%] h-full pr-2">
+//           <div className="w-full h-full">
+//             <VideoTile
+//               participant={screenSharingStream}
+//               isLocal={screenSharingParticipant?.id === currentUserId}
+//               isThreeUsers={false}
+//             />
+//           </div>
+//         </div>
+//         {/* Right side: 20% for participant tiles in a column */}
+//         <div className="w-[20%] h-full flex flex-col gap-2 overflow-y-auto">
+//           {participantsForTiles.map((participant) => (
+//             <div key={participant.id} className="w-full">
+//               <VideoTile
+//                 participant={participant}
+//                 isLocal={participant.id === currentUserId}
+//                 isThreeUsers={false}
+//               />
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // Normal layout (no screen sharing)
+//   const { gridCols, tileStyle, isThreeUsers } = getGridConfig(
+//     participants.length
+//   );
+
+//   return (
+//     <div
+//       className={`flex-1 grid ${gridCols} gap-2 p-2 bg-gray-900 place-items-center overflow-hidden sm:${gridCols} lg:${gridCols}`}
+//     >
+//       {participants.map((participant) => (
+//         <div key={participant.id} className={tileStyle}>
+//           <VideoTile
+//             participant={participant}
+//             isLocal={participant.id === currentUserId}
+//             isThreeUsers={isThreeUsers}
+//           />
+//         </div>
+//       ))}
+//     </div>
+//   );
+// };
+
+// export default VideoGrid;
 import React from "react";
 import VideoTile from "./VideoTile";
 
 interface Participant {
   id: string;
   name: string;
-  stream?: MediaStream;
+  stream?: MediaStream | null;
+  cameraStream?: MediaStream | null;
+  screenShareStream?: MediaStream | null;
   audio: boolean;
   video: boolean;
+  isSharingScreen?: boolean;
 }
 
 interface VideoGridProps {
@@ -21,30 +157,54 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   console.log("VideoGrid: participants:", participants);
   console.log("VideoGrid: currentUserId:", currentUserId);
 
-  // Calculate grid layout and tile sizing based on participant count
+  // Log screen-sharing status for debugging
+  participants.forEach((p) => {
+    console.log(
+      `VideoGrid: Participant ${p.name} (ID: ${p.id}) - isSharingScreen: ${p.isSharingScreen}`
+    );
+  });
+
+  // Find the participant who is sharing their screen
+  const screenSharingParticipant = participants.find(
+    (participant) => participant.isSharingScreen
+  );
+
+  // Extract the screen-sharing stream if it exists
+  const screenSharingStream = screenSharingParticipant
+    ? {
+        id: `${screenSharingParticipant.id}-screen`,
+        name: `${screenSharingParticipant.name}'s Screen`,
+        stream: screenSharingParticipant.screenShareStream,
+        audio: screenSharingParticipant.audio,
+        video: true,
+      }
+    : null;
+
+  // Use cameraStream for participant tiles to show camera feeds
+  const participantsForTiles = participants.map((participant) => ({
+    ...participant,
+    stream: participant.cameraStream || participant.stream,
+  }));
+
+  // Calculate grid layout and tile sizing for normal view (no screen sharing)
   const getGridConfig = (count: number) => {
     let columns: number;
     let tileStyle: string;
     let isThreeUsers: boolean = false;
 
     if (count <= 1) {
-      // Single user: centered, large tile
       columns = 1;
       tileStyle = "max-w-[70vw] max-h-[80vh] w-full mx-auto";
     } else if (count === 2) {
-      // 2 users: side by side, medium tiles
       columns = 2;
       tileStyle = "max-w-[55vw] max-h-[65vh] w-full";
     } else if (count <= 4) {
-      // 4 users: 2x2 grid, smaller tiles
       columns = 2;
       tileStyle = "max-w-[40vw] max-h-[65vh] w-full mx-auto";
     } else if (count <= 6) {
-      // 5-6 users: 3x2 grid, compact tiles
       columns = 3;
       tileStyle = "max-w-[30vw] max-h-[25vh] w-full";
     } else {
-      // 7+ users: 3 or 4 columns based on screen width, very compact
       columns = window.innerWidth >= 1280 ? 4 : 3;
       tileStyle = "max-w-[25vw] max-h-[20vh] w-full";
     }
@@ -56,6 +216,40 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     };
   };
 
+  if (screenSharingStream) {
+    console.log(
+      `VideoGrid: Screen sharing active by ${screenSharingParticipant.name} (ID: ${screenSharingParticipant.id})`
+    );
+    // Screen-sharing layout: 80% left (screen share), 20% right (participant tiles in a column)
+    return (
+      <div className="flex-1 flex flex-row p-2 bg-gray-900 overflow-hidden">
+        {/* Left side: 80% for screen sharing */}
+        <div className="w-[80%] h-full pr-2">
+          <div className="w-full h-full">
+            <VideoTile
+              participant={screenSharingStream}
+              isLocal={screenSharingParticipant?.id === currentUserId}
+              isThreeUsers={false}
+            />
+          </div>
+        </div>
+        {/* Right side: 20% for participant tiles in a column */}
+        <div className="w-[20%] h-full flex flex-col gap-2 overflow-y-auto">
+          {participantsForTiles.map((participant) => (
+            <div key={participant.id} className="w-full">
+              <VideoTile
+                participant={participant}
+                isLocal={participant.id === currentUserId}
+                isThreeUsers={false}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Normal layout (no screen sharing)
   const { gridCols, tileStyle, isThreeUsers } = getGridConfig(
     participants.length
   );
