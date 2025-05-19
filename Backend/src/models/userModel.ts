@@ -170,8 +170,20 @@ const UsersSchema: Schema<EUsers> = new Schema(
       default: [],
     },
     isOnline: {
-      type: Boolean,
-      default: false,
+      type: {
+        status: {
+          type: Boolean,
+          default: false,
+          required: false,
+        },
+        role: {
+          type: String,
+          enum: ["mentor", "mentee"], // Restricts the role to either 'mentor' or 'mentee'
+          default: null, // Default to null when the user is not online
+          required: false,
+        },
+      },
+      default: { status: false, role: null }, // Default for the entire object
       required: false,
     },
     contacts: {

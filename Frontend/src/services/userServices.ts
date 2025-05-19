@@ -95,6 +95,33 @@ interface ChatHistoryResponse {
   success: boolean;
 }
 
+// export const getChatHistory = async (
+//   dashboard: string
+// ): Promise<ChatHistoryResponse> => {
+//   try {
+//     console.log("user service getChatHistory step 1, dashboard:", dashboard);
+//     const response = await api.get<ChatHistoryResponse>(
+//       `/user/${dashboard}/chat-history`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+//     console.log("user service getChatHistory step 2, response:", response.data);
+//     // Ensure the response data matches the expected structure
+//     if (!response.data.data || !Array.isArray(response.data.data)) {
+//       throw new Error("Invalid chat history response format");
+//     }
+//     return response.data;
+//   } catch (error: any) {
+//     console.error("Error fetching chat history:", error);
+//     throw new Error(
+//       error.response?.data?.error || "Failed to fetch chat history"
+//     );
+//   }
+// };
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
@@ -110,11 +137,15 @@ export const getChatHistory = async (
       }
     );
     console.log("user service getChatHistory step 2, response:", response.data);
-    // Ensure the response data matches the expected structure
     if (!response.data.data || !Array.isArray(response.data.data)) {
       throw new Error("Invalid chat history response format");
     }
-    return response.data;
+    // Map response to ensure isOnline is included
+    const updatedData = response.data.data.map((user) => ({
+      ...user,
+      isOnline: user.isOnline ?? false,
+    }));
+    return { ...response.data, data: updatedData };
   } catch (error: any) {
     console.error("Error fetching chat history:", error);
     throw new Error(
@@ -122,7 +153,6 @@ export const getChatHistory = async (
     );
   }
 };
-
 // Upload to S3
 export const uploadToS3WithPresignedUrl = async (
   file: File,
@@ -211,126 +241,6 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
   }
 };
 
-// export const startVideoCall = async (): Promise<string> => {
-//   try {
-//     console.log("USERSERVICE  startVideoCall step 1");
-//     const accessToken = localStorage.getItem("accessToken");
-
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     const response = await api.post(
-//       "/user/video-call/create",
-//       {},
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//       }
-//     );
-
-//     console.log("USERSERVICE  startVideoCall step 2", response);
-
-//     if (!response.data.success || !response.data.data.meetingId) {
-//       throw new Error("Failed to create meeting room");
-//     }
-
-//     return response.data.data.meetingId;
-//   } catch (error: any) {
-//     console.error("Error creating meeting:", error);
-//     throw new Error(
-//       error.response?.data?.message || "Failed to create meeting room"
-//     );
-//   }
-// };
-
-// export const validateMeeting = async (meetingId: string): Promise<boolean> => {
-//   try {
-//     console.log("Validating meeting:", meetingId);
-//     const accessToken = localStorage.getItem("accessToken");
-
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     const response = await api.get(`/user/video-call/validate/${meetingId}`, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-
-//     console.log("Validation response:", response.data);
-
-//     if (!response.data.success) {
-//       throw new Error(response.data.message || "Failed to validate meeting");
-//     }
-
-//     return response.data.data.isValid;
-//   } catch (error: any) {
-//     console.error("Error validating meeting:", error);
-
-//     // Check for specific error types
-//     if (error.response?.status === 500) {
-//       throw new Error("Server error. Please try again later.");
-//     } else if (error.response?.status === 404) {
-//       return false; // Meeting not found, consider it invalid
-//     }
-
-//     throw new Error(
-//       error.response?.data?.message || "Failed to validate meeting"
-//     );
-//   }
-// };
-
-// export const joinMeeting = async (meetingId: string): Promise<void> => {
-//   try {
-//     console.log("user servcie joinMeeting step 1");
-
-//     const accessToken = localStorage.getItem("accessToken");
-//     console.log("user servcie joinMeeting step 2");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-//     console.log("user servcie joinMeeting step 3");
-//     await api.post(
-//       `/user/video-call/join/${meetingId}`,
-//       {},
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//       }
-//     );
-//     console.log("user servcie joinMeeting step 4");
-//   } catch (error: any) {
-//     console.error("Error joining meeting:", error);
-//     throw new Error(error.response?.data?.message || "Failed to join meeting");
-//   }
-// };
-
-// export const endMeeting = async (meetingId: string): Promise<void> => {
-//   try {
-//     const accessToken = localStorage.getItem("accessToken");
-
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     await api.post(
-//       `/user/video-call/end/${meetingId}`,
-//       {},
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//       }
-//     );
-//   } catch (error: any) {
-//     console.error("Error ending meeting:", error);
-//     throw new Error(error.response?.data?.message || "Failed to end meeting");
-//   }
-// };
 export const startVideoCall = async (): Promise<string> => {
   try {
     console.log("USERSERVICE  startVideoCall step 1");
@@ -445,5 +355,46 @@ export const endMeeting = async (meetingId: string): Promise<void> => {
   } catch (error: any) {
     console.error("Error ending meeting:", error);
     throw new Error(error.response?.data?.message || "Failed to end meeting");
+  }
+};
+
+// Update Online Status
+export const updateOnlineStatus = async (
+  isOnline: boolean,
+  role: string | null
+): Promise<any> => {
+  try {
+    console.log("updateOnlineStatus step 1:", { isOnline, role });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const payload = {
+      isOnline,
+      role, // Send role as null for logout, or "mentor"/"mentee"
+    };
+
+    const response = await api.put("/user/update-online-status", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log("updateOnlineStatus step 2, response:", response.data);
+
+    if (!response.data.success) {
+      throw new Error(
+        response.data.message || "Failed to update online status"
+      );
+    }
+
+    return response.data.data; // Return updated user data
+  } catch (error: any) {
+    console.error("Error updating online status:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to update online status"
+    );
   }
 };

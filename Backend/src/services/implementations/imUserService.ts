@@ -107,4 +107,41 @@ export default class UserService implements inUserService {
       };
     }
   }
+
+  async updateOnlineStatus(
+    userId: string,
+    isOnline: boolean,
+    role: "mentor" | "mentee" | null
+  ): Promise<EUsers | null> {
+    try {
+      console.log("UserService updateOnlineStatus step 1", {
+        userId,
+        isOnline,
+        role,
+      });
+
+      const updateData = {
+        isOnline: {
+          status: isOnline,
+          role: role,
+        },
+      };
+
+      const updatedUser = await this.BaseRepository.update(userId, updateData);
+      console.log("UserService updateOnlineStatus step 2", updatedUser);
+
+      if (!updatedUser) {
+        console.error("UserService: Failed to update user", userId);
+        return null;
+      }
+
+      return updatedUser;
+    } catch (error: any) {
+      console.error(
+        "Error at updateOnlineStatus in UserService:",
+        error.message
+      );
+      throw new Error("Failed to update online status");
+    }
+  }
 }

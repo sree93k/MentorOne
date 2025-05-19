@@ -2,7 +2,28 @@ import { NextFunction, Request, Response } from "express";
 import ApiResponse from "../../utils/apiResponse";
 import { inUserService } from "../../services/interface/inUserService";
 import imUserService from "../../services/implementations/imUserService";
+import { createClient } from "@redis/client";
+import { getIO } from "../../utils/socket/chat";
 
+interface AuthUser {
+  id: string;
+  role?: string[];
+  rawToken?: string;
+}
+const redisClient = createClient({ url: process.env.REDIS_URL });
+
+redisClient.on("error", (err) => console.error("Redis connection error:", err));
+redisClient.on("connect", () =>
+  console.log("Redis connected in UserController")
+);
+
+(async () => {
+  try {
+    await redisClient.connect();
+  } catch (err) {
+    console.error("Failed to connect to Redis in UserController:", err);
+  }
+})();
 class UserController {
   private UserService: inUserService;
   constructor() {
@@ -128,6 +149,136 @@ class UserController {
   //     next(error);
   //   }
   // };
+
+  public updateOnlineStatus = async (
+    req: Request & { user?: AuthUser },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { isOnline, role } = req.body;
+      const userId = req.user?.id;
+      const authRole = req.user?.role || [];
+
+      console.log(
+        `updateOnlineStatus: userId=${userId}, isOnline=${isOnline}, role=${role}, authRole=${authRole}`
+      );
+
+      // if (!authUserId) {
+      //   console.log("updateOnlineStatus: Unauthorized");
+      //   res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
+      //   return;
+      // }
+
+      if (!userId || typeof isOnline !== "boolean") {
+        console.log("updateOnlineStatus: Invalid input");
+        res
+          .status(400)
+          .json(
+            new ApiResponse(400, null, "Invalid userId or isOnline status")
+          );
+        return;
+      }
+
+      // if (userId !== authUserId) {
+      //   console.log("updateOnlineStatus: User ID mismatch");
+      //   res
+      //     .status(403)
+      //     .json(
+      //       new ApiResponse(
+      //         403,
+      //         null,
+      //         "Forbidden: Cannot update status for another user"
+      //       )
+      //     );
+      //   return;
+      // }
+
+      if (role !== null && !["mentor", "mentee"].includes(role)) {
+        console.log("updateOnlineStatus: Invalid role");
+        res.status(400).json(new ApiResponse(400, null, "Invalid role"));
+        return;
+      }
+
+      // Update Redis
+      try {
+        if (isOnline) {
+          await redisClient.sAdd("online_users", userId);
+          console.log(`Added ${userId} to online_users`);
+        } else {
+          await redisClient.sRem("online_users", userId);
+          console.log(`Removed ${userId} from online_users`);
+        }
+      } catch (err: any) {
+        console.error("Redis operation error:", err.message);
+        res
+          .status(500)
+          .json(
+            new ApiResponse(500, null, "Failed to update Redis online status")
+          );
+        return;
+      }
+
+      // Emit Socket.IO event
+      try {
+        const io = getIO();
+        io.emit("userStatus", { userId, isOnline });
+        console.log(`Emitted userStatus: ${userId}, isOnline=${isOnline}`);
+      } catch (err: any) {
+        console.error("Socket.IO emit error:", err.message);
+        // Non-critical, proceed with database update
+      }
+
+      // Update database
+      let updatedUser = null;
+      if (role) {
+        updatedUser = await this.UserService.updateOnlineStatus(
+          userId,
+          isOnline,
+          role as "mentor" | "mentee"
+        );
+        console.log(`Updated database online status for ${userId}`);
+      } else {
+        // For logout, set isOnline to false without role
+        updatedUser = await this.UserService.updateOnlineStatus(
+          userId,
+          false,
+          null
+        );
+        console.log(`Cleared online status for ${userId} on logout`);
+      }
+
+      if (!updatedUser) {
+        console.log("updateOnlineStatus: Failed to update user");
+        res
+          .status(500)
+          .json(
+            new ApiResponse(
+              500,
+              null,
+              "Failed to update database online status"
+            )
+          );
+        return;
+      }
+
+      res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            updatedUser,
+            "Online status updated successfully"
+          )
+        );
+    } catch (error: any) {
+      console.error("Error updating online status:", error.message);
+      res
+        .status(500)
+        .json(new ApiResponse(500, null, "Failed to update online status"));
+      next(error);
+    }
+  };
 }
 
 export default new UserController();
