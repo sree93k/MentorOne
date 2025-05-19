@@ -141,7 +141,10 @@ export default class UserRepository implements inUserRepository {
 
       const userWithRemovedToken = await Users.findOneAndUpdate(
         { _id: userId },
-        { $pull: { refreshToken: refreshToken } },
+        {
+          $pull: { refreshToken: refreshToken },
+          $set: { isOnline: { status: false, role: null } },
+        },
         { new: true }
       ).select("-password -refreshToken");
       console.log("reop removerefrsh token step 1", userWithRemovedToken);

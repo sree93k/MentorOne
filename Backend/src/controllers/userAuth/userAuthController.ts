@@ -10,6 +10,7 @@ import imUserService from "../../services/implementations/imUserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { inUploadService } from "../../services/interface/inUploadService";
 import imUploadService from "../../services/implementations/imUploadService";
+
 import axios from "axios";
 import sharp from "sharp";
 
@@ -403,7 +404,7 @@ class UserAuthController {
 
     const logoutData = await this.userAuthService.logout(rawToken, id);
     console.log("user logout step 3 - logoutData:", logoutData);
-
+    await this.userService.updateOnlineStatus(id, false, null);
     if (logoutData) {
       console.log("user logout step 4 - Success");
       res

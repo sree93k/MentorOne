@@ -9,4 +9,9 @@ export interface inUserService {
     newPassword: string
   ): Promise<{ success: boolean; message: string }>;
   editUserProfile(id: string, paylaod: any): Promise<EUsers | null>;
+  updateOnlineStatus(
+    userId: string,
+    isOnline: boolean,
+    role: "mentor" | "mentee" | null
+  ): Promise<EUsers | null>;
 }

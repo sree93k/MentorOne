@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface User {
   _id: string;
@@ -25,6 +25,7 @@ interface InitialState {
   currentTab: string;
   formData: object;
   dashboard: string;
+  isOnline: { status: boolean; role: "mentor" | "mentee" | null };
   pageTitle: string;
   tempData: object;
 }
@@ -41,6 +42,7 @@ const initialState: InitialState = {
   currentTab: "",
   formData: {},
   dashboard: "",
+  isOnline: { status: false, role: null },
   pageTitle: "User Panel",
   tempData: {},
 };
@@ -85,6 +87,15 @@ const userSlice = createSlice({
     setDashboard(state, action) {
       state.dashboard = action.payload;
     },
+    setOnlineStatus(
+      state,
+      action: PayloadAction<{
+        status: boolean;
+        role: "mentor" | "mentee" | null;
+      }>
+    ) {
+      state.isOnline = action.payload;
+    },
     resetUser: () => initialState,
   },
 });
@@ -100,6 +111,7 @@ export const {
   setAccessToken,
   setFormData,
   setDashboard,
+  setOnlineStatus,
   resetUser,
 } = userSlice.actions;
 export default userSlice.reducer;

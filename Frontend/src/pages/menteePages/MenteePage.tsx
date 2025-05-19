@@ -11,6 +11,11 @@ import MenteeCourses from "./subPages/MenteeCourses";
 import VideoTutorialPage from "./subPages/VideoTutorial";
 import DigitalProducts from "./subPages/DigitalProduct";
 import StripeCheckoutPage from "@/pages/menteePages/subPages/StripeCheckoutPage";
+import VideoCallHome from "@/pages/usersPage/VideoCallHome";
+import VideoCallMeeting from "@/pages/usersPage/VideoCallMeeting";
+import VideoCallEndPage from "@/pages/usersPage/VideoCallEndPage";
+import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
+//=======
 const Footer = lazy(() => import("@/components/landing/Footer"));
 const MenteeHeader = lazy(() => import("@/components/mentee/MenteeHeader"));
 const MenteeSidebar = lazy(() => import("@/components/mentee/MenteeSidebar"));
@@ -43,6 +48,16 @@ const MenteePage = () => {
             <Route path="/digitalcontent/:id" element={<DigitalProducts />} />
             <Route path="/tutorials/:id" element={<VideoTutorialPage />} />
             <Route path="/checkout" element={<StripeCheckoutPage />} />
+            <Route path="/meetinghome" element={<VideoCallHome />} />
+            <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
+            <Route
+              path="/meeting-end/:meetingId"
+              element={<VideoCallEndPage />}
+            />
+            <Route
+              path="/meeting-join/:meetingId"
+              element={<VideoCallJoinPage />}
+            />
           </Routes>
         </Suspense>
       </main>

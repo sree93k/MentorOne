@@ -108,4 +108,10 @@ userPrivateRoute.post(
   authenticate,
   videoCallController.endMeeting.bind(videoCallController)
 );
+
+userPrivateRoute.put(
+  "/update-online-status",
+  authenticate,
+  userController.updateOnlineStatus.bind(userController)
+);
 export default userPrivateRoute;

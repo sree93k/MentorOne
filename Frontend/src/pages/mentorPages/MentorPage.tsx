@@ -9,6 +9,10 @@ import PriorityDMPage from "./MentorSubPages/PriorityDMPage";
 import TestimonialPage from "./MentorSubPages/TestimonialPage";
 import CalendarPage from "./MentorSubPages/CalenderPage";
 import ServiceEditPage from "./MentorSubPages/ServiceEditPage";
+import VideoCallHome from "@/pages/usersPage/VideoCallHome";
+import VideoCallMeeting from "@/pages/usersPage/VideoCallMeeting";
+import VideoCallEndPage from "@/pages/usersPage/VideoCallEndPage";
+import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
 //=======
 const Footer = lazy(() => import("@/components/landing/Footer"));
 const MentorSidebar = lazy(() => import("@/components/mentor/MentorSidebar"));
@@ -39,6 +43,16 @@ export const MentorPage = () => {
             <Route path="/testimonials" element={<TestimonialPage />} />
             <Route path="/calender" element={<CalendarPage />} />
             <Route path="/editService/:id" element={<ServiceEditPage />} />
+            <Route path="/meetinghome" element={<VideoCallHome />} />
+            <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
+            <Route
+              path="/meeting-end/:meetingId"
+              element={<VideoCallEndPage />}
+            />
+            <Route
+              path="/meeting-join/:meetingId"
+              element={<VideoCallJoinPage />}
+            />
           </Routes>
         </Suspense>
       </main>
