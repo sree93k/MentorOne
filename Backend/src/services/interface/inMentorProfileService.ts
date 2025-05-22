@@ -18,5 +18,8 @@ export interface inMentorProfileService {
   ): Promise<EService | null>;
   getAllMentors(serviceType?: string): Promise<EUsers[]>;
   getMentorById(mentorId: string): Promise<EUsers>;
-  isApprovalChecking(userId: string): Promise<string | null>;
+  // isApprovalChecking(userId: string): Promise<string | null>;
+  isApprovalChecking(
+    userId: string
+  ): Promise<{ isApproved: string | null; approvalReason: string | null }>;
 }

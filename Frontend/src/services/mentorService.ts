@@ -681,14 +681,36 @@ export const removeBlockedDate = async (
   }
 };
 
+// export const isApprovalChecking = async (
+//   mentorId: string
+// ): Promise<{ isApproved: string | null }> => {
+//   try {
+//     console.log("isApprovalChecking step 1:", mentorId);
+//     if (!mentorId) {
+//       throw new Error("Mentor ID is required");
+//     }
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+//     const response = await api.get(`/expert/isApprovalChecking/${mentorId}`, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     });
+//     console.log("isApprovalChecking step 2: ", response.data);
+//     return response.data; // Expecting { isApproved: string | null }
+//   } catch (error: unknown) {
+//     console.error("isApprovalChecking error:", error);
+//     const errorMessage =
+//       error instanceof Error ? error.message : "Unknown error";
+//     throw new Error(`isApprovalChecking error: ${errorMessage}`);
+//   }
+// };
 export const isApprovalChecking = async (
   mentorId: string
-): Promise<{ isApproved: string | null }> => {
+): Promise<{ isApproved: string | null; approvalReason: string | null }> => {
   try {
-    console.log("isApprovalChecking step 1:", mentorId);
-    if (!mentorId) {
-      throw new Error("Mentor ID is required");
-    }
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
@@ -698,12 +720,18 @@ export const isApprovalChecking = async (
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    console.log("isApprovalChecking step 2: ", response.data);
-    return response.data; // Expecting { isApproved: string | null }
-  } catch (error: unknown) {
-    console.error("isApprovalChecking error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`isApprovalChecking error: ${errorMessage}`);
+    console.log("isApprovalChecking frontend response:", response.data);
+    const data = response.data.data; // Access nested data
+    if (!data || typeof data.isApproved === "undefined") {
+      console.error("Invalid response structure:", response.data);
+      throw new Error("Invalid approval status response from server");
+    }
+    return {
+      isApproved: data.isApproved || null,
+      approvalReason: data.approvalReason || null,
+    };
+  } catch (error: any) {
+    console.error("Error checking approval status:", error);
+    throw new Error(`Failed to check approval: ${error.message}`);
   }
 };
