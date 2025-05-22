@@ -1,5 +1,5 @@
 import { Router } from "express";
-import webhookController from "../../controllers/webHookController/webHookController";
+import webhookController from "../../controllers/implementation/webHookController";
 import { stripeMiddleware } from "../../middlewares/stripeMiddleware";
 
 const webhookRoute = Router();

@@ -3,7 +3,7 @@ import userAuthRoute from "./userAuthRoute";
 // import userPrivateRoute from './userPrivateRoute'
 // import {authenticateUser} from '../../middlewares/authenticateuser'
 import userPrivateRoute from "./userPrivateRoute";
-import userController from "../../controllers/userController/userController";
+import userController from "../../controllers/implementation/userController";
 const userRoutes = Router();
 
 userRoutes.use("/auth", userAuthRoute);

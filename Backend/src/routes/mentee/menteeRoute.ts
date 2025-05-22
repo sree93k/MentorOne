@@ -1,9 +1,9 @@
 import { Router } from "express";
-import menteeController from "../../controllers/menteeController/menteeController";
+import menteeController from "../../controllers/implementation/menteeController";
 import multer from "multer";
 import { authenticate } from "../../middlewares/authenticateuser";
-import uploadController from "../../controllers/userController/uploadController";
-import bookingController from "../../controllers/bookingController/bookingController";
+import uploadController from "../../controllers/implementation/uploadController";
+import bookingController from "../../controllers/implementation/bookingController";
 const menteeRoutes = Router();
 const upload = multer({ dest: "uploads/" });
 

@@ -1,12 +1,12 @@
 import { Router } from "express";
 import multer from "multer";
-import uploadController from "../../controllers/userController/uploadController";
+import uploadController from "../../controllers/implementation/uploadController";
 import { authenticate } from "../../middlewares/authenticateuser";
-import userController from "../../controllers/userController/userController";
-import paymentController from "../../controllers/paymentController/paymentController";
-import socketController from "../../controllers/socketController/socketController";
-import videoCallController from "../../controllers/VideoCallController/videoCallController";
-import chatController from "../../controllers/socketController/socketController";
+import userController from "../../controllers/implementation/userController";
+import paymentController from "../../controllers/implementation/paymentController";
+import socketController from "../../controllers/implementation/socketController";
+import videoCallController from "../../controllers/implementation/videoCallController";
+import chatController from "../../controllers/implementation/socketController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
