@@ -78,4 +78,10 @@ mentorRoutes.delete(
   authenticate,
   mentorController.removeBlockedDate.bind(mentorController)
 );
+
+mentorRoutes.get(
+  "/isApprovalChecking/:mentorId",
+  authenticate,
+  mentorController.isApprovalChecking.bind(mentorController)
+);
 export default mentorRoutes;

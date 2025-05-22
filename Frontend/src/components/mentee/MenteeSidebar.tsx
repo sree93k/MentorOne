@@ -1,6 +1,6 @@
 // import { useState, useRef, useEffect, Suspense } from "react";
 // import { useSelector, useDispatch } from "react-redux";
-// import { RootState } from "@/redux/store/store"; // Adjust the import based on your store setup
+// import { RootState } from "@/redux/store/store";
 // import {
 //   Home,
 //   FileText,
@@ -13,7 +13,6 @@
 //   Wallet,
 //   Video,
 // } from "lucide-react";
-
 // import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 // import { LogoutConfirmationModal } from "@/components/modal/Logout";
 // import { logout } from "@/services/userAuthService";
@@ -25,11 +24,12 @@
 //   resetUser,
 //   setActivated,
 //   setDashboard,
-// } from "@/redux/slices/userSlice"; // Import action to update user
+//   setOnlineStatus,
+// } from "@/redux/slices/userSlice";
 // import { uploadMenteeWelcomeForm } from "@/services/menteeService";
+// import { updateOnlineStatus } from "@/services/userServices"; // Import updateOnlineStatus
 // import Notification from "../users/Notification";
 // import logo from "@/assets/logo.png";
-// import { log } from "node:console";
 
 // interface WelcomeFormData {
 //   userType: string;
@@ -49,6 +49,7 @@
 //   interestedCareer?: string[];
 //   selectedOptions?: string[];
 // }
+
 // const SidebarItem = ({
 //   icon: Icon,
 //   text,
@@ -106,6 +107,8 @@
 //     (state: RootState) => state.user
 //   );
 //   const isActivated = useSelector((state: RootState) => state.user.activated);
+
+//   // Set dashboard and update online status on mount (login)
 //   useEffect(() => {
 //     dispatch(setDashboard("mentee"));
 //     console.log(
@@ -113,30 +116,40 @@
 //       isActivated
 //     );
 //     console.log("users", user);
-//   }, []);
 
-//   // Check authentication and activation status on mount
+//     if (isAuthenticated) {
+//       updateOnlineStatus(true, "mentee")
+//         .then((updatedUser) => {
+//           dispatch(setOnlineStatus({ status: true, role: "mentee" }));
+//           if (updatedUser) {
+//             dispatch(setUser(updatedUser));
+//           }
+//         })
+//         .catch((error) => {
+//           toast.error("Failed to update online status");
+//         });
+//     }
+//   }, [isAuthenticated, dispatch]);
+
+//   // Check authentication and activation status
 //   useEffect(() => {
 //     if (!isAuthenticated) {
 //       toast.error("Please log in to continue.");
 //       navigate("/login");
 //     } else if (!isActivated) {
-//       setIsWelcomeModalOpen(true); // Open modal if user is not activated
+//       setIsWelcomeModalOpen(true);
 //     }
 //   }, [isAuthenticated, isActivated, navigate]);
-//   // Handle form submission with typed formData
+
+//   // Handle welcome form submission
 //   const handleWelcomeFormSubmit = async (
 //     formData: WelcomeFormData
 //   ): Promise<boolean> => {
 //     try {
 //       console.log("welcome sidebar 1 submit", user);
-//       console.log("welcome sidebar 1 submit");
-//       console.log("welcome sidebar 1 submit", user?._id);
 //       if (!user || !user._id) {
 //         throw new Error("User ID not found. Please log in again.");
 //       }
-//       console.log("user and userid exists..");
-
 //       console.log("access token >>", accessToken);
 
 //       const updatedUser = await uploadMenteeWelcomeForm(
@@ -146,8 +159,6 @@
 //       );
 //       console.log("welcome sidebar 2 submit", updatedUser);
 //       if (updatedUser) {
-//         console.log("yess");
-
 //         dispatch(setUser(updatedUser));
 //         dispatch(setActivated(true));
 //         setIsWelcomeModalOpen(false);
@@ -161,16 +172,18 @@
 //     }
 //   };
 
+//   // Handle logout
 //   const handleLogout = async () => {
 //     setLoggingOut(true);
 //     try {
+//       await updateOnlineStatus(false, null); // Clear online status
 //       const response = await logout();
-//       console.log("logout reposnse is ", response);
-
+//       console.log("logout response is ", response);
 //       toast.success("Logged out successfully!");
 //       setLogoutModalOpen(false);
 //       dispatch(resetUser());
-//       navigate("/"); // Redirect to login page after logout
+//       dispatch(setOnlineStatus({ status: false, role: null }));
+//       navigate("/");
 //     } catch (error) {
 //       toast.error("Failed to logout. Please try again.");
 //     } finally {
@@ -178,6 +191,7 @@
 //     }
 //   };
 
+//   // Handle sidebar item click
 //   const handleItemClick = (itemName: string, path?: string) => {
 //     if (!isAuthenticated) {
 //       toast.error("Please log in to continue.");
@@ -190,10 +204,10 @@
 //       return;
 //     }
 //     console.log("path and navigate", itemName, "and ", path);
-
 //     setActiveItem(itemName);
 //     if (path) navigate(path);
 //   };
+
 //   const openNotification = () => {
 //     setIsNotification(true);
 //   };
@@ -204,14 +218,26 @@
 //     }
 //   };
 
+//   // Handle role switching
 //   const handleDropdownSelect = (dashboard: string) => {
 //     setCurrentDashboard(dashboard);
-//     if (dashboard === "Mentee Dashboard") {
-//       navigate("/seeker/dashboard");
-//     } else if (dashboard === "Mentor Dashboard") {
-//       navigate("/expert/dashboard");
-//     }
-//     setDropdownOpen(false);
+//     const newRole = dashboard === "Mentor Dashboard" ? "mentor" : "mentee";
+//     updateOnlineStatus(true, newRole)
+//       .then((updatedUser) => {
+//         dispatch(setOnlineStatus({ status: true, role: newRole }));
+//         if (updatedUser) {
+//           dispatch(setUser(updatedUser));
+//         }
+//         if (dashboard === "Mentee Dashboard") {
+//           navigate("/seeker/dashboard");
+//         } else if (dashboard === "Mentor Dashboard") {
+//           navigate("/expert/dashboard");
+//         }
+//         setDropdownOpen(false);
+//       })
+//       .catch((error) => {
+//         toast.error("Failed to update online status");
+//       });
 //   };
 
 //   return (
@@ -226,7 +252,6 @@
 //         {isExpanded ? (
 //           <DropdownMenu.Root open={dropdownOpen} onOpenChange={setDropdownOpen}>
 //             <DropdownMenu.Trigger asChild>
-//               {/* <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 w-full"> */}
 //               <button className="flex items-center gap-2 p-2 rounded-lg bg-black text-white w-full">
 //                 <UserCircle2 size={24} />
 //                 <span className="flex-1 text-left">{currentDashboard}</span>
@@ -255,7 +280,6 @@
 //           </DropdownMenu.Root>
 //         ) : (
 //           <button className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 w-full">
-//             {/* <UserCircle2 size={24} /> */}
 //             <img src={logo} alt="" />
 //           </button>
 //         )}
@@ -306,26 +330,6 @@
 //         />
 //       </nav>
 //       <div className="absolute bottom-4 w-full px-2">
-//         {/* User Profile SidebarItem (shown in both expanded and collapsed states) */}
-//         {/* {user?.firstName && (
-//           <SidebarItem
-//             icon={() => (
-//               <img
-//                 src={user?.profilePicture || "https://via.placeholder.com/24"} // Fallback image if profilePicture is null
-//                 alt="Profile"
-//                 className="w-6 h-6 rounded-full object-cover"
-//               />
-//             )}
-//             text={`${
-//               user.firstName.charAt(0).toUpperCase() + user.firstName.slice(1)
-//             } ${
-//               user.lastName
-//                 ? user.lastName.charAt(0).toUpperCase() + user.lastName.slice(1)
-//                 : ""
-//             }`}
-//             isExpanded={isExpanded}
-//           />
-//         )} */}
 //         {user?.firstName && (
 //           <SidebarItem
 //             icon={() => (
@@ -352,7 +356,6 @@
 //           />
 //         )}
 
-//         {/* Logout SidebarItem */}
 //         <SidebarItem
 //           icon={LogOut}
 //           text="Logout"
@@ -361,17 +364,7 @@
 //           onClick={() => setLogoutModalOpen(true)}
 //         />
 //       </div>
-//       {/* <div className="absolute bottom-4 w-full px-2">
-//         <SidebarItem
-//           icon={LogOut}
-//           text="Logout"
-//           isExpanded={isExpanded}
-//           active={activeItem === "Logout"}
-//           onClick={() => setLogoutModalOpen(true)}
-//         />
-//       </div> */}
 
-//       {/* Logout Confirmation Modal */}
 //       <LogoutConfirmationModal
 //         open={logoutModalOpen}
 //         onOpenChange={setLogoutModalOpen}
@@ -379,7 +372,6 @@
 //         loggingOut={loggingOut}
 //       />
 
-//       {/* Mentee Welcome Form Modal */}
 //       <WelcomeModalForm1
 //         open={isWelcomeModalOpen}
 //         onOpenChange={setIsWelcomeModalOpen}
@@ -509,7 +501,9 @@ const MenteeSidebar: React.FC = () => {
       "is activated is >>>>>>>>>mentee>>>>>>>>>>>>>>>>>s",
       isActivated
     );
-    console.log("users", user);
+
+    console.log("users...mentee", user);
+    console.log("user.isapproved statuys is", user?.mentorId?.isApproved);
 
     if (isAuthenticated) {
       updateOnlineStatus(true, "mentee")

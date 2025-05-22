@@ -1,3 +1,4 @@
+import { EMentor } from "../../entities/mentorEntity";
 import { EService } from "../../entities/serviceEntity";
 import { EUsers } from "../../entities/userEntity";
 
@@ -17,4 +18,5 @@ export interface inMentorProfileService {
   ): Promise<EService | null>;
   getAllMentors(serviceType?: string): Promise<EUsers[]>;
   getMentorById(mentorId: string): Promise<EUsers>;
+  isApprovalChecking(userId: string): Promise<string | null>;
 }

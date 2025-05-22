@@ -26,6 +26,7 @@ interface InitialState {
   formData: object;
   dashboard: string;
   isOnline: { status: boolean; role: "mentor" | "mentee" | null };
+  isApproved: string;
   pageTitle: string;
   tempData: object;
 }
@@ -43,6 +44,7 @@ const initialState: InitialState = {
   formData: {},
   dashboard: "",
   isOnline: { status: false, role: null },
+  isApproved: "",
   pageTitle: "User Panel",
   tempData: {},
 };
@@ -96,6 +98,9 @@ const userSlice = createSlice({
     ) {
       state.isOnline = action.payload;
     },
+    setIsApproved(state, action) {
+      state.isApproved = action.payload;
+    },
     resetUser: () => initialState,
   },
 });
@@ -112,6 +117,7 @@ export const {
   setFormData,
   setDashboard,
   setOnlineStatus,
+  setIsApproved,
   resetUser,
 } = userSlice.actions;
 export default userSlice.reducer;

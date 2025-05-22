@@ -376,5 +376,34 @@ class mentorController {
       res.status(500).json({ message: "Error removing blocked date", error });
     }
   }
+  async isApprovalChecking(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      console.log(
+        "mentor controller isApprovalChecking step 1",
+        req.params.mentorId
+      );
+      const mentorId = req.params.mentorId;
+
+      if (!mentorId) {
+        res.status(400).json({ message: "Mentor ID is required" });
+        return;
+      }
+      console.log("mentor controller isApprovalChecking step 2", mentorId);
+      const isApproved = await this.MentorProfileService.isApprovalChecking(
+        mentorId
+      );
+      console.log("mentor controller isApprovalChecking step 3", isApproved);
+      res.status(200).json({ isApproved });
+    } catch (error) {
+      console.error("Error in isApprovalChecking:", error);
+      res
+        .status(500)
+        .json({ message: "Error checking approval status", error });
+    }
+  }
 }
 export default new mentorController();

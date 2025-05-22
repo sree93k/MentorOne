@@ -17,6 +17,7 @@ export interface EMentor extends Document {
   featuredArticle: string | null;
   totalExperience: string | null;
   isApproved: string | null;
+  approvalReason: string | null;
   isBlocked: boolean | null;
   schedules: ObjectId[] | null;
   mentorPolicyId: ObjectId | null;

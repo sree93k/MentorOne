@@ -140,7 +140,7 @@ const ProfileStep: React.FC<ProfileStepProps> = ({ formData, setFormData }) => {
             value={formData.bio || ""}
             onChange={handleInputChange}
             placeholder="Tell us about yourself."
-            className="min-h-[150px]"
+            className="min-h-[100px]"
           />
         </div>
 

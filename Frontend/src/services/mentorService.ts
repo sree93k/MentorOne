@@ -59,6 +59,35 @@ interface Service {
   };
 }
 
+// export const uploadImage = async (imageFile: File): Promise<string> => {
+//   try {
+//     console.log("image upload stepp1", imageFile);
+
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+//     console.log("image upload stepp1.5", accessToken);
+//     console.log("image upload stepp2");
+//     const formData = new FormData();
+//     console.log("image upload stepp3", formData);
+//     console.log("image upload stepp3.5", imageFile);
+//     formData.append("image", imageFile);
+//     console.log("image upload stepp4......", formData);
+//     const response = await api.post("/user/upload_image", formData, {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     });
+//     console.log("image upload stepp5");
+//     console.log("Image upload response:", response.data);
+//     return response.data.imageUrl;
+//   } catch (error) {
+//     console.error("Error uploading image:", error);
+//     throw error;
+//   }
+// };
 export const uploadImage = async (imageFile: File): Promise<string> => {
   try {
     console.log("image upload stepp1", imageFile);
@@ -69,11 +98,21 @@ export const uploadImage = async (imageFile: File): Promise<string> => {
     }
     console.log("image upload stepp1.5", accessToken);
     console.log("image upload stepp2");
+
+    // Sanitize file name: replace spaces and special characters
+    const sanitizedFileName = imageFile.name
+      .replace(/[^a-zA-Z0-9._-]/g, "_") // Replace non-alphanumeric characters (except ._-)
+      .replace(/\s+/g, "_"); // Replace spaces with underscores
+    const timestamp = Date.now();
+    const uniqueFileName = `${timestamp}_${sanitizedFileName}`;
+    console.log("image upload stepp2.5: Sanitized file name", uniqueFileName);
+
     const formData = new FormData();
     console.log("image upload stepp3", formData);
     console.log("image upload stepp3.5", imageFile);
-    formData.append("image", imageFile);
+    formData.append("image", imageFile, uniqueFileName); // Use sanitized file name
     console.log("image upload stepp4......", formData);
+
     const response = await api.post("/user/upload_image", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -88,7 +127,6 @@ export const uploadImage = async (imageFile: File): Promise<string> => {
     throw error;
   }
 };
-
 export const uploadMentorWelcomeForm = async (
   formData: UpdateUserDataPayload,
   id: string
@@ -640,5 +678,32 @@ export const removeBlockedDate = async (
   } catch (error: any) {
     console.error("removeBlockedDate error:", error);
     throw new Error(`Failed to remove blocked date: ${error.message}`);
+  }
+};
+
+export const isApprovalChecking = async (
+  mentorId: string
+): Promise<{ isApproved: string | null }> => {
+  try {
+    console.log("isApprovalChecking step 1:", mentorId);
+    if (!mentorId) {
+      throw new Error("Mentor ID is required");
+    }
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.get(`/expert/isApprovalChecking/${mentorId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log("isApprovalChecking step 2: ", response.data);
+    return response.data; // Expecting { isApproved: string | null }
+  } catch (error: unknown) {
+    console.error("isApprovalChecking error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`isApprovalChecking error: ${errorMessage}`);
   }
 };

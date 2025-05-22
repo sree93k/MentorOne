@@ -27,24 +27,46 @@ export default class MentorRepository implements inMentorRepository {
     return response;
   }
 
+  // async updateField(
+  //   id: string,
+  //   field: string,
+  //   status: string
+  // ): Promise<EMentor | null> {
+  //   console.log("mentor repo updateMentorStatus step1", id, status);
+
+  //   const response = await Mentor.findByIdAndUpdate(
+  //     id,
+  //     {
+  //       $set: { [field]: status },
+  //     },
+  //     { new: true }
+  //   );
+  //   console.log("mentor repo updateMentorStatus repsonse", response);
+  //   return response;
+  // }
   async updateField(
     id: string,
     field: string,
-    status: string
+    status: string,
+    reason: string = ""
   ): Promise<EMentor | null> {
-    console.log("mentor repo updateMentorStatus step1", id, status);
+    console.log("mentor repo updateMentorStatus step1", id, status, reason);
+
+    const updateFields: { [key: string]: string } = { [field]: status };
+    if (reason) {
+      updateFields.approvalReason = reason;
+    }
 
     const response = await Mentor.findByIdAndUpdate(
       id,
       {
-        $set: { [field]: status },
+        $set: updateFields,
       },
       { new: true }
     );
     console.log("mentor repo updateMentorStatus repsonse", response);
     return response;
   }
-
   //create servcie
   async createService(service: Partial<EService>): Promise<EService | null> {
     try {

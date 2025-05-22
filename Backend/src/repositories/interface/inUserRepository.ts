@@ -27,7 +27,7 @@ export interface inUserRepository {
     userType: string;
     experienceId: string;
     mentorId: string;
-    imageUrl: string;
+    profilePicture: string;
     role: string[];
   }): Promise<EUsers | null>;
   getAllMentors(serviceType?: string): Promise<EUsers[]>;
