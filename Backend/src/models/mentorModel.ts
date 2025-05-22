@@ -57,7 +57,11 @@ const MentorSchema: Schema<EMentor> = new Schema(
       enum: ["Pending", "Approved", "Rejected"],
       default: "Pending",
       required: false,
-      reason: String,
+    },
+    approvalReason: {
+      type: String,
+      required: false,
+      default: "",
     },
     isBlocked: {
       type: Boolean,

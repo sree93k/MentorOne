@@ -175,16 +175,78 @@ export default class AdminService implements inAdminService {
     }
   }
 
+  // async mentorStatusChange(
+  //   id: string,
+  //   status: string,
+  //   reason: string = "" // Default to empty string if not provided
+  // ): Promise<{ mentorData: EMentor | null } | null> {
+  //   try {
+  //     console.log(
+  //       "mentor service ....mentorStatusChange step 1",
+  //       id,
+  //       status,
+  //       reason
+  //     );
+
+  //     const updateMentor = await this.MentorRepository.updateField(
+  //       id,
+  //       "isApproved",
+  //       status
+  //     );
+  //     console.log(
+  //       "adminside service mentorStatusChange service is ",
+  //       updateMentor
+  //     );
+  //     const userData = await this.BaseRepository.findByField("mentorId", id);
+  //     console.log("user data is ", userData);
+  //     const user = userData?.[0];
+  //     if (!user) {
+  //       console.warn("No user found with mentorId:", id);
+  //       return { mentorData: updateMentor };
+  //     }
+  //     // Send email notification if status is updated
+  //     if (updateMentor && (status === "Approved" || status === "Rejected")) {
+  //       const message = `Your mentor status has been updated to "${status}". Reason: ${
+  //         reason || "No reason provided"
+  //       }`;
+
+  //       console.log("user emails  is ", user?.email, "and message", message);
+  //       const OTPDetails = await sendMail(user?.email, message);
+  //       console.log("Email sent:", OTPDetails);
+  //       // If Rejected, deactivate mentor in user model
+  //       if (status === "Rejected") {
+  //         await this.BaseRepository.update(user._id, {
+  //           mentorActivated: false,
+  //           refreshToken: "", // Clear refreshToken
+  //         } as any);
+  //         console.log("User deactivated as mentor and refresh token cleared.");
+  //       }
+  //     }
+
+  //     return { mentorData: updateMentor };
+  //   } catch (error) {
+  //     console.error("Error in mentorStatusChange:", error);
+  //     return null;
+  //   }
+  // }
   async mentorStatusChange(
     id: string,
     status: string,
-    reason: string = "" // Default to empty string if not provided
+    reason: string = ""
   ): Promise<{ mentorData: EMentor | null } | null> {
     try {
+      console.log(
+        "mentor service ....mentorStatusChange step 1",
+        id,
+        status,
+        reason
+      );
+
       const updateMentor = await this.MentorRepository.updateField(
         id,
         "isApproved",
-        status
+        status,
+        reason
       );
       console.log(
         "adminside service mentorStatusChange service is ",
@@ -210,7 +272,7 @@ export default class AdminService implements inAdminService {
         if (status === "Rejected") {
           await this.BaseRepository.update(user._id, {
             mentorActivated: false,
-            refreshToken: "", // Clear refreshToken
+            refreshToken: "",
           } as any);
           console.log("User deactivated as mentor and refresh token cleared.");
         }
@@ -222,7 +284,6 @@ export default class AdminService implements inAdminService {
       return null;
     }
   }
-
   async userStatusChange(
     id: string,
     status: string

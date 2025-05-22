@@ -247,22 +247,23 @@ export default class UserRepository implements inUserRepository {
     userType: string;
     experienceId: string;
     mentorId: string;
-    imageUrl: string;
+    profilePicture: string;
     role: string[];
   }): Promise<EUsers | null> {
     try {
-      const { id, userType, experienceId, imageUrl, mentorId, role } = data;
+      const { id, userType, experienceId, profilePicture, mentorId, role } =
+        data;
       console.log(
         "Repo updateUser step1",
         id,
         userType,
         experienceId,
         mentorId,
-        imageUrl
+        profilePicture
       );
       let updateData: any = {
         mentorActivated: true,
-        imageUrl: imageUrl,
+        profilePicture: profilePicture,
         mentorId: mentorId,
         role: role,
       }; // Common fields

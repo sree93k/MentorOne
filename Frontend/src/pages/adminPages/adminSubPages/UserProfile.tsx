@@ -354,7 +354,7 @@ const UserProfile: React.FC = () => {
                               placeholder="Enter reason"
                               value={reason}
                               onChange={(e) => setReason(e.target.value)}
-                              className="h-8 w-32 border rounded-md p-2"
+                              className="h-10 w-96 border rounded-md p-2"
                             />
                           )}
                           <Button

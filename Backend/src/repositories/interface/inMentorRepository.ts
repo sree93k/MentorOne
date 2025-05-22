@@ -8,7 +8,8 @@ export interface inMentorRepository {
   updateField(
     id: string,
     field: string,
-    status: string
+    status: string,
+    reason: string
   ): Promise<EMentor | null>;
 
   createService(service: Record<string, any>): Promise<EService | null>;
