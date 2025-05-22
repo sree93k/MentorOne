@@ -1,6 +1,7 @@
+import { EPayment } from "../entities/paymentEntity";
 import mongoose, { Schema } from "mongoose";
 
-const PaymentSchema = new Schema({
+const PaymentSchema = new Schema<EPayment>({
   bookingId: {
     type: Schema.Types.ObjectId,
     ref: "Booking",
@@ -29,4 +30,6 @@ const PaymentSchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("Payment", PaymentSchema);
+const Payment = mongoose.model<EPayment>("Payment", PaymentSchema);
+
+export default Payment;
