@@ -1,6 +1,7 @@
+import { EMessage } from "../entities/messageEntity";
 import mongoose, { Schema } from "mongoose";
 
-const MessageSchema = new Schema(
+const MessageSchema = new Schema<EMessage>(
   {
     sender: { type: Schema.Types.ObjectId, ref: "Users", required: true },
     content: { type: String, trim: true, required: true },
@@ -16,4 +17,6 @@ const MessageSchema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("Message", MessageSchema);
+const Message = mongoose.model<EMessage>("Message", MessageSchema);
+
+export default Message;

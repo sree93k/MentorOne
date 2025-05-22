@@ -1,6 +1,7 @@
+import { EBooking } from "../entities/bookingEntity";
 import mongoose, { Schema } from "mongoose";
 
-const BookingSchema = new Schema({
+const BookingSchema = new Schema<EBooking>({
   serviceId: {
     type: Schema.Types.ObjectId,
     ref: "Service",
@@ -40,10 +41,6 @@ const BookingSchema = new Schema({
     required: true,
     match: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/,
   },
-  // endTime: {
-  //   type: String,
-  //   match: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/,
-  // },
   bookingDate: {
     type: Date,
     required: true,
@@ -70,4 +67,6 @@ const BookingSchema = new Schema({
   },
 });
 
-export default mongoose.model("Booking", BookingSchema);
+const Booking = mongoose.model<EBooking>("Booking", BookingSchema);
+
+export default Booking;

@@ -1,11 +1,5 @@
 import mongoose, { Schema, model, Document } from "mongoose";
-
-interface EBlockedDate extends Document {
-  mentorId: mongoose.Types.ObjectId;
-  date: Date;
-  day: String;
-  createdAt: Date;
-}
+import { EBlockedDate } from "../entities/blockedEntity";
 
 const BlockedDateSchema = new Schema<EBlockedDate>({
   mentorId: {

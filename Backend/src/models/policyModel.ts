@@ -1,12 +1,12 @@
-import mongoose, { Schema, model, Document } from "mongoose";
-import { EUsers } from "../entities/userEntity";
+import { EPolicy } from "../entities/policyEntity";
+import mongoose, { Schema, model } from "mongoose";
 
-const PolicySchema = new Schema({
+const PolicySchema = new Schema<EPolicy>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
     required: true,
-    unique: true, // One policy per mentor
+    unique: true,
   },
   reschedulePeriod: {
     value: { type: Number, required: true, min: 0 },
@@ -30,6 +30,6 @@ const PolicySchema = new Schema({
   },
 });
 
-const Policy = model("Policy", PolicySchema);
+const Policy = model<EPolicy>("Policy", PolicySchema);
 
 export default Policy;

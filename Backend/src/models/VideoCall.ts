@@ -1,19 +1,12 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { EVideoCall } from "../entities/videoCallEntity";
 
-export interface IVideoCall extends Document {
-  meetingId: string;
-  creatorId: string;
-  participants: { userId: string; joinedAt: Date }[];
-  createdAt: Date;
-  endedAt?: Date;
-}
-
-const VideoCallSchema: Schema = new Schema({
+const VideoCallSchema: Schema<EVideoCall> = new Schema({
   meetingId: { type: String, required: true, unique: true },
-  creatorId: { type: String, required: true },
+  creatorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   participants: [
     {
-      userId: { type: String, required: true },
+      userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
       joinedAt: { type: Date, default: Date.now },
     },
   ],
@@ -21,4 +14,4 @@ const VideoCallSchema: Schema = new Schema({
   endedAt: { type: Date },
 });
 
-export default mongoose.model<IVideoCall>("VideoCall", VideoCallSchema);
+export default mongoose.model<EVideoCall>("VideoCall", VideoCallSchema);
