@@ -1,5 +1,5 @@
 import { ESchoolExperience } from "../../entities/schoolEntity";
-import { inCareerRepository } from "../interface/inCareerRepositoty";
+import { ICareerRepository } from "../interface/ICareerRepositoty";
 import SchoolExperience from "../../models/schoolExperienceModel";
 import CollegeExperience from "../../models/CollegeExperienceModel";
 import WorkExperience from "../../models/professionalExperienceModel";
@@ -8,7 +8,7 @@ import { ECollegeExperience } from "../../entities/collegeEntity";
 import { EGoals } from "../../entities/goalsEntity";
 import Goals from "../../models/goalModel";
 
-export default class CareerRepository implements inCareerRepository {
+export default class CareerRepository implements ICareerRepository {
   async schoolStudentFormDataCreate(
     formData: ESchoolExperience,
     id: string

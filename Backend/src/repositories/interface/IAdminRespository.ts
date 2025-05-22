@@ -1,6 +1,6 @@
 import { EAdmin } from "../../entities/adminEntity";
 
-export interface inAdminRepository {
+export interface IAdminRepository {
   findByEmail(adminEmail: string): Promise<EAdmin | null>;
   removeRefreshToken(
     userId: string,

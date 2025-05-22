@@ -1,5 +1,5 @@
-import MessageRepository from "../../repositories/implementations/imMessageRepository";
-import ChatRepository from "../../repositories/implementations/imChatRepository";
+import MessageRepository from "../../repositories/implementations/MessageRepository";
+import ChatRepository from "../../repositories/implementations/ChatRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import mongoose from "mongoose";
 import sharp from "sharp";

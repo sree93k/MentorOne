@@ -1,7 +1,6 @@
 import { EMentee } from "../../entities/menteeEntiry";
-import { EGoals } from "../../entities/goalsEntity";
 
-export interface inMenteeRepository {
+export interface IMenteeRepository {
   createMentee(data: {
     careerGoals: string;
     interestedNewcareer: string[];

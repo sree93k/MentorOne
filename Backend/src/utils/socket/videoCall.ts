@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { verifyAccessToken } from "../../utils/jwt";
-import VideoCallRepository from "../../repositories/implementations/imVideoCallRepository";
+import VideoCallRepository from "../../repositories/implementations/VideoCallRepository";
 import VideoCallService from "../../services/implementations/imVideoCallService";
 
 interface UserPayload {

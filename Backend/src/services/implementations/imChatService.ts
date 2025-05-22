@@ -1,5 +1,5 @@
-import ChatRepository from "../../repositories/implementations/imChatRepository";
-import BookingRepository from "../../repositories/implementations/imBookingRepository";
+import ChatRepository from "../../repositories/implementations/ChatRepository";
+import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 
 export default class ChatService {

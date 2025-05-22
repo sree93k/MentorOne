@@ -1,6 +1,6 @@
 import { EUsers } from "../../entities/userEntity";
 
-export interface inUserRepository {
+export interface IUserRepository {
   createUser(user: EUsers): Promise<EUsers | null>;
   saveRefreshToken(
     userID: string,

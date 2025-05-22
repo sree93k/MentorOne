@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
 import { EUsers } from "../../entities/userEntity";
 import { inUserAuthService } from "../interface/inUserAuthService";
-import { inUserRepository } from "../../repositories/interface/inUserRepository";
-import imUserRepository from "../../repositories/implementations/imUserRepository";
-import imOTPRepository from "../../repositories/implementations/imOTPRepository";
-import { inOTPRepository } from "../../repositories/interface/inOTPRepository";
+import { inUserRepository } from "../../repositories/interface/IUserRepository";
+import imUserRepository from "../../repositories/implementations/UserRepository";
+import imOTPRepository from "../../repositories/implementations/OTPRepository";
+import { inOTPRepository } from "../../repositories/interface/IOTPRepository";
 import UserModel from "../../models/userModel";
 import {
   accessTokenForReset,

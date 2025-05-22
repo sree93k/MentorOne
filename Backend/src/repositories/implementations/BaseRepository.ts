@@ -1,7 +1,7 @@
 import { Model } from "mongoose";
-import { inBaseRepository } from "../interface/inBaseRepository";
+import { IBaseRepository } from "../interface/IBaseRepository";
 
-export default class BaseRepository<T> implements inBaseRepository<T> {
+export default class BaseRepository<T> implements IBaseRepository<T> {
   private model: Model<T>;
 
   constructor(model: Model<T>) {

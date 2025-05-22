@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
 import { EAdmin } from "../../entities/adminEntity";
 import { inAdminAuthService } from "../interface/inAdminAuthservice";
-import { inAdminRepository } from "../../repositories/interface/inAdminRespository";
-import AdminRepository from "../../repositories/implementations/imAdminRepository";
+import { inAdminRepository } from "../../repositories/interface/IAdminRespository";
+import AdminRepository from "../../repositories/implementations/AdminRepository";
 import {
   generateAccessToken,
   generateRefreshToken,

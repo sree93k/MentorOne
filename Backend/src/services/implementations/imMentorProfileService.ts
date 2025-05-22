@@ -1,22 +1,22 @@
-import imUserRepository from "../../repositories/implementations/imUserRepository";
-import { inUserRepository } from "../../repositories/interface/inUserRepository";
+import imUserRepository from "../../repositories/implementations/UserRepository";
+import { inUserRepository } from "../../repositories/interface/IUserRepository";
 import { inMentorProfileService } from "../interface/inMentorProfileService";
-import { inCareerRepository } from "../../repositories/interface/inCareerRepositoty"; // Fixed typo
-import imCareerRepositiory from "../../repositories/implementations/imCareerRepository";
+import { inCareerRepository } from "../../repositories/interface/ICareerRepositoty"; // Fixed typo
+import imCareerRepositiory from "../../repositories/implementations/CareerRepository";
 import { EUsers } from "../../entities/userEntity";
 import { ObjectId } from "mongoose";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
-import { inMentorRepository } from "../../repositories/interface/inMentorRepository";
-import imMentorRepository from "../../repositories/implementations/imMentorRepository";
+import { inMentorRepository } from "../../repositories/interface/IMentorRepository";
+import imMentorRepository from "../../repositories/implementations/MentorRepository";
 import { EMentor } from "../../entities/mentorEntity";
-import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
-import imBaseRepository from "../../repositories/implementations/imBaseRepository";
+import { inBaseRepository } from "../../repositories/interface/IBaseRepository";
+import imBaseRepository from "../../repositories/implementations/BaseRepository";
 import Users from "../../models/userModel";
 import { ApiError } from "../../middlewares/errorHandler";
-import { inServiceRepository } from "../../repositories/interface/inServiceRepository";
-import imServiceRepository from "../../repositories/implementations/imServiceRepository";
+import { inServiceRepository } from "../../repositories/interface/IServiceRepository";
+import imServiceRepository from "../../repositories/implementations/ServiceRepository";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;

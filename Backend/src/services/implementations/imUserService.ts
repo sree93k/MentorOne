@@ -1,10 +1,10 @@
 import { EUsers } from "../../entities/userEntity";
 import { EOTP } from "../../entities/OTPEntity";
 import { inUserService } from "../interface/inUserService";
-import imUserRespository from "../../repositories/implementations/imUserRepository";
-import { inUserRepository } from "../../repositories/interface/inUserRepository";
-import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
-import imBaseRepositotry from "../../repositories/implementations/imBaseRepository";
+import imUserRespository from "../../repositories/implementations/UserRepository";
+import { inUserRepository } from "../../repositories/interface/IUserRepository";
+import { inBaseRepository } from "../../repositories/interface/IBaseRepository";
+import imBaseRepositotry from "../../repositories/implementations/BaseRepository";
 import { error } from "console";
 import { string } from "joi";
 import Users from "../../models/userModel";

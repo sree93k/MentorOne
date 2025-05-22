@@ -1,7 +1,8 @@
 import Booking from "../../models/bookingModel";
 import { ApiError } from "../../middlewares/errorHandler";
+import { IBookingRepository } from "../interface/IBookingRepository";
 
-export default class BookingRepository {
+export default class BookingRepository implements IBookingRepository {
   async create(data: any) {
     try {
       const booking = new Booking(data);
