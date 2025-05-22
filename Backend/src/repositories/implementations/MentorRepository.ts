@@ -1,6 +1,6 @@
 import { EUsers } from "../../entities/userEntity";
 import { EMentor } from "../../entities/mentorEntity";
-import { inMentorRepository } from "../interface/inMentorRepository";
+import { IMentorRepository } from "../interface/IMentorRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import Mentor from "../../models/mentorModel";
 import { Stats } from "fs";
@@ -9,7 +9,7 @@ import DigitalProduct from "../../models/digitalProductsModel";
 import VideoTutorial from "../../models/videoTutorialModel";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
-export default class MentorRepository implements inMentorRepository {
+export default class MentorRepository implements IMentorRepository {
   async createMentor(mentorData: EMentor): Promise<EMentor | null> {
     console.log("mentor repo statt 1", mentorData);
     //const newMentor = await Mentor.create(mentorData);

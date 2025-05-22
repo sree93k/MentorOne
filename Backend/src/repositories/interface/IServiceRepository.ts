@@ -1,6 +1,6 @@
 import { EService } from "../../entities/serviceEntity";
 
-export interface inServiceRepository {
+export interface IServiceRepository {
   getAllServices(mentorId: string): Promise<EService[]>;
   getServiceById(serviceId: string): Promise<EService | null>;
   updateService(

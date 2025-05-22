@@ -1,9 +1,9 @@
 import { EAdmin } from "../../entities/adminEntity";
 import Admin from "../../models/adminModel";
-import { inAdminRepository } from "../interface/inAdminRespository";
+import { IAdminRepository } from "../interface/IAdminRespository";
 import mongoose from "mongoose";
 
-export default class AdminRepository implements inAdminRepository {
+export default class AdminRepository implements IAdminRepository {
   async findUserById(userId: string): Promise<EAdmin | null> {
     try {
       console.log("Repository - Searching for admin with user ID:", userId);

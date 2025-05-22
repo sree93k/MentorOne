@@ -1,9 +1,10 @@
-import mongoose from "mongoose";
+import { IMessageRepository } from "../interface/IMessageRepository";
 import Message from "../../models/messageModel";
+import { EMessage } from "../../entities/messageEntity";
 import { ApiError } from "../../middlewares/errorHandler";
 
-export default class MessageRepository {
-  async create(data: any) {
+export default class MessageRepository implements IMessageRepository {
+  async create(data: any): Promise<EMessage> {
     try {
       const message = new Message(data);
       return await message.save();
@@ -12,7 +13,7 @@ export default class MessageRepository {
     }
   }
 
-  async findByChatId(chatId: string) {
+  async findByChatId(chatId: string): Promise<EMessage[]> {
     try {
       return await Message.find({ chat: chatId })
         .populate("sender", "firstName lastName profilePicture")
@@ -23,7 +24,7 @@ export default class MessageRepository {
     }
   }
 
-  async markAsRead(chatId: string, userId: string) {
+  async markAsRead(chatId: string, userId: string): Promise<any> {
     try {
       return await Message.updateMany(
         { chat: chatId, readBy: { $ne: userId } },

@@ -1,13 +1,14 @@
 import VideoCall from "../../models/VideoCall";
-import { IVideoCall } from "../../models/VideoCall";
+import { EVideoCall } from "../../entities/videoCallEntity";
+import IVideoCallRepository from "../interface/IVideoCallRepository";
 
-class VideoCallRepository {
-  async createMeeting(meetingData: Partial<IVideoCall>): Promise<IVideoCall> {
+class VideoCallRepository implements IVideoCallRepository {
+  async createMeeting(meetingData: Partial<EVideoCall>): Promise<EVideoCall> {
     const videoCall = new VideoCall(meetingData);
     return await videoCall.save();
   }
 
-  async findMeeting(meetingId: string): Promise<IVideoCall | null> {
+  async findMeeting(meetingId: string): Promise<EVideoCall | null> {
     return await VideoCall.findOne({ meetingId });
   }
 
@@ -22,12 +23,6 @@ class VideoCallRepository {
     );
   }
 
-  // async removeParticipant(meetingId: string, userId: string): Promise<void> {
-  //   await VideoCall.updateOne(
-  //     { meetingId },
-  //     { $pull: { participants: { userId } } }
-  //   );
-  // }
   async removeParticipant(meetingId: string, userId: string): Promise<void> {
     const result = await VideoCall.updateOne(
       { meetingId },
@@ -45,7 +40,7 @@ class VideoCallRepository {
   }
   async update(
     meetingId: string,
-    updateData: Partial<IVideoCall>
+    updateData: Partial<EVideoCall>
   ): Promise<any> {
     const result = await VideoCall.updateOne(
       { meetingId },

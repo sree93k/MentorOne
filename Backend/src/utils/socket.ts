@@ -4,7 +4,7 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import jwt from "jsonwebtoken";
 import ChatService from "../services/implementations/imChatService";
 import MessageService from "../services/implementations/imMessageService";
-import UserRepository from "../repositories/implementations/imUserRepository";
+import UserRepository from "../repositories/implementations/UserRepository";
 import { NextFunction, Request, Response } from "express";
 import {
   decodeToken,

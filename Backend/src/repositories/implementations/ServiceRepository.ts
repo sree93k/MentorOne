@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import { inServiceRepository } from "../interface/inServiceRepository";
+import { IServiceRepository } from "../interface/IServiceRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
 
-export default class ServiceRepository implements inServiceRepository {
+export default class ServiceRepository implements IServiceRepository {
   async getAllServices(mentorId: string): Promise<EService[]> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {

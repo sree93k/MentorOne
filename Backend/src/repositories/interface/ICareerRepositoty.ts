@@ -3,7 +3,7 @@ import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { EGoals } from "../../entities/goalsEntity";
-export interface inCareerRepository {
+export interface ICareerRepository {
   createGoalDatas(data: {
     careerGoals: string;
     interestedNewcareer: string;

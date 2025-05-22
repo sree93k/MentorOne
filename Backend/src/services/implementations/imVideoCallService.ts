@@ -186,7 +186,7 @@
 
 // export default VideoCallService;
 import { v4 as uuidv4 } from "uuid";
-import VideoCallRepository from "../../repositories/implementations/imVideoCallRepository";
+import VideoCallRepository from "../../repositories/implementations/VideoCallRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 
 class VideoCallService {

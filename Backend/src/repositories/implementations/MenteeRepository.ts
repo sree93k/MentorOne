@@ -1,7 +1,7 @@
 import { EMentee } from "../../entities/menteeEntiry";
 import Mentee from "../../models/menteeModel";
-import { inMenteeRepository } from "../interface/inMenteeRepository";
-export default class MenteeRepository implements inMenteeRepository {
+import { IMenteeRepository } from "../interface/IMenteeRepository";
+export default class MenteeRepository implements IMenteeRepository {
   async createMentee(data: {
     joinPurpose: string[];
     careerGoals: string;

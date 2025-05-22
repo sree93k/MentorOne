@@ -1,14 +1,14 @@
 import { EOTP } from "../../entities/OTPEntity";
 import { EUsers } from "../../entities/userEntity";
-import { inOTPRepository } from "../../repositories/interface/inOTPRepository";
+import { inOTPRepository } from "../../repositories/interface/IOTPRepository";
 import { inOTPService } from "../interface/inOTPService";
-import imOTPRepository from "../../repositories/implementations/imOTPRepository";
+import imOTPRepository from "../../repositories/implementations/OTPRepository";
 import { sendMail } from "../../utils/emailService";
 import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
-import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
-import imBaseRepository from "../../repositories/implementations/imBaseRepository";
+import { inBaseRepository } from "../../repositories/interface/IBaseRepository";
+import imBaseRepository from "../../repositories/implementations/BaseRepository";
 import Users from "../../models/userModel";
 import { string } from "joi";
 export default class OTPServices implements inOTPService {

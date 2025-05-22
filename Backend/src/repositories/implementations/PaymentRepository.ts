@@ -1,7 +1,9 @@
 import Payment from "../../models/paymentModel";
 import { ApiError } from "../../middlewares/errorHandler";
 import mongoose from "mongoose";
-export default class PaymentRepository {
+import { IPaymentRepository } from "../interface/IPaymentRepository";
+
+export default class PaymentRepository implements IPaymentRepository {
   async create(data: any) {
     try {
       const payment = new Payment(data);
@@ -209,7 +211,7 @@ export default class PaymentRepository {
       }
 
       // Clean up the data by removing debugging fields
-      const cleanPaymentData = paymentData.map((payment) => {
+      const cleanPaymentData = paymentData.map((payment: any) => {
         const {
           bookingDetails,
           serviceDetails,
@@ -223,7 +225,7 @@ export default class PaymentRepository {
       });
 
       const totalAmount = cleanPaymentData.reduce(
-        (sum, payment) => sum + (payment.amount || 0),
+        (sum: number, payment: any) => sum + (payment.amount || 0),
         0
       );
       const totalCount = cleanPaymentData.length;

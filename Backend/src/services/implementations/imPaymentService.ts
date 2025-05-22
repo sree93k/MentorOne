@@ -190,7 +190,7 @@ import {
   Payment,
 } from "../interface/inPaymentService";
 import Stripe from "stripe";
-import PaymentRepository from "../../repositories/implementations/imPaymentRepository";
+import PaymentRepository from "../../repositories/implementations/PaymentRepository";
 
 export default class PaymentService implements inPaymentService {
   private paymentRepository: PaymentRepository;

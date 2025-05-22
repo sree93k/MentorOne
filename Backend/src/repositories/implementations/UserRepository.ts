@@ -2,12 +2,12 @@ import { error, profile } from "console";
 
 import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
-import { inUserRepository } from "../interface/inUserRepository";
+import { IUserRepository } from "../interface/IUserRepository";
 import mongoose from "mongoose";
 import { ApiError } from "../../middlewares/errorHandler"; // Adjust the import path as necessary
 import { log } from "winston";
 import Service from "../../models/serviceModel";
-export default class UserRepository implements inUserRepository {
+export default class UserRepository implements IUserRepository {
   //create user
   async createUser(user: Partial<EUsers>): Promise<EUsers | null> {
     try {

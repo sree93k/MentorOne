@@ -5,8 +5,8 @@ import {
 } from "../../utils/uploadToCloudninary";
 import * as fs from "fs";
 import cloudinary from "../../config/cloudinary";
-import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
-import imBaseRepository from "../../repositories/implementations/imBaseRepository";
+import { inBaseRepository } from "../../repositories/interface/IBaseRepository";
+import imBaseRepository from "../../repositories/implementations/BaseRepository";
 import Users from "../../models/userModel";
 import { EUsers } from "../../entities/userEntity";
 import { s3 } from "../../config/awsS3";

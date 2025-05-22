@@ -1,8 +1,8 @@
 import { inBookingService, BookingParams } from "../interface/inBookingService";
-import BookingRepository from "../../repositories/implementations/imBookingRepository";
-import PaymentRepository from "../../repositories/implementations/imPaymentRepository";
-import ChatRepository from "../../repositories/implementations/imChatRepository";
-import ServiceRepository from "../../repositories/implementations/imServiceRepository";
+import BookingRepository from "../../repositories/implementations/BookingRepository";
+import PaymentRepository from "../../repositories/implementations/PaymentRepository";
+import ChatRepository from "../../repositories/implementations/ChatRepository";
+import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import ChatService from "./imChatService";
 import { ApiError } from "../../middlewares/errorHandler";
 import { EService } from "../../entities/serviceEntity";

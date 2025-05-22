@@ -3,7 +3,7 @@ import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import ChatService from "../../services/implementations/imChatService";
 import VideoCallService from "../../services/implementations/imVideoCallService";
-import VideoCallRepository from "../../repositories/implementations/imVideoCallRepository";
+import VideoCallRepository from "../../repositories/implementations/VideoCallRepository";
 import mongoose from "mongoose";
 
 class SocketController {

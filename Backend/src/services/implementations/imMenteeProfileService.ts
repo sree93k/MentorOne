@@ -1,17 +1,17 @@
-import imUserRepository from "../../repositories/implementations/imUserRepository";
-import { inUserRepository } from "../../repositories/interface/inUserRepository";
+import imUserRepository from "../../repositories/implementations/UserRepository";
+import { inUserRepository } from "../../repositories/interface/IUserRepository";
 import { inMenteeProfileService } from "../interface/inMenteeProfileService";
-import { inCareerRepository } from "../../repositories/interface/inCareerRepositoty"; // Fixed typo
-import imCareerRepositiory from "../../repositories/implementations/imCareerRepository";
+import { inCareerRepository } from "../../repositories/interface/ICareerRepositoty"; // Fixed typo
+import imCareerRepositiory from "../../repositories/implementations/CareerRepository";
 import { EUsers } from "../../entities/userEntity";
 import { ObjectId } from "mongoose";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
-import { inMenteeRepository } from "../../repositories/interface/inMenteeRepository";
-import imMenteeRepository from "../../repositories/implementations/imMenteeRepository";
-import { inBaseRepository } from "../../repositories/interface/inBaseRepository";
-import imBaseRepositotry from "../../repositories/implementations/imBaseRepository";
+import { inMenteeRepository } from "../../repositories/interface/IMenteeRepository";
+import imMenteeRepository from "../../repositories/implementations/MenteeRepository";
+import { inBaseRepository } from "../../repositories/interface/IBaseRepository";
+import imBaseRepositotry from "../../repositories/implementations/BaseRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 
 // import CollegeExperience from "../../models/CollegeExperienceModel";

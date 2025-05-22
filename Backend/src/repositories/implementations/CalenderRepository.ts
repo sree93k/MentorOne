@@ -1,36 +1,26 @@
 import mongoose from "mongoose";
 import Policy from "../../models/policyModel";
-import Schedule from "../../models/scheduleModel"; // Use consistent casing
+import Schedule from "../../models/scheduleModel";
 import BlockedDate from "../../models/blockedModel";
-import { response } from "express";
 
-// Rest of the repository code remains the same
-interface PolicyData {
-  reschedulePeriod?: { value: number; unit: "hours" | "days" };
-  bookingPeriod?: { value: number; unit: "hours" | "days" };
-  noticePeriod?: { value: number; unit: "minutes" };
-}
+import {
+  ICalendarRepository,
+  PolicyData,
+  ScheduleData,
+  BlockedDateData,
+} from "../interface/ICalenderRepository";
 
-interface ScheduleSlot {
-  index: number;
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-}
-
-interface ScheduleData {
-  day: string;
-  slots: ScheduleSlot[];
-}
-
-export class CalendarRepository {
-  async getPolicy(mentorId: string) {
+export class CalendarRepository implements ICalendarRepository {
+  async getPolicy(mentorId: string | mongoose.Types.ObjectId) {
     return await Policy.findOne({
       userId: new mongoose.Types.ObjectId(mentorId),
     });
   }
 
-  async updatePolicy(mentorId: string, data: PolicyData) {
+  async updatePolicy(
+    mentorId: string | mongoose.Types.ObjectId,
+    data: PolicyData
+  ) {
     return await Policy.findOneAndUpdate(
       { userId: new mongoose.Types.ObjectId(mentorId) },
       { $set: data, updatedAt: new Date() },
@@ -38,14 +28,17 @@ export class CalendarRepository {
     );
   }
 
-  async getSchedules(mentorId: string) {
+  async getSchedules(mentorId: string | mongoose.Types.ObjectId) {
     return await Schedule.find({
       mentorId: new mongoose.Types.ObjectId(mentorId),
     });
   }
 
-  async createSchedule(mentorId: string, data: ScheduleData) {
-    console.log("calender repo createSchedule step1", mentorId, data);
+  async createSchedule(
+    mentorId: string | mongoose.Types.ObjectId,
+    data: ScheduleData
+  ) {
+    console.log("calendar repo createSchedule step1", mentorId, data);
 
     const validDays = [
       "sunday",
@@ -60,15 +53,14 @@ export class CalendarRepository {
     let weeklySchedule;
 
     if (data.weeklySchedule) {
-      // Use provided weeklySchedule, ensuring all days are included
       const providedDays = data.weeklySchedule.reduce((acc, d) => {
         acc[d.day] = d;
         return acc;
-      }, {} as Record<string, ScheduleData["weeklySchedule"][0]>);
+      }, {} as Record<string, NonNullable<ScheduleData["weeklySchedule"]>[0]>);
 
       weeklySchedule = validDays.map((day) => ({
         day,
-        slots: providedDays[day]?.slots || [], // Use provided slots or empty array
+        slots: providedDays[day]?.slots || [],
       }));
     } else {
       throw new Error("weeklySchedule must be provided");
@@ -82,39 +74,39 @@ export class CalendarRepository {
       updatedAt: new Date(),
     });
 
-    console.log("calender repo createSchedule step2", schedule);
+    console.log("calendar repo createSchedule step2", schedule);
     return schedule;
   }
 
   async updateSchedule(scheduleId: string, data: ScheduleData) {
-    console.log("calender repo updateSchedule step1", scheduleId, data);
+    console.log("calendar repo updateSchedule step1", scheduleId, data);
     const updatedSchedule = await Schedule.findByIdAndUpdate(
       scheduleId,
       { $set: { weeklySchedule: data?.weeklySchedule, updatedAt: new Date() } },
       { new: true }
     );
-    console.log("calender repo updateSchedule step2", updatedSchedule);
+    console.log("calendar repo updateSchedule step2", updatedSchedule);
     return updatedSchedule;
   }
 
   async deleteSchedule(scheduleId: string) {
-    console.log("calender repo deleteSchedule step1", scheduleId);
+    console.log("calendar repo deleteSchedule step1", scheduleId);
     const result = await Schedule.findByIdAndDelete(scheduleId);
-    console.log("calender repo deleteSchedule step2", result);
+    console.log("calendar repo deleteSchedule step2", result);
     return result;
   }
 
-  async getBlockedDates(mentorId: string) {
+  async getBlockedDates(mentorId: string | mongoose.Types.ObjectId) {
     return await BlockedDate.find({
       mentorId: new mongoose.Types.ObjectId(mentorId),
     });
   }
 
   async addBlockedDates(
-    mentorId: string,
-    dates: { date: Date; day: string }[]
+    mentorId: string | mongoose.Types.ObjectId,
+    dates: BlockedDateData[]
   ) {
-    console.log("calneder repo addBlockedDates step 1", mentorId, dates);
+    console.log("calendar repo addBlockedDates step1", mentorId, dates);
 
     const blockedDates = dates.map(({ date, day }) => ({
       mentorId: new mongoose.Types.ObjectId(mentorId),
@@ -124,7 +116,7 @@ export class CalendarRepository {
     }));
 
     const response = await BlockedDate.insertMany(blockedDates);
-    console.log("calneder repo addBlockedDates step 2", response);
+    console.log("calendar repo addBlockedDates step2", response);
     return response;
   }
 

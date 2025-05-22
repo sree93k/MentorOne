@@ -1,8 +1,8 @@
-import { IVideoCall } from "../../models/VideoCall";
+import { EVideoCall } from "../../entities/videoCallEntity";
 
 interface IVideoCallRepository {
-  createMeeting(meetingId: string, creatorId: string): Promise<IVideoCall>;
-  findMeeting(meetingId: string): Promise<IVideoCall | null>;
+  createMeeting(meetingData: Partial<EVideoCall>): Promise<EVideoCall>;
+  findMeeting(meetingId: string): Promise<EVideoCall | null>;
   addParticipant(meetingId: string, userId: string): Promise<void>;
   removeParticipant(meetingId: string, userId: string): Promise<void>;
   endMeeting(meetingId: string): Promise<void>;

@@ -1,5 +1,5 @@
 import { response } from "express";
-import { CalendarRepository } from "../../repositories/implementations/imCalenderRepository";
+import { CalendarRepository } from "../../repositories/implementations/CalenderRepository";
 
 export class CalendarService {
   private repository: CalendarRepository;
