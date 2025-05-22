@@ -1,5 +1,5 @@
 import { Router } from "express";
-import adminAuthController from "../../controllers/adminAuth/adminAuthController";
+import adminAuthController from "../../controllers/implementation/adminAuthController";
 import { validateAdminLogin } from "../../validator/adminValidator";
 import {
   decodedRefreshToken,

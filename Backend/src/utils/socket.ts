@@ -2,8 +2,8 @@ import { Server, Socket } from "socket.io";
 import { createClient } from "redis";
 import { createAdapter } from "@socket.io/redis-adapter";
 import jwt from "jsonwebtoken";
-import ChatService from "../services/implementations/imChatService";
-import MessageService from "../services/implementations/imMessageService";
+import ChatService from "../services/implementations/ChatService";
+import MessageService from "../services/implementations/MessageService";
 import UserRepository from "../repositories/implementations/UserRepository";
 import { NextFunction, Request, Response } from "express";
 import {

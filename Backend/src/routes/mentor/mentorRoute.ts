@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { welcomeFormValidator } from "../../validator/MentorValidator";
-import mentorController from "../../controllers/mentorController/mentorController";
+import mentorController from "../../controllers/implementation/mentorController";
 import { authenticate } from "../../middlewares/authenticateuser";
 import multer from "multer";
 
