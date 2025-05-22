@@ -564,19 +564,42 @@ export default class MentorProfileService implements inMentorProfileService {
     }
   }
 
-  async isApprovalChecking(userId: string): Promise<string | null> {
+  // async isApprovalChecking(userId: string): Promise<string | null> {
+  //   try {
+  //     console.log("isApprovalChecking step1", userId);
+  //     const response = await this.MentorRepository.getMentor(userId);
+  //     console.log("isApprovalChecking step2", response);
+  //     return response?.isApproved || null;
+  //   } catch (error: unknown) {
+  //     console.log("isApprovalChecking service step 3: Error");
+  //     throw error instanceof ApiError
+  //       ? error
+  //       : new ApiError(
+  //           500,
+  //           `Failed to fetch isApproval: ${
+  //             error instanceof Error ? error.message : "Unknown error"
+  //           }`
+  //         );
+  //   }
+  // }
+  async isApprovalChecking(
+    userId: string
+  ): Promise<{ isApproved: string | null; approvalReason: string | null }> {
     try {
       console.log("isApprovalChecking step1", userId);
       const response = await this.MentorRepository.getMentor(userId);
       console.log("isApprovalChecking step2", response);
-      return response?.isApproved || null;
+      return {
+        isApproved: response?.isApproved || null,
+        approvalReason: response?.approvalReason || null,
+      };
     } catch (error: unknown) {
       console.log("isApprovalChecking service step 3: Error");
       throw error instanceof ApiError
         ? error
         : new ApiError(
             500,
-            `Failed to fetch isApproval: ${
+            `Failed to fetch approval status: ${
               error instanceof Error ? error.message : "Unknown error"
             }`
           );

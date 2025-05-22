@@ -393,16 +393,16 @@ class mentorController {
         return;
       }
       console.log("mentor controller isApprovalChecking step 2", mentorId);
-      const isApproved = await this.MentorProfileService.isApprovalChecking(
+      const response = await this.MentorProfileService.isApprovalChecking(
         mentorId
       );
-      console.log("mentor controller isApprovalChecking step 3", isApproved);
-      res.status(200).json({ isApproved });
-    } catch (error) {
-      console.error("Error in isApprovalChecking:", error);
+      console.log("mentor controller isApprovalChecking step 3", response);
       res
-        .status(500)
-        .json({ message: "Error checking approval status", error });
+        .status(200)
+        .json(new ApiResponse(200, response, "Approval status fetched"));
+    } catch (error) {
+      console.log("mentor controller isApprovalChecking step 4: Error");
+      next(error);
     }
   }
 }
