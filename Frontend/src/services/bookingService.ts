@@ -72,17 +72,67 @@ export const updateSlot = async (
   }
 };
 
-export const getBookings = async () => {
+// export const getBookings = async (
+//   page: number = 1,
+//   limit: number = 12,
+//   searchQuery: string = ""
+// ): Promise<{ data: any[]; total: number }> => {
+//   try {
+//     console.log("bookingservice getBookings.. step 1", {
+//       page,
+//       limit,
+//       searchQuery,
+//     });
+
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+
+//     const response = await api.get(`/seeker/bookings`, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//       params: { page, limit, searchQuery },
+//     });
+//     console.log("bookingservice getBookings.. step 2", response);
+//     return {
+//       data: response.data.data,
+//       total: response.data.total,
+//     };
+//   } catch (error: any) {
+//     console.error("Error fetching bookings:", error);
+//     throw new Error(error.response?.data?.error || "Failed to fetch bookings");
+//   }
+// };
+export const getBookings = async (
+  page: number = 1,
+  limit: number = 12,
+  searchQuery: string = ""
+): Promise<{ data: any[]; total: number }> => {
   try {
-    console.log("bookingservice getBookings.. step 1");
+    console.log("bookingservice getBookings.. step 1", {
+      page,
+      limit,
+      searchQuery,
+    });
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
 
     const response = await api.get(`/seeker/bookings`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        Authorization: `Bearer ${accessToken}`,
       },
+      params: { page, limit, searchQuery },
     });
     console.log("bookingservice getBookings.. step 2", response);
-    return response.data;
+    return {
+      data: response.data.data,
+      total: response.data.total,
+    };
   } catch (error: any) {
     console.error("Error fetching bookings:", error);
     throw new Error(error.response?.data?.error || "Failed to fetch bookings");
@@ -124,26 +174,6 @@ export const getDocumentUrl = async (serviceId: string): Promise<string> => {
   }
 };
 
-// export const getBookingsByMentor = async (mentorId: string): Promise<any[]> => {
-//   try {
-//     console.log("getBookingsByMentor step 1: Fetching bookings", mentorId);
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-//     const response = await api.get(`/expert/bookings`, {
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-//     console.log("getBookingsByMentor step 2: Bookings fetched", response.data);
-//     return response.data.data;
-//   } catch (error: any) {
-//     console.error("getBookingsByMentor error:", error);
-//     throw new Error(`Failed to fetch bookings: ${error.message}`);
-//   }
-// };
 export const getBookingsByMentor = async (
   mentorId: string,
   page: number = 1,
