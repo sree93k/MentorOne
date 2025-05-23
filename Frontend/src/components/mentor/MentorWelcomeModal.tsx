@@ -94,7 +94,7 @@ function WelcomeModal({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mentorActivated, user } = useSelector(
+  const { mentorActivated, user, isApproved, activated } = useSelector(
     (state: RootState) => state.user
   );
 
@@ -127,12 +127,12 @@ function WelcomeModal({
         mentorMotivation: user.mentorMotivation || "",
         achievements: user.achievements || "",
       });
-
-      if (user.menteeId) {
-        setStep("profile");
-      } else {
-        setStep("about");
-      }
+      setStep("about");
+      // if (isApproved === "Rejected") {
+      //   setStep("about");
+      // } else if (activated === true && mentorActivated === false) {
+      //   setStep("profile");
+      // }
     }
   }, [open, user]);
 
