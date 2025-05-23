@@ -176,6 +176,17 @@ const MentorSidebar: React.FC = () => {
   useEffect(() => {
     const checkApprovalStatus = async () => {
       try {
+        console.log(
+          "useEffect checkApprovalStatus isAuthenticated is",
+          isAuthenticated
+        );
+        console.log("useEffect checkApprovalStatus user is", user);
+        console.log("useEffect checkApprovalStatus isApproved is", isApproved);
+        console.log(
+          "useEffect checkApprovalStatus isActivated is",
+          isActivated
+        );
+        console.log("useEffect checkApprovalStatus dispatch is", dispatch);
         console.log("Redux isApproved status is step", user?.mentorId);
         console.log("Redux isApproved status is step1", isApproved);
 
@@ -306,37 +317,6 @@ const MentorSidebar: React.FC = () => {
     }
   }, [isAuthenticated, dispatch]);
 
-  // const handleWelcomeFormSubmit = async (
-  //   formData: WelcomeFormData
-  // ): Promise<boolean> => {
-  //   try {
-  //     let imageUrl = formData.imageUrl || "";
-  //     const payload: Omit<WelcomeFormData, "imageFile"> = {
-  //       ...formData,
-  //       imageUrl,
-  //     };
-
-  //     if (!user || !user._id) {
-  //       throw new Error("User ID not found. Please log in again.");
-  //     }
-
-  //     const updatedUser = await uploadMentorWelcomeForm(payload, user._id);
-  //     if (updatedUser) {
-  //       console.log("new updated user data is", updatedUser);
-  //       dispatch(setUser(updatedUser));
-  //       dispatch(setMentorActivated(true));
-  //       dispatch(setIsApproved(updatedUser?.mentorId?.isApproved || ""));
-  //       toast.success("Profile updated successfully!");
-  //       setIsWelcomeModalOpen(false);
-  //       return true;
-  //     }
-  //     return false;
-  //   } catch (error) {
-  //     console.error("Failed to update user data:", error);
-  //     toast.error("Failed to submit form. Please try again.");
-  //     return false;
-  //   }
-  // };
   const handleWelcomeFormSubmit = async (
     formData: WelcomeFormData
   ): Promise<boolean> => {
