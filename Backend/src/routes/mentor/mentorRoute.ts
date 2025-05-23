@@ -3,6 +3,7 @@ import { welcomeFormValidator } from "../../validator/MentorValidator";
 import mentorController from "../../controllers/implementation/mentorController";
 import { authenticate } from "../../middlewares/authenticateuser";
 import multer from "multer";
+import bookingController from "../../controllers/implementation/bookingController";
 
 const upload = multer({ storage: multer.memoryStorage() });
 const mentorRoutes = Router();
@@ -83,5 +84,11 @@ mentorRoutes.get(
   "/isApprovalChecking/:mentorId",
   authenticate,
   mentorController.isApprovalChecking.bind(mentorController)
+);
+
+mentorRoutes.get(
+  "/bookings",
+  authenticate,
+  bookingController.getMentorBookings.bind(bookingController)
 );
 export default mentorRoutes;

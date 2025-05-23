@@ -67,7 +67,7 @@ export default class BookingRepository implements IBookingRepository {
     }
   }
 
-  async findByMentor(mentorId: string) {
+  async findByMentor(mentorId: string, skip: number = 0, limit: number = 10) {
     try {
       return await Booking.find({ mentorId })
         .populate({
@@ -76,14 +76,24 @@ export default class BookingRepository implements IBookingRepository {
         })
         .populate({
           path: "serviceId",
-          select: "title technology price serviceType",
+          select: "title type amount oneToOneType digitalProductType",
         })
-        .populate("menteeId", "firstName lastName");
+        .populate("menteeId", "firstName lastName")
+        .skip(skip)
+        .limit(limit)
+        .lean();
     } catch (error: any) {
       throw new ApiError(500, "Failed to find bookings", error.message);
     }
   }
-
+  async countByMentor(mentorId: string) {
+    try {
+      const total = await Booking.countDocuments({ mentorId });
+      return total;
+    } catch (error: any) {
+      throw new Error("Failed to count bookings by mentor");
+    }
+  }
   async update(id: string, data: any) {
     try {
       return await Booking.findByIdAndUpdate(id, data, { new: true })

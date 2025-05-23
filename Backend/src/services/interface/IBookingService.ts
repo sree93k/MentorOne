@@ -32,7 +32,12 @@ interface BookServiceParams {
 export interface IBookingService {
   createBooking(params: BookingParams): Promise<any>;
   getBookingsByMentee(menteeId: string): Promise<any[]>;
-  getBookingsByMentor(mentorId: string): Promise<any[]>;
+  // getBookingsByMentor(mentorId: string): Promise<any[]>;
+  getBookingsByMentor(
+    mentorId: string,
+    page: number,
+    limit: number
+  ): Promise<any[]>;
   cancelBooking(bookingId: string): Promise<void>;
   verifyBookingBySessionId(sessionId: string): Promise<any>;
   saveBookingAndPayment(
