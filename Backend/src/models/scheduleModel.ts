@@ -40,7 +40,7 @@ const DaySchema = new Schema({
   },
   slots: {
     type: [SlotSchema],
-    validate: [(v: any[]) => v.length === 3, "Each day must have 3 slots"],
+    validate: [(v: any[]) => v.length <= 3, "Each day maximum upto 3 slots"],
   },
 });
 

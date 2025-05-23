@@ -3,10 +3,10 @@ import { EVideoCall } from "../entities/videoCallEntity";
 
 const VideoCallSchema: Schema<EVideoCall> = new Schema({
   meetingId: { type: String, required: true, unique: true },
-  creatorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  creatorId: { type: String, ref: "User", required: true },
   participants: [
     {
-      userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+      userId: { type: String, ref: "User", required: true },
       joinedAt: { type: Date, default: Date.now },
     },
   ],

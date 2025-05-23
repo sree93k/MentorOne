@@ -37,6 +37,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import Logo from "@/assets/logo6.png";
+
 interface ChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -72,6 +73,33 @@ const debounce = <T extends (...args: any[]) => void>(
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
+};
+
+const formatTimestamp = (timestamp: string | undefined) => {
+  if (!timestamp) return "12:30 PM";
+
+  const now = new Date();
+  const messageDate = new Date(timestamp);
+  const diffMs = now.getTime() - messageDate.getTime();
+  const diffHours = diffMs / (1000 * 60 * 60);
+
+  if (diffHours < 24) {
+    // Within 24 hours, show time only
+    return messageDate.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } else if (diffHours < 48) {
+    // Between 24-48 hours, show "Yesterday"
+    return "Yesterday";
+  } else {
+    // Older than 48 hours, show date in dd/mm/yyyy
+    return messageDate.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
 };
 
 const Chatting = ({ open, onOpenChange }: ChatProps) => {
@@ -263,6 +291,8 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
     socketInstance.on("receiveMessage", async (message) => {
       console.log("Received message:", { message });
+
+      // Update chat history
       setChatHistories((prev) => {
         const chatId = message.chat.toString();
         const formattedMessage: ChatMessage = {
@@ -280,6 +310,49 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         const updated = [...(prev[chatId] || []), formattedMessage];
         return { ...prev, [chatId]: updated };
       });
+
+      // Update chatUsers with latest message and unread count
+      setChatUsers((prev) =>
+        prev.map((user) =>
+          user.id === message.chat.toString()
+            ? {
+                ...user,
+                lastMessage:
+                  message.type === "text"
+                    ? message.content
+                    : message.type === "image"
+                    ? "Image"
+                    : "Audio",
+                timestamp: message.createdAt,
+                unread:
+                  message.sender._id === userId
+                    ? user.unread
+                    : (user.unread || 0) + 1, // Increment unread only for incoming messages
+              }
+            : user
+        )
+      );
+
+      setFilteredChatUsers((prev) =>
+        prev.map((user) =>
+          user.id === message.chat.toString()
+            ? {
+                ...user,
+                lastMessage:
+                  message.type === "text"
+                    ? message.content
+                    : message.type === "image"
+                    ? "Image"
+                    : "Audio",
+                timestamp: message.createdAt,
+                unread:
+                  message.sender._id === userId
+                    ? user.unread
+                    : (user.unread || 0) + 1, // Increment unread only for incoming messages
+              }
+            : user
+        )
+      );
 
       // Fetch presigned URL for media messages
       if (message.type === "image" || message.type === "audio") {
@@ -321,6 +394,15 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       });
     });
 
+    // socketInstance.on("messageRead", ({ messageId, chatId }) => {
+    //   setChatHistories((prev) => {
+    //     const updatedMessages = (prev[chatId] || []).map((msg) =>
+    //       msg._id === messageId ? { ...msg, status: "read" } : msg
+    //     );
+    //     return { ...prev, [chatId]: updatedMessages };
+    //   });
+    // });
+    // Update the "messageRead" handler to adjust unread count
     socketInstance.on("messageRead", ({ messageId, chatId }) => {
       setChatHistories((prev) => {
         const updatedMessages = (prev[chatId] || []).map((msg) =>
@@ -328,8 +410,34 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         );
         return { ...prev, [chatId]: updatedMessages };
       });
-    });
 
+      // Recalculate unread count for the chat
+      setChatUsers((prev) =>
+        prev.map((user) =>
+          user.id === chatId
+            ? {
+                ...user,
+                unread: (chatHistories[chatId] || []).filter(
+                  (msg) => msg.sender !== "user" && msg.status !== "read"
+                ).length,
+              }
+            : user
+        )
+      );
+
+      setFilteredChatUsers((prev) =>
+        prev.map((user) =>
+          user.id === chatId
+            ? {
+                ...user,
+                unread: (chatHistories[chatId] || []).filter(
+                  (msg) => msg.sender !== "user" && msg.status !== "read"
+                ).length,
+              }
+            : user
+        )
+      );
+    });
     socketInstance.on("userStatus", ({ userId, isOnline }) => {
       setChatUsers((prev) =>
         prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
@@ -796,10 +904,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
           {/* Sidebar */}
           <div className="w-[320px] bg-white border-r border-gray-200 shadow-sm">
             <div className="p-4 border-b border-gray-100 bg-white">
-              {/* <h2 className="text-indigo-700 text-xl font-bold flex items-center space-x-2">
-                <img src={Logo} alt="Logo" className="w-6 h-6" />
-                <span>Chat</span>
-              </h2> */}
               <h2
                 className="text-xl font-semibold flex items-center space-x-2"
                 style={{ color: "#6978f5" }}
@@ -819,13 +923,8 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                 />
               </div>
             </div>
-            <ScrollArea className="h-[calc(100vh-150px)]">
+            {/* <ScrollArea className="h-[calc(100vh-150px)]">
               <div className="space-y-1 px-2">
-                {/* {error && (
-                  <p className="text-center text-sm text-red-600 p-3 bg-red-50 rounded-md mx-2">
-                    {error}
-                  </p>
-                )} */}
                 {filteredChatUsers.length > 0 ? (
                   filteredChatUsers.map((user) => (
                     <button
@@ -855,18 +954,79 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                             {user.name}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {user.timestamp || "12:30 PM"}
+                            {formatTimestamp(user.timestamp)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mt-1">
                           <p className="text-sm text-gray-500 truncate max-w-[150px]">
                             {user.lastMessage || "Start chatting now!"}
                           </p>
-                          {user.unread && (
-                            <span className="bg-indigo-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
-                              {user.unread}
-                            </span>
-                          )}
+                          {typeof user.unread === "number" &&
+                            user.unread > 0 && (
+                              <span className="bg-indigo-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
+                                {user.unread}
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 text-sm">
+                      No conversations found
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      Try adjusting your search
+                    </p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea> */}
+            <ScrollArea className="h-[calc(100vh-150px)]">
+              <div className="space-y-1 px-2">
+                {filteredChatUsers.length > 0 ? (
+                  filteredChatUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleUserClick(user)}
+                      className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 
+          ${
+            selectedUser?.id === user.id
+              ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
+              : ""
+          }`}
+                    >
+                      <div className="relative">
+                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+                          <AvatarImage src={user.avatar} alt={user.name} />
+                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-400 text-white">
+                            {user.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        {user.isOnline && (
+                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></span>
+                        )}
+                      </div>
+                      <div className="flex-1 ml-3 text-left">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-gray-800">
+                            {user.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatTimestamp(user.timestamp)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                          <p className="text-sm text-gray-500 truncate max-w-[150px]">
+                            {user.lastMessage || "Start chatting now!"}
+                          </p>
+                          {typeof user.unread === "number" &&
+                            user.unread > 0 && (
+                              <span className="bg-indigo-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
+                                {user.unread}
+                              </span>
+                            )}
                         </div>
                       </div>
                     </button>
@@ -920,20 +1080,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       size="icon"
                       className="rounded-full h-9 w-9 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
                     >
-                      <Phone className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full h-9 w-9 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
-                    >
-                      <Video className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-full h-9 w-9 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
-                    >
                       <MoreVertical className="h-5 w-5" />
                     </Button>
                   </div>
@@ -960,11 +1106,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       }
                     `}
                   </style>
-                  {/* {error && (
-                    <p className="text-center text-sm text-red-600 p-3 bg-red-50 rounded-md mb-4 shadow-sm">
-                      {error}
-                    </p>
-                  )} */}
                   {!isMessagesLoaded ? (
                     <div className="flex justify-center items-center h-full">
                       <div className="flex flex-col items-center gap-2">
@@ -996,7 +1137,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                                 className={`max-w-[70%] rounded-2xl p-3 shadow-sm ${
                                   message.sender === "user"
                                     ? "bg-gradient-to-r from-indigo-500 to-blue-400 text-white rounded-br-none"
-                                    : "bg-white text-gray-700 rounded-bl-none"
+                                    : "bg-gradient-to-r from-violet-400 to-blue-400 text-white rounded-bl-none"
                                 }`}
                               >
                                 {message.type === "image" &&
@@ -1072,7 +1213,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                                     className={`text-xs opacity-80 ${
                                       message.sender === "user"
                                         ? "text-blue-100"
-                                        : "text-gray-500"
+                                        : "text-indigo-100"
                                     }`}
                                   >
                                     {message.timestamp}

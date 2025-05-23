@@ -16,6 +16,10 @@ class VideoCallService implements IVideoCallService {
 
     const meetingId = uuidv4();
     try {
+      console.log("VideoCallService meeting creeation step 1");
+      console.log("meetingId ", meetingId);
+      console.log("creatorId", userId);
+
       await this.videoCallRepository.createMeeting({
         meetingId,
         creatorId: userId,

@@ -59,35 +59,6 @@ interface Service {
   };
 }
 
-// export const uploadImage = async (imageFile: File): Promise<string> => {
-//   try {
-//     console.log("image upload stepp1", imageFile);
-
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-//     console.log("image upload stepp1.5", accessToken);
-//     console.log("image upload stepp2");
-//     const formData = new FormData();
-//     console.log("image upload stepp3", formData);
-//     console.log("image upload stepp3.5", imageFile);
-//     formData.append("image", imageFile);
-//     console.log("image upload stepp4......", formData);
-//     const response = await api.post("/user/upload_image", formData, {
-//       headers: {
-//         "Content-Type": "multipart/form-data",
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-//     console.log("image upload stepp5");
-//     console.log("Image upload response:", response.data);
-//     return response.data.imageUrl;
-//   } catch (error) {
-//     console.error("Error uploading image:", error);
-//     throw error;
-//   }
-// };
 export const uploadImage = async (imageFile: File): Promise<string> => {
   try {
     console.log("image upload stepp1", imageFile);
@@ -595,34 +566,6 @@ export const deleteSchedule = async (mentorId: string, scheduleId: string) => {
   }
 };
 
-// export const addBlockedDates = async (mentorId: string, dates: string[]) => {
-//   try {
-//     console.log(
-//       "addBlockedDates step 1: Adding blocked dates",
-//       mentorId,
-//       dates
-//     );
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-//     const response = await api.post(
-//       `/expert/${mentorId}/blocked-dates`,
-//       { dates },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-//     console.log("addBlockedDates step 2: Blocked dates added", response.data);
-//     return response.data;
-//   } catch (error: any) {
-//     console.error("addBlockedDates error:", error);
-//     throw new Error(`Failed to add blocked dates: ${error.message}`);
-//   }
-// };
 export const addBlockedDates = async (
   mentorId: string,
   dates: { date: string; day: string }[]
@@ -681,32 +624,6 @@ export const removeBlockedDate = async (
   }
 };
 
-// export const isApprovalChecking = async (
-//   mentorId: string
-// ): Promise<{ isApproved: string | null }> => {
-//   try {
-//     console.log("isApprovalChecking step 1:", mentorId);
-//     if (!mentorId) {
-//       throw new Error("Mentor ID is required");
-//     }
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-//     const response = await api.get(`/expert/isApprovalChecking/${mentorId}`, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-//     console.log("isApprovalChecking step 2: ", response.data);
-//     return response.data; // Expecting { isApproved: string | null }
-//   } catch (error: unknown) {
-//     console.error("isApprovalChecking error:", error);
-//     const errorMessage =
-//       error instanceof Error ? error.message : "Unknown error";
-//     throw new Error(`isApprovalChecking error: ${errorMessage}`);
-//   }
-// };
 export const isApprovalChecking = async (
   mentorId: string
 ): Promise<{ isApproved: string | null; approvalReason: string | null }> => {

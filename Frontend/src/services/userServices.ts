@@ -95,33 +95,6 @@ interface ChatHistoryResponse {
   success: boolean;
 }
 
-// export const getChatHistory = async (
-//   dashboard: string
-// ): Promise<ChatHistoryResponse> => {
-//   try {
-//     console.log("user service getChatHistory step 1, dashboard:", dashboard);
-//     const response = await api.get<ChatHistoryResponse>(
-//       `/user/${dashboard}/chat-history`,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-//     console.log("user service getChatHistory step 2, response:", response.data);
-//     // Ensure the response data matches the expected structure
-//     if (!response.data.data || !Array.isArray(response.data.data)) {
-//       throw new Error("Invalid chat history response format");
-//     }
-//     return response.data;
-//   } catch (error: any) {
-//     console.error("Error fetching chat history:", error);
-//     throw new Error(
-//       error.response?.data?.error || "Failed to fetch chat history"
-//     );
-//   }
-// };
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
