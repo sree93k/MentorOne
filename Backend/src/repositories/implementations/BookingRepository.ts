@@ -44,11 +44,43 @@ export default class BookingRepository implements IBookingRepository {
     }
   }
 
-  async findByMentee(menteeId: string) {
-    try {
-      console.log("booking repository findByMentee step 1", menteeId);
+  // async findByMentee(menteeId: string) {
+  //   try {
+  //     console.log("booking repository findByMentee step 1", menteeId);
 
-      const response = await Booking.find({ menteeId })
+  //     const response = await Booking.find({ menteeId })
+  //       .populate({
+  //         path: "mentorId",
+  //         select: "firstName lastName profilePicture",
+  //       })
+  //       .populate({
+  //         path: "serviceId",
+  //         select:
+  //           "title technology amount type digitalProductType oneToOneType",
+  //       });
+  //     console.log("booking repository findByMentee step 2", response);
+  //     return response;
+  //   } catch (error: any) {
+  //     console.log("booking repository findByMentee step 3 error", error);
+
+  //     throw new ApiError(500, "Failed to find bookings", error.message);
+  //   }
+  // }
+  async findByMentee(
+    menteeId: string,
+    skip: number = 0,
+    limit: number = 12,
+    query: any = { menteeId }
+  ) {
+    try {
+      console.log("booking repository findByMentee step 1", {
+        menteeId,
+        skip,
+        limit,
+        query,
+      });
+
+      const response = await Booking.find(query)
         .populate({
           path: "mentorId",
           select: "firstName lastName profilePicture",
@@ -57,13 +89,28 @@ export default class BookingRepository implements IBookingRepository {
           path: "serviceId",
           select:
             "title technology amount type digitalProductType oneToOneType",
-        });
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
       console.log("booking repository findByMentee step 2", response);
       return response;
     } catch (error: any) {
       console.log("booking repository findByMentee step 3 error", error);
-
       throw new ApiError(500, "Failed to find bookings", error.message);
+    }
+  }
+
+  async countByMentee(menteeId: string, query: any = { menteeId }) {
+    try {
+      const total = await Booking.countDocuments(query);
+      return total;
+    } catch (error: any) {
+      throw new ApiError(
+        500,
+        "Failed to count bookings by mentee",
+        error.message
+      );
     }
   }
 

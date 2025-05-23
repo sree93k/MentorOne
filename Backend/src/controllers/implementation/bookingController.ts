@@ -59,6 +59,44 @@ class BookingController {
     }
   };
 
+  // public getBookings = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   try {
+  //     console.log("booking controller get bookings step 1");
+
+  //     const menteeId = req?.user?.id;
+  //     const page = parseInt(req.query.page as string) || 1;
+  //     const limit = parseInt(req.query.limit as string) || 12;
+  //     const searchQuery = (req.query.searchQuery as string) || "";
+  //     console.log("booking controller get bookings step 2", {
+  //       menteeId,
+  //       page,
+  //       limit,
+  //       searchQuery,
+  //     });
+  //     if (!menteeId) {
+  //       throw new ApiError(400, "Mentee ID is required");
+  //     }
+  //     const { bookings, total } = await this.bookingService.getBookingsByMentee(
+  //       menteeId,
+  //       page,
+  //       limit,
+  //       searchQuery
+  //     );
+  //     console.log("booking controller get bookings step 3", {
+  //       bookings,
+  //       total,
+  //     });
+  //     res.json({ data: bookings, total });
+  //   } catch (error: any) {
+  //     console.log("booking controller get bookings step error", error);
+  //     console.error("Error fetching bookings:", error);
+  //     next(error);
+  //   }
+  // };
   public getBookings = async (
     req: Request,
     res: Response,
@@ -68,13 +106,29 @@ class BookingController {
       console.log("booking controller get bookings step 1");
 
       const menteeId = req?.user?.id;
-      console.log("booking controller get bookings step 2", menteeId);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 12;
+      const searchQuery = (req.query.searchQuery as string) || "";
+      console.log("booking controller get bookings step 2", {
+        menteeId,
+        page,
+        limit,
+        searchQuery,
+      });
       if (!menteeId) {
         throw new ApiError(400, "Mentee ID is required");
       }
-      const bookings = await this.bookingService.getBookingsByMentee(menteeId);
-      console.log("booking controller get bookings step 3", bookings);
-      res.json(bookings);
+      const { bookings, total } = await this.bookingService.getBookingsByMentee(
+        menteeId,
+        page,
+        limit,
+        searchQuery
+      );
+      console.log("booking controller get bookings step 3", {
+        bookings,
+        total,
+      });
+      res.json({ data: bookings, total });
     } catch (error: any) {
       console.log("booking controller get bookings step error", error);
       console.error("Error fetching bookings:", error);
@@ -82,28 +136,6 @@ class BookingController {
     }
   };
 
-  // public getMentorBookings = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) => {
-  //   try {
-  //     console.log("booking controller get mentor bookings step 1");
-
-  //     const mentorId = req?.user?.id;
-  //     console.log("booking controller get mentor bookings step 2", mentorId);
-  //     if (!mentorId) {
-  //       throw new ApiError(400, "Mentor ID is required");
-  //     }
-  //     const bookings = await this.bookingService.getBookingsByMentor(mentorId);
-  //     console.log("booking controller get mentor bookings step 3", bookings);
-  //     res.json({ data: bookings });
-  //   } catch (error: any) {
-  //     console.log("booking controller get mentor bookings step error", error);
-  //     console.error("Error fetching mentor bookings:", error);
-  //     next(error);
-  //   }
-  // };
   public getMentorBookings = async (
     req: Request,
     res: Response,

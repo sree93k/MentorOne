@@ -140,21 +140,85 @@ export default class BookingService implements IBookingService {
     }
   }
 
-  async getBookingsByMentee(menteeId: string): Promise<any[]> {
-    console.log("booking service getBookingsByMentee step 1", menteeId);
+  // async getBookingsByMentee(
+  //   menteeId: string,
+  //   page: number = 1,
+  //   limit: number = 12,
+  //   searchQuery: string = ""
+  // ): Promise<{ bookings: any[]; total: number }> {
+  //   console.log("booking service getBookingsByMentee step 1", {
+  //     menteeId,
+  //     page,
+  //     limit,
+  //     searchQuery,
+  //   });
 
-    const response = this.bookingRepository.findByMentee(menteeId);
-    console.log("booking service getBookingsByMentee step 2", response);
-    return response;
+  //   const skip = (page - 1) * limit;
+  //   const query: any = { menteeId };
+
+  //   if (searchQuery) {
+  //     query.$or = [
+  //       { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+  //       { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+  //       { "serviceId.title": { $regex: searchQuery, $options: "i" } },
+  //     ];
+  //   }
+
+  //   try {
+  //     const [bookings, total] = await Promise.all([
+  //       this.bookingRepository.findByMentee(menteeId, skip, limit, query),
+  //       this.bookingRepository.countByMentee(menteeId, query),
+  //     ]);
+  //     console.log("booking service getBookingsByMentee step 2", {
+  //       bookings,
+  //       total,
+  //     });
+  //     return { bookings, total };
+  //   } catch (error: any) {
+  //     console.log("booking service getBookingsByMentee step error", error);
+  //     throw new ApiError(500, "Failed to fetch bookings");
+  //   }
+  // }
+  async getBookingsByMentee(
+    menteeId: string,
+    page: number = 1,
+    limit: number = 12,
+    searchQuery: string = ""
+  ): Promise<{ bookings: any[]; total: number }> {
+    console.log("booking service getBookingsByMentee step 1", {
+      menteeId,
+      page,
+      limit,
+      searchQuery,
+    });
+
+    const skip = (page - 1) * limit;
+    const query: any = { menteeId };
+
+    if (searchQuery) {
+      query.$or = [
+        { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+        { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+        { "serviceId.title": { $regex: searchQuery, $options: "i" } },
+      ];
+    }
+
+    try {
+      const [bookings, total] = await Promise.all([
+        this.bookingRepository.findByMentee(menteeId, skip, limit, query),
+        this.bookingRepository.countByMentee(menteeId, query),
+      ]);
+      console.log("booking service getBookingsByMentee step 2", {
+        bookings,
+        total,
+      });
+      return { bookings, total };
+    } catch (error: any) {
+      console.log("booking service getBookingsByMentee step error", error);
+      throw new ApiError(500, "Failed to fetch bookings");
+    }
   }
 
-  // async getBookingsByMentor(mentorId: string): Promise<any[]> {
-  //   console.log("booking service getBookingsByMentor step 1", mentorId);
-
-  //   const repsonse = this.bookingRepository.findByMentor(mentorId);
-  //   console.log("booking service getBookingsByMentor step 2", response);
-  //   return repsonse;
-  // }
   async getBookingsByMentor(
     mentorId: string,
     page: number = 1,
