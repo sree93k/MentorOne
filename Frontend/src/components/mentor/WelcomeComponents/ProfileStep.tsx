@@ -49,14 +49,6 @@ const ProfileStep: React.FC<ProfileStepProps> = ({ formData, setFormData }) => {
     setFormData({ ...formData, skills });
   };
 
-  //   const removeSkill = (skillToRemove: string) => {
-  //     const updatedSkills = selectedSkills.filter(
-  //       (skill) => skill !== skillToRemove
-  //     );
-  //     setSelectedSkills(updatedSkills);
-  //     setFormData({ ...formData, skills: updatedSkills });
-  //   };
-
   const handleMentoringGoalsChange = (selectedOptions: any) => {
     const interestedNewcareer = selectedOptions.map(
       (option: any) => option.value
