@@ -6,6 +6,7 @@ import ServiceRepository from "../../repositories/implementations/ServiceReposit
 import ChatService from "./ChatService";
 import { ApiError } from "../../middlewares/errorHandler";
 import { EService } from "../../entities/serviceEntity";
+import { response } from "express";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -147,8 +148,28 @@ export default class BookingService implements IBookingService {
     return response;
   }
 
-  async getBookingsByMentor(mentorId: string): Promise<any[]> {
-    return this.bookingRepository.findByMentor(mentorId);
+  // async getBookingsByMentor(mentorId: string): Promise<any[]> {
+  //   console.log("booking service getBookingsByMentor step 1", mentorId);
+
+  //   const repsonse = this.bookingRepository.findByMentor(mentorId);
+  //   console.log("booking service getBookingsByMentor step 2", response);
+  //   return repsonse;
+  // }
+  async getBookingsByMentor(
+    mentorId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<any[]> {
+    try {
+      const skip = (page - 1) * limit;
+      const [bookings, total] = await Promise.all([
+        this.bookingRepository.findByMentor(mentorId, skip, limit),
+        this.bookingRepository.countByMentor(mentorId),
+      ]);
+      return { bookings, total };
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to fetch mentor bookings");
+    }
   }
 
   async cancelBooking(bookingId: string): Promise<void> {

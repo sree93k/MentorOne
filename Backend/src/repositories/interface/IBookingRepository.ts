@@ -3,7 +3,8 @@ export interface IBookingRepository {
   findById(id: string): Promise<any | null>;
   findBySessionId(sessionId: string): Promise<any | null>;
   findByMentee(menteeId: string): Promise<any[]>;
-  findByMentor(mentorId: string): Promise<any[]>;
+  findByMentor(mentorId: string, skip: number, limit: number): Promise<any[]>;
+  countByMentor(mentorId: string): Promise<any | null>;
   update(id: string, data: any): Promise<any | null>;
   findByMenteeAndService(
     menteeId: string,

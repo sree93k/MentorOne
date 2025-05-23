@@ -82,6 +82,66 @@ class BookingController {
     }
   };
 
+  // public getMentorBookings = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   try {
+  //     console.log("booking controller get mentor bookings step 1");
+
+  //     const mentorId = req?.user?.id;
+  //     console.log("booking controller get mentor bookings step 2", mentorId);
+  //     if (!mentorId) {
+  //       throw new ApiError(400, "Mentor ID is required");
+  //     }
+  //     const bookings = await this.bookingService.getBookingsByMentor(mentorId);
+  //     console.log("booking controller get mentor bookings step 3", bookings);
+  //     res.json({ data: bookings });
+  //   } catch (error: any) {
+  //     console.log("booking controller get mentor bookings step error", error);
+  //     console.error("Error fetching mentor bookings:", error);
+  //     next(error);
+  //   }
+  // };
+  public getMentorBookings = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      console.log("booking controller get mentor bookings step 1");
+
+      const mentorId = req?.user?.id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      console.log(
+        "booking controller get mentor bookings step 2",
+        mentorId,
+        page,
+        limit
+      );
+      if (!mentorId) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+      const { bookings, total } = await this.bookingService.getBookingsByMentor(
+        mentorId,
+        page,
+        limit
+      );
+      console.log(
+        "booking controller get mentor bookings step 3",
+        bookings,
+        total
+      );
+      res.json({ data: bookings, total });
+    } catch (error: any) {
+      console.log("booking controller get mentor bookings step error", error);
+      console.error("Error fetching mentor bookings:", error);
+      next(error);
+    }
+  };
+
   public deleteBooking = async (
     req: Request,
     res: Response,
