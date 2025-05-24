@@ -1,6 +1,7 @@
 import Booking from "../../models/bookingModel";
 import { ApiError } from "../../middlewares/errorHandler";
 import { IBookingRepository } from "../interface/IBookingRepository";
+import { EBooking } from "../../entities/bookingEntity";
 
 export default class BookingRepository implements IBookingRepository {
   async create(data: any) {
@@ -44,28 +45,6 @@ export default class BookingRepository implements IBookingRepository {
     }
   }
 
-  // async findByMentee(menteeId: string) {
-  //   try {
-  //     console.log("booking repository findByMentee step 1", menteeId);
-
-  //     const response = await Booking.find({ menteeId })
-  //       .populate({
-  //         path: "mentorId",
-  //         select: "firstName lastName profilePicture",
-  //       })
-  //       .populate({
-  //         path: "serviceId",
-  //         select:
-  //           "title technology amount type digitalProductType oneToOneType",
-  //       });
-  //     console.log("booking repository findByMentee step 2", response);
-  //     return response;
-  //   } catch (error: any) {
-  //     console.log("booking repository findByMentee step 3 error", error);
-
-  //     throw new ApiError(500, "Failed to find bookings", error.message);
-  //   }
-  // }
   async findByMentee(
     menteeId: string,
     skip: number = 0,
@@ -178,5 +157,23 @@ export default class BookingRepository implements IBookingRepository {
     } catch (error: any) {
       throw new ApiError(500, "Failed to find booking", error.message);
     }
+  }
+
+  async findAllBookings(
+    skip: number,
+    limit: number,
+    query: any
+  ): Promise<EBooking[]> {
+    return await Booking.find(query)
+      .populate("mentorId", "firstName lastName")
+      .populate("menteeId", "firstName lastName email")
+      .populate("serviceId", "title type")
+      .skip(skip)
+      .limit(limit)
+      .exec();
+  }
+
+  async countAllBookings(query: any): Promise<number> {
+    return await Booking.countDocuments(query).exec();
   }
 }

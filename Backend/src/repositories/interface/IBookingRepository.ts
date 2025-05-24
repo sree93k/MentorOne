@@ -1,3 +1,5 @@
+import { EBooking } from "../../entities/bookingEntity";
+
 export interface IBookingRepository {
   create(data: any): Promise<any>;
   findById(id: string): Promise<any | null>;
@@ -16,4 +18,6 @@ export interface IBookingRepository {
     menteeId: string,
     serviceId: string
   ): Promise<any | null>;
+  findAllBookings(skip: number, limit: number, query: any): Promise<EBooking[]>;
+  countAllBookings(query: any): Promise<number>;
 }

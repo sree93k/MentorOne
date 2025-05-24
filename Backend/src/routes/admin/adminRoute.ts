@@ -11,6 +11,7 @@ adminRoutes.use("/auth", adminAuthRoute);
 adminRoutes.get("/validate_session", adminController.validateSuccessResponse);
 adminRoutes.get("/allUsers", authenticate, adminController.getAllUsers);
 adminRoutes.get("/userData/:id", authenticate, adminController.userDatas);
+adminRoutes.get("/bookings", authenticate, adminController.getAllBookings);
 adminRoutes.patch(
   "/mentorstatus_update/:id/",
   authenticate,

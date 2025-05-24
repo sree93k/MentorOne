@@ -530,4 +530,16 @@ export default class UserRepository implements IUserRepository {
       throw new ApiError(500, "Failed to update online status", error.message);
     }
   }
+
+  async findUsersByNameOrEmail(searchQuery: string): Promise<any[]> {
+    return await Users.find({
+      $or: [
+        { firstName: { $regex: searchQuery, $options: "i" } },
+        { lastName: { $regex: searchQuery, $options: "i" } },
+        { email: { $regex: searchQuery, $options: "i" } },
+      ],
+    })
+      .select("_id")
+      .exec();
+  }
 }

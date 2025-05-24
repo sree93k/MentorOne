@@ -139,3 +139,42 @@ export const updateMentorStatus = async (
     throw error;
   }
 };
+
+export const getAllBookings = async (
+  page: number,
+  limit: number,
+  searchQuery: string = "",
+  service?: string,
+  status?: string
+) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No admin token found. Please log in.");
+    }
+    console.log("admin get all bookings step 1 sending...");
+    let url = `/admin/bookings?page=${page}&limit=${limit}`;
+    if (searchQuery) url += `&searchQuery=${encodeURIComponent(searchQuery)}`;
+    if (service && service !== "All")
+      url += `&service=${encodeURIComponent(service)}`;
+    if (status && status !== "All")
+      url += `&status=${encodeURIComponent(status)}`;
+
+    const response = await api.get(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log("admin get all bookings step 2 response...", response.data);
+    return response;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Axios error:", error.response?.data || error.message);
+      return error.response;
+    } else {
+      console.error("Unexpected error:", error);
+      return null;
+    }
+  }
+};

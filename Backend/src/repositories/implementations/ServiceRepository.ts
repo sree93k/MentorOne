@@ -112,4 +112,12 @@ export default class ServiceRepository implements IServiceRepository {
       );
     }
   }
+
+  async findServicesByTitle(searchQuery: string): Promise<any[]> {
+    return await Service.find({
+      title: { $regex: searchQuery, $options: "i" },
+    })
+      .select("_id")
+      .exec();
+  }
 }

@@ -37,4 +37,5 @@ export interface IUserRepository {
     role: "mentor" | "mentee",
     isOnline: boolean
   ): Promise<void>;
+  findUsersByNameOrEmail(searchQuery: string): Promise<any[]>;
 }
