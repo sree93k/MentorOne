@@ -1,3 +1,4 @@
+import { EPayment } from "../../entities/paymentEntity";
 export interface IPaymentRepository {
   create(data: any): Promise<any>;
   findById(id: string): Promise<any>;
@@ -7,4 +8,7 @@ export interface IPaymentRepository {
     totalAmount: number;
     totalCount: number;
   }>;
+  findAllPayments(skip: number, limit: number, query: any): Promise<any[]>;
+  countAllPayments(query: any): Promise<number>;
+  update(id: string, data: any): Promise<any>;
 }
