@@ -12,6 +12,12 @@ adminRoutes.get("/validate_session", adminController.validateSuccessResponse);
 adminRoutes.get("/allUsers", authenticate, adminController.getAllUsers);
 adminRoutes.get("/userData/:id", authenticate, adminController.userDatas);
 adminRoutes.get("/bookings", authenticate, adminController.getAllBookings);
+adminRoutes.get("/payments", authenticate, adminController.getAllPayments);
+adminRoutes.post(
+  "/transfer-to-mentor",
+  authenticate,
+  adminController.transferToMentor
+);
 adminRoutes.patch(
   "/mentorstatus_update/:id/",
   authenticate,

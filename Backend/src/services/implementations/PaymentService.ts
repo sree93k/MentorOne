@@ -7,12 +7,23 @@ import {
 } from "../interface/IPaymentService";
 import Stripe from "stripe";
 import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-
+import BookingRepository from "../../repositories/implementations/BookingRepository";
+import UserRepository from "../../repositories/implementations/UserRepository";
+import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { IUserRepository } from "../../repositories/interface/IUserRepository";
+import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 export default class PaymentService implements IPaymentService {
   private paymentRepository: PaymentRepository;
+  private bookingRepository: BookingRepository;
+  private userRepository: UserRepository;
+  private serviceRepository: ServiceRepository;
 
   constructor() {
     this.paymentRepository = new PaymentRepository();
+    this.bookingRepository = new BookingRepository();
+    this.userRepository = new UserRepository();
+    this.serviceRepository = new ServiceRepository();
   }
 
   async createCheckoutSession(
@@ -202,6 +213,131 @@ export default class PaymentService implements IPaymentService {
     } catch (error: any) {
       console.error("Error in getAllMenteePayments service:", error);
       throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+    }
+  }
+
+  async getAllPayments(
+    page: number,
+    limit: number,
+    searchQuery: string,
+    status: string
+  ): Promise<{
+    payments: any[];
+    total: number;
+  }> {
+    try {
+      console.log("payment service getAllPayments step 1", {
+        page,
+        limit,
+        searchQuery,
+        status,
+      });
+
+      const skip = (page - 1) * limit;
+      let query: any = {};
+
+      if (status && status !== "All") {
+        query.status = status;
+      }
+
+      if (searchQuery) {
+        const userIds = await this.userRepository.findUsersByNameOrEmail(
+          searchQuery
+        );
+        if (userIds.length > 0) {
+          query.$or = [
+            { menteeId: { $in: userIds.map((u) => u._id) } },
+            { "mentorDetails._id": { $in: userIds.map((u) => u._id) } },
+          ];
+        } else {
+          query.$or = [
+            {
+              "mentorDetails.firstName": { $regex: searchQuery, $options: "i" },
+            },
+            {
+              "mentorDetails.lastName": { $regex: searchQuery, $options: "i" },
+            },
+            { "menteeId.firstName": { $regex: searchQuery, $options: "i" } },
+            { "menteeId.lastName": { $regex: searchQuery, $options: "i" } },
+          ];
+        }
+      }
+
+      const payments = await this.paymentRepository.findAllPayments(
+        skip,
+        limit,
+        query
+      );
+      const total = await this.paymentRepository.countAllPayments(query);
+
+      console.log("payment service getAllPayments step 2", {
+        payments: payments.length,
+        total,
+      });
+      return { payments, total };
+    } catch (error: any) {
+      console.error("Error in getAllPayments service:", error);
+      throw new ApiError(500, "Failed to fetch payments", error.message);
+    }
+  }
+
+  async transferToMentor(
+    paymentId: string,
+    mentorId: string,
+    amount: number
+  ): Promise<any> {
+    try {
+      console.log("payment service transferToMentor step 1", {
+        paymentId,
+        mentorId,
+        amount,
+      });
+
+      // Verify payment exists and is in pending status
+      const payment = await this.paymentRepository.findById(paymentId);
+      if (!payment) {
+        throw new ApiError(404, "Payment not found");
+      }
+      if (payment.status !== "pending") {
+        throw new ApiError(400, "Payment is not in pending status");
+      }
+
+      // Verify mentor exists
+      const mentor = await this.userRepository.findById(mentorId);
+      if (!mentor) {
+        throw new ApiError(404, "Mentor not found");
+      }
+
+      // Mock Stripe transfer (replace with actual Stripe transfer logic)
+      // Note: Actual implementation requires mentor's Stripe Connect account ID
+      const transfer = {
+        id: `mock_transfer_${paymentId}`,
+        amount: Math.round(amount * 100),
+        currency: "inr",
+        destination: mentorId,
+        status: "succeeded",
+      };
+
+      // Update payment status to "transferred"
+      const updatedPayment = await this.paymentRepository.update(paymentId, {
+        status: "transferred",
+        updatedAt: new Date(),
+      });
+
+      console.log("payment service transferToMentor step 2", {
+        transfer,
+        updatedPayment,
+      });
+      return { transfer, payment: updatedPayment };
+    } catch (error: any) {
+      console.error("Error in transferToMentor service:", error);
+      throw error instanceof ApiError
+        ? error
+        : new ApiError(
+            500,
+            "Failed to transfer payment to mentor",
+            error.message
+          );
     }
   }
 }

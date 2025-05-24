@@ -7,13 +7,18 @@ import AdminService from "../../services/implementations/AdminService";
 import { string } from "joi";
 import { IBookingService } from "../../services/interface/IBookingService";
 import BookingService from "../../services/implementations/Bookingservice";
+import { IPaymentService } from "../../services/interface/IPaymentService";
+import PaymentService from "../../services/implementations/PaymentService";
 
 class AdminController {
   private adminService: IAdminService;
   private bookingService: IBookingService;
+  private paymentService: IPaymentService;
+
   constructor() {
     this.adminService = new AdminService();
     this.bookingService = new BookingService();
+    this.paymentService = new PaymentService();
   }
 
   public validateSuccessResponse = (
@@ -161,6 +166,64 @@ class AdminController {
       res.json({ data: bookings, total });
     } catch (error: any) {
       console.error("Error fetching all bookings:", error);
+      next(error);
+    }
+  };
+
+  public getAllPayments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const searchQuery = (req.query.searchQuery as string) || "";
+      const status = (req.query.status as string) || "";
+
+      const { payments, total } = await this.paymentService.getAllPayments(
+        page,
+        limit,
+        searchQuery,
+        status
+      );
+
+      res.json({ data: payments, total });
+    } catch (error: any) {
+      console.error("Error fetching all payments:", error);
+      next(error);
+    }
+  };
+
+  public transferToMentor = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { paymentId, mentorId, amount } = req.body;
+      console.log("admincontroller transferToMentor step1", {
+        paymentId,
+        mentorId,
+        amount,
+      });
+      const response = await this.paymentService.transferToMentor(
+        paymentId,
+        mentorId,
+        amount
+      );
+      console.log("admincontroller transferToMentor step2", response);
+      res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            response,
+            "Payment transferred to mentor successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error transferring to mentor:", error);
       next(error);
     }
   };

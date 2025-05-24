@@ -2,7 +2,7 @@ import Payment from "../../models/paymentModel";
 import { ApiError } from "../../middlewares/errorHandler";
 import mongoose from "mongoose";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
-
+import { EPayment } from "../../entities/paymentEntity";
 export default class PaymentRepository implements IPaymentRepository {
   async create(data: any) {
     try {
@@ -240,6 +240,161 @@ export default class PaymentRepository implements IPaymentRepository {
     } catch (error: any) {
       console.error("Error in findAllByMenteeId repository:", error);
       throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+    }
+  }
+
+  async findAllPayments(
+    skip: number,
+    limit: number,
+    query: any
+  ): Promise<any[]> {
+    try {
+      console.log("paymentRepository findAllPayments step 1", {
+        skip,
+        limit,
+        query,
+      });
+
+      const payments = await Payment.aggregate([
+        {
+          $match: query,
+        },
+        {
+          $lookup: {
+            from: "bookings",
+            localField: "bookingId",
+            foreignField: "_id",
+            as: "booking",
+          },
+        },
+        {
+          $unwind: {
+            path: "$booking",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "Service",
+            localField: "booking.serviceId",
+            foreignField: "_id",
+            as: "service",
+          },
+        },
+        {
+          $unwind: {
+            path: "$service",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "Users",
+            localField: "booking.mentorId",
+            foreignField: "_id",
+            as: "mentor",
+          },
+        },
+        {
+          $unwind: {
+            path: "$mentor",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "Users",
+            localField: "menteeId",
+            foreignField: "_id",
+            as: "mentee",
+          },
+        },
+        {
+          $unwind: {
+            path: "$mentee",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            bookingId: 1,
+            menteeId: "$mentee",
+            amount: 1,
+            status: 1,
+            transactionId: 1,
+            createdAt: 1,
+            serviceDetails: "$service",
+            mentorDetails: "$mentor",
+            serviceName: {
+              $ifNull: ["$service.title", "Unknown Service"],
+            },
+            mentorName: {
+              $cond: {
+                if: {
+                  $and: [
+                    {
+                      $ne: [{ $ifNull: ["$mentor.firstName", null] }, null],
+                    },
+                    {
+                      $ne: [{ $ifNull: ["$mentor.lastName", null] }, null],
+                    },
+                  ],
+                },
+                then: {
+                  $concat: [
+                    { $ifNull: ["$mentor.firstName", ""] },
+                    " ",
+                    { $ifNull: ["$mentor.lastName", ""] },
+                  ],
+                },
+                else: "Unknown Mentor",
+              },
+            },
+            paymentMode: {
+              $cond: {
+                if: {
+                  $ne: [{ $ifNull: ["$transactionId", null] }, null],
+                },
+                then: "Card",
+                else: "Unknown",
+              },
+            },
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
+
+      console.log("paymentRepository findAllPayments step 2", payments.length);
+      return payments;
+    } catch (error: any) {
+      console.error("Error in findAllPayments repository:", error);
+      throw new ApiError(500, "Failed to fetch payments", error.message);
+    }
+  }
+
+  async countAllPayments(query: any): Promise<number> {
+    try {
+      return await Payment.countDocuments(query).exec();
+    } catch (error: any) {
+      console.error("Error in countAllPayments repository:", error);
+      throw new ApiError(500, "Failed to count payments", error.message);
+    }
+  }
+
+  async update(id: string, data: any): Promise<any> {
+    try {
+      return await Payment.findByIdAndUpdate(id, data, { new: true });
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to update payment", error.message);
     }
   }
 }

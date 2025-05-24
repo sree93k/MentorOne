@@ -178,3 +178,76 @@ export const getAllBookings = async (
     }
   }
 };
+export const getAllPayments = async (
+  page: number,
+  limit: number,
+  searchQuery: string = "",
+  status?: string
+) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No admin token found. Please log in.");
+    }
+    console.log("admin get all payments step 1 sending...");
+    let url = `/admin/payments?page=${page}&limit=${limit}`;
+    if (searchQuery) url += `&searchQuery=${encodeURIComponent(searchQuery)}`;
+    if (status && status !== "All")
+      url += `&status=${encodeURIComponent(status)}`;
+
+    const response = await api.get(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log("admin get all payments step 2 response...", response.data);
+    return response;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Axios error:", error.response?.data || error.message);
+      return error.response;
+    } else {
+      console.error("Unexpected error:", error);
+      return null;
+    }
+  }
+};
+
+export const transferToMentor = async (
+  paymentId: string,
+  mentorId: string,
+  amount: number
+) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No admin token found. Please log in.");
+    }
+    console.log(
+      "admin transfer to mentor step 1 sending...",
+      paymentId,
+      mentorId,
+      amount
+    );
+    const response = await api.post(
+      "/admin/transfer-to-mentor",
+      { paymentId, mentorId, amount },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    console.log("admin transfer to mentor step 2 response...", response.data);
+    return response;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      console.error("Axios error:", error.response?.data || error.message);
+      return error.response;
+    } else {
+      console.error("Unexpected error:", error);
+      return null;
+    }
+  }
+};
