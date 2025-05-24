@@ -6,6 +6,8 @@ import ServiceRepository from "../../repositories/implementations/ServiceReposit
 import ChatService from "./ChatService";
 import { ApiError } from "../../middlewares/errorHandler";
 import { EService } from "../../entities/serviceEntity";
+import UserRepository from "../../repositories/implementations/UserRepository";
+import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { response } from "express";
 
 interface SaveBookingAndPaymentParams {
@@ -34,6 +36,7 @@ export default class BookingService implements IBookingService {
   private chatRepository: ChatRepository;
   private serviceRepository: ServiceRepository;
   private chatService: ChatService;
+  private userRepository: IUserRepository;
 
   constructor() {
     this.bookingRepository = new BookingRepository();
@@ -41,6 +44,7 @@ export default class BookingService implements IBookingService {
     this.chatRepository = new ChatRepository();
     this.serviceRepository = new ServiceRepository();
     this.chatService = new ChatService();
+    this.userRepository = new UserRepository();
   }
 
   async createBooking(params: BookingParams): Promise<any> {
@@ -351,4 +355,198 @@ export default class BookingService implements IBookingService {
       throw new ApiError(500, error.message || "Failed to fetch service");
     }
   }
+
+  // async getAllBookings(
+  //   page: number = 1,
+  //   limit: number = 10,
+  //   searchQuery: string = "",
+  //   service: string = "",
+  //   status: string = ""
+  // ): Promise<{ bookings: any[]; total: number }> {
+  //   try {
+  //     console.log("booking service gettAllBookings >page", page);
+  //     console.log("booking service gettAllBookings >limit", limit);
+  //     console.log("booking service gettAllBookings >searchQuery", searchQuery);
+  //     console.log("booking service gettAllBookings >service", service);
+  //     console.log("booking service gettAllBookings >status", status);
+  //     const skip = (page - 1) * limit;
+  //     const query: any = {};
+
+  //     if (searchQuery) {
+  //       query.$or = [
+  //         { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+  //         { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+  //         { "menteeId.firstName": { $regex: searchQuery, $options: "i" } },
+  //         { "menteeId.lastName": { $regex: searchQuery, $options: "i" } },
+  //         { "serviceId.title": { $regex: searchQuery, $options: "i" } },
+  //       ];
+  //     }
+
+  //     if (service && service !== "All") {
+  //       query["serviceId.type"] = service;
+  //     }
+
+  //     if (status && status !== "All") {
+  //       query.status = status;
+  //     }
+
+  //     const [bookings, total] = await Promise.all([
+  //       this.bookingRepository.findAllBookings(skip, limit, query),
+  //       this.bookingRepository.countAllBookings(query),
+  //     ]);
+  //     console.log("booking service gettAllBookings response", bookings, total);
+
+  //     return { bookings, total };
+  //   } catch (error: any) {
+  //     console.error("Error fetching all bookings:", error);
+  //     throw new ApiError(500, "Failed to fetch all bookings");
+  //   }
+  // }
+  async getAllBookings(
+    page: number = 1,
+    limit: number = 10,
+    searchQuery: string = "",
+    service: string = "",
+    status: string = ""
+  ): Promise<{ bookings: any[]; total: number }> {
+    try {
+      console.log("BookingService getAllBookings > params:", {
+        page,
+        limit,
+        searchQuery,
+        service,
+        status,
+      });
+      const skip = (page - 1) * limit;
+      const query: any = {};
+
+      if (searchQuery) {
+        // Fetch matching User IDs
+        const users = await this.userRepository.findUsersByNameOrEmail(
+          searchQuery
+        );
+        const userIds = users.map((user: any) => user._id);
+
+        // Fetch matching Service IDs
+        const services = await this.serviceRepository.findServicesByTitle(
+          searchQuery
+        );
+        const serviceIds = services.map((service: any) => service._id);
+
+        console.log("BookingService getAllBookings > search IDs:", {
+          userIds,
+          serviceIds,
+        });
+
+        if (userIds.length === 0 && serviceIds.length === 0) {
+          return { bookings: [], total: 0 }; // No matching users or services
+        }
+
+        query.$or = [
+          { mentorId: { $in: userIds } },
+          { menteeId: { $in: userIds } },
+          { serviceId: { $in: serviceIds } },
+        ];
+      }
+
+      if (service && service !== "All") {
+        query["serviceId.type"] = service;
+      }
+
+      if (status && status !== "All") {
+        query.status = status;
+      }
+
+      console.log(
+        "BookingService getAllBookings > query:",
+        JSON.stringify(query)
+      );
+
+      const [bookings, total] = await Promise.all([
+        this.bookingRepository.findAllBookings(skip, limit, query),
+        this.bookingRepository.countAllBookings(query),
+      ]);
+
+      console.log("BookingService getAllBookings > response:", {
+        bookingsCount: bookings.length,
+        bookings: bookings.map((b: any) => ({
+          _id: b._id,
+          mentorId: b.mentorId,
+          menteeId: b.menteeId,
+          serviceId: b.serviceId,
+          status: b.status,
+        })),
+        total,
+      });
+
+      return { bookings, total };
+    } catch (error: any) {
+      console.error("BookingService getAllBookings > error:", error);
+      throw new ApiError(500, "Failed to fetch all bookings");
+    }
+  }
+  // async getAllBookings(
+  //   page: number = 1,
+  //   limit: number = 10,
+  //   searchQuery: string = "",
+  //   service: string = "",
+  //   status: string = ""
+  // ): Promise<{ bookings: any[]; total: number }> {
+  //   try {
+  //     console.log("BookingService getAllBookings > params:", {
+  //       page,
+  //       limit,
+  //       searchQuery,
+  //       service,
+  //       status,
+  //     });
+  //     const skip = (page - 1) * limit;
+  //     const query: any = {};
+
+  //     if (searchQuery) {
+  //       query.$or = [
+  //         { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+  //         { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+  //         { "menteeId.firstName": { $regex: searchQuery, $options: "i" } },
+  //         { "menteeId.lastName": { $regex: searchQuery, $options: "i" } },
+  //         { "serviceId.title": { $regex: searchQuery, $options: "i" } },
+  //       ];
+  //     }
+
+  //     if (service && service !== "All") {
+  //       query["serviceId.type"] = service;
+  //     }
+
+  //     if (status && status !== "All") {
+  //       query.status = status;
+  //     }
+
+  //     console.log(
+  //       "BookingService getAllBookings > query:",
+  //       JSON.stringify(query)
+  //     );
+
+  //     const [bookings, total] = await Promise.all([
+  //       this.bookingRepository.findAllBookings(skip, limit, query),
+  //       this.bookingRepository.countAllBookings(query),
+  //     ]);
+
+  //     console.log("BookingService getAllBookings > response:", {
+  //       bookingsCount: bookings.length,
+  //       bookings: bookings.map((b: any) => ({
+  //         _id: b._id,
+  //         mentorId: b.mentorId,
+  //         menteeId: b.menteeId,
+  //         serviceId: b.serviceId,
+  //         status: b.status,
+  //       })),
+  //       total,
+  //     });
+
+  //     return { bookings, total };
+  //   } catch (error: any) {
+  //     console.error("BookingService getAllBookings > error:", error);
+  //     throw new ApiError(500, "Failed to fetch all bookings");
+  //   }
+  // }
 }

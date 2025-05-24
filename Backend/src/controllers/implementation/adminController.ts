@@ -5,12 +5,15 @@ import { EUsers } from "../../entities/userEntity";
 import { IAdminService } from "../../services/interface/IAdminService";
 import AdminService from "../../services/implementations/AdminService";
 import { string } from "joi";
+import { IBookingService } from "../../services/interface/IBookingService";
+import BookingService from "../../services/implementations/Bookingservice";
 
 class AdminController {
   private adminService: IAdminService;
-
+  private bookingService: IBookingService;
   constructor() {
     this.adminService = new AdminService();
+    this.bookingService = new BookingService();
   }
 
   public validateSuccessResponse = (
@@ -131,6 +134,33 @@ class AdminController {
           new ApiResponse(200, repsonse, "Mentor status updated successfully")
         );
     } catch (error) {
+      next(error);
+    }
+  };
+
+  public getAllBookings = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const searchQuery = (req.query.searchQuery as string) || "";
+      const service = (req.query.service as string) || "";
+      const status = (req.query.status as string) || "";
+
+      const { bookings, total } = await this.bookingService.getAllBookings(
+        page,
+        limit,
+        searchQuery,
+        service,
+        status
+      );
+
+      res.json({ data: bookings, total });
+    } catch (error: any) {
+      console.error("Error fetching all bookings:", error);
       next(error);
     }
   };

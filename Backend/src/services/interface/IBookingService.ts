@@ -52,4 +52,11 @@ export interface IBookingService {
   getTutorialById(tutorialId: string): Promise<any>;
   checkBookingStatus(menteeId: string, serviceId: string): Promise<boolean>;
   bookService(params: BookServiceParams): Promise<any>;
+  getAllBookings(
+    page: number,
+    limit: number,
+    searchQuery: string,
+    service: string,
+    status: string
+  ): Promise<{ bookings: any[]; total: number }>;
 }
