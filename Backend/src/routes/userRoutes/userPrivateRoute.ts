@@ -7,6 +7,7 @@ import paymentController from "../../controllers/implementation/paymentControlle
 import socketController from "../../controllers/implementation/socketController";
 import videoCallController from "../../controllers/implementation/videoCallController";
 import chatController from "../../controllers/implementation/socketController";
+import notificationController from "../../controllers/implementation/notificationController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
@@ -93,11 +94,6 @@ userPrivateRoute.get(
   videoCallController.validateMeeting.bind(videoCallController)
 );
 
-// userPrivateRoute.post(
-//   "/video-call/join/:meetingId",
-//   authenticate,
-//   videoCallController.joinMeeting.bind(videoCallController)
-// );
 userPrivateRoute.post(
   "/video-call/join/:meetingId",
   authenticate,
@@ -113,5 +109,18 @@ userPrivateRoute.put(
   "/update-online-status",
   authenticate,
   userController.updateOnlineStatus.bind(userController)
+);
+
+// Notification routes
+userPrivateRoute.get(
+  "/notifications/unread",
+  authenticate,
+  notificationController.getUnreadNotifications.bind(notificationController)
+);
+
+userPrivateRoute.post(
+  "/notifications/:notificationId/read",
+  authenticate,
+  notificationController.markNotificationAsRead.bind(notificationController)
 );
 export default userPrivateRoute;
