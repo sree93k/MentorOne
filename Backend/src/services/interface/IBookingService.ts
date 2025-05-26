@@ -1,3 +1,4 @@
+import { EService } from "../../entities/serviceEntity";
 export interface BookingParams {
   serviceId: string;
   mentorId: string;
@@ -59,4 +60,5 @@ export interface IBookingService {
     service: string,
     status: string
   ): Promise<{ bookings: any[]; total: number }>;
+  getServiceById(serviceId: string): Promise<EService | null>;
 }

@@ -1,5 +1,6 @@
 import stripe from "../../config/stripe";
 import { ApiError } from "../../middlewares/errorHandler";
+import mongoose from "mongoose";
 import {
   IPaymentService,
   CreateCheckoutSessionParams,
@@ -216,6 +217,24 @@ export default class PaymentService implements IPaymentService {
     }
   }
 
+  async getAllMentorPayments(mentorId: string): Promise<{
+    payments: Payment[];
+    totalAmount: number;
+    totalCount: number;
+  }> {
+    try {
+      console.log("payment service getAllMentorPayments step 1", mentorId);
+
+      const result = await this.paymentRepository.findAllByMentorId(mentorId);
+
+      console.log("payment service getAllMentorPayments step 2", result);
+
+      return result;
+    } catch (error: any) {
+      console.error("Error in getAllMentorPayments service:", error);
+      throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+    }
+  }
   async getAllPayments(
     page: number,
     limit: number,
@@ -308,8 +327,6 @@ export default class PaymentService implements IPaymentService {
         throw new ApiError(404, "Mentor not found");
       }
 
-      // Mock Stripe transfer (replace with actual Stripe transfer logic)
-      // Note: Actual implementation requires mentor's Stripe Connect account ID
       const transfer = {
         id: `mock_transfer_${paymentId}`,
         amount: Math.round(amount * 100),

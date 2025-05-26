@@ -4,7 +4,7 @@ import mentorController from "../../controllers/implementation/mentorController"
 import { authenticate } from "../../middlewares/authenticateuser";
 import multer from "multer";
 import bookingController from "../../controllers/implementation/bookingController";
-
+import paymentController from "../../controllers/implementation/paymentController";
 const upload = multer({ storage: multer.memoryStorage() });
 const mentorRoutes = Router();
 
@@ -90,5 +90,11 @@ mentorRoutes.get(
   "/bookings",
   authenticate,
   bookingController.getMentorBookings.bind(bookingController)
+);
+
+mentorRoutes.get(
+  "/payment/mentor-payments",
+  authenticate,
+  paymentController.getAllMentorPayments.bind(paymentController)
 );
 export default mentorRoutes;

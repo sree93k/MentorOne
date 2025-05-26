@@ -169,6 +169,70 @@ class PaymentController {
       }
     }
   };
+
+  public getAllPayments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { page = 1, limit = 10, searchQuery = "", status = "" } = req.query;
+    const mentorId = req.user?.id; // Assuming req.user is set by authenticate middleware
+
+    try {
+      console.log("paymentController getAllPayments step 1", {
+        mentorId,
+        page,
+        limit,
+        searchQuery,
+        status,
+      });
+      const result = await this.paymentService.getAllPayments(
+        Number(page),
+        Number(limit),
+        String(searchQuery),
+        String(status)
+      );
+      console.log("paymentController getAllPayments step 2", result);
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error in getAllPayments controller:", error);
+      next(error);
+    }
+  };
+
+  public getAllMentorPayments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      console.log("paymentcontroller getAllMentorPayments step 1");
+      const menteeId = req.user?.id;
+      if (!menteeId) {
+        throw new ApiError(
+          401,
+          "Unauthorized: No mentee ID",
+          "Authentication required"
+        );
+      }
+
+      const paymentData = await this.paymentService.getAllMentorPayments(
+        menteeId.toString()
+      );
+      console.log("paymentcontroller getAllMentorPayments step 2", paymentData);
+
+      res.json(
+        new ApiResponse(
+          200,
+          "Mentee payments fetched successfully",
+          paymentData
+        )
+      );
+    } catch (error) {
+      console.error("Error in getAllMentorPayments controller:", error);
+      next(error);
+    }
+  };
 }
 
 export default new PaymentController();

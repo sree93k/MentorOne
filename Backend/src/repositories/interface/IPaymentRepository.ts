@@ -8,6 +8,12 @@ export interface IPaymentRepository {
     totalAmount: number;
     totalCount: number;
   }>;
+  findAllByMentorId(mentorId: string): Promise<{
+    payments: any[];
+    totalAmount: number;
+    totalCount: number;
+  }>;
+
   findAllPayments(skip: number, limit: number, query: any): Promise<any[]>;
   countAllPayments(query: any): Promise<number>;
   update(id: string, data: any): Promise<any>;

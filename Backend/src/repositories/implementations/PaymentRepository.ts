@@ -28,6 +28,136 @@ export default class PaymentRepository implements IPaymentRepository {
       throw new ApiError(500, "Failed to find payment", error.message);
     }
   }
+  //mentor payments
+  async findAllByMentorId(mentorId: string): Promise<{
+    payments: any[];
+    totalAmount: number;
+    totalCount: number;
+  }> {
+    try {
+      console.log("paymentRepository findAllByMentorId step 1", mentorId);
+
+      const payments = await Payment.aggregate([
+        {
+          $lookup: {
+            from: "bookings",
+            localField: "bookingId",
+            foreignField: "_id",
+            as: "booking",
+          },
+        },
+        {
+          $unwind: {
+            path: "$booking",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $match: {
+            "booking.mentorId": new mongoose.Types.ObjectId(mentorId),
+          },
+        },
+        {
+          $lookup: {
+            from: "Service",
+            localField: "booking.serviceId",
+            foreignField: "_id",
+            as: "service",
+          },
+        },
+        {
+          $unwind: {
+            path: "$service",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "Users",
+            localField: "menteeId",
+            foreignField: "_id",
+            as: "mentee",
+          },
+        },
+        {
+          $unwind: {
+            path: "$mentee",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            bookingId: 1,
+            menteeId: {
+              _id: "$mentee._id",
+              firstName: "$mentee.firstName",
+              lastName: "$mentee.lastName",
+            },
+            amount: 1,
+            status: 1,
+            transactionId: 1,
+            createdAt: 1,
+            serviceDetails: {
+              _id: "$service._id",
+              title: "$service.title",
+              type: "$service.type",
+            },
+            serviceName: {
+              $ifNull: ["$service.title", "Unknown Service"],
+            },
+            menteeName: {
+              $cond: {
+                if: {
+                  $and: [
+                    { $ne: [{ $ifNull: ["$mentee.firstName", null] }, null] },
+                    { $ne: [{ $ifNull: ["$mentee.lastName", null] }, null] },
+                  ],
+                },
+                then: {
+                  $concat: [
+                    { $ifNull: ["$mentee.firstName", ""] },
+                    " ",
+                    { $ifNull: ["$mentee.lastName", ""] },
+                  ],
+                },
+                else: "Unknown Mentee",
+              },
+            },
+            paymentMode: {
+              $cond: {
+                if: { $ne: [{ $ifNull: ["$transactionId", null] }, null] },
+                then: "Card",
+                else: "Unknown",
+              },
+            },
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+      ]);
+
+      const totalAmount = payments.reduce(
+        (sum: number, payment: any) => sum + (payment.amount || 0),
+        0
+      );
+      const totalCount = payments.length;
+
+      console.log("paymentRepository findAllByMentorId step 2", {
+        paymentsCount: payments.length,
+        totalAmount,
+        totalCount,
+      });
+
+      return { payments, totalAmount, totalCount };
+    } catch (error: any) {
+      console.error("Error in findAllByMentorId repository:", error);
+      throw new ApiError(500, "Failed to fetch mentor payments", error.message);
+    }
+  }
+
+  //mentee payments
 
   async findAllByMenteeId(menteeId: string): Promise<{
     payments: any[];
@@ -242,6 +372,8 @@ export default class PaymentRepository implements IPaymentRepository {
       throw new ApiError(500, "Failed to fetch mentee payments", error.message);
     }
   }
+
+  //all payments admin
 
   async findAllPayments(
     skip: number,
