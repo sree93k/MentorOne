@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
-
+import SocketService from "./socketService";
+import toast from "react-hot-toast";
 const api = userAxiosInstance;
 
 // Reset Password
@@ -370,4 +371,65 @@ export const updateOnlineStatus = async (
       error.response?.data?.message || "Failed to update online status"
     );
   }
+};
+
+interface Notification {
+  _id: string;
+  recipient: string;
+  sender?: { firstName: string; lastName: string };
+  type: "payment" | "booking" | "chat";
+  content: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export const getUnreadNotifications = async () => {
+  try {
+    const response = await api.get("/user/notifications/unread", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      },
+    });
+    return response.data.data; // Adjust based on your API response structure
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch notifications"
+    );
+  }
+};
+
+export const markNotificationAsRead = async (notificationId: string) => {
+  try {
+    await api.post(
+      `/user/notifications/${notificationId}/read`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Failed to mark notification as read"
+    );
+  }
+};
+
+export const initializeNotifications = (
+  userId: string,
+  callback: (notification: any) => void
+) => {
+  try {
+    SocketService.connect(userId);
+    SocketService.onNewNotification(callback);
+  } catch (error: any) {
+    console.error("Failed to initialize notifications:", error.message);
+    toast.error("Unable to connect to notifications service");
+  }
+};
+
+export const cleanupNotifications = () => {
+  SocketService.disconnect();
 };

@@ -72,39 +72,6 @@ export const updateSlot = async (
   }
 };
 
-// export const getBookings = async (
-//   page: number = 1,
-//   limit: number = 12,
-//   searchQuery: string = ""
-// ): Promise<{ data: any[]; total: number }> => {
-//   try {
-//     console.log("bookingservice getBookings.. step 1", {
-//       page,
-//       limit,
-//       searchQuery,
-//     });
-
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     const response = await api.get(`/seeker/bookings`, {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//       params: { page, limit, searchQuery },
-//     });
-//     console.log("bookingservice getBookings.. step 2", response);
-//     return {
-//       data: response.data.data,
-//       total: response.data.total,
-//     };
-//   } catch (error: any) {
-//     console.error("Error fetching bookings:", error);
-//     throw new Error(error.response?.data?.error || "Failed to fetch bookings");
-//   }
-// };
 export const getBookings = async (
   page: number = 1,
   limit: number = 12,
