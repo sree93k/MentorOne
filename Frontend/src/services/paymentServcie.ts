@@ -130,3 +130,71 @@ export const getAllMenteePayments = async () => {
     );
   }
 };
+
+// export const getAllMentorPayments = async (
+//   mentorId: string,
+//   page: number,
+//   limit: number,
+//   searchQuery: string,
+//   status: string
+// ) => {
+//   try {
+//     console.log("payment service getAllMentorPayments step 1", {
+//       mentorId,
+//       page,
+//       limit,
+//       searchQuery,
+//       status,
+//     });
+//     const response = await api.get("/expert/payment/mentor-payments", {
+//       headers: {
+//         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+//       },
+//       params: {
+//         page,
+//         limit,
+//         searchQuery,
+//         status,
+//       },
+//     });
+//     console.log(
+//       "payment service getAllMentorPayments step 2",
+//       response.data.message
+//     );
+
+//     if (!response.data.success || !response.data.message) {
+//       throw new Error(response.data.message || "Invalid response from server");
+//     }
+
+//     return response.data.message;
+//   } catch (error: any) {
+//     console.error("Error in getAllMentorPayments:", error);
+//     throw new Error(
+//       error.response?.data?.message || "Failed to fetch mentor payments"
+//     );
+//   }
+// };
+export const getAllMentorPayments = async () => {
+  try {
+    console.log("payment service getAllMentorPayments step 1");
+    const accessToken = localStorage.getItem("accessToken");
+    const response = await api.get("/expert/payment/mentor-payments", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    console.log("payment service getAllMentorPayments step 2", response.data);
+
+    // Ensure response has expected structure
+    if (!response.data.success || !response.data.message) {
+      throw new Error(response.data.message || "Invalid response from server");
+    }
+
+    return response.data.message;
+  } catch (error: any) {
+    console.error("Error in getAllMentorPayments:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch payments"
+    );
+  }
+};

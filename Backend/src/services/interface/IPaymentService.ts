@@ -41,6 +41,11 @@ export interface IPaymentService {
     totalAmount: number;
     totalCount: number;
   }>;
+  getAllMentorPayments(mentoeId: string): Promise<{
+    payments: Payment[];
+    totalAmount: number;
+    totalCount: number;
+  }>;
   getAllPayments(
     page: number,
     limit: number,
