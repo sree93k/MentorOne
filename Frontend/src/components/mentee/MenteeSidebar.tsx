@@ -296,6 +296,13 @@ const MenteeSidebar: React.FC = () => {
           onClick={() => handleItemClick("Home", "/seeker/dashboard")}
         />
         <SidebarItem
+          icon={Bell}
+          text="Notification"
+          isExpanded={isExpanded}
+          active={activeItem === "Notification"}
+          onClick={openNotification}
+        />
+        <SidebarItem
           icon={FileText}
           text="Profile Details"
           isExpanded={isExpanded}
@@ -316,13 +323,7 @@ const MenteeSidebar: React.FC = () => {
           active={activeItem === "Payment History"}
           onClick={() => handleItemClick("Payment History", "/seeker/payment")}
         />
-        <SidebarItem
-          icon={Bell}
-          text="Notification"
-          isExpanded={isExpanded}
-          active={activeItem === "Notification"}
-          onClick={openNotification}
-        />
+
         <SidebarItem
           icon={Video}
           text="Video Call"
