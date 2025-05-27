@@ -21,7 +21,11 @@ export default class BaseRepository<T> implements IBaseRepository<T> {
   }
 
   async findById(id: string): Promise<T | null> {
-    return await this.model.findById(id).exec();
+    return await this.model
+      .findById(id)
+      .populate("schoolDetails")
+      .populate("collegeDetails")
+      .populate("professionalDetails");
   }
   async findByEmail(email: string): Promise<T | null> {
     return await this.model.findOne({ email }).exec();

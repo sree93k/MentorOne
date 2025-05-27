@@ -13,17 +13,28 @@ import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
 import { sendMail } from "../../utils/emailService";
 import { Model } from "mongoose";
+import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
+import { EService } from "../../entities/serviceEntity";
+import BookingRepository from "../../repositories/implementations/BookingRepository";
+import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { EBooking } from "../../entities/bookingEntity";
+import { number } from "joi";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements IAdminService {
   private BaseRepository: IBaseRepository<EUsers>;
   private MenteeRepository: IMenteeRepository;
   private MentorRepository: IMentorRepository;
+  private ServiceRepository: IServiceRepository;
+  private BookingRepository: IBookingRepository;
 
   constructor() {
     this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.MenteeRepository = new MenteeRepository();
     this.MentorRepository = new MentorRepository();
+    this.ServiceRepository = new ServiceRepository();
+    this.BookingRepository = new BookingRepository();
   }
 
   private getModel(): Model<EUsers> {
@@ -129,10 +140,81 @@ export default class AdminService implements IAdminService {
     }
   }
   //getuserdata
+  // async getUserDatas(id: string): Promise<{
+  //   user: EUsers;
+  //   menteeData: EMentee | null;
+  //   mentorData: EMentor | null;
+  // } | null> {
+  //   try {
+  //     console.log("AdminService getUserDatas step 1:", id);
+  //     const user = await this.BaseRepository.findById(id);
+  //     console.log("AdminService getUserDatas step 2:", user);
+  //     if (!user) {
+  //       console.log("AdminService getUserDatas: User not found");
+  //       return null;
+  //     }
+
+  //     let menteeData: EMentee | null = null;
+  //     let mentorData: EMentor | null = null;
+  //     let serviceData: EService | null = null;
+  //     let bookingData: EBooking | null = null;
+
+  //     // Check roles and fetch corresponding data
+  //     if (user.role?.includes("mentee") && user.menteeId) {
+  //       menteeData = await this.MenteeRepository.getMentee(
+  //         user.menteeId.toString()
+  //       );
+  //       console.log(
+  //         "AdminService getUserDatas step 3 - menteeData:",
+  //         menteeData
+  //       );
+  //     }
+  //     if (user.role?.includes("mentee") && user.menteeId) {
+  //       bookingData = await this.BookingRepository.findByMentee(id);
+  //       console.log(
+  //         "AdminService getUserDatas step 3 - menteeData:",
+  //         menteeData
+  //       );
+  //     }
+
+  //     if (user.role?.includes("mentor") && user.mentorId) {
+  //       serviceData = await this.ServiceRepository.getAllServices(id);
+  //       console.log(
+  //         "AdminService getUserDatas step 3 - menteeData:",
+  //         menteeData
+  //       );
+  //     }
+
+  //     if (user.role?.includes("mentor") && user.mentorId) {
+  //       mentorData = await this.MentorRepository.getMentor(
+  //         user.mentorId.toString()
+  //       );
+  //       console.log(
+  //         "AdminService getUserDatas step 4 - mentorData:",
+  //         mentorData
+  //       );
+  //     }
+  //     console.log(
+  //       ">>>>>>>>>>>@@@@@@",
+  //       user,
+  //       menteeData,
+  //       mentorData,
+  //       serviceData,
+  //       bookingData
+  //     );
+
+  //     return { user, menteeData, mentorData, serviceData, bookingData };
+  //   } catch (error) {
+  //     console.error("Error in getUserDatas:", error);
+  //     return null;
+  //   }
+  // }
   async getUserDatas(id: string): Promise<{
     user: EUsers;
     menteeData: EMentee | null;
     mentorData: EMentor | null;
+    serviceData: EService[] | null; // Updated to array to match getAllServices return type
+    bookingData: EBooking[] | null; // Updated to array to match findByMentee return type
   } | null> {
     try {
       console.log("AdminService getUserDatas step 1:", id);
@@ -145,8 +227,10 @@ export default class AdminService implements IAdminService {
 
       let menteeData: EMentee | null = null;
       let mentorData: EMentor | null = null;
+      let serviceData: EService[] | null = null;
+      let bookingData: EBooking[] | null = null;
 
-      // Check roles and fetch corresponding data
+      // Fetch mentee data if user has mentee role
       if (user.role?.includes("mentee") && user.menteeId) {
         menteeData = await this.MenteeRepository.getMentee(
           user.menteeId.toString()
@@ -157,24 +241,49 @@ export default class AdminService implements IAdminService {
         );
       }
 
+      // Fetch booking data if user has mentee role
+      if (user.role?.includes("mentee") && user.menteeId) {
+        bookingData = await this.BookingRepository.findByMentee(id);
+        console.log(
+          "AdminService getUserDatas step 4 - bookingData:",
+          bookingData
+        );
+      }
+
+      // Fetch mentor data if user has mentor role
       if (user.role?.includes("mentor") && user.mentorId) {
         mentorData = await this.MentorRepository.getMentor(
           user.mentorId.toString()
         );
         console.log(
-          "AdminService getUserDatas step 4 - mentorData:",
+          "AdminService getUserDatas step 5 - mentorData:",
           mentorData
         );
       }
-      console.log(">>>>>>>>>>>@@@@@@", user, menteeData, mentorData);
 
-      return { user, menteeData, mentorData };
+      // Fetch service data if user has mentor role
+      if (user.role?.includes("mentor") && user.mentorId) {
+        serviceData = await this.ServiceRepository.getAllServices(id);
+        console.log(
+          "AdminService getUserDatas step 6 - serviceData:",
+          serviceData
+        );
+      }
+
+      console.log("AdminService getUserDatas final response:", {
+        user,
+        menteeData,
+        mentorData,
+        serviceData,
+        bookingData,
+      });
+
+      return { user, menteeData, mentorData, serviceData, bookingData };
     } catch (error) {
       console.error("Error in getUserDatas:", error);
       return null;
     }
   }
-
   async mentorStatusChange(
     id: string,
     status: string,
