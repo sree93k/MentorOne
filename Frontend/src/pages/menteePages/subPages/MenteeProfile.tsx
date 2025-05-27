@@ -18,7 +18,7 @@ import { updateUserProfile } from "@/services/userServices";
 import { uploadProfileImage } from "@/services/uploadService";
 import { toast } from "react-hot-toast";
 import { XIcon, SearchIcon } from "lucide-react";
-import { updateUserPassword, deleteUserAccount } from "@/services/userServices";
+import { updateUserPassword } from "@/services/userServices";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import * as Yup from "yup";
@@ -281,7 +281,7 @@ const MenteeProfile: React.FC = () => {
       dispatch(setError(null));
       try {
         const response = await userProfileData();
-        console.log("user response data", response);
+        console.log("<<<<<<<<<Mnteeee response data<<<<<<<<<<<<", response);
         if (response) {
           dispatch(setUser(response));
         } else {
@@ -1016,12 +1016,12 @@ const MenteeProfile: React.FC = () => {
           {/* Tab 2: As Mentee */}
           <Tabs.Content value="as-mentee">
             <div className="max-w-2xl">
-              {user?.collegeDetails?.userType === "school" && (
+              {user?.schoolDetails?.userType === "school" && (
                 <>
                   <EditableField
                     label="School Name"
                     field="schoolName"
-                    value={profileData.schoolName}
+                    value={user?.schoolDetails?.schoolName}
                     workAs={profileData.workAs}
                     onEdit={() => handleEdit("schoolName")}
                     isEditing={editingField === "schoolName"}
@@ -1035,7 +1035,7 @@ const MenteeProfile: React.FC = () => {
                   <EditableField
                     label="Class"
                     field="class"
-                    value={profileData.class}
+                    value={user?.schoolDetails?.class}
                     workAs={profileData.workAs}
                     onEdit={() => handleEdit("class")}
                     isEditing={editingField === "class"}
@@ -1047,7 +1047,7 @@ const MenteeProfile: React.FC = () => {
                   <EditableField
                     label="City"
                     field="city"
-                    value={profileData.city}
+                    value={user?.schoolDetails?.city}
                     workAs={profileData.workAs}
                     onEdit={() => handleEdit("city")}
                     isEditing={editingField === "city"}
@@ -1058,12 +1058,12 @@ const MenteeProfile: React.FC = () => {
                   />
                 </>
               )}
-              {user?.collegeDetails?.userType === "professional" && (
+              {user?.professionalDetails?.userType === "professional" && (
                 <>
                   <EditableField
                     label="Job Role"
                     field="jobRole"
-                    value={profileData.jobRole}
+                    value={user?.professionalDetails?.jobRole}
                     workAs={profileData.workAs}
                     onEdit={() => handleEdit("jobRole")}
                     isEditing={editingField === "jobRole"}
@@ -1075,7 +1075,7 @@ const MenteeProfile: React.FC = () => {
                   <EditableField
                     label="Company"
                     field="company"
-                    value={profileData.company}
+                    value={user?.professionalDetails?.company}
                     workAs={profileData.workAs}
                     onEdit={() => handleEdit("company")}
                     isEditing={editingField === "company"}
@@ -1087,7 +1087,7 @@ const MenteeProfile: React.FC = () => {
                   <EditableField
                     label="Total Experience"
                     field="totalExperience"
-                    value={profileData.totalExperience}
+                    value={user?.professionalDetails?.experience}
                     workAs={profileData.workAs}
                     onEdit={() => handleEdit("totalExperience")}
                     isEditing={editingField === "totalExperience"}
@@ -1104,10 +1104,13 @@ const MenteeProfile: React.FC = () => {
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-medium">Start Year</label>
-                      {editingField === "startYear" ? (
+                      {editingField === "startDate" ? (
                         <button
                           onClick={() =>
-                            handleSave("startYear", profileData.startYear)
+                            handleSave(
+                              "startDate",
+                              user?.professionalDetails?.startDate
+                            )
                           }
                           className="text-sm text-green-600 hover:underline"
                         >
@@ -1115,7 +1118,7 @@ const MenteeProfile: React.FC = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleEdit("startYear")}
+                          onClick={() => handleEdit("startDate")}
                           className="text-sm text-black hover:underline"
                         >
                           Edit
@@ -1123,7 +1126,7 @@ const MenteeProfile: React.FC = () => {
                       )}
                     </div>
                     <select
-                      value={profileData.startYear}
+                      value={user?.professionalDetails?.startDate}
                       onChange={(e) =>
                         setProfileData((prev) => ({
                           ...prev,
@@ -1144,10 +1147,13 @@ const MenteeProfile: React.FC = () => {
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-medium">End Year</label>
-                      {editingField === "endYear" ? (
+                      {editingField === "endDate" ? (
                         <button
                           onClick={() =>
-                            handleSave("endYear", profileData.endYear)
+                            handleSave(
+                              "endYear",
+                              user?.professionalDetails?.endDate
+                            )
                           }
                           className="text-sm text-green-600 hover:underline"
                         >
@@ -1155,7 +1161,7 @@ const MenteeProfile: React.FC = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleEdit("endYear")}
+                          onClick={() => handleEdit("endDate")}
                           className="text-sm text-black hover:underline"
                         >
                           Edit
@@ -1163,14 +1169,14 @@ const MenteeProfile: React.FC = () => {
                       )}
                     </div>
                     <select
-                      value={profileData.endYear}
+                      value={user?.professionalDetails?.endDate}
                       onChange={(e) =>
                         setProfileData((prev) => ({
                           ...prev,
                           endYear: e.target.value,
                         }))
                       }
-                      disabled={editingField !== "endYear"}
+                      disabled={editingField !== "endDate"}
                       className="w-full p-2 border rounded-md"
                     >
                       <option value="">Select Year</option>
@@ -1332,40 +1338,40 @@ const MenteeProfile: React.FC = () => {
                       setProfileData((prev) => ({ ...prev, city: value }))
                     }
                   />
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-medium">Bio</label>
-                      {editingField === "bio" ? (
-                        <button
-                          onClick={() => handleSave("bio", profileData.bio)}
-                          className="text-sm text-green-600 hover:underline"
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit("bio")}
-                          className="text-sm text-black hover:underline"
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    <textarea
-                      className="w-full p-2 border rounded-md h-32"
-                      placeholder="Enter about yourself"
-                      value={profileData.bio}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          bio: e.target.value,
-                        }))
-                      }
-                      readOnly={editingField !== "bio"}
-                    />
-                  </div>
                 </>
               )}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm font-medium">Bio</label>
+                  {editingField === "bio" ? (
+                    <button
+                      onClick={() => handleSave("bio", profileData.bio)}
+                      className="text-sm text-green-600 hover:underline"
+                    >
+                      Save
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleEdit("bio")}
+                      className="text-sm text-black hover:underline"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  className="w-full p-2 border rounded-md h-32"
+                  placeholder="Enter about yourself"
+                  value={profileData.bio}
+                  onChange={(e) =>
+                    setProfileData((prev) => ({
+                      ...prev,
+                      bio: e.target.value,
+                    }))
+                  }
+                  readOnly={editingField !== "bio"}
+                />
+              </div>
             </div>
           </Tabs.Content>
 
