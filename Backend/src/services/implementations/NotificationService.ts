@@ -41,29 +41,35 @@
 //       });
 
 //       const payload = {
-//         _id: notification._id,
-//         recipient: recipientId, // Align with frontend
+//         _id: notification._id.toString(),
+//         recipient: recipientId,
 //         type,
-//         content: message, // Align with frontend
-//         relatedId,
+//         content: message,
+//         link:
+//           type === "payment"
+//             ? `/payments/${relatedId}`
+//             : `/bookings/${relatedId}`, // Add link for navigation
 //         isRead: false,
-//         createdAt: notification.createdAt,
+//         createdAt: notification.createdAt.toISOString(),
 //         sender: sender
 //           ? { firstName: sender.firstName, lastName: sender.lastName }
 //           : undefined,
 //       };
 
-//       // Publish to Redis instead of direct Socket.IO emission
+//       // Publish to Redis
 //       await this.redisClient.publish(
 //         `${type}-notifications`,
 //         JSON.stringify(payload)
 //       );
 
-//       // Fallback direct emission if io is provided (for compatibility)
+//       // Direct emission if io is provided
 //       if (io) {
-//         io.to(`user_${recipientId}`).emit("new_notification", payload);
+//         io.of("/notifications")
+//           .to(`user_${recipientId}`)
+//           .emit("new_notification", payload);
 //       }
 //     } catch (error: any) {
+//       console.error("Error creating notification:", error.message);
 //       throw new ApiError(500, "Failed to create notification", error.message);
 //     }
 //   }
@@ -76,12 +82,11 @@
 //     io?: any
 //   ): Promise<void> {
 //     try {
-//       // Fetch mentor and mentee details for sender information
-//       const User = require("mongoose").model("Users"); // Adjust based on your model
+//       const User = require("mongoose").model("Users");
 //       const mentee = await User.findById(menteeId).select("firstName lastName");
 //       const mentor = await User.findById(mentorId).select("firstName lastName");
 
-//       // Notify mentee
+//       // Mentee notifications
 //       await this.createNotification(
 //         menteeId,
 //         "payment",
@@ -111,7 +116,7 @@
 //           : undefined
 //       );
 
-//       // Notify mentor
+//       // Mentor notifications
 //       await this.createNotification(
 //         mentorId,
 //         "payment",
@@ -141,6 +146,10 @@
 //           : undefined
 //       );
 //     } catch (error: any) {
+//       console.error(
+//         "Error creating payment and booking notifications:",
+//         error.message
+//       );
 //       throw new ApiError(
 //         500,
 //         "Failed to create payment and booking notifications",
@@ -151,9 +160,24 @@
 
 //   async getUnreadNotifications(recipientId: string): Promise<any[]> {
 //     try {
-//       return await this.notificationRepository.findUnreadByRecipient(
-//         recipientId
-//       );
+//       const notifications =
+//         await this.notificationRepository.findUnreadByRecipient(recipientId);
+//       // Transform to match frontend NotificationData interface
+//       return notifications.map((n) => ({
+//         _id: n._id.toString(),
+//         recipient: n.recipientId,
+//         type: n.type,
+//         content: n.message,
+//         link:
+//           n.type === "payment"
+//             ? `/payments/${n.relatedId}`
+//             : `/bookings/${n.relatedId}`,
+//         isRead: n.isRead,
+//         createdAt: n.createdAt.toISOString(),
+//         sender: n.sender
+//           ? { firstName: n.sender.firstName, lastName: n.sender.lastName }
+//           : undefined,
+//       }));
 //     } catch (error: any) {
 //       throw new ApiError(
 //         500,
@@ -190,9 +214,10 @@
 //     }
 //   }
 // }
+// src/services/implementations/notificationService.ts
 import NotificationRepository from "../../repositories/implementations/NotificationRepository";
 import { ApiError } from "../../middlewares/errorHandler";
-import { createClient } from "@redis/client";
+import { pubClient } from "../../server"; // Import shared Redis client
 
 interface NotificationData {
   recipientId: string;
@@ -204,14 +229,9 @@ interface NotificationData {
 
 export default class NotificationService {
   private notificationRepository: NotificationRepository;
-  private redisClient: any;
 
   constructor() {
     this.notificationRepository = new NotificationRepository();
-    this.redisClient = createClient({ url: process.env.REDIS_URL });
-    this.redisClient.connect().catch((err: any) => {
-      console.error("Redis connection error:", err);
-    });
   }
 
   async createNotification(
@@ -240,7 +260,9 @@ export default class NotificationService {
         link:
           type === "payment"
             ? `/payments/${relatedId}`
-            : `/bookings/${relatedId}`, // Add link for navigation
+            : type === "booking"
+            ? `/bookings/${relatedId}`
+            : undefined,
         isRead: false,
         createdAt: notification.createdAt.toISOString(),
         sender: sender
@@ -248,11 +270,11 @@ export default class NotificationService {
           : undefined,
       };
 
+      // Ensure Redis client is connected
+      if (!pubClient.isOpen) await pubClient.connect();
+
       // Publish to Redis
-      await this.redisClient.publish(
-        `${type}-notifications`,
-        JSON.stringify(payload)
-      );
+      await pubClient.publish(`${type}-notifications`, JSON.stringify(payload));
 
       // Direct emission if io is provided
       if (io) {
@@ -354,7 +376,6 @@ export default class NotificationService {
     try {
       const notifications =
         await this.notificationRepository.findUnreadByRecipient(recipientId);
-      // Transform to match frontend NotificationData interface
       return notifications.map((n) => ({
         _id: n._id.toString(),
         recipient: n.recipientId,
@@ -363,7 +384,9 @@ export default class NotificationService {
         link:
           n.type === "payment"
             ? `/payments/${n.relatedId}`
-            : `/bookings/${n.relatedId}`,
+            : n.type === "booking"
+            ? `/bookings/${n.relatedId}`
+            : undefined,
         isRead: n.isRead,
         createdAt: n.createdAt.toISOString(),
         sender: n.sender

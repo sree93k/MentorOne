@@ -1293,7 +1293,9 @@ export const initializeVideoSocket = async (videoNamespace: Server) => {
         await pubClient.del(key);
         await pubClient.del(`meeting:${meetingId}:user:${userId}:name`);
         await pubClient.del(`meeting:${meetingId}:user:${userId}:socket`);
+        await pubClient.del(`meeting:${meetingId}:user:${userId}:peer`);
         await pubClient.del(`meeting:${meetingId}:admitted:${userId}`);
+        await pubClient.del(`meeting:${meetingId}:pending:${userId}`);
       }
       await pubClient.quit();
     });
