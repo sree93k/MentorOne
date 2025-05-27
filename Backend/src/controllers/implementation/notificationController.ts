@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import NotificationService from "../../services/implementations/NotifictaionService";
+import NotificationService from "../../services/implementations/NotificationService";
 import ApiResponse from "../../utils/apiResponse";
 
 interface AuthUser {
