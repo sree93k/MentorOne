@@ -77,6 +77,98 @@ export default class BookingService implements IBookingService {
     return booking;
   }
 
+  // async saveBookingAndPayment(
+  //   params: SaveBookingAndPaymentParams
+  // ): Promise<{ booking: any; payment: any; chat?: any }> {
+  //   const {
+  //     sessionId,
+  //     serviceId,
+  //     mentorId,
+  //     menteeId,
+  //     bookingDate,
+  //     startTime,
+  //     endTime,
+  //     day,
+  //     slotIndex,
+  //     amount,
+  //   } = params;
+
+  //   console.log("saveBookingAndPayment params:", params);
+
+  //   try {
+  //     // Fetch the service to check its type
+  //     const service = await this.serviceRepository.getServiceById(serviceId);
+  //     if (!service) {
+  //       throw new ApiError(404, "Service not found", "Invalid service ID");
+  //     }
+
+  //     // Create booking
+  //     const booking = await this.createBooking({
+  //       serviceId,
+  //       mentorId,
+  //       menteeId,
+  //       bookingDate,
+  //       startTime,
+  //       endTime,
+  //       day,
+  //       slotIndex,
+  //     });
+
+  //     // Create payment
+  //     const payment = await this.paymentRepository.create({
+  //       bookingId: booking._id,
+  //       menteeId,
+  //       amount,
+  //       status: "completed",
+  //       transactionId: sessionId,
+  //     });
+
+  //     // Create chat for "chat" type services
+  //     let chat;
+  //     if (service.oneToOneType === "chat") {
+  //       chat = await this.chatService.createChat(
+  //         booking._id.toString(),
+  //         menteeId,
+  //         mentorId
+  //       );
+  //       console.log("Created chat:", chat._id);
+  //     }
+
+  //     // Trigger payment and booking notifications
+  //     try {
+  //       const io = getIO();
+  //       await this.notificationService.createPaymentAndBookingNotifications(
+  //         payment._id.toString(),
+  //         booking._id.toString(),
+  //         menteeId,
+  //         mentorId,
+  //         io
+  //       );
+  //       console.log("Notifications sent for payment and booking:", {
+  //         paymentId: payment._id,
+  //         bookingId: booking._id,
+  //       });
+  //     } catch (notificationError: any) {
+  //       console.error(
+  //         "Failed to send notifications:",
+  //         notificationError.message
+  //       );
+  //       // Continue execution even if notifications fail to avoid blocking the booking
+  //     }
+
+  //     console.log("Saved booking:", booking._id);
+  //     console.log("Saved payment:", payment._id);
+
+  //     return { booking, payment, chat };
+  //   } catch (error: any) {
+  //     console.error("Detailed error in saveBookingAndPayment:", error);
+  //     throw new ApiError(
+  //       500,
+  //       error.message || "Failed to save booking and payment",
+  //       "Error during booking and payment creation"
+  //     );
+  //   }
+  // }
   async saveBookingAndPayment(
     params: SaveBookingAndPaymentParams
   ): Promise<{ booking: any; payment: any; chat?: any }> {
@@ -96,13 +188,20 @@ export default class BookingService implements IBookingService {
     console.log("saveBookingAndPayment params:", params);
 
     try {
-      // Fetch the service to check its type
       const service = await this.serviceRepository.getServiceById(serviceId);
       if (!service) {
         throw new ApiError(404, "Service not found", "Invalid service ID");
       }
 
-      // Create booking
+      // Check if booking already exists for this sessionId
+      const existingBooking = await this.bookingRepository.findBySessionId(
+        sessionId
+      );
+      if (existingBooking) {
+        console.log("Booking already exists for sessionId:", sessionId);
+        return { booking: existingBooking, payment: null, chat: null };
+      }
+
       const booking = await this.createBooking({
         serviceId,
         mentorId,
@@ -114,7 +213,6 @@ export default class BookingService implements IBookingService {
         slotIndex,
       });
 
-      // Create payment
       const payment = await this.paymentRepository.create({
         bookingId: booking._id,
         menteeId,
@@ -123,7 +221,6 @@ export default class BookingService implements IBookingService {
         transactionId: sessionId,
       });
 
-      // Create chat for "chat" type services
       let chat;
       if (service.oneToOneType === "chat") {
         chat = await this.chatService.createChat(
@@ -134,17 +231,21 @@ export default class BookingService implements IBookingService {
         console.log("Created chat:", chat._id);
       }
 
-      // Trigger payment and booking notifications
       try {
         const io = getIO();
+        console.log("Sending notifications for:", {
+          paymentId: payment._id,
+          bookingId: booking._id,
+        });
         await this.notificationService.createPaymentAndBookingNotifications(
           payment._id.toString(),
           booking._id.toString(),
           menteeId,
           mentorId,
+          amount,
           io
         );
-        console.log("Notifications sent for payment and booking:", {
+        console.log("Notifications sent successfully:", {
           paymentId: payment._id,
           bookingId: booking._id,
         });
@@ -153,7 +254,6 @@ export default class BookingService implements IBookingService {
           "Failed to send notifications:",
           notificationError.message
         );
-        // Continue execution even if notifications fail to avoid blocking the booking
       }
 
       console.log("Saved booking:", booking._id);
@@ -169,7 +269,6 @@ export default class BookingService implements IBookingService {
       );
     }
   }
-
   async getBookingsByMentee(
     menteeId: string,
     page: number = 1,
@@ -303,6 +402,56 @@ export default class BookingService implements IBookingService {
     }
   }
 
+  // async bookService(params: BookServiceParams): Promise<any> {
+  //   try {
+  //     console.log("bookingservice bookService step 1", params);
+  //     const { serviceId, mentorId, menteeId, sessionId } = params;
+  //     const service = await this.serviceRepository.getServiceById(serviceId);
+  //     if (!service) {
+  //       throw new ApiError(404, "Service not found");
+  //     }
+  //     const booking = await this.bookingRepository.create({
+  //       serviceId,
+  //       mentorId,
+  //       menteeId,
+  //       status: "confirmed",
+  //     });
+  //     const payment = await this.paymentRepository.create({
+  //       bookingId: booking._id,
+  //       menteeId,
+  //       amount: service.amount,
+  //       status: "completed",
+  //       transactionId: sessionId,
+  //     });
+  //     console.log("bookingservice bookService step 2", booking, payment);
+
+  //     // Trigger payment and booking notifications
+  //     try {
+  //       const io = getIO();
+  //       await this.notificationService.createPaymentAndBookingNotifications(
+  //         payment._id.toString(),
+  //         booking._id.toString(),
+  //         menteeId,
+  //         mentorId,
+  //         io
+  //       );
+  //       console.log("Notifications sent for payment and booking:", {
+  //         paymentId: payment._id,
+  //         bookingId: booking._id,
+  //       });
+  //     } catch (notificationError: any) {
+  //       console.error(
+  //         "Failed to send notifications:",
+  //         notificationError.message
+  //       );
+  //     }
+
+  //     return { booking, payment };
+  //   } catch (error: any) {
+  //     console.error("Error booking service:", error);
+  //     throw new ApiError(500, error.message || "Failed to book service");
+  //   }
+  // }
   async bookService(params: BookServiceParams): Promise<any> {
     try {
       console.log("bookingservice bookService step 1", params);
@@ -311,6 +460,16 @@ export default class BookingService implements IBookingService {
       if (!service) {
         throw new ApiError(404, "Service not found");
       }
+
+      // Check if booking already exists for this sessionId
+      const existingBooking = await this.bookingRepository.findBySessionId(
+        sessionId
+      );
+      if (existingBooking) {
+        console.log("Booking already exists for sessionId:", sessionId);
+        return { booking: existingBooking, payment: null };
+      }
+
       const booking = await this.bookingRepository.create({
         serviceId,
         mentorId,
@@ -326,9 +485,12 @@ export default class BookingService implements IBookingService {
       });
       console.log("bookingservice bookService step 2", booking, payment);
 
-      // Trigger payment and booking notifications
       try {
         const io = getIO();
+        console.log("Sending notifications for:", {
+          paymentId: payment._id,
+          bookingId: booking._id,
+        });
         await this.notificationService.createPaymentAndBookingNotifications(
           payment._id.toString(),
           booking._id.toString(),
@@ -336,7 +498,7 @@ export default class BookingService implements IBookingService {
           mentorId,
           io
         );
-        console.log("Notifications sent for payment and booking:", {
+        console.log("Notifications sent successfully:", {
           paymentId: payment._id,
           bookingId: booking._id,
         });

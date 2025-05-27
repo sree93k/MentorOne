@@ -55,20 +55,34 @@
 
 // //     fetchNotifications();
 
-// //     // Initialize live notifications
-// //     try {
-// //       initializeNotifications(user._id, (notification) => {
-// //         console.log("Received notification:", notification);
-// //         setNotifications((prev) => [notification, ...prev]);
-// //         toast.success("New notification: " + notification.content);
-// //       });
-// //     } catch (error: any) {
-// //       console.error("Failed to initialize live notifications:", error.message);
-// //       setError("Unable to connect to live notifications");
-// //       toast.error("Unable to connect to live notifications");
-// //     }
+// //     // Initialize live notifications with retry
+// //     const initializeSocket = (retryCount = 0) => {
+// //       const maxRetries = 3;
+// //       try {
+// //         initializeNotifications(user._id, (notification) => {
+// //           console.log("Received notification:", notification);
+// //           setNotifications((prev) => [notification, ...prev]);
+// //           toast.success(`New notification: ${notification.content}`);
+// //         });
+// //       } catch (error: any) {
+// //         console.error(
+// //           "Failed to initialize live notifications:",
+// //           error.message
+// //         );
+// //         if (retryCount < maxRetries) {
+// //           console.log(
+// //             `Retrying socket initialization (attempt ${retryCount + 1})`
+// //           );
+// //           setTimeout(() => initializeSocket(retryCount + 1), 5000);
+// //         } else {
+// //           setError("Unable to connect to live notifications");
+// //           toast.error("Unable to connect to live notifications");
+// //         }
+// //       }
+// //     };
 
-// //     // Cleanup on unmount
+// //     initializeSocket();
+
 // //     return () => {
 // //       cleanupNotifications();
 // //     };
@@ -88,7 +102,7 @@
 
 // //   const handleNotificationClick = (link?: string) => {
 // //     if (link) {
-// //       navigate(link);
+// //       // navigate(link);
 // //       onOpenChange(false);
 // //     }
 // //   };
@@ -154,6 +168,7 @@
 // // };
 
 // // export default Notification;
+// // notification.tsx
 // import { useState, useEffect } from "react";
 // import toast from "react-hot-toast";
 // import { useSelector } from "react-redux";
@@ -195,10 +210,10 @@
 //     setLoading(true);
 //     setError(null);
 
-//     // Fetch initial notifications
 //     const fetchNotifications = async () => {
 //       try {
 //         const data = await getUnreadNotifications();
+//         console.log("Fetched notifications:", data); // Debug log
 //         setNotifications(data);
 //       } catch (error: any) {
 //         console.error("Failed to fetch notifications:", error.message);
@@ -211,19 +226,39 @@
 
 //     fetchNotifications();
 
-//     // Initialize live notifications
-//     try {
-//       initializeNotifications(user._id, (notification) => {
-//         setNotifications((prev) => [notification, ...prev]);
-//         toast.success("New notification: " + notification.content);
-//       });
-//     } catch (error: any) {
-//       console.error("Failed to initialize live notifications:", error.message);
-//       setError("Unable to connect to live notifications");
-//       toast.error("Unable to connect to live notifications");
-//     }
+//     const initializeSocket = (retryCount = 0) => {
+//       const maxRetries = 3;
+//       try {
+//         initializeNotifications(user._id, (notification) => {
+//           console.log("Received live notification:", notification);
+//           setNotifications((prev) => {
+//             // Prevent duplicates by checking _id
+//             if (prev.some((n) => n._id === notification._id)) {
+//               return prev;
+//             }
+//             return [notification, ...prev];
+//           });
+//           toast.success(`New notification: ${notification.content}`);
+//         });
+//       } catch (error: any) {
+//         console.error(
+//           "Failed to initialize live notifications:",
+//           error.message
+//         );
+//         if (retryCount < maxRetries) {
+//           console.log(
+//             `Retrying socket initialization (attempt ${retryCount + 1})`
+//           );
+//           setTimeout(() => initializeSocket(retryCount + 1), 5000);
+//         } else {
+//           setError("Unable to connect to live notifications");
+//           toast.error("Unable to connect to live notifications");
+//         }
+//       }
+//     };
 
-//     // Cleanup on unmount
+//     initializeSocket();
+
 //     return () => {
 //       cleanupNotifications();
 //     };
@@ -243,7 +278,7 @@
 
 //   const handleNotificationClick = (link?: string) => {
 //     if (link) {
-//       navigate(link);
+//       // navigate(link); // Re-enable navigation
 //       onOpenChange(false);
 //     }
 //   };
@@ -259,7 +294,7 @@
 //         <h2 className="text-lg font-semibold">Notifications</h2>
 //         <button
 //           onClick={() => onOpenChange(false)}
-//           className="absolute top-4 right-4"
+//           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
 //         >
 //           Close
 //         </button>
@@ -280,13 +315,13 @@
 //               }`}
 //               onClick={() => handleNotificationClick(notification.link)}
 //             >
-//               <p>
+//               <p className="text-sm text-gray-800 dark:text-gray-200">
 //                 {notification.sender
 //                   ? `${notification.sender.firstName} ${notification.sender.lastName}: `
 //                   : ""}
-//                 {notification.content}
+//                 {notification.content || "No content available"}
 //               </p>
-//               <p className="text-xs text-gray-500">
+//               <p className="text-xs text-gray-500 mt-1">
 //                 {new Date(notification.createdAt).toLocaleString()}
 //               </p>
 //               {!notification.isRead && (
@@ -295,7 +330,7 @@
 //                     e.stopPropagation();
 //                     handleMarkAsRead(notification._id);
 //                   }}
-//                   className="text-blue-500 text-sm"
+//                   className="text-blue-500 text-sm mt-1 hover:underline"
 //                 >
 //                   Mark as Read
 //                 </button>
@@ -309,7 +344,7 @@
 // };
 
 // export default Notification;
-// notification.tsx
+// src/components/notification.tsx
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -351,10 +386,10 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
     setLoading(true);
     setError(null);
 
-    // Fetch initial notifications
     const fetchNotifications = async () => {
       try {
         const data = await getUnreadNotifications();
+        console.log("Fetched notifications:", JSON.stringify(data, null, 2)); // Detailed debug log
         setNotifications(data);
       } catch (error: any) {
         console.error("Failed to fetch notifications:", error.message);
@@ -367,14 +402,23 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
 
     fetchNotifications();
 
-    // Initialize live notifications with retry
     const initializeSocket = (retryCount = 0) => {
       const maxRetries = 3;
       try {
         initializeNotifications(user._id, (notification) => {
-          console.log("Received notification:", notification);
-          setNotifications((prev) => [notification, ...prev]);
-          toast.success(`New notification: ${notification.content}`);
+          console.log(
+            "Received live notification:",
+            JSON.stringify(notification, null, 2)
+          );
+          setNotifications((prev) => {
+            if (prev.some((n) => n._id === notification._id)) {
+              return prev;
+            }
+            return [notification, ...prev];
+          });
+          toast.success(
+            `New notification: ${notification.content || "No content"}`
+          );
         });
       } catch (error: any) {
         console.error(
@@ -414,7 +458,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
 
   const handleNotificationClick = (link?: string) => {
     if (link) {
-      navigate(link);
+      // navigate(link); // Re-enable navigation
       onOpenChange(false);
     }
   };
@@ -430,7 +474,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
         <h2 className="text-lg font-semibold">Notifications</h2>
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
         >
           Close
         </button>
@@ -441,7 +485,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : notifications.length === 0 ? (
-          <p>No unread notifications</p>
+          <p>No notifications</p>
         ) : (
           notifications.map((notification) => (
             <div
@@ -451,13 +495,13 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
               }`}
               onClick={() => handleNotificationClick(notification.link)}
             >
-              <p>
+              <p className="text-sm text-gray-800 dark:text-gray-200">
                 {notification.sender
                   ? `${notification.sender.firstName} ${notification.sender.lastName}: `
                   : ""}
-                {notification.content}
+                {notification.content || "No content available"}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 mt-1">
                 {new Date(notification.createdAt).toLocaleString()}
               </p>
               {!notification.isRead && (
@@ -466,7 +510,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
                     e.stopPropagation();
                     handleMarkAsRead(notification._id);
                   }}
-                  className="text-blue-500 text-sm"
+                  className="text-blue-500 text-sm mt-1 hover:underline"
                 >
                   Mark as Read
                 </button>
