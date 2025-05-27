@@ -269,7 +269,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   // Initialize Socket.IO
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    const socketInstance = io(import.meta.env.VITE_API_URL, {
+    const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
       auth: { token },
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -923,66 +923,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                 />
               </div>
             </div>
-            {/* <ScrollArea className="h-[calc(100vh-150px)]">
-              <div className="space-y-1 px-2">
-                {filteredChatUsers.length > 0 ? (
-                  filteredChatUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      onClick={() => handleUserClick(user)}
-                      className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 
-                      ${
-                        selectedUser?.id === user.id
-                          ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
-                          : ""
-                      }`}
-                    >
-                      <div className="relative">
-                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-400 text-white">
-                            {user.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        {user.isOnline && (
-                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></span>
-                        )}
-                      </div>
-                      <div className="flex-1 ml-3 text-left">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-800">
-                            {user.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatTimestamp(user.timestamp)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mt-1">
-                          <p className="text-sm text-gray-500 truncate max-w-[150px]">
-                            {user.lastMessage || "Start chatting now!"}
-                          </p>
-                          {typeof user.unread === "number" &&
-                            user.unread > 0 && (
-                              <span className="bg-indigo-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
-                                {user.unread}
-                              </span>
-                            )}
-                        </div>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 text-sm">
-                      No conversations found
-                    </p>
-                    <p className="text-gray-400 text-xs mt-1">
-                      Try adjusting your search
-                    </p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea> */}
+
             <ScrollArea className="h-[calc(100vh-150px)]">
               <div className="space-y-1 px-2">
                 {filteredChatUsers.length > 0 ? (

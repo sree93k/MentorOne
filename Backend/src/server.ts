@@ -11,10 +11,7 @@
 // import { router } from "./routes/router";
 // import cookieParser from "cookie-parser";
 // import multer from "multer";
-// import { Server, Namespace } from "socket.io";
-// import { initializeChatSocket } from "./utils/socket/chat";
-// import { initializeVideoSocket } from "./utils/socket/videoCall";
-// import { initializeNotificationSocket } from "./utils/socket/notification";
+// import { Server } from "socket.io"; // Import Server from socket.io
 
 // const requiredEnvVars = [
 //   "ACCESS_TOKEN_SECRET",
@@ -36,17 +33,37 @@
 // const app = express();
 // const httpServer = createServer(app);
 
-// initializeChatSocket(httpServer)
+// // Initialize a single Socket.IO server instance
+// const io = new Server(httpServer, {
+//   cors: {
+//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
+//     credentials: true,
+//     methods: ["GET", "POST"],
+//   },
+// });
+
+// // Initialize Socket.IO namespaces
+// import { initializeChatSocket } from "./utils/socket/chat";
+// import { initializeVideoSocket } from "./utils/socket/videoCall";
+// import { initializeNotificationSocket } from "./utils/socket/notification";
+
+// // Pass the single `io` instance to each namespace initializer
+// initializeChatSocket(io)
 //   .then(() => console.log("Socket.IO (chat) initialized"))
 //   .catch((err) =>
 //     console.error("Socket.IO (chat) initialization failed:", err)
 //   );
 
-// // Initialize Socket.IO for video call
-// initializeVideoSocket(httpServer)
+// initializeVideoSocket(io)
 //   .then(() => console.log("Socket.IO (video call) initialized"))
 //   .catch((err) =>
 //     console.error("Socket.IO (video call) initialization failed:", err)
+//   );
+
+// initializeNotificationSocket(io)
+//   .then(() => console.log("Socket.IO (notifications) initialized"))
+//   .catch((err) =>
+//     console.error("Socket.IO (notifications) initialization failed:", err)
 //   );
 
 // // Middleware
@@ -69,13 +86,11 @@
 // connectDatabase();
 
 // const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "uploads/");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, Date.now() + path.extname(file.originalname));
-//   },
+//   destination: (req, file, cb) => cb(null, "uploads/"),
+//   filename: (req, file, cb) =>
+//     cb(null, Date.now() + path.extname(file.originalname)),
 // });
+
 // const upload = multer({ storage });
 
 // app.use("/", router);
@@ -98,7 +113,9 @@ import { connectDatabase } from "./config/database";
 import { router } from "./routes/router";
 import cookieParser from "cookie-parser";
 import multer from "multer";
-import { Server } from "socket.io"; // Import Server from socket.io
+import { Server } from "socket.io";
+import { createClient } from "@redis/client";
+import { createAdapter } from "@socket.io/redis-adapter";
 
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
@@ -120,37 +137,59 @@ for (const envVar of requiredEnvVars) {
 const app = express();
 const httpServer = createServer(app);
 
-// Initialize a single Socket.IO server instance
+// Initialize Socket.IO server
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST"],
   },
+  path: "/socket.io/",
 });
 
-// Initialize Socket.IO namespaces
+// Redis Setup for Socket.IO
+export const pubClient = createClient({ url: process.env.REDIS_URL });
+export const subClient = pubClient.duplicate();
+
+pubClient.on("error", (err) => console.error("Redis Pub Client Error:", err));
+subClient.on("error", (err) => console.error("Redis Sub Client Error:", err));
+pubClient.on("connect", () => console.log("Redis Pub Client connected"));
+subClient.on("connect", () => console.log("Redis Sub Client connected"));
+
+(async () => {
+  try {
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("Redis adapter connected for Socket.IO");
+  } catch (err) {
+    console.error("Failed to connect Redis adapter:", err);
+  }
+})();
+
+// Define namespaces
+const chatNamespace = io.of("/chat");
+const videoNamespace = io.of("/video");
+const notificationNamespace = io.of("/notifications");
+
+// Initialize sockets with namespaces
 import { initializeChatSocket } from "./utils/socket/chat";
 import { initializeVideoSocket } from "./utils/socket/videoCall";
 import { initializeNotificationSocket } from "./utils/socket/notification";
 
-// Pass the single `io` instance to each namespace initializer
-initializeChatSocket(io)
-  .then(() => console.log("Socket.IO (chat) initialized"))
+initializeChatSocket(chatNamespace)
+  .then(() => console.log("Socket.IO /chat namespace initialized"))
+  .catch((err) => console.error("Socket.IO /chat initialization failed:", err));
+
+initializeVideoSocket(videoNamespace)
+  .then(() => console.log("Socket.IO /video namespace initialized"))
   .catch((err) =>
-    console.error("Socket.IO (chat) initialization failed:", err)
+    console.error("Socket.IO /video initialization failed:", err)
   );
 
-initializeVideoSocket(io)
-  .then(() => console.log("Socket.IO (video call) initialized"))
+initializeNotificationSocket(notificationNamespace)
+  .then(() => console.log("Socket.IO /notifications namespace initialized"))
   .catch((err) =>
-    console.error("Socket.IO (video call) initialization failed:", err)
-  );
-
-initializeNotificationSocket(io)
-  .then(() => console.log("Socket.IO (notifications) initialized"))
-  .catch((err) =>
-    console.error("Socket.IO (notifications) initialization failed:", err)
+    console.error("Socket.IO /notifications initialization failed:", err)
   );
 
 // Middleware

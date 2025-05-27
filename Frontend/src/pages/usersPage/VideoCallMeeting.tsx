@@ -655,10 +655,10 @@ const VideoCallMeeting: React.FC = () => {
       return;
     }
 
-    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+    const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/video`, {
       auth: { token },
       transports: ["websocket"],
-      path: "/video-socket.io/",
+      path: "/socket.io/",
       query: { meetingId },
       reconnection: true,
       reconnectionAttempts: 5,
