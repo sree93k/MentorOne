@@ -50,32 +50,32 @@ class UserController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("mentee copntroller editUserProfile step 1", req.user);
+      console.log("user copntroller editUserProfile step 1", req.user);
 
       const id = req.user?.id;
       if (!id) {
-        console.log("mentee copntroller editUserProfile step 2");
+        console.log("user copntroller editUserProfile step 2");
         res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
         return;
       }
-      console.log("mentee copntroller editUserProfile step 3");
+      console.log("user copntroller editUserProfile step 3");
       const payload = req.body;
-      console.log("mentee copntroller editUserProfile step 4", payload);
+      console.log("user copntroller editUserProfile step 4", payload);
       const updatedUser = await this.UserService.editUserProfile(id, payload);
-      console.log("mentee copntroller editUserProfile step 5", updatedUser);
+      console.log("user copntroller editUserProfile step 5", updatedUser);
       if (!updatedUser) {
-        console.log("mentee copntroller editUserProfile step 6");
+        console.log("user copntroller editUserProfile step 6");
         res.status(404).json(new ApiResponse(404, null, "User not found"));
         return;
       }
-      console.log("mentee copntroller editUserProfile step 7");
+      console.log("user copntroller editUserProfile step 7");
       res
         .status(200)
         .json(
           new ApiResponse(200, updatedUser, "Profile updated successfully")
         );
     } catch (error) {
-      console.log("mentee copntroller editUserProfile step 8 errror", error);
+      console.log("user copntroller editUserProfile step 8 errror", error);
       next(error);
     }
   };

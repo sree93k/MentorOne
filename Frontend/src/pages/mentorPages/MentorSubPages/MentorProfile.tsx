@@ -269,8 +269,11 @@ const MentorProfile: React.FC = () => {
       if (user && user._id) {
         try {
           const userDetails = await getUserDetails(user._id);
+          console.log(">>>>>>getUserDetails fetched>>>", userDetails);
+
           setProfileData(userDetails.data.response);
           setPreviewUrl(userDetails.data.response.profilePicture || null);
+          console.log("prifile dataa is **********", profileData);
         } catch (error) {
           console.error("Failed to fetch user details", error);
           toast.error("Failed to load profile data.");
@@ -324,12 +327,6 @@ const MentorProfile: React.FC = () => {
     }
   };
 
-  // Mock uploadProfileImage function (replace with actual implementation)
-  // const uploadProfileImage = async (formData: FormData) => {
-  //   // Simulate API call
-  //   return { profilePicture: "https://example.com/new-image.jpg" };
-  // };
-
   const handleImageSave = async () => {
     if (!selectedFile) {
       toast.error("No image selected to upload");
@@ -363,35 +360,6 @@ const MentorProfile: React.FC = () => {
       dispatch(setLoading(false));
     }
   };
-
-  // const handleImageSave = async () => {
-  //   if (!selectedFile) {
-  //     toast.error("No image selected to upload");
-  //     return;
-  //   }
-  //   setIsUploading(true);
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("image", selectedFile);
-  //     const response = await uploadProfileImage(formData);
-  //     const newProfilePictureUrl = response.profilePicture;
-  //     if (newProfilePictureUrl) {
-  //       setPreviewUrl(newProfilePictureUrl);
-  //       setProfileData((prev) => ({
-  //         ...prev,
-  //         profilePicture: newProfilePictureUrl,
-  //       }));
-  //       await updateProfileField("profilePicture", newProfilePictureUrl);
-  //     }
-  //     toast.success("Profile image uploaded successfully");
-  //     setSelectedFile(null);
-  //   } catch (error) {
-  //     toast.error("Failed to upload image");
-  //     console.error(error);
-  //   } finally {
-  //     setIsUploading(false);
-  //   }
-  // };
 
   const handleEdit = (field: string) => {
     setEditingField(field);
@@ -480,6 +448,12 @@ const MentorProfile: React.FC = () => {
     (skill) =>
       skill.toLowerCase().includes(skillSearchTerm.toLowerCase()) &&
       !profileData.skills.includes(skill)
+  );
+
+  // Generate year options for dropdowns
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 21 }, (_, i) =>
+    (currentYear - 20 + i).toString()
   );
 
   const handlePasswordUpdate = async () => {
@@ -910,46 +884,7 @@ const MentorProfile: React.FC = () => {
                   </p>
                 </div>
               )}
-              {/* <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium">Bio</label>
-                  {editingField !== "about" ? (
-                    <button
-                      onClick={() => handleEdit("about")}
-                      className="text-sm text-black hover:underline"
-                    >
-                      Edit
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleSave("about")}
-                      className="text-sm text-green-600 hover:underline"
-                    >
-                      Save
-                    </button>
-                  )}
-                </div>
-                <textarea
-                  value={profileData.about || ""}
-                  placeholder="Enter about yourself"
-                  onChange={(e) => handleFieldChange("about", e.target.value)}
-                  readOnly={editingField !== "about"}
-                  className="w-full p-2 border rounded-md h-32 bg-white"
-                />
-              </div> */}
-              {/* <EditableField
-                label="Bio"
-                field="bio"
-                value={profileData.bio}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("bio")}
-                isEditing={editingField === "bio"}
-                onSave={() => handleSave("bio", profileData.bio)}
-                onCancel={() => handleCancel("bio")}
-                onChange={(value) =>
-                  setProfileData((prev) => ({ ...prev, bio: value }))
-                }
-              /> */}
+
               {editingField === "bio" ? (
                 <div className="mb-4">
                   <label className="text-sm font-medium text-gray-700 block mb-2">
@@ -1003,10 +938,355 @@ const MentorProfile: React.FC = () => {
               )}
             </div>
           </Tabs.Content>
-
+          {/* tab2  */}
           <Tabs.Content value="experience">
             <div className="max-w-2xl">
-              {/* Add experience fields here if needed */}
+              {profileData?.schoolDetails?.userType === "school" && (
+                <>
+                  <EditableField
+                    label="School Name"
+                    field="schoolName"
+                    value={profileData?.schoolDetails?.schoolName}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("schoolName")}
+                    isEditing={editingField === "schoolName"}
+                    onSave={() =>
+                      handleSave(
+                        "schoolName",
+                        profileData?.schoolDetails?.schoolName
+                      )
+                    }
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, schoolName: value }))
+                    }
+                  />
+                  <EditableField
+                    label="Class"
+                    field="class"
+                    value={profileData?.schoolDetails?.class}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("class")}
+                    isEditing={editingField === "class"}
+                    onSave={() => handleSave("class", profileData.class)}
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, class: value }))
+                    }
+                  />
+                  <EditableField
+                    label="City"
+                    field="city"
+                    value={profileData?.schoolDetails?.city}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("city")}
+                    isEditing={editingField === "city"}
+                    onSave={() => handleSave("city", profileData.city)}
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, city: value }))
+                    }
+                  />
+                </>
+              )}
+              {profileData?.professionalDetails?.userType ===
+                "professional" && (
+                <>
+                  <EditableField
+                    label="Job Role"
+                    field="jobRole"
+                    value={profileData?.professionalDetails?.jobRole}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("jobRole")}
+                    isEditing={editingField === "jobRole"}
+                    onSave={() => handleSave("jobRole", profileData.jobRole)}
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, jobRole: value }))
+                    }
+                  />
+                  <EditableField
+                    label="Company"
+                    field="company"
+                    value={profileData?.professionalDetails?.company}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("company")}
+                    isEditing={editingField === "company"}
+                    onSave={() => handleSave("company", profileData.company)}
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, company: value }))
+                    }
+                  />
+                  <EditableField
+                    label="Total Experience"
+                    field="totalExperience"
+                    value={profileData?.professionalDetails?.experience}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("totalExperience")}
+                    isEditing={editingField === "totalExperience"}
+                    onSave={() =>
+                      handleSave("totalExperience", profileData.totalExperience)
+                    }
+                    onChange={(value) =>
+                      setProfileData((prev) => ({
+                        ...prev,
+                        totalExperience: value,
+                      }))
+                    }
+                  />
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium">Start Year</label>
+                      {editingField === "startYear" ? (
+                        <button
+                          onClick={() =>
+                            handleSave(
+                              "startDate",
+                              profileData?.professionalDetails?.startDate
+                            )
+                          }
+                          className="text-sm text-green-600 hover:underline"
+                        >
+                          Save
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit("startDate")}
+                          className="text-sm text-black hover:underline"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      value={profileData?.professionalDetails?.startDate}
+                      onChange={(e) =>
+                        setProfileData((prev) => ({
+                          ...prev,
+                          startYear: e.target.value,
+                        }))
+                      }
+                      disabled={editingField !== "startDate"}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">Select Year</option>
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium">End Year</label>
+                      {editingField === "endDate" ? (
+                        <button
+                          onClick={() =>
+                            handleSave(
+                              "endDate",
+                              profileData?.professionalDetails?.endDate
+                            )
+                          }
+                          className="text-sm text-green-600 hover:underline"
+                        >
+                          Save
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit("endDate")}
+                          className="text-sm text-black hover:underline"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      value={profileData?.professionalDetails?.endDate}
+                      onChange={(e) =>
+                        setProfileData((prev) => ({
+                          ...prev,
+                          endYear: e.target.value,
+                        }))
+                      }
+                      disabled={editingField !== "endDate"}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">Select Year</option>
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+              {(profileData?.collegeDetails?.userType === "college" ||
+                profileData?.collegeDetails?.userType === "fresher") && (
+                <>
+                  <EditableField
+                    label="Specialized In"
+                    field="specializedIn"
+                    value={profileData?.collegeDetails?.specializedIn}
+                    workAs={profileData.workAs}
+                    onEdit={() => handleEdit("specializedIn")}
+                    isEditing={editingField === "specializedIn"}
+                    onSave={() =>
+                      handleSave(
+                        "specializedIn",
+                        profileData?.collegeDetails?.specializedIn
+                      )
+                    }
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, workAs: value }))
+                    }
+                  />
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium">Course</label>
+                      {editingField === "course" ? (
+                        <button
+                          onClick={() =>
+                            handleSave(
+                              "course",
+                              profileData?.collegeDetails?.course
+                            )
+                          }
+                          className="text-sm text-green-600 hover:underline"
+                        >
+                          Save
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit("course")}
+                          className="text-sm text-black hover:underline"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    <select
+                      value={profileData?.collegeDetails?.course}
+                      onChange={(e) =>
+                        setProfileData((prev) => ({
+                          ...prev,
+                          course: e.target.value,
+                        }))
+                      }
+                      disabled={editingField !== "course"}
+                      className="text-sm w-full p-2 border rounded-md"
+                    >
+                      <option value="btech">B-Tech (Computer Science)</option>
+                      <option value="mtech">M-Tech</option>
+                      {/* Add more options as needed */}
+                    </select>
+                  </div>
+                  <EditableField
+                    label="College Name"
+                    field="college"
+                    value={profileData?.collegeDetails?.collegeName}
+                    workAs={profileData?.collegeDetails?.collegeName}
+                    onEdit={() => handleEdit("college")}
+                    isEditing={editingField === "college"}
+                    onSave={() =>
+                      handleSave(
+                        "college",
+                        profileData?.collegeDetails?.collegeName
+                      )
+                    }
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, college: value }))
+                    }
+                  />
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-medium">
+                        Course Duration
+                      </label>
+                      {editingField === "courseDuration" ? (
+                        <button
+                          onClick={() =>
+                            handleSave({
+                              courseStart:
+                                profileData?.collegeDetails?.startDate,
+                              courseEnd: profileData?.collegeDetails?.endDate,
+                            })
+                          }
+                          className="text-sm text-green-600 hover:underline"
+                        >
+                          Save
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit("courseDuration")}
+                          className="text-sm text-black hover:underline"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-4">
+                      <select
+                        value={
+                          profileData?.collegeDetails?.startDate
+                            ? profileData?.collegeDetails?.startDate.split(
+                                "-"
+                              )[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            courseStart: `${e.target.value}-01-01`,
+                          }))
+                        }
+                        disabled={editingField !== "courseDuration"}
+                        className="w-1/2 p-2 border rounded-md"
+                      >
+                        <option value="">Select Start Year</option>
+                        {yearOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={
+                          profileData?.collegeDetails?.endDate
+                            ? profileData?.collegeDetails?.endDate.split("-")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setProfileData((prev) => ({
+                            ...prev,
+                            courseEnd: `${e.target.value}-12-31`,
+                          }))
+                        }
+                        disabled={editingField !== "courseDuration"}
+                        className="w-1/2 p-2 border rounded-md"
+                      >
+                        <option value="">Select End Year</option>
+                        {yearOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <EditableField
+                    label="City"
+                    field="city"
+                    value={profileData?.collegeDetails?.city}
+                    workAs={profileData?.collegeDetails?.city}
+                    onEdit={() => handleEdit("city")}
+                    isEditing={editingField === "city"}
+                    onSave={() =>
+                      handleSave("city", profileData?.collegeDetails?.city)
+                    }
+                    onChange={(value) =>
+                      setProfileData((prev) => ({ ...prev, city: value }))
+                    }
+                  />
+                </>
+              )}
             </div>
           </Tabs.Content>
 

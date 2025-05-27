@@ -4,7 +4,7 @@ import { pubClient } from "../../server";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import mongoose from "mongoose";
-
+import { INotificationService } from "../../services/interface/INotificationService";
 interface NotificationData {
   recipientId: string;
   type: "payment" | "booking" | "chat";
@@ -13,7 +13,7 @@ interface NotificationData {
   sender?: { firstName: string; lastName: string; id: string };
 }
 
-export default class NotificationService {
+export default class NotificationService implements INotificationService {
   private notificationRepository: NotificationRepository;
   private bookingRepository: IBookingRepository;
 
@@ -76,154 +76,6 @@ export default class NotificationService {
     }
   }
 
-  // async createPaymentAndBookingNotifications(
-  //   paymentId: string,
-  //   bookingId: string,
-  //   menteeId: string,
-  //   mentorId: string,
-  //   amount: number,
-  //   io?: any
-  // ): Promise<void> {
-  //   try {
-  //     const User = require("mongoose").model("Users");
-  //     const Admin = require("mongoose").model("Admin");
-  //     const mentee = await User.findById(menteeId).select("firstName lastName");
-  //     const mentor = await User.findById(mentorId).select("firstName lastName");
-  //     // Use case-insensitive match for admin role
-  //     const admin = await Admin.findOne({
-  //       role: { $regex: "^admin$", $options: "i" },
-  //     }).select(" adminName _id ");
-  //     console.log("Admin fetch result:", admin.data);
-
-  //     // Fallback admin ID if query fails (temporary)
-  //     const fallbackAdminId = "65db0511920fb2100b560467d4";
-  //     if (!admin) {
-  //       console.warn("Admin not found. Using fallback ID:", fallbackAdminId);
-  //     }
-
-  //     console.log("Fetched users for notifications:", {
-  //       mentee,
-  //       mentor,
-  //       admin,
-  //     });
-  //     const booking = await this.bookingRepository.findById(bookingId);
-  //     console.log("Booking response:", booking);
-
-  //     // Mentee notifications
-  //     await this.createNotification(
-  //       menteeId,
-  //       "payment",
-  //       `Payment of ₹${amount} confirmed for booking ${
-  //         booking?.serviceId?.title || "Unknown Service"
-  //       }`,
-  //       paymentId,
-  //       io,
-  //       mentor
-  //         ? {
-  //             firstName: mentor.firstName,
-  //             lastName: mentor.lastName,
-  //             id: mentorId,
-  //           }
-  //         : undefined
-  //     );
-  //     await this.createNotification(
-  //       menteeId,
-  //       "booking",
-  //       `Booking ${booking?.serviceId?.title || "Unknown Service"} confirmed`,
-  //       bookingId,
-  //       io,
-  //       mentor
-  //         ? {
-  //             firstName: mentor.firstName,
-  //             lastName: mentor.lastName,
-  //             id: mentorId,
-  //           }
-  //         : undefined
-  //     );
-
-  //     // Mentor notifications
-  //     await this.createNotification(
-  //       mentorId,
-  //       "payment",
-  //       `Received payment of ₹${amount} for booking ${
-  //         booking?.serviceId?.title || "Unknown Service"
-  //       }`,
-  //       paymentId,
-  //       io,
-  //       mentee
-  //         ? {
-  //             firstName: mentee.firstName,
-  //             lastName: mentee.lastName,
-  //             id: menteeId,
-  //           }
-  //         : undefined
-  //     );
-  //     await this.createNotification(
-  //       mentorId,
-  //       "booking",
-  //       `New booking ${
-  //         booking?.serviceId?.title || "Unknown Service"
-  //       } confirmed`,
-  //       bookingId,
-  //       io,
-  //       mentee
-  //         ? {
-  //             firstName: mentee.firstName,
-  //             lastName: mentee.lastName,
-  //             id: menteeId,
-  //           }
-  //         : undefined
-  //     );
-
-  //     // Admin notifications
-  //     const adminId = admin?._id.toString() || fallbackAdminId;
-  //     const adminSenderName = admin?.firstName || admin?.adminName || "System";
-  //     await this.createNotification(
-  //       adminId,
-  //       "payment",
-  //       `Payment of ₹${amount} confirmed for booking ${
-  //         booking?.serviceId?.title || "Unknown Service"
-  //       } by ${mentee?.firstName || "Unknown"} ${mentee?.lastName || ""}`,
-  //       paymentId,
-  //       io,
-  //       mentee
-  //         ? {
-  //             firstName: mentee.firstName,
-  //             lastName: mentee.lastName,
-  //             id: menteeId,
-  //           }
-  //         : undefined
-  //     );
-  //     await this.createNotification(
-  //       adminId,
-  //       "booking",
-  //       `New booking ${
-  //         booking?.serviceId?.title || "Unknown Service"
-  //       } confirmed by ${mentee?.firstName || "Unknown"} ${
-  //         mentee?.lastName || ""
-  //       }`,
-  //       bookingId,
-  //       io,
-  //       mentee
-  //         ? {
-  //             firstName: mentee.firstName,
-  //             lastName: mentee.lastName,
-  //             id: menteeId,
-  //           }
-  //         : undefined
-  //     );
-  //   } catch (error: any) {
-  //     console.error(
-  //       "Error creating payment and booking notifications:",
-  //       error.message
-  //     );
-  //     throw new ApiError(
-  //       500,
-  //       "Failed to create payment and booking notifications",
-  //       error.message
-  //     );
-  //   }
-  // }
   async createPaymentAndBookingNotifications(
     paymentId: string,
     bookingId: string,
