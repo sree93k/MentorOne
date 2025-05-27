@@ -9,7 +9,7 @@
 //     relatedId?: string;
 //     isRead: boolean;
 //     createdAt: Date;
-//     senderId?: string; // Added for sender reference
+//     senderId?: string;
 //   }) {
 //     try {
 //       const notification = new Notification(data);
@@ -21,16 +21,16 @@
 
 //   async findUnreadByRecipient(recipientId: string) {
 //     try {
-//       return await Notification.find({ recipientId, isRead: false })
-//         .populate("senderId", "firstName lastName") // Populate sender details
+//       return await Notification.find({ recipientId }) // Remove isRead filter
+//         .populate("senderId", "firstName lastName")
 //         .sort({ createdAt: -1 })
 //         .lean()
 //         .then((notifications) =>
 //           notifications.map((n) => ({
-//             _id: n._id,
-//             recipient: n.recipientId, // Align with frontend
+//             _id: n._id.toString(),
+//             recipient: n.recipientId,
 //             type: n.type,
-//             content: n.message, // Align with frontend
+//             content: n.message,
 //             relatedId: n.relatedId,
 //             isRead: n.isRead,
 //             createdAt: n.createdAt,
@@ -71,6 +71,7 @@
 //     }
 //   }
 // }
+
 // src/repositories/implementations/notificationRepository.ts
 import Notification from "../../models/notificationModel";
 import { ApiError } from "../../middlewares/errorHandler";
@@ -87,7 +88,13 @@ export default class NotificationRepository {
   }) {
     try {
       const notification = new Notification(data);
-      return await notification.save();
+      const savedNotification = await notification.save();
+      console.log("Saved notification:", {
+        _id: savedNotification._id,
+        recipientId: savedNotification.recipientId,
+        type: savedNotification.type,
+      });
+      return savedNotification;
     } catch (error: any) {
       throw new ApiError(500, "Failed to create notification", error.message);
     }
@@ -95,8 +102,8 @@ export default class NotificationRepository {
 
   async findUnreadByRecipient(recipientId: string) {
     try {
-      return await Notification.find({ recipientId }) // Remove isRead filter
-        .populate("senderId", "firstName lastName")
+      return await Notification.find({ recipientId })
+        .populate("senderId", "firstName lastName", "Users")
         .sort({ createdAt: -1 })
         .lean()
         .then((notifications) =>

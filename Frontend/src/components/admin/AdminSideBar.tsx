@@ -26,7 +26,7 @@ import LogoName from "@/assets/logoname3.png";
 import { resetAdmin } from "@/redux/slices/adminSlice";
 import { useDispatch } from "react-redux";
 import ThemeToggle from "../users/ThemeToggle";
-import AdminNotification from "./AdminNotificaton";
+import AdminNotification from "../users/Notification";
 const SidebarItem = ({
   icon: Icon,
   text,
