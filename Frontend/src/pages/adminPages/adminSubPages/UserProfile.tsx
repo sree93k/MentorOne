@@ -195,14 +195,14 @@ const UserProfile: React.FC = () => {
                 </Link>
               </div>
               <Avatar className="h-24 w-24 rounded-full">
-                <AvatarImage src={user.profilePicture} alt={user.firstName} />
+                <AvatarImage src={user?.profilePicture} alt={user.firstName} />
                 <AvatarFallback>{user.firstName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
                 <h2 className="text-xl font-semibold">{`${user.firstName} ${user.lastName}`}</h2>
-                <p className="text-sm text-gray-500">
+                {/* <p className="text-sm text-gray-500">
                   {mentorData?.selfIntro || "N/A"}
-                </p>
+                </p> */}
               </div>
             </div>
 
@@ -440,12 +440,8 @@ const UserProfile: React.FC = () => {
                     <span className="w-1/3 mb-2 text-sm font-medium text-gray-500">
                       Skills
                     </span>
-                    {/* <div className="flex flex-wrap gap-2">
-                      {(
-                        mentorData?.skills ||
-                        user?.skills?.split(",") ||
-                        []
-                      ).map((skill: string) => (
+                    <div className="flex flex-wrap gap-2">
+                      {(user?.skills).map((skill: string) => (
                         <Badge
                           key={skill}
                           variant="outline"
@@ -454,7 +450,7 @@ const UserProfile: React.FC = () => {
                           {skill}
                         </Badge>
                       ))}
-                    </div> */}
+                    </div>
                   </div>
                   <div className="flex py-2">
                     <span className="w-1/3 text-sm font-medium text-gray-500">
@@ -574,27 +570,33 @@ const UserProfile: React.FC = () => {
                       Achievements
                     </span>
                     <span className="text-sm">
-                      {user.achievements || "N/A"}
+                      {userProfile?.mentorData?.achievements?.length
+                        ? userProfile.mentorData.achievements.join(", ")
+                        : "N/A"}
                     </span>
                   </div>
-                  <div className="flex py-2">
+                  {/* <div className="flex py-2">
                     <span className="w-1/3 text-sm font-medium text-gray-500">
                       LinkedIn URL
                     </span>
-                    <span className="text-sm">{user.linkedinUrl || "N/A"}</span>
+                    <span className="text-sm">
+                      {userProfile?.mentorData?.linkedinUrl || "N/A"}
+                    </span>
                   </div>
                   <div className="flex py-2">
                     <span className="w-1/3 text-sm font-medium text-gray-500">
                       YouTube URL
                     </span>
-                    <span className="text-sm">{user.youtubeUrl || "N/A"}</span>
-                  </div>
+                    <span className="text-sm">
+                      {userProfile?.mentorData?.youtube || "N/A"}
+                    </span>
+                  </div> */}
                   <div className="flex py-2">
                     <span className="w-1/3 text-sm font-medium text-gray-500">
                       Portfolio URL
                     </span>
                     <span className="text-sm">
-                      {user.portfolioUrl || "N/A"}
+                      {userProfile?.mentorData?.portfolio || "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -602,7 +604,9 @@ const UserProfile: React.FC = () => {
                       Interested New Career
                     </span>
                     <span className="text-sm">
-                      {user.interestedNewCareer || "N/A"}
+                      {userProfile?.mentorData?.interestedNewCareer?.length
+                        ? userProfile.mentorData.interestedNewCareer.join(", ")
+                        : "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -610,7 +614,7 @@ const UserProfile: React.FC = () => {
                       Featured Article
                     </span>
                     <span className="text-sm">
-                      {user.featuredArticle || "N/A"}
+                      {userProfile?.mentorData?.featuredArticle || "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -618,7 +622,7 @@ const UserProfile: React.FC = () => {
                       Mentor Motivation
                     </span>
                     <span className="text-sm">
-                      {user.mentorMotivation || "N/A"}
+                      {userProfile?.mentorData?.mentorMotivation || "N/A"}
                     </span>
                   </div>
                 </div>
