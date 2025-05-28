@@ -224,17 +224,52 @@ class menteeController {
     }
   };
 
+  // public getAllTutorials = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     console.log("mentee controller getAllTutorials step 1");
+  //     const tutorials = await this.bookingService.getAllVideoTutorials();
+  //     console.log("mentee controller getAllTutorials step 2", tutorials);
+  //     res.json(
+  //       new ApiResponse(200, tutorials, "Video tutorials fetched successfully")
+  //     );
+  //   } catch (error: any) {
+  //     console.log("mentee controller getAllTutorials step 3 error ", error);
+  //     next(error);
+  //   }
+  // };
   public getAllTutorials = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("mentee controller getAllTutorials step 1");
-      const tutorials = await this.bookingService.getAllVideoTutorials();
-      console.log("mentee controller getAllTutorials step 2", tutorials);
+      const { type, searchQuery, page = "1", limit = "12" } = req.query;
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+      console.log("mentee controller getAllTutorials step 1", {
+        type,
+        searchQuery,
+        pageNum,
+        limitNum,
+      });
+      const { tutorials, total } =
+        await this.bookingService.getAllVideoTutorials(
+          type as string,
+          searchQuery as string,
+          pageNum,
+          limitNum
+        );
+      console.log("mentee controller getAllTutorials step 2", tutorials.length);
       res.json(
-        new ApiResponse(200, tutorials, "Video tutorials fetched successfully")
+        new ApiResponse(
+          200,
+          { tutorials, total },
+          "Video tutorials fetched successfully"
+        )
       );
     } catch (error: any) {
       console.log("mentee controller getAllTutorials step 3 error ", error);

@@ -358,19 +358,49 @@ export default class BookingService implements IBookingService {
     return booking;
   }
 
-  async getAllVideoTutorials(): Promise<any[]> {
+  // async getAllVideoTutorials(): Promise<any[]> {
+  //   try {
+  //     console.log("bookingservice getAllVideoTutorials step 1");
+  //     const tutorials = await this.serviceRepository.getAllVideoTutorials();
+  //     console.log("bookingservice getAllVideoTutorials step 2", tutorials);
+  //     return tutorials;
+  //   } catch (error: any) {
+  //     console.log("bookingservice getAllVideoTutorials step errror", error);
+  //     console.error("Error fetching video tutorials:", error);
+  //     throw new ApiError(
+  //       500,
+  //       error.message || "Failed to fetch video tutorials"
+  //     );
+  //   }
+  // }
+  async getAllVideoTutorials(
+    type?: string,
+    searchQuery?: string,
+    page: number = 1,
+    limit: number = 12
+  ): Promise<{ tutorials: any[]; total: number }> {
     try {
-      console.log("bookingservice getAllVideoTutorials step 1");
-      const tutorials = await this.serviceRepository.getAllVideoTutorials();
-      console.log("bookingservice getAllVideoTutorials step 2", tutorials);
-      return tutorials;
-    } catch (error: any) {
-      console.log("bookingservice getAllVideoTutorials step errror", error);
-      console.error("Error fetching video tutorials:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to fetch video tutorials"
+      console.log("bookingservice getAllVideoTutorials step 1", {
+        type,
+        searchQuery,
+        page,
+        limit,
+      });
+      const { tutorials, total } =
+        await this.serviceRepository.getAllVideoTutorials(
+          type,
+          searchQuery,
+          page,
+          limit
+        );
+      console.log(
+        "bookingservice getAllVideoTutorials step 2: Tutorials fetched",
+        tutorials.length
       );
+      return { tutorials, total };
+    } catch (error: any) {
+      console.error("Error fetching tutorials:", error);
+      throw new ApiError(500, `Failed to fetch tutorials: ${error.message}`);
     }
   }
 
