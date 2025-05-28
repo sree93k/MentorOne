@@ -36,12 +36,12 @@ const MentorHeader: React.FC = () => {
                 : "Mentor"
             }`}
           </span> */}
-          <div className="flex items-center gap-4">
-            <Input
+          <div className="flex px-6 items-center gap-4">
+            {/* <Input
               type="search"
               placeholder="Search"
               className="w-64 rounded-full"
-            />
+            /> */}
             <button onClick={openChat}>
               <Send size={24} />
             </button>

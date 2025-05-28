@@ -152,22 +152,67 @@ interface Mentor {
   };
 }
 
+// interface ApiResponse {
+//   status: number;
+//   data: Mentor[] | Mentor;
+//   message: string;
+// }
+
+// export const getAllMentors = async (filter?: string): Promise<Mentor[]> => {
+//   try {
+//     console.log("getAllMentors: Fetching mentors from /seeker/allMentors", {
+//       filter,
+//     });
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+//     const params = filter && filter !== "All" ? { serviceType: filter } : {};
+//     const response = await userAxiosInstance.get<ApiResponse>(
+//       "/seeker/allMentors",
+//       {
+//         headers: { Authorization: `Bearer ${accessToken}` },
+//         params,
+//       }
+//     );
+//     console.log("getAllMentors: Response received", response.data.data);
+//     return response.data.data as Mentor[];
+//   } catch (error: any) {
+//     console.error("getAllMentors error:", {
+//       message: error.message,
+//       response: error.response?.data,
+//     });
+//     throw new Error(`Failed to fetch mentors: ${error.message}`);
+//   }
+// };
+
 interface ApiResponse {
   status: number;
-  data: Mentor[] | Mentor;
+  data: any;
   message: string;
+  total?: number;
 }
-
-export const getAllMentors = async (filter?: string): Promise<Mentor[]> => {
+export const getAllMentors = async (
+  page: number = 1,
+  limit: number = 12,
+  role?: string,
+  searchQuery?: string
+): Promise<{ mentors: Mentor[]; total: number }> => {
   try {
     console.log("getAllMentors: Fetching mentors from /seeker/allMentors", {
-      filter,
+      page,
+      limit,
+      role,
+      searchQuery,
     });
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    const params = filter && filter !== "All" ? { serviceType: filter } : {};
+    const params: any = { page, limit };
+    if (role && role !== "All") params.role = role;
+    if (searchQuery) params.searchQuery = searchQuery;
+
     const response = await userAxiosInstance.get<ApiResponse>(
       "/seeker/allMentors",
       {
@@ -176,7 +221,10 @@ export const getAllMentors = async (filter?: string): Promise<Mentor[]> => {
       }
     );
     console.log("getAllMentors: Response received", response.data.data);
-    return response.data.data as Mentor[];
+    return {
+      mentors: response.data.data.mentors as Mentor[],
+      total: response.data.data.total || 0,
+    };
   } catch (error: any) {
     console.error("getAllMentors error:", {
       message: error.message,

@@ -317,27 +317,138 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
-  async getAllMentors(serviceType?: string): Promise<EUsers[]> {
+  // async getAllMentors(serviceType?: string): Promise<EUsers[]> {
+  //   try {
+  //     console.log("getAllMentors repo step 1", { serviceType });
+  //     let mentorIds: string[] = [];
+
+  //     // Filter by serviceType if provided
+  //     if (serviceType && serviceType.toLowerCase() !== "all") {
+  //       const services = await Service.find({ type: serviceType }).lean();
+  //       mentorIds = services.map((s) => s.mentorId.toString());
+  //       console.log(
+  //         "getAllMentors repo step 2: Found mentorIds for service",
+  //         mentorIds
+  //       );
+  //     }
+
+  //     const query = {
+  //       mentorId: { $exists: true, $ne: null },
+  //       ...(mentorIds.length && { _id: { $in: mentorIds } }),
+  //     };
+
+  //     const mentors = await Users.find(query)
+  //       .populate({
+  //         path: "mentorId",
+  //         select: "bio skills isApproved",
+  //       })
+  //       .populate({
+  //         path: "schoolDetails",
+  //         select: "schoolName city class",
+  //       })
+  //       .populate({
+  //         path: "collegeDetails",
+  //         select: "collegeName city course specializedIn",
+  //       })
+  //       .populate({
+  //         path: "professionalDetails",
+  //         select: "company jobRole city",
+  //       })
+  //       .lean();
+
+  //     console.log("getAllMentors repo step 3: Found mentors", mentors.length);
+
+  //     return mentors.map((mentor, index) => {
+  //       let role = "N/A";
+  //       let work = "N/A";
+  //       let badge = "N/A";
+  //       let workRole = "N/A";
+
+  //       if (mentor.professionalDetails) {
+  //         role = "Professional";
+  //         work = mentor.professionalDetails.company || "Unknown";
+  //         badge = mentor.professionalDetails.jobRole || "N/A";
+  //         workRole = mentor.professionalDetails.jobRole || "Professional";
+  //       } else if (mentor.category === "college" && mentor.collegeDetails) {
+  //         role = "College Student";
+  //         work = mentor.collegDetails.collegeName || "Unknown";
+  //         badge = mentor.collegeDetails.course || "N/A";
+  //         workRole = mentor.collegeDetails.specializedIn || "N/A";
+  //       } else if (mentor.category === "school" && mentor.schoolDetails) {
+  //         role = "School Student";
+  //         work = mentor.schoolDetails.schoolName || "Unknown";
+  //         badge = mentor.schoolDetails.schoolName || "N/A";
+  //         workRole = mentor.schoolDetails.class
+  //           ? String(mentor.schoolDetails.class)
+  //           : "N/A";
+  //       }
+
+  //       return {
+  //         userId: mentor?._id.toString(),
+  //         mentorId: mentor.mentorId?._id.toString(),
+  //         name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
+  //         bio: mentor.mentorId?.bio,
+  //         role,
+  //         work,
+  //         workRole,
+  //         profileImage: mentor.profilePicture || undefined,
+  //         badge,
+  //         isBlocked: mentor.isBlocked,
+  //         isApproved:
+  //           mentor.mentorId && "isApproved" in mentor.mentorId
+  //             ? mentor.mentorId.isApproved
+  //             : "Pending",
+  //       };
+  //     });
+  //   } catch (error: any) {
+  //     console.error("getAllMentors repo step 5: Error", {
+  //       message: error.message,
+  //       stack: error.stack,
+  //     });
+  //     throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+  //   }
+  // }
+  async getAllMentors(
+    role?: string,
+    page: number = 1,
+    limit: number = 12,
+    searchQuery?: string
+  ): Promise<EUsers[]> {
     try {
-      console.log("getAllMentors repo step 1", { serviceType });
-      let mentorIds: string[] = [];
-
-      // Filter by serviceType if provided
-      if (serviceType && serviceType.toLowerCase() !== "all") {
-        const services = await Service.find({ type: serviceType }).lean();
-        mentorIds = services.map((s) => s.mentorId.toString());
-        console.log(
-          "getAllMentors repo step 2: Found mentorIds for service",
-          mentorIds
-        );
-      }
-
-      const query = {
+      console.log("getAllMentors repo step 1", {
+        role,
+        page,
+        limit,
+        searchQuery,
+      });
+      const query: any = {
         mentorId: { $exists: true, $ne: null },
-        ...(mentorIds.length && { _id: { $in: mentorIds } }),
       };
 
+      // Filter by role based on details fields
+      if (role && role.toLowerCase() !== "all") {
+        if (role === "School Student") {
+          query.schoolDetails = { $exists: true, $ne: null };
+        } else if (role === "College Student") {
+          query.collegeDetails = { $exists: true, $ne: null };
+        } else if (role === "Professional") {
+          query.professionalDetails = { $exists: true, $ne: null };
+        }
+      }
+
+      // Add search query if provided
+      if (searchQuery) {
+        query.$or = [
+          { firstName: { $regex: searchQuery, $options: "i" } },
+          { lastName: { $regex: searchQuery, $options: "i" } },
+          { email: { $regex: searchQuery, $options: "i" } },
+          { bio: { $regex: searchQuery, $options: "i" } },
+        ];
+      }
+
       const mentors = await Users.find(query)
+        .skip((page - 1) * limit)
+        .limit(limit)
         .populate({
           path: "mentorId",
           select: "bio skills isApproved",
@@ -356,26 +467,26 @@ export default class UserRepository implements IUserRepository {
         })
         .lean();
 
-      console.log("getAllMentors repo step 3: Found mentors", mentors.length);
+      console.log("getAllMentors repo step 2: Found mentors", mentors.length);
 
-      return mentors.map((mentor, index) => {
-        let role = "N/A";
+      return mentors.map((mentor) => {
+        let mappedRole = "N/A";
         let work = "N/A";
         let badge = "N/A";
         let workRole = "N/A";
 
         if (mentor.professionalDetails) {
-          role = "Professional";
+          mappedRole = "Professional";
           work = mentor.professionalDetails.company || "Unknown";
           badge = mentor.professionalDetails.jobRole || "N/A";
           workRole = mentor.professionalDetails.jobRole || "Professional";
-        } else if (mentor.category === "college" && mentor.collegeDetails) {
-          role = "College Student";
-          work = mentor.collegDetails.collegeName || "Unknown";
+        } else if (mentor.collegeDetails) {
+          mappedRole = "College Student";
+          work = mentor.collegeDetails.collegeName || "Unknown";
           badge = mentor.collegeDetails.course || "N/A";
           workRole = mentor.collegeDetails.specializedIn || "N/A";
-        } else if (mentor.category === "school" && mentor.schoolDetails) {
-          role = "School Student";
+        } else if (mentor.schoolDetails) {
+          mappedRole = "School Student";
           work = mentor.schoolDetails.schoolName || "Unknown";
           badge = mentor.schoolDetails.schoolName || "N/A";
           workRole = mentor.schoolDetails.class
@@ -388,7 +499,7 @@ export default class UserRepository implements IUserRepository {
           mentorId: mentor.mentorId?._id.toString(),
           name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
           bio: mentor.mentorId?.bio,
-          role,
+          role: mappedRole, // Use mappedRole to ensure consistency
           work,
           workRole,
           profileImage: mentor.profilePicture || undefined,
@@ -401,11 +512,37 @@ export default class UserRepository implements IUserRepository {
         };
       });
     } catch (error: any) {
-      console.error("getAllMentors repo step 5: Error", {
+      console.error("getAllMentors repo step 3: Error", {
         message: error.message,
         stack: error.stack,
       });
       throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+    }
+  }
+
+  async countMentors(role?: string, searchQuery?: string): Promise<number> {
+    try {
+      const query: any = {
+        mentorId: { $exists: true, $ne: null },
+      };
+
+      if (role && role.toLowerCase() !== "all") {
+        query.role = { $regex: `^${role}$`, $options: "i" }; // Case-insensitive match
+      }
+
+      if (searchQuery) {
+        query.$or = [
+          { firstName: { $regex: searchQuery, $options: "i" } },
+          { lastName: { $regex: searchQuery, $options: "i" } },
+          { email: { $regex: searchQuery, $options: "i" } },
+          { bio: { $regex: searchQuery, $options: "i" } },
+        ];
+      }
+
+      return await Users.countDocuments(query);
+    } catch (error: any) {
+      console.error("countMentors repo error", { message: error.message });
+      throw new ApiError(500, `Failed to count mentors: ${error.message}`);
     }
   }
 

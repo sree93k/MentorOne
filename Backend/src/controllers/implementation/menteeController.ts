@@ -174,15 +174,37 @@ class menteeController {
     }
   };
 
+  // public getAllMentors = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     const { serviceType } = req.query;
+  //     const mentors = await this.MenteeProfileService.getAllMentors();
+  //     res.json(new ApiResponse(200, mentors, "Mentors fetched successfully"));
+  //   } catch (error: any) {
+  //     next(error);
+  //   }
+  // };
   public getAllMentors = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { serviceType } = req.query;
-      const mentors = await this.MenteeProfileService.getAllMentors();
-      res.json(new ApiResponse(200, mentors, "Mentors fetched successfully"));
+      const { role, page = "1", limit = "12", searchQuery } = req.query;
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+      const mentorsData = await this.MenteeProfileService.getAllMentors(
+        pageNum,
+        limitNum,
+        role as string,
+        searchQuery as string
+      );
+      res.json(
+        new ApiResponse(200, mentorsData, "Mentors fetched successfully")
+      );
     } catch (error: any) {
       next(error);
     }
