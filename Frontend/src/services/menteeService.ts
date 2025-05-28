@@ -261,16 +261,50 @@ export const getMentorById = async (mentorId: string): Promise<Mentor> => {
   }
 };
 
-export const getAllTutorials = async () => {
+// export const getAllTutorials = async () => {
+//   try {
+//     console.log("bookingservice getAllTutorials.. step 1");
+//     const response = await api.get(`/seeker/alltutorials`, {
+//       headers: {
+//         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+//       },
+//     });
+//     console.log("bookingservice getAllTutorials.. step 2", response);
+//     return response.data.data; // Return the tutorials array
+//   } catch (error: any) {
+//     console.error("Error fetching tutorials:", error);
+//     throw new Error(error.response?.data?.error || "Failed to fetch tutorials");
+//   }
+// };
+export const getAllTutorials = async (
+  page: number = 1,
+  limit: number = 12,
+  type?: string,
+  searchQuery?: string
+): Promise<{ tutorials: any[]; total: number }> => {
   try {
-    console.log("bookingservice getAllTutorials.. step 1");
+    console.log("bookingservice getAllTutorials step 1", {
+      page,
+      limit,
+      type,
+      searchQuery,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const params: any = { page, limit };
+    if (type && type !== "All") params.type = type;
+    if (searchQuery) params.searchQuery = searchQuery;
+
     const response = await api.get(`/seeker/alltutorials`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        Authorization: `Bearer ${accessToken}`,
       },
+      params,
     });
-    console.log("bookingservice getAllTutorials.. step 2", response);
-    return response.data.data; // Return the tutorials array
+    console.log("bookingservice getAllTutorials step 2", response.data.data);
+    return response.data.data; // Return { tutorials, total }
   } catch (error: any) {
     console.error("Error fetching tutorials:", error);
     throw new Error(error.response?.data?.error || "Failed to fetch tutorials");

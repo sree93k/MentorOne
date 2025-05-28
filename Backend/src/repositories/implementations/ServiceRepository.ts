@@ -56,35 +56,128 @@ export default class ServiceRepository implements IServiceRepository {
     }
   }
 
-  async getAllVideoTutorials(): Promise<any[]> {
-    try {
-      console.log("servcie repoo getAllVideoTutorials step 1");
+  // async getAllVideoTutorials(): Promise<any[]> {
+  //   try {
+  //     console.log("servcie repoo getAllVideoTutorials step 1");
 
-      const tutorials = await Service.find({
+  //     const tutorials = await Service.find({
+  //       type: "DigitalProducts",
+  //       digitalProductType: "videoTutorials",
+  //     })
+  //       .populate("mentorId", "username") // Populate mentor's username
+  //       .select("title amount exclusiveContent mentorId");
+  //     // Select only required fields
+  //     console.log("servcie repoo getAllVideoTutorials step 2", tutorials);
+  //     const response = tutorials.map((tutorial) => ({
+  //       _id: tutorial._id,
+  //       userId: tutorial.mentorId,
+  //       mentorId: tutorial.mentorId?.mentorId,
+  //       title: tutorial.title,
+  //       amount: tutorial.amount,
+  //       seasonCount: tutorial?.exclusiveContent?.length,
+  //       mentorUsername: tutorial.mentorId?.username,
+  //     }));
+  //     console.log("servcie repoo getAllVideoTutorials step 3", response);
+  //     return response;
+  //   } catch (error: any) {
+  //     console.error("Error in ServiceRepository.getAllVideoTutorials:", error);
+  //     throw new ApiError(
+  //       500,
+  //       `Failed to fetch video tutorials: ${error.message}`
+  //     );
+  //   }
+  // }
+
+  // async getTutorialById(tutorialId: string): Promise<any> {
+  //   try {
+  //     console.log("service repo getTutorialById step 1", tutorialId);
+  //     if (!mongoose.Types.ObjectId.isValid(tutorialId)) {
+  //       throw new ApiError(400, `Invalid tutorialId format: ${tutorialId}`);
+  //     }
+  //     const tutorial = await Service.findById(tutorialId).populate({
+  //       path: "mentorId",
+  //       select: "firstName lastName profilePicture bio professionalDetails",
+  //       populate: {
+  //         path: "professionalDetails",
+  //         select: "company",
+  //       },
+  //     });
+  //     console.log("service repo getTutorialById step 2", tutorial);
+  //     return tutorial;
+  //   } catch (error: any) {
+  //     console.error("Error in ServiceRepository.getTutorialById:", error);
+  //     throw new ApiError(
+  //       500,
+  //       `Failed to fetch tutorial details: ${error.message}`
+  //     );
+  //   }
+  // }
+  async getAllVideoTutorials(
+    type?: string,
+    searchQuery?: string,
+    page: number = 1,
+    limit: number = 12
+  ): Promise<{ tutorials: any[]; total: number }> {
+    try {
+      console.log("service repo getAllVideoTutorials step 1", {
+        type,
+        searchQuery,
+        page,
+        limit,
+      });
+      const query: any = {
         type: "DigitalProducts",
         digitalProductType: "videoTutorials",
-      })
-        .populate("mentorId", "username") // Populate mentor's username
-        .select("title amount exclusiveContent mentorId");
-      // Select only required fields
-      console.log("servcie repoo getAllVideoTutorials step 2", tutorials);
-      const response = tutorials.map((tutorial) => ({
-        _id: tutorial._id,
-        userId: tutorial.mentorId,
-        mentorId: tutorial.mentorId?.mentorId,
-        title: tutorial.title,
-        amount: tutorial.amount,
-        seasonCount: tutorial?.exclusiveContent?.length,
-        mentorUsername: tutorial.mentorId?.username,
-      }));
-      console.log("servcie repoo getAllVideoTutorials step 3", response);
-      return response;
+      };
+
+      // Filter by type (Paid or Free)
+      if (type && type.toLowerCase() !== "all") {
+        if (type === "Free") {
+          query.amount = 0;
+        } else if (type === "Paid") {
+          query.amount = { $gt: 0 };
+        }
+      }
+
+      // Add search query if provided
+      if (searchQuery) {
+        query.$or = [
+          { title: { $regex: searchQuery, $options: "i" } },
+          { shortDescription: { $regex: searchQuery, $options: "i" } },
+          // Search mentor's firstName or lastName
+          {
+            $or: [
+              { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+              { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+            ],
+          },
+        ];
+      }
+
+      const tutorials = await Service.find(query)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: "mentorId",
+          select: "firstName lastName profilePicture bio professionalDetails",
+          populate: {
+            path: "professionalDetails",
+            select: "company",
+          },
+        })
+        .lean();
+
+      console.log(
+        "service repo getAllVideoTutorials step 2: Found tutorials",
+        tutorials.length
+      );
+
+      const total = await Service.countDocuments(query);
+
+      return { tutorials, total };
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllVideoTutorials:", error);
-      throw new ApiError(
-        500,
-        `Failed to fetch video tutorials: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch tutorials: ${error.message}`);
     }
   }
 
@@ -112,7 +205,6 @@ export default class ServiceRepository implements IServiceRepository {
       );
     }
   }
-
   async findServicesByTitle(searchQuery: string): Promise<any[]> {
     return await Service.find({
       title: { $regex: searchQuery, $options: "i" },
