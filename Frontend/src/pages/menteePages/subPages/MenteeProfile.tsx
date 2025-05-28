@@ -770,7 +770,7 @@ const MenteeProfile: React.FC = () => {
           </div>
         </div>
       </div>
-      {/* 
+      {/*
       Loading Modal for Image Upload
       <Dialog open={isUploading} onOpenChange={setIsUploading}>
         <DialogContent className="sm:max-w-[425px]">
@@ -1253,7 +1253,7 @@ const MenteeProfile: React.FC = () => {
                       setProfileData((prev) => ({ ...prev, college: value }))
                     }
                   />
-                  <div className="mb-6">
+                  {/* <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-medium">
                         Course Duration
@@ -1325,7 +1325,7 @@ const MenteeProfile: React.FC = () => {
                         ))}
                       </select>
                     </div>
-                  </div>
+                  </div> */}
                   <EditableField
                     label="City"
                     field="city"
@@ -1392,7 +1392,7 @@ const MenteeProfile: React.FC = () => {
                   setProfileData((prev) => ({ ...prev, achievements: value }))
                 }
               />
-              <EditableField
+              {/* <EditableField
                 label="LinkedIn URL"
                 field="linkedinUrl"
                 value={profileData.linkedinUrl}
@@ -1405,7 +1405,7 @@ const MenteeProfile: React.FC = () => {
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, linkedinUrl: value }))
                 }
-              />
+              /> */}
               <EditableField
                 label="Portfolio URL"
                 field="portfolioUrl"
