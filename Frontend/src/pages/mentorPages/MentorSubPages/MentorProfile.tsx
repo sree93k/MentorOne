@@ -18,21 +18,7 @@ import { uploadProfileImage } from "@/services/uploadService";
 // Adjust based on your Redux setup
 import * as Yup from "yup"; // For validation schema
 import { Textarea } from "@/components/ui/textarea";
-// Define EditableFieldProps interface
-interface EditableFieldProps {
-  label: string;
-  field: string;
-  value: string;
-  workAs: string;
-  onEdit: () => void;
-  isEditing?: boolean;
-  onSave?: () => void;
-  onCancel?: () => void;
-  onChange?: (value: string) => void;
-  type?: string;
-}
 
-// Yup validation schema for profile fields
 const profileSchema = Yup.object().shape({
   firstName: Yup.string()
     .required("First name is required")
@@ -92,14 +78,14 @@ const profileSchema = Yup.object().shape({
   totalExperience: Yup.string().optional(),
   startYear: Yup.string().optional(),
   endYear: Yup.string().optional(),
-  achievements: Yup.string().optional(),
-  linkedinUrl: Yup.string().url("Invalid URL").nullable().optional(),
-  portfolioUrl: Yup.string().url("Invalid URL").nullable().optional(),
-  interestedNewCareer: Yup.string().optional(),
-  featuredArticle: Yup.string().optional(),
   mentorMotivation: Yup.string().optional(),
   shortInfo: Yup.string().optional(),
   skills: Yup.array().of(Yup.string()).optional(),
+  achievements: Yup.array().of(Yup.string()).optional(),
+  linkedin: Yup.string().url("Invalid URL").nullable().optional(),
+  portfolio: Yup.string().url("Invalid URL").nullable().optional(),
+  interestedNewCareer: Yup.array().of(Yup.string()).optional(),
+  featuredArticle: Yup.string().optional(),
 });
 
 const passwordSchema = Yup.object().shape({
@@ -123,7 +109,19 @@ const passwordSchema = Yup.object().shape({
     .required("Please confirm your new password"),
 });
 
-// EditableField component
+interface EditableFieldProps {
+  label: string;
+  field: string;
+  value: string | string[]; // Allow string or string[]
+  workAs: string;
+  onEdit: () => void;
+  isEditing?: boolean;
+  onSave?: () => void;
+  onCancel?: () => void;
+  onChange?: (value: string | string[]) => void; // Update to handle string or string[]
+  type?: string;
+}
+
 const EditableField: React.FC<EditableFieldProps> = ({
   label,
   field,
@@ -140,8 +138,18 @@ const EditableField: React.FC<EditableFieldProps> = ({
 
   const handleSaveWithValidation = async () => {
     try {
+      // Convert string value to array if field is achievements or interestedNewCareer
+      const validationValue =
+        field === "achievements" || field === "interestedNewCareer"
+          ? value
+              .toString()
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean)
+          : value;
+
       await profileSchema.validateAt(field, {
-        [field]: value,
+        [field]: validationValue,
         workAs: workAs,
       });
       setError(null);
@@ -154,6 +162,10 @@ const EditableField: React.FC<EditableFieldProps> = ({
       }
     }
   };
+
+  // Convert array to string for input display
+  const displayValue = Array.isArray(value) ? value.join(", ") : value;
+
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-2">
@@ -184,9 +196,16 @@ const EditableField: React.FC<EditableFieldProps> = ({
       </div>
       <Input
         type={type}
-        value={value}
+        value={displayValue}
         readOnly={!isEditing}
-        onChange={(e) => onChange && onChange(e.target.value)}
+        onChange={(e) =>
+          onChange &&
+          onChange(
+            field === "achievements" || field === "interestedNewCareer"
+              ? e.target.value
+              : e.target.value
+          )
+        }
         className="w-full bg-white"
       />
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -342,7 +361,7 @@ const MentorProfile: React.FC = () => {
       const response = await uploadProfileImage(formData);
       console.log("response of image uplaodi us ", response);
 
-      const newProfilePictureUrl = response.profilePicture;
+      const newProfilePictureUrl = response?.profilePicture;
       if (newProfilePictureUrl) {
         setPreviewUrl(newProfilePictureUrl);
         setProfileData((prev) => ({
@@ -1195,7 +1214,7 @@ const MentorProfile: React.FC = () => {
                       setProfileData((prev) => ({ ...prev, college: value }))
                     }
                   />
-                  <div className="mb-6">
+                  {/* <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <label className="text-sm font-medium">
                         Course Duration
@@ -1270,7 +1289,7 @@ const MentorProfile: React.FC = () => {
                         ))}
                       </select>
                     </div>
-                  </div>
+                  </div> */}
                   <EditableField
                     label="City"
                     field="city"
@@ -1290,7 +1309,7 @@ const MentorProfile: React.FC = () => {
             </div>
           </Tabs.Content>
 
-          <Tabs.Content value="links">
+          {/* <Tabs.Content value="links">
             <div className="max-w-2xl">
               <EditableField
                 label="Achievements"
@@ -1354,6 +1373,105 @@ const MentorProfile: React.FC = () => {
                 onSave={() =>
                   handleSave("featuredArticle", profileData.featuredArticle)
                 }
+                onChange={(value) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    featuredArticle: value,
+                  }))
+                }
+              />
+            </div>
+          </Tabs.Content> */}
+          <Tabs.Content value="links">
+            <div className="max-w-2xl">
+              <EditableField
+                label="Achievements"
+                field="achievements" // Added field prop
+                value={profileData.achievements || []} // Ensure array or empty array
+                workAs={profileData.workAs} // Added workAs prop
+                onEdit={() => handleEdit("achievements")}
+                isEditing={editingField === "achievements"}
+                onSave={() =>
+                  handleSave(
+                    "achievements",
+                    profileData.achievements
+                      .toString()
+                      .split(",")
+                      .map((v) => v.trim())
+                      .filter(Boolean)
+                  )
+                }
+                onCancel={() => handleCancel("achievements")} // Added onCancel
+                onChange={(value) =>
+                  setProfileData((prev) => ({ ...prev, achievements: value }))
+                }
+              />
+              {/* <EditableField
+                label="LinkedIn URL"
+                field="linkedinUrl" // Added field prop
+                value={profileData?.mentorId?.linkedinUrl || ""} // Ensure string
+                workAs={profileData.workAs} // Added workAs prop
+                onEdit={() => handleEdit("linkedinUrl")}
+                isEditing={editingField === "linkedinUrl"}
+                onSave={() =>
+                  handleSave("linkedinUrl", profileData.linkedinUrl)
+                }
+                onCancel={() => handleCancel("linkedinUrl")} // Added onCancel
+                onChange={(value) =>
+                  setProfileData((prev) => ({ ...prev, linkedinUrl: value }))
+                }
+              /> */}
+              <EditableField
+                label="Portfolio URL"
+                field="portfolioUrl" // Added field prop
+                value={profileData?.mentorId?.portfolio || ""} // Ensure string
+                workAs={profileData.workAs} // Added workAs prop
+                onEdit={() => handleEdit("portfolioUrl")}
+                isEditing={editingField === "portfolioUrl"}
+                onSave={() =>
+                  handleSave("portfolioUrl", profileData.portfolioUrl)
+                }
+                onCancel={() => handleCancel("portfolioUrl")} // Added onCancel
+                onChange={(value) =>
+                  setProfileData((prev) => ({ ...prev, portfolioUrl: value }))
+                }
+              />
+              <EditableField
+                label="Interested New Career"
+                field="interestedNewCareer" // Added field prop
+                value={profileData?.mentorId?.interestedNewCareer || []} // Ensure array or empty array
+                workAs={profileData.workAs} // Added workAs prop
+                onEdit={() => handleEdit("interestedNewCareer")}
+                isEditing={editingField === "interestedNewCareer"}
+                onSave={() =>
+                  handleSave(
+                    "interestedNewCareer",
+                    profileData.interestedNewCareer
+                      .toString()
+                      .split(",")
+                      .map((v) => v.trim())
+                      .filter(Boolean)
+                  )
+                }
+                onCancel={() => handleCancel("interestedNewCareer")} // Added onCancel
+                onChange={(value) =>
+                  setProfileData((prev) => ({
+                    ...prev,
+                    interestedNewCareer: value,
+                  }))
+                }
+              />
+              <EditableField
+                label="Featured Article"
+                field="featuredArticle" // Added field prop
+                value={profileData?.mentorId?.featuredArticle || ""} // Ensure string
+                workAs={profileData.workAs} // Added workAs prop
+                onEdit={() => handleEdit("featuredArticle")}
+                isEditing={editingField === "featuredArticle"}
+                onSave={() =>
+                  handleSave("featuredArticle", profileData.featuredArticle)
+                }
+                onCancel={() => handleCancel("featuredArticle")} // Added onCancel
                 onChange={(value) =>
                   setProfileData((prev) => ({
                     ...prev,
