@@ -193,10 +193,52 @@ export default class MenteeProfileService implements IMenteeProfileService {
       throw error;
     }
   }
-  async getAllMentors(): Promise<EUsers[]> {
+  // async getAllMentors(): Promise<EUsers[]> {
+  //   try {
+  //     console.log("getAllMentors service step 1");
+  //     let mentors = await this.UserRepository.getAllMentors();
+  //     console.log(
+  //       "getAllMentors service step 2: Mentors fetched",
+  //       mentors.length
+  //     );
+
+  //     // Filter by isBlocked and isApproved
+  //     mentors = mentors.filter(
+  //       (mentor) => !mentor.isBlocked && mentor?.isApproved === "Approved"
+  //     );
+  //     console.log(
+  //       "getAllMentors service step 3: Filtered by isBlocked and isApproved",
+  //       mentors.length
+  //     );
+
+  //     return mentors;
+  //   } catch (error: any) {
+  //     console.log("getAllMentors service step 4: Error", {
+  //       message: error.message,
+  //       stack: error.stack,
+  //     });
+  //     throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+  //   }
+  // }
+  async getAllMentors(
+    page: number = 1,
+    limit: number = 12,
+    role?: string,
+    searchQuery?: string
+  ): Promise<{ mentors: EUsers[]; total: number }> {
     try {
-      console.log("getAllMentors service step 1");
-      let mentors = await this.UserRepository.getAllMentors();
+      console.log("getAllMentors service step 1", {
+        page,
+        limit,
+        role,
+        searchQuery,
+      });
+      let mentors = await this.UserRepository.getAllMentors(
+        role,
+        page,
+        limit,
+        searchQuery
+      );
       console.log(
         "getAllMentors service step 2: Mentors fetched",
         mentors.length
@@ -211,16 +253,18 @@ export default class MenteeProfileService implements IMenteeProfileService {
         mentors.length
       );
 
-      return mentors;
+      const total = await this.UserRepository.countMentors(role, searchQuery);
+      console.log("getAllMentors service step 4: Total mentors", total);
+
+      return { mentors, total };
     } catch (error: any) {
-      console.log("getAllMentors service step 4: Error", {
+      console.log("getAllMentors service step 5: Error", {
         message: error.message,
         stack: error.stack,
       });
       throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
     }
   }
-
   async getMentorById(mentorId: string): Promise<EUsers> {
     try {
       console.log("getMentorById service step 1", { mentorId });

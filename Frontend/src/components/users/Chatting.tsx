@@ -1349,11 +1349,11 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                     Select a conversation from the list to start chatting or
                     search for someone specific
                   </p>
-                  {error && (
+                  {/* {error && (
                     <p className="text-sm text-red-600 p-3 bg-red-50 rounded-md shadow-sm">
                       {error}
                     </p>
-                  )}
+                  )} */}
                 </div>
               </div>
             )}
