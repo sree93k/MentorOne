@@ -174,19 +174,6 @@ class menteeController {
     }
   };
 
-  // public getAllMentors = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> => {
-  //   try {
-  //     const { serviceType } = req.query;
-  //     const mentors = await this.MenteeProfileService.getAllMentors();
-  //     res.json(new ApiResponse(200, mentors, "Mentors fetched successfully"));
-  //   } catch (error: any) {
-  //     next(error);
-  //   }
-  // };
   public getAllMentors = async (
     req: Request,
     res: Response,
@@ -224,23 +211,6 @@ class menteeController {
     }
   };
 
-  // public getAllTutorials = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> => {
-  //   try {
-  //     console.log("mentee controller getAllTutorials step 1");
-  //     const tutorials = await this.bookingService.getAllVideoTutorials();
-  //     console.log("mentee controller getAllTutorials step 2", tutorials);
-  //     res.json(
-  //       new ApiResponse(200, tutorials, "Video tutorials fetched successfully")
-  //     );
-  //   } catch (error: any) {
-  //     console.log("mentee controller getAllTutorials step 3 error ", error);
-  //     next(error);
-  //   }
-  // };
   public getAllTutorials = async (
     req: Request,
     res: Response,
@@ -351,7 +321,7 @@ class menteeController {
               product_data: {
                 name: tutorial.title,
               },
-              unit_amount: amount * 100, // Convert to paise
+              unit_amount: amount * 100,
             },
             quantity: 1,
           },
@@ -523,6 +493,53 @@ class menteeController {
       next(
         new ApiError(500, "Failed to generate presigned URL", error.message)
       );
+    }
+  };
+
+  // menteeController.ts
+  public getMentorSchedule = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+      const schedule = await this.MentorProfileService.getMentorSchedule(id);
+      if (!schedule) {
+        throw new ApiError(404, "Schedule not found for this mentor");
+      }
+      res.json(
+        new ApiResponse(200, schedule, "Mentor schedule fetched successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getMentorBlockedDates = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+      const blockedDates =
+        await this.MentorProfileService.getMentorBlockedDates(id);
+      res.json(
+        new ApiResponse(
+          200,
+          blockedDates,
+          "Mentor blocked dates fetched successfully"
+        )
+      );
+    } catch (error) {
+      next(error);
     }
   };
 }

@@ -11,6 +11,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { verifySession } from "@/services/paymentServcie";
+import { log } from "util";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -28,6 +29,7 @@ export default function MentorServicePage() {
 
   useEffect(() => {
     if (loading) return;
+    console.log("^^^^^^^^^^^^^^^^^^^^^^mentor DETIAILS", mentor);
 
     if (!user || !isAuthenticated) {
       toast.error("Please log in to book a service.");
@@ -112,7 +114,7 @@ export default function MentorServicePage() {
           />
         </div>
         <div className="flex-1 p-4">
-          <BookingConfirm onConfirm={handleBookingConfirm} />
+          <BookingConfirm onConfirm={handleBookingConfirm} mentor={mentor} />
         </div>
       </div>
 

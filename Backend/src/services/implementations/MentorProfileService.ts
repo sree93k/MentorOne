@@ -15,6 +15,12 @@ import Users from "../../models/userModel";
 import { ApiError } from "../../middlewares/errorHandler";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import Schedule from "../../models/scheduleModel";
+import BlockedDate from "../../models/blockedModel";
+import { ESchedule } from "../../entities/scheduleEntity";
+import { EBlockedDate } from "../../entities/blockedEntity";
+import SlotRepository from "../../repositories/implementations/SlotRepository";
+import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -30,12 +36,14 @@ export default class MentorProfileService implements IMentorProfileService {
   private MentorRepository: IMentorRepository;
   private BaseRepository: IBaseRepository<EUsers>;
   private ServiceRepository: IServiceRepository;
+  private SlotRepository: ISlotRepository;
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
     this.MentorRepository = new MentorRepository();
     this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.ServiceRepository = new ServiceRepository();
+    this.SlotRepository = new SlotRepository();
   }
 
   async welcomeData(
@@ -583,6 +591,37 @@ export default class MentorProfileService implements IMentorProfileService {
               error instanceof Error ? error.message : "Unknown error"
             }`
           );
+    }
+  }
+
+  async getMentorSchedule(mentorId: string): Promise<ESchedule[]> {
+    try {
+      console.log("getMentorSchedule service step 1", { mentorId });
+      const response = await this.SlotRepository.findAvailableSlots(mentorId);
+      // const schedule = await Schedule.findOne({ mentorId }).exec();
+      console.log("getMentorSchedule service step 2", response);
+      return response;
+    } catch (error: any) {
+      console.error("Error fetching mentor schedule:", error);
+      throw new ApiError(
+        500,
+        `Failed to fetch mentor schedule: ${error.message}`
+      );
+    }
+  }
+
+  async getMentorBlockedDates(mentorId: string): Promise<EBlockedDate[]> {
+    try {
+      console.log("getMentorBlockedDates service step 1", { mentorId });
+      const response = await this.SlotRepository.findBlockedDates(mentorId);
+      console.log("getMentorBlockedDates service step 2", response);
+      return response;
+    } catch (error: any) {
+      console.error("Error fetching mentor blocked dates:", error);
+      throw new ApiError(
+        500,
+        `Failed to fetch mentor blocked dates: ${error.message}`
+      );
     }
   }
 }
