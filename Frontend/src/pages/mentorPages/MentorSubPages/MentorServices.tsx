@@ -9,6 +9,7 @@ import { getAllServices } from "@/services/mentorService";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
+import SlotManagementDrawer from "@/components/mentor/SlotManagementDrawer"; // Import the new component
 
 interface Service {
   _id: string;
@@ -49,6 +50,7 @@ const MentorService: React.FC = () => {
   const { user, error, loading, isAuthenticated } = useSelector(
     (state: RootState) => state.user
   );
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -135,14 +137,23 @@ const MentorService: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center justify-between w-full mt-5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded border-black text-black hover:bg-black hover:text-white transition-colors duration-200"
-                asChild
-              >
-                <Link to={`/expert/editService/${service._id}`}>Edit</Link>
-              </Button>
+              <div className="flex p-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded border-black text-black hover:bg-black hover:text-white transition-colors duration-200"
+                  asChild
+                >
+                  <Link to={`/expert/editService/${service._id}`}>Edit</Link>
+                </Button>
+                {/* Replaced Link with SlotManagementDrawer */}
+                {user?._id && (
+                  <SlotManagementDrawer
+                    mentorId={user._id}
+                    serviceId={service._id}
+                  />
+                )}
+              </div>
               <Button ref={buttonRef} onClick={() => toggleStats(service._id)}>
                 <ChartNoAxesCombined size={36} />
               </Button>
@@ -182,7 +193,7 @@ const MentorService: React.FC = () => {
                   </div>
                   <div className="border border-gray-400">
                     <div className="text-sm text-muted-foreground pt-8">
-                      Conversions
+                      Shedule Slot
                     </div>
                     <div className="font-semibold text-xl py-2">
                       {service.stats?.conversions || "0%"}
@@ -224,7 +235,7 @@ const MentorService: React.FC = () => {
             <TabsTrigger
               value="all"
               className="
-                rounded-md border border-gray-300 
+                rounded-md border border-gray-300
                 px-4 py-2 text-sm font-medium text-gray-700
                 hover:border-black
                 data-[state=active]:bg-black
@@ -237,7 +248,7 @@ const MentorService: React.FC = () => {
             <TabsTrigger
               value="call"
               className="
-                rounded-md border border-gray-300 
+                rounded-md border border-gray-300
                 px-4 py-2 text-sm font-medium text-gray-700
                 hover:border-black
                 data-[state=active]:bg-black
@@ -250,7 +261,7 @@ const MentorService: React.FC = () => {
             <TabsTrigger
               value="priority"
               className="
-                rounded-md border border-gray-300 
+                rounded-md border border-gray-300
                 px-4 py-2 text-sm font-medium text-gray-700
                 hover:border-black
                 data-[state=active]:bg-black
@@ -263,7 +274,7 @@ const MentorService: React.FC = () => {
             <TabsTrigger
               value="digitalProducts"
               className="
-                rounded-md border border-gray-300 
+                rounded-md border border-gray-300
                 px-4 py-2 text-sm font-medium text-gray-700
                 hover:border-black
                 data-[state=active]:bg-black

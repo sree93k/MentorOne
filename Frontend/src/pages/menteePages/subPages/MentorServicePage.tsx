@@ -113,8 +113,13 @@ export default function MentorServicePage() {
             mentor={mentor}
           />
         </div>
+
         <div className="flex-1 p-4">
-          <BookingConfirm onConfirm={handleBookingConfirm} mentor={mentor} />
+          <BookingConfirm
+            onConfirm={handleBookingConfirm}
+            mentor={mentor}
+            service={service}
+          />
         </div>
       </div>
 

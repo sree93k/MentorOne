@@ -73,6 +73,11 @@ const ServiceSchema: Schema = new Schema(
       earnings: { type: Number, default: 0 },
       conversions: { type: String, default: "0%" },
     },
+    slot: {
+      type: Schema.Types.ObjectId,
+      ref: "Schedule",
+      required: false,
+    },
   },
   {
     collection: "Service",

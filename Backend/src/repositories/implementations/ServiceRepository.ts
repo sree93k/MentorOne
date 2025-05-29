@@ -13,7 +13,7 @@ export default class ServiceRepository implements IServiceRepository {
 
       const allServices = await Service.find({
         mentorId: new mongoose.Types.ObjectId(mentorId),
-      });
+      }).populate({ path: "slot" });
       return allServices as EService[];
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllServices:", error);
@@ -27,7 +27,9 @@ export default class ServiceRepository implements IServiceRepository {
         throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
       }
 
-      const service = await Service.findById(serviceId);
+      const service = await Service.findById(serviceId).populate({
+        path: "slot",
+      });
       return service as EService | null;
     } catch (error: any) {
       console.error("Error in ServiceRepository.getServiceById:", error);
@@ -48,7 +50,7 @@ export default class ServiceRepository implements IServiceRepository {
         serviceId,
         { $set: serviceData },
         { new: true, runValidators: true }
-      );
+      ).populate({ path: "slot" });
       return updatedService as EService | null;
     } catch (error: any) {
       console.error("Error in ServiceRepository.updateService:", error);
@@ -56,62 +58,6 @@ export default class ServiceRepository implements IServiceRepository {
     }
   }
 
-  // async getAllVideoTutorials(): Promise<any[]> {
-  //   try {
-  //     console.log("servcie repoo getAllVideoTutorials step 1");
-
-  //     const tutorials = await Service.find({
-  //       type: "DigitalProducts",
-  //       digitalProductType: "videoTutorials",
-  //     })
-  //       .populate("mentorId", "username") // Populate mentor's username
-  //       .select("title amount exclusiveContent mentorId");
-  //     // Select only required fields
-  //     console.log("servcie repoo getAllVideoTutorials step 2", tutorials);
-  //     const response = tutorials.map((tutorial) => ({
-  //       _id: tutorial._id,
-  //       userId: tutorial.mentorId,
-  //       mentorId: tutorial.mentorId?.mentorId,
-  //       title: tutorial.title,
-  //       amount: tutorial.amount,
-  //       seasonCount: tutorial?.exclusiveContent?.length,
-  //       mentorUsername: tutorial.mentorId?.username,
-  //     }));
-  //     console.log("servcie repoo getAllVideoTutorials step 3", response);
-  //     return response;
-  //   } catch (error: any) {
-  //     console.error("Error in ServiceRepository.getAllVideoTutorials:", error);
-  //     throw new ApiError(
-  //       500,
-  //       `Failed to fetch video tutorials: ${error.message}`
-  //     );
-  //   }
-  // }
-
-  // async getTutorialById(tutorialId: string): Promise<any> {
-  //   try {
-  //     console.log("service repo getTutorialById step 1", tutorialId);
-  //     if (!mongoose.Types.ObjectId.isValid(tutorialId)) {
-  //       throw new ApiError(400, `Invalid tutorialId format: ${tutorialId}`);
-  //     }
-  //     const tutorial = await Service.findById(tutorialId).populate({
-  //       path: "mentorId",
-  //       select: "firstName lastName profilePicture bio professionalDetails",
-  //       populate: {
-  //         path: "professionalDetails",
-  //         select: "company",
-  //       },
-  //     });
-  //     console.log("service repo getTutorialById step 2", tutorial);
-  //     return tutorial;
-  //   } catch (error: any) {
-  //     console.error("Error in ServiceRepository.getTutorialById:", error);
-  //     throw new ApiError(
-  //       500,
-  //       `Failed to fetch tutorial details: ${error.message}`
-  //     );
-  //   }
-  // }
   async getAllVideoTutorials(
     type?: string,
     searchQuery?: string,

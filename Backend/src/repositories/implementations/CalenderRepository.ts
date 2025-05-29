@@ -10,7 +10,7 @@ import {
   BlockedDateData,
 } from "../interface/ICalenderRepository";
 
-export class CalendarRepository implements ICalendarRepository {
+export default class CalendarRepository implements ICalendarRepository {
   async getPolicy(mentorId: string | mongoose.Types.ObjectId) {
     return await Policy.findOne({
       userId: new mongoose.Types.ObjectId(mentorId),
