@@ -1,6 +1,7 @@
 import { EService } from "../../entities/serviceEntity";
 import { EUsers } from "../../entities/userEntity";
-
+import { ESchedule } from "../../entities/scheduleEntity";
+import { EBlockedDate } from "../../entities/blockedEntity";
 export interface IMentorProfileService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   profileDatas(userId: string): Promise<EUsers | null>;
@@ -17,4 +18,6 @@ export interface IMentorProfileService {
   isApprovalChecking(
     userId: string
   ): Promise<{ isApproved: string | null; approvalReason: string | null }>;
+  getMentorSchedule(mentorId: string): Promise<ESchedule[]>;
+  getMentorBlockedDates(mentorId: string): Promise<EBlockedDate[]>;
 }

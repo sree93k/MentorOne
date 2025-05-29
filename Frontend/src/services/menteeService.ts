@@ -152,40 +152,6 @@ interface Mentor {
   };
 }
 
-// interface ApiResponse {
-//   status: number;
-//   data: Mentor[] | Mentor;
-//   message: string;
-// }
-
-// export const getAllMentors = async (filter?: string): Promise<Mentor[]> => {
-//   try {
-//     console.log("getAllMentors: Fetching mentors from /seeker/allMentors", {
-//       filter,
-//     });
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-//     const params = filter && filter !== "All" ? { serviceType: filter } : {};
-//     const response = await userAxiosInstance.get<ApiResponse>(
-//       "/seeker/allMentors",
-//       {
-//         headers: { Authorization: `Bearer ${accessToken}` },
-//         params,
-//       }
-//     );
-//     console.log("getAllMentors: Response received", response.data.data);
-//     return response.data.data as Mentor[];
-//   } catch (error: any) {
-//     console.error("getAllMentors error:", {
-//       message: error.message,
-//       response: error.response?.data,
-//     });
-//     throw new Error(`Failed to fetch mentors: ${error.message}`);
-//   }
-// };
-
 interface ApiResponse {
   status: number;
   data: any;
@@ -260,23 +226,7 @@ export const getMentorById = async (mentorId: string): Promise<Mentor> => {
     throw new Error(`Failed to fetch mentor: ${error.message}`);
   }
 };
-
-// export const getAllTutorials = async () => {
-//   try {
-//     console.log("bookingservice getAllTutorials.. step 1");
-//     const response = await api.get(`/seeker/alltutorials`, {
-//       headers: {
-//         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-//       },
-//     });
-//     console.log("bookingservice getAllTutorials.. step 2", response);
-//     return response.data.data; // Return the tutorials array
-//   } catch (error: any) {
-//     console.error("Error fetching tutorials:", error);
-//     throw new Error(error.response?.data?.error || "Failed to fetch tutorials");
-//   }
-// };
-export const getAllTutorials = async (
+const getAllTutorials = async (
   page: number = 1,
   limit: number = 12,
   type?: string,
@@ -408,5 +358,57 @@ export const createBooking = async (
   } catch (error: any) {
     console.error("Error creating booking:", error);
     throw new Error(error.response?.data?.error || "Failed to create booking");
+  }
+};
+// services/menteeService.ts
+export const getMentorSchedule = async (mentorId: string) => {
+  try {
+    console.log("getMentorSchedule: Fetching schedule for mentor", {
+      mentorId,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await userAxiosInstance.get<ApiResponse>(
+      `/seeker/mentor/${mentorId}/schedule`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    console.log("getMentorSchedule: Response received", response.data.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("getMentorSchedule error:", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    throw new Error(`Failed to fetch mentor schedule: ${error.message}`);
+  }
+};
+
+export const getMentorBlockedDates = async (mentorId: string) => {
+  try {
+    console.log("getMentorBlockedDates: Fetching blocked dates for mentor", {
+      mentorId,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await userAxiosInstance.get<ApiResponse>(
+      `/seeker/mentor/${mentorId}/blocked-dates`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    console.log("getMentorBlockedDates: Response received", response.data.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("getMentorBlockedDates error:", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    throw new Error(`Failed to fetch mentor blocked dates: ${error.message}`);
   }
 };

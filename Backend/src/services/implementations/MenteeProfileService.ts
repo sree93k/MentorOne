@@ -1,7 +1,7 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IMenteeProfileService } from "../interface/IMenteeProfileService";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty"; // Fixed typo
+import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
 import CareerRepositiory from "../../repositories/implementations/CareerRepository";
 import { EUsers } from "../../entities/userEntity";
 import { ObjectId } from "mongoose";
@@ -13,7 +13,6 @@ import MenteeRepository from "../../repositories/implementations/MenteeRepositor
 import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepositotry from "../../repositories/implementations/BaseRepository";
 import { ApiError } from "../../middlewares/errorHandler";
-
 import Users from "../../models/userModel";
 
 interface WelcomeFormData {
@@ -193,33 +192,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       throw error;
     }
   }
-  // async getAllMentors(): Promise<EUsers[]> {
-  //   try {
-  //     console.log("getAllMentors service step 1");
-  //     let mentors = await this.UserRepository.getAllMentors();
-  //     console.log(
-  //       "getAllMentors service step 2: Mentors fetched",
-  //       mentors.length
-  //     );
 
-  //     // Filter by isBlocked and isApproved
-  //     mentors = mentors.filter(
-  //       (mentor) => !mentor.isBlocked && mentor?.isApproved === "Approved"
-  //     );
-  //     console.log(
-  //       "getAllMentors service step 3: Filtered by isBlocked and isApproved",
-  //       mentors.length
-  //     );
-
-  //     return mentors;
-  //   } catch (error: any) {
-  //     console.log("getAllMentors service step 4: Error", {
-  //       message: error.message,
-  //       stack: error.stack,
-  //     });
-  //     throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
-  //   }
-  // }
   async getAllMentors(
     page: number = 1,
     limit: number = 12,

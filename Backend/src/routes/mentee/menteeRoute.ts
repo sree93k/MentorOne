@@ -86,5 +86,15 @@ menteeRoutes.get(
   authenticate,
   menteeController.getDocumentUrl.bind(menteeController)
 );
+menteeRoutes.get(
+  "/mentor/:id/schedule",
+  authenticate,
+  menteeController.getMentorSchedule.bind(menteeController)
+);
 
+menteeRoutes.get(
+  "/mentor/:id/blocked-dates",
+  authenticate,
+  menteeController.getMentorBlockedDates.bind(menteeController)
+);
 export default menteeRoutes;

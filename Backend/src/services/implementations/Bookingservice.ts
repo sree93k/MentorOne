@@ -77,106 +77,6 @@ export default class BookingService implements IBookingService {
     return booking;
   }
 
-  // async saveBookingAndPayment(
-  //   params: SaveBookingAndPaymentParams
-  // ): Promise<{ booking: any; payment: any; chat?: any }> {
-  //   const {
-  //     sessionId,
-  //     serviceId,
-  //     mentorId,
-  //     menteeId,
-  //     bookingDate,
-  //     startTime,
-  //     endTime,
-  //     day,
-  //     slotIndex,
-  //     amount,
-  //   } = params;
-
-  //   console.log("saveBookingAndPayment params:", params);
-
-  //   try {
-  //     const service = await this.serviceRepository.getServiceById(serviceId);
-  //     if (!service) {
-  //       throw new ApiError(404, "Service not found", "Invalid service ID");
-  //     }
-
-  //     // Check if booking already exists for this sessionId
-  //     const existingBooking = await this.bookingRepository.findBySessionId(
-  //       sessionId
-  //     );
-  //     if (existingBooking) {
-  //       console.log("Booking already exists for sessionId:", sessionId);
-  //       return { booking: existingBooking, payment: null, chat: null };
-  //     }
-
-  //     const booking = await this.createBooking({
-  //       serviceId,
-  //       mentorId,
-  //       menteeId,
-  //       bookingDate,
-  //       startTime,
-  //       endTime,
-  //       day,
-  //       slotIndex,
-  //     });
-
-  //     const payment = await this.paymentRepository.create({
-  //       bookingId: booking._id,
-  //       menteeId,
-  //       amount,
-  //       status: "completed",
-  //       transactionId: sessionId,
-  //     });
-
-  //     let chat;
-  //     if (service.oneToOneType === "chat") {
-  //       chat = await this.chatService.createChat(
-  //         booking._id.toString(),
-  //         menteeId,
-  //         mentorId
-  //       );
-  //       console.log("Created chat:", chat._id);
-  //     }
-
-  //     try {
-  //       const io = getIO();
-  //       console.log("Sending notifications for:", {
-  //         paymentId: payment._id,
-  //         bookingId: booking._id,
-  //       });
-  //       await this.notificationService.createPaymentAndBookingNotifications(
-  //         payment._id.toString(),
-  //         booking._id.toString(),
-  //         menteeId,
-  //         mentorId,
-  //         amount,
-  //         io
-  //       );
-  //       console.log("Notifications sent successfully:", {
-  //         paymentId: payment._id,
-  //         bookingId: booking._id,
-  //       });
-  //     } catch (notificationError: any) {
-  //       console.error(
-  //         "Failed to send notifications:",
-  //         notificationError.message
-  //       );
-  //     }
-
-  //     console.log("Saved booking:", booking._id);
-  //     console.log("Saved payment:", payment._id);
-
-  //     return { booking, payment, chat };
-  //   } catch (error: any) {
-  //     console.error("Detailed error in saveBookingAndPayment:", error);
-  //     throw new ApiError(
-  //       500,
-  //       error.message || "Failed to save booking and payment",
-  //       "Error during booking and payment creation"
-  //     );
-  //   }
-  // }
   async saveBookingAndPayment(
     params: SaveBookingAndPaymentParams
   ): Promise<{ booking: any; payment: any; chat?: any }> {
@@ -358,21 +258,6 @@ export default class BookingService implements IBookingService {
     return booking;
   }
 
-  // async getAllVideoTutorials(): Promise<any[]> {
-  //   try {
-  //     console.log("bookingservice getAllVideoTutorials step 1");
-  //     const tutorials = await this.serviceRepository.getAllVideoTutorials();
-  //     console.log("bookingservice getAllVideoTutorials step 2", tutorials);
-  //     return tutorials;
-  //   } catch (error: any) {
-  //     console.log("bookingservice getAllVideoTutorials step errror", error);
-  //     console.error("Error fetching video tutorials:", error);
-  //     throw new ApiError(
-  //       500,
-  //       error.message || "Failed to fetch video tutorials"
-  //     );
-  //   }
-  // }
   async getAllVideoTutorials(
     type?: string,
     searchQuery?: string,
