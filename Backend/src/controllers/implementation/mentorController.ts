@@ -404,5 +404,57 @@ class mentorController {
       next(error);
     }
   }
+
+  // mentorController.ts
+  public assignScheduleToService = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("assignScheduleToService controller step 1");
+      const serviceId = req.params.serviceId;
+      const { scheduleId } = req.body;
+
+      if (!serviceId || !scheduleId) {
+        console.log(
+          "assignScheduleToService controller step 2: Missing fields"
+        );
+        throw new ApiError(400, "Service ID and Schedule ID are required");
+      }
+
+      console.log("assignScheduleToService controller step 3", {
+        serviceId,
+        scheduleId,
+      });
+      const updatedService =
+        await this.MentorProfileService.assignScheduleToService(
+          serviceId,
+          scheduleId
+        );
+
+      if (!updatedService) {
+        console.log(
+          "assignScheduleToService controller step 4: Service not found"
+        );
+        throw new ApiError(404, "Service not found");
+      }
+
+      console.log(
+        "assignScheduleToService controller step 5: Service updated",
+        updatedService
+      );
+      res.json(
+        new ApiResponse(
+          200,
+          updatedService,
+          "Schedule assigned to service successfully"
+        )
+      );
+    } catch (error) {
+      console.log("assignScheduleToService controller step 6: Error", error);
+      next(error);
+    }
+  };
 }
 export default new mentorController();

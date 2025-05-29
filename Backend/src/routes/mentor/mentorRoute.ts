@@ -97,4 +97,11 @@ mentorRoutes.get(
   authenticate,
   paymentController.getAllMentorPayments.bind(paymentController)
 );
+
+// mentorRoutes.ts
+mentorRoutes.post(
+  "/service/:serviceId/assign-schedule",
+  authenticate,
+  mentorController.assignScheduleToService.bind(mentorController)
+);
 export default mentorRoutes;

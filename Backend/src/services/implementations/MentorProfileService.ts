@@ -21,6 +21,9 @@ import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
+import CalendarRepository from "../../repositories/implementations/CalenderRepository";
+import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import mongoose from "mongoose";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -37,6 +40,7 @@ export default class MentorProfileService implements IMentorProfileService {
   private BaseRepository: IBaseRepository<EUsers>;
   private ServiceRepository: IServiceRepository;
   private SlotRepository: ISlotRepository;
+  private CalendarRepository: ICalendarRepository;
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
@@ -44,6 +48,7 @@ export default class MentorProfileService implements IMentorProfileService {
     this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.ServiceRepository = new ServiceRepository();
     this.SlotRepository = new SlotRepository();
+    this.CalendarRepository = new CalendarRepository();
   }
 
   async welcomeData(
@@ -594,10 +599,10 @@ export default class MentorProfileService implements IMentorProfileService {
     }
   }
 
-  async getMentorSchedule(mentorId: string): Promise<ESchedule[]> {
+  async getMentorSchedule(serviceId: string): Promise<ESchedule[]> {
     try {
-      console.log("getMentorSchedule service step 1", { mentorId });
-      const response = await this.SlotRepository.findAvailableSlots(mentorId);
+      console.log("getMentorSchedule service step 1", { serviceId });
+      const response = await this.SlotRepository.findAvailableSlots(serviceId);
       // const schedule = await Schedule.findOne({ mentorId }).exec();
       console.log("getMentorSchedule service step 2", response);
       return response;
@@ -622,6 +627,77 @@ export default class MentorProfileService implements IMentorProfileService {
         500,
         `Failed to fetch mentor blocked dates: ${error.message}`
       );
+    }
+  }
+  // MentorProfileService.ts
+  async assignScheduleToService(
+    serviceId: string,
+    scheduleId: string
+  ): Promise<EService | null> {
+    try {
+      console.log("assignScheduleToService service step 1", {
+        serviceId,
+        scheduleId,
+      });
+
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        console.log(
+          "assignScheduleToService service step 2: Invalid serviceId"
+        );
+        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
+        console.log(
+          "assignScheduleToService service step 3: Invalid scheduleId"
+        );
+        throw new ApiError(400, `Invalid scheduleId format: ${scheduleId}`);
+      }
+
+      // Verify that the schedule exists
+      const schedule = await this.CalendarRepository.getSchedules(
+        serviceId?.mentorId
+      );
+      // const schedule = await Schedule.findById(scheduleId).exec();
+      if (!schedule) {
+        console.log(
+          "assignScheduleToService service step 4: Schedule not found"
+        );
+        throw new ApiError(404, "Schedule not found");
+      }
+
+      // Update the service with the scheduleId
+      const serviceData: Partial<EService> = {
+        slot: new mongoose.Types.ObjectId(scheduleId),
+      };
+
+      console.log("assignScheduleToService service step 5: Updating service");
+      const updatedService = await this.ServiceRepository.updateService(
+        serviceId,
+        serviceData
+      );
+      console.log(
+        "OOOOOOOOOO mentorsevcie assignScheduleToService reposne",
+        updatedService
+      );
+
+      if (!updatedService) {
+        console.log(
+          "assignScheduleToService service step 6: Service not found"
+        );
+        throw new ApiError(404, "Service not found");
+      }
+
+      console.log(
+        "assignScheduleToService service step 7: Service updated",
+        updatedService
+      );
+      return updatedService;
+    } catch (error: any) {
+      console.error("assignScheduleToService service error:", error);
+      throw error instanceof ApiError
+        ? error
+        : new ApiError(500, `Failed to assign schedule: ${error.message}`);
     }
   }
 }

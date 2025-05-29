@@ -27,4 +27,5 @@ export interface EService {
     earnings: number;
     conversions: string;
   };
+  slot?: mongoose.Types.ObjectId;
 }

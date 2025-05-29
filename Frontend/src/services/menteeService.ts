@@ -361,17 +361,17 @@ export const createBooking = async (
   }
 };
 // services/menteeService.ts
-export const getMentorSchedule = async (mentorId: string) => {
+export const getMentorSchedule = async (serviceId: string) => {
   try {
-    console.log("getMentorSchedule: Fetching schedule for mentor", {
-      mentorId,
+    console.log("getMentorSchedule: Fetching schedule for mentor serviceId", {
+      serviceId,
     });
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
     const response = await userAxiosInstance.get<ApiResponse>(
-      `/seeker/mentor/${mentorId}/schedule`,
+      `/seeker/mentor/${serviceId}/schedule`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }

@@ -576,7 +576,10 @@ export default class UserRepository implements IUserRepository {
         throw new ApiError(404, "Mentor not found");
       }
 
-      const services = await Service.find({ mentorId: mentor._id }).lean();
+      const services = await Service.find({
+        mentorId: mentor._id,
+        slot: { $exists: true, $ne: null },
+      }).lean();
       console.log("getMentorById repo step 3: Found services", services.length);
 
       let role = "N/A";

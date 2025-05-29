@@ -5,9 +5,9 @@ import blockedModel from "../../models/blockedModel";
 import { ISlotRepository } from "../interface/ISlotRepository";
 
 export default class SlotRepository implements ISlotRepository {
-  async findAvailableSlots(mentorId: string): Promise<ESchedule[]> {
-    console.log("SlotRepository findAvailableSlots steo 1", mentorId);
-    const response = await scheduleModel.find({ mentorId: mentorId });
+  async findAvailableSlots(serviceId: string): Promise<ESchedule[]> {
+    console.log("SlotRepository findAvailableSlots steo 1", serviceId);
+    const response = await scheduleModel.find({ _id: serviceId });
     console.log("SlotRepository findAvailableSlots steo 2", response);
     return response;
   }

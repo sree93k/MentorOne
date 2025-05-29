@@ -18,6 +18,10 @@ export interface IMentorProfileService {
   isApprovalChecking(
     userId: string
   ): Promise<{ isApproved: string | null; approvalReason: string | null }>;
-  getMentorSchedule(mentorId: string): Promise<ESchedule[]>;
+  getMentorSchedule(serviceId: string): Promise<ESchedule[]>;
   getMentorBlockedDates(mentorId: string): Promise<EBlockedDate[]>;
+  assignScheduleToService(
+    serviceId: string,
+    scheduleId: string
+  ): Promise<EService | null>;
 }

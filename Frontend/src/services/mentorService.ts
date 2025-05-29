@@ -652,3 +652,37 @@ export const isApprovalChecking = async (
     throw new Error(`Failed to check approval: ${error.message}`);
   }
 };
+// mentorService.ts
+export const assignScheduleToService = async (
+  serviceId: string,
+  scheduleId: string
+): Promise<void> => {
+  try {
+    console.log("assignScheduleToService step 1: Assigning schedule", {
+      serviceId,
+      scheduleId,
+    });
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    await api.post(
+      `/expert/service/${serviceId}/assign-schedule`,
+      { scheduleId },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(
+      "assignScheduleToService step 2: Schedule assigned successfully"
+    );
+  } catch (error: any) {
+    console.error("assignScheduleToService error:", error);
+    throw new Error(`Failed to assign schedule: ${error.message}`);
+  }
+};

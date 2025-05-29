@@ -44,22 +44,28 @@ const DaySchema = new Schema({
   },
 });
 
-const ScheduleSchema = new Schema<ESchedule>({
-  mentorId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
+const ScheduleSchema = new Schema<ESchedule>(
+  {
+    mentorId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    weeklySchedule: [DaySchema],
+    scheduleName: { type: String, default: "Default Schedule" },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  weeklySchedule: [DaySchema],
-  scheduleName: { type: String, default: "Default Schedule" },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  {
+    collection: "Schedule",
+    timestamps: true,
+  }
+);
 
 export default mongoose.model<ESchedule>("Schedule", ScheduleSchema);

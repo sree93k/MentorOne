@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import DummyImage from "@/assets/DummyProfile.jpg";
+import { useEffect } from "react";
 
 interface Service {
   _id: string; // Added _id
@@ -31,7 +32,10 @@ export default function BookingDetails({
   if (!service || !mentor) {
     return <div>Service or mentor data is missing.</div>;
   }
-
+  useEffect(() => {
+    console.log("Booking details step 1 service", service);
+    console.log("Booking details step 1 mentor", mentor);
+  });
   return (
     <div className="rounded-3xl overflow-hidden bg-gray-100">
       <div className="flex flex-row items-center justify-center gap-10 p-8">
