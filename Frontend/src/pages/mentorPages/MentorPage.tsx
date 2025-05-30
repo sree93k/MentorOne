@@ -13,6 +13,7 @@ import VideoCallHome from "@/pages/usersPage/VideoCallHome";
 import VideoCallMeeting from "@/pages/usersPage/VideoCallMeeting";
 import VideoCallEndPage from "@/pages/usersPage/VideoCallEndPage";
 import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
+import NotFoundPage from "../usersPage/NotFoundPage";
 //=======
 const Footer = lazy(() => import("@/components/landing/Footer"));
 const MentorSidebar = lazy(() => import("@/components/mentor/MentorSidebar"));
@@ -53,6 +54,7 @@ export const MentorPage = () => {
               path="/meeting-join/:meetingId"
               element={<VideoCallJoinPage />}
             />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>
       </main>
