@@ -578,7 +578,15 @@ export default class UserRepository implements IUserRepository {
 
       const services = await Service.find({
         mentorId: mentor._id,
-        slot: { $exists: true, $ne: null },
+        $or: [
+          {
+            type: { $in: ["1-1Call", "priorityDM"] },
+            slot: { $exists: true, $ne: null },
+          },
+          {
+            type: "DigitalProducts",
+          },
+        ],
       }).lean();
       console.log("getMentorById repo step 3: Found services", services.length);
 

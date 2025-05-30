@@ -226,7 +226,7 @@ export const getMentorById = async (mentorId: string): Promise<Mentor> => {
     throw new Error(`Failed to fetch mentor: ${error.message}`);
   }
 };
-const getAllTutorials = async (
+export const getAllTutorials = async (
   page: number = 1,
   limit: number = 12,
   type?: string,

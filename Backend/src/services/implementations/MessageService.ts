@@ -88,7 +88,7 @@ export default class MessageService implements IMessageService {
     console.log("get meesage servcie step 1");
 
     const response = await this.messageRepository.findByChatId(chatId);
-    console.log("get meesage servcie step 2", response);
+    console.log("get meesage servcie step 2");
     return response;
   }
 
