@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChartNoAxesCombined } from "lucide-react";
+import { ChartNoAxesCombined, ArrowBigLeft } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import toast from "react-hot-toast";
 import { getAllServices } from "@/services/mentorService";
@@ -10,7 +10,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import SlotManagementDrawer from "@/components/mentor/SlotManagementDrawer"; // Import the new component
-
+import { Badge } from "@/components/ui/badge";
 interface Service {
   _id: string;
   title: string;
@@ -136,7 +136,7 @@ const MentorService: React.FC = () => {
                 <p className="mt-2 text-gray-500">{service.shortDescription}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between w-full mt-5">
+            {/* <div className="flex items-center justify-between w-full mt-5">
               <div className="flex p-2 gap-2">
                 <Button
                   variant="outline"
@@ -146,12 +146,56 @@ const MentorService: React.FC = () => {
                 >
                   <Link to={`/expert/editService/${service._id}`}>Edit</Link>
                 </Button>
-                {/* Replaced Link with SlotManagementDrawer */}
+
                 {user?._id && (
                   <SlotManagementDrawer
                     mentorId={user._id}
                     serviceId={service._id}
                   />
+                )}
+                {!service?.slot ? (
+                  <p className="text-red-500">Add slot to sevice </p>
+                ) : (
+                  ""
+                )}
+              </div>
+              <Button ref={buttonRef} onClick={() => toggleStats(service._id)}>
+                <ChartNoAxesCombined size={36} />
+              </Button>
+            </div> */}
+
+            <div className="flex items-center justify-between w-full mt-5">
+              <div className="flex p-2 gap-2 items-center">
+                {" "}
+                {/* Added items-center here */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded border-black text-black hover:bg-black hover:text-white transition-colors duration-200"
+                  asChild
+                >
+                  <Link to={`/expert/editService/${service._id}`}>Edit</Link>
+                </Button>
+                {/* SlotManagementDrawer for 1-1Call services (conditional rendering from previous code) */}
+                {(service.type === "1-1Call" ||
+                  service.type === "priorityDM") && ( // Ensure SlotManagementDrawer is only for 1-1Call as discussed
+                  <SlotManagementDrawer
+                    mentorId={user._id}
+                    serviceId={service._id}
+                  />
+                )}
+                {!service?.slot &&
+                (service.type === "1-1Call" ||
+                  service.type === "priorityDM") ? ( // Only show message if it's a 1-1Call and no slot
+                  <Badge
+                    variant="destructive"
+                    className="text-xs font-medium px-3 py-1.5 rounded-full animate-pulse bg-red-500 text-white"
+                  >
+                    <ArrowBigLeft />
+                    Slots Needed!
+                  </Badge>
+                ) : (
+                  ""
                 )}
               </div>
               <Button ref={buttonRef} onClick={() => toggleStats(service._id)}>

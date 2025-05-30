@@ -23,7 +23,7 @@ export default class MentorRepository implements IMentorRepository {
   async getMentor(id: string): Promise<EMentor | null> {
     console.log("mentor getMneter step1 ", id);
     const response = await Mentor.findById(id);
-    console.log("mentor getMneter step 2 ", response);
+    console.log("mentor getMneter step 2 ");
     return response;
   }
 
