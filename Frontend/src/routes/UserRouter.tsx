@@ -6,7 +6,7 @@ import VideoCallMeeting from "@/pages/usersPage/VideoCallMeeting";
 import VideoCallEndPage from "@/pages/usersPage/VideoCallEndPage";
 import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
 import { MeetingProvider } from "@/contexts/MeetingContext";
-
+import NotFoundPage from "@/pages/usersPage/NotFoundPage";
 // Lazy-loaded components
 const BlogPage = lazy(() => import("../pages/usersPage/BlogPage"));
 const BlogPostPage = lazy(() => import("../pages/usersPage/BlogPost"));
@@ -34,6 +34,7 @@ const UserRouter: React.FC = () => {
         <Route path="/blog/:id" element={<BlogPostPage />} />
         <Route path="/meetinghome" element={<VideoCallHome />} />
         <Route path="/*" element={<MeetingRoutesWrapper />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   );
