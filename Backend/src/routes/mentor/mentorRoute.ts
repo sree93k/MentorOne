@@ -105,7 +105,6 @@ mentorRoutes.post(
   mentorController.assignScheduleToService.bind(mentorController)
 );
 
-// routes/mentorRoutes.ts
 mentorRoutes.post(
   "/priority-dm/:priorityDMId/reply",
   authenticate,
@@ -116,5 +115,11 @@ mentorRoutes.get(
   "/priority-dm/:serviceId",
   authenticate,
   mentorController.getPriorityDMs.bind(mentorController)
+);
+
+mentorRoutes.get(
+  "/priority-dm",
+  authenticate,
+  mentorController.getAllPriorityDMsByMentor.bind(mentorController)
 );
 export default mentorRoutes;

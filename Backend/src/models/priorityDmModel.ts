@@ -10,12 +10,12 @@ const PriorityDMSchema: Schema = new Schema(
     },
     mentorId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Users",
       required: true,
     },
     menteeId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Users",
       required: true,
     },
     bookingId: {

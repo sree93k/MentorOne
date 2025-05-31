@@ -182,10 +182,7 @@ class mentorController {
       console.log("getAllServices controller step 2: User ID", userId);
 
       const services = await this.MentorProfileService.getAllServices(userId);
-      console.log(
-        "getAllServices controller step 3: Services fetched",
-        services
-      );
+      console.log("getAllServices controller step 3: Services fetched");
 
       res.json(new ApiResponse(200, services, "Services fetched successfully"));
     } catch (error) {
@@ -510,6 +507,32 @@ class mentorController {
 
       res.json(
         new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getAllPriorityDMsByMentor = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const mentorId = req.user?.id;
+      if (!mentorId) {
+        throw new ApiError(401, "Unauthorized", "User ID is required");
+      }
+
+      const priorityDMs =
+        await this.MentorProfileService.getAllPriorityDMsByMentor(mentorId);
+
+      res.json(
+        new ApiResponse(
+          200,
+          priorityDMs,
+          "All Priority DMs fetched successfully"
+        )
       );
     } catch (error) {
       next(error);
