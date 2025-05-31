@@ -714,8 +714,11 @@ export default class MentorProfileService implements IMentorProfileService {
       pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
     }
   ): Promise<EPriorityDM | null> {
+    console.log("@@@@@Mentor servcie replyToPriorityDM step 1");
+
     try {
       if (!mongoose.Types.ObjectId.isValid(priorityDMId)) {
+        console.log("@@@@@Mentor servcie replyToPriorityDM step 2");
         throw new ApiError(400, `Invalid priorityDMId format: ${priorityDMId}`);
       }
 
@@ -723,18 +726,24 @@ export default class MentorProfileService implements IMentorProfileService {
       if (!priorityDM) {
         throw new ApiError(404, "Priority DM not found");
       }
-
-      if (priorityDM.mentorId.toString() !== mentorId) {
+      console.log("@@@@@Mentor servcie replyToPriorityDM step 3", priorityDM);
+      if (priorityDM.mentorId._id.toString() !== mentorId) {
+        console.log("@@@@@Mentor servcie replyToPriorityDM step 4", mentorId);
+        console.log(
+          "@@@@@Mentor servcie replyToPriorityDM step 4.5",
+          priorityDM.mentorId._id
+        );
         throw new ApiError(403, "Unauthorized to reply to this Priority DM");
       }
 
       if (priorityDM.status !== "pending") {
+        console.log("@@@@@Mentor servcie replyToPriorityDM step 5");
         throw new ApiError(
           400,
           "Priority DM has already been replied to or closed"
         );
       }
-
+      console.log("@@@@@Mentor servcie replyToPriorityDM step 6");
       const updateData: Partial<EPriorityDM> = {
         mentorReply: {
           content: data.content,
@@ -743,12 +752,15 @@ export default class MentorProfileService implements IMentorProfileService {
         },
         status: "replied",
       };
-
+      console.log("@@@@@Mentor servcie replyToPriorityDM step 7");
       const updatedDM = await this.PriorityDMRepository.update(
         priorityDMId,
         updateData
       );
-
+      console.log(
+        "@@@@@Mentor servcie replyToPriorityDM step 8 final",
+        updatedDM
+      );
       return updatedDM;
     } catch (error) {
       console.error("Error replying to PriorityDM:", error);
