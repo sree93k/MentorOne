@@ -412,3 +412,54 @@ export const getMentorBlockedDates = async (mentorId: string) => {
     throw new Error(`Failed to fetch mentor blocked dates: ${error.message}`);
   }
 };
+
+// services/menteeService.ts
+export const createPriorityDM = async (payload: {
+  serviceId: string;
+  bookingId?: string;
+  content: string;
+  pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
+}) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.post("/seeker/priority-dm", payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error creating PriorityDM:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to create PriorityDM"
+    );
+  }
+};
+
+export const getPriorityDMs = async (serviceId: string) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get(`/seeker/priority-dm/${serviceId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error fetching PriorityDMs:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch PriorityDMs"
+    );
+  }
+};

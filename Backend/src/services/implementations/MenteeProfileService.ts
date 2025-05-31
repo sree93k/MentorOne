@@ -5,6 +5,8 @@ import { ICareerRepository } from "../../repositories/interface/ICareerRepositot
 import CareerRepositiory from "../../repositories/implementations/CareerRepository";
 import { EUsers } from "../../entities/userEntity";
 import { ObjectId } from "mongoose";
+import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
+import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
@@ -14,7 +16,12 @@ import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepositotry from "../../repositories/implementations/BaseRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import Users from "../../models/userModel";
-
+import { EPriorityDM } from "../../entities/priorityDMEntity";
+import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
+import BookingRepository from "../../repositories/implementations/BookingRepository";
+import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import mongoose from "mongoose";
 interface WelcomeFormData {
   careerGoal: string;
   interestedCareer: string;
@@ -28,11 +35,17 @@ export default class MenteeProfileService implements IMenteeProfileService {
   private CareerRepository: ICareerRepository;
   private MenteeRepository: IMenteeRepository;
   private BaseRepository: IBaseRepository<EUsers>;
+  private PriorityDMRepository: IPriorityDMRepository;
+  private ServiceRepository: IServiceRepository;
+  private BookingRepository: IBookingRepository;
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
     this.MenteeRepository = new MenteeRepository();
     this.BaseRepository = new BaseRepositotry<EUsers>(Users);
+    this.PriorityDMRepository = new PriorityDMRepository();
+    this.ServiceRepository = new ServiceRepository();
+    this.BookingRepository = new BookingRepository();
   }
   //welcomeData
   async welcomeData(
@@ -257,6 +270,159 @@ export default class MenteeProfileService implements IMenteeProfileService {
       throw error instanceof ApiError
         ? error
         : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
+    }
+  }
+
+  // async createPriorityDM(data: {
+  //   serviceId: string;
+  //   bookingId?: string;
+  //   menteeId: string;
+  //   content: string;
+  //   pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
+  // }): Promise<EPriorityDM> {
+  //   try {
+  //     const { serviceId, bookingId, menteeId, content, pdfFiles } = data;
+
+  //     const service = await this.ServiceRepository.getServiceById(serviceId);
+  //     if (!service) {
+  //       throw new ApiError(404, "Service not found");
+  //     }
+
+  //     if (service.type !== "priorityDM") {
+  //       throw new ApiError(400, "Service is not a Priority DM");
+  //     }
+
+  //     const priorityDMData: Partial<EPriorityDM> = {
+  //       serviceId: new mongoose.Types.ObjectId(serviceId),
+  //       mentorId: new mongoose.Types.ObjectId(service.mentorId),
+  //       menteeId: new mongoose.Types.ObjectId(menteeId),
+  //       bookingId: bookingId
+  //         ? new mongoose.Types.ObjectId(bookingId)
+  //         : undefined,
+  //       content,
+  //       pdfFiles,
+  //       status: "pending",
+  //     };
+
+  //     const priorityDM = await this.PriorityDMRepository.create(priorityDMData);
+  //     if (!priorityDM) {
+  //       throw new ApiError(500, "Failed to create Priority DM");
+  //     }
+
+  //     return priorityDM;
+  //   } catch (error) {
+  //     console.error("Error creating PriorityDM:", error);
+  //     throw error;
+  //   }
+  // }
+
+  // async getPriorityDMs(
+  //   serviceId: string,
+  //   menteeId: string
+  // ): Promise<EPriorityDM[]> {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+  //       throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+  //     }
+
+  //     const priorityDMs =
+  //       await this.PriorityDMRepository.findByServiceAndMentee(
+  //         serviceId,
+  //         menteeId
+  //       );
+
+  //     return priorityDMs;
+  //   } catch (error) {
+  //     console.error("Error fetching PriorityDMs:", error);
+  //     throw error;
+  //   }
+  // }
+  async createPriorityDM(data: {
+    serviceId: string;
+    bookingId: string; // Not optional since it's required
+    menteeId: string;
+    content: string;
+    pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
+  }): Promise<EPriorityDM> {
+    try {
+      const { serviceId, bookingId, menteeId, content, pdfFiles } = data;
+
+      // Validate serviceId
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        throw new ApiError(400, "Invalid serviceId format");
+      }
+
+      // Fetch service to get mentorId
+      const service = await this.ServiceRepository.getServiceById(serviceId);
+      if (!service) {
+        throw new ApiError(404, "Service not found");
+      }
+
+      if (service.type !== "priorityDM") {
+        throw new ApiError(400, "Service is not a Priority DM");
+      }
+
+      // Validate menteeId
+      if (!mongoose.Types.ObjectId.isValid(menteeId)) {
+        throw new ApiError(400, "Invalid menteeId format");
+      }
+
+      // Validate bookingId
+      if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+        throw new ApiError(400, "Invalid bookingId format");
+      }
+
+      // Verify booking exists
+      const booking = await this.BookingRepository.findById(bookingId);
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+
+      // Prepare PriorityDM data
+      const priorityDMData: Partial<EPriorityDM> = {
+        serviceId: new mongoose.Types.ObjectId(serviceId),
+        mentorId: new mongoose.Types.ObjectId(service.mentorId),
+        menteeId: new mongoose.Types.ObjectId(menteeId),
+        bookingId: new mongoose.Types.ObjectId(bookingId),
+        content,
+        pdfFiles,
+        status: "pending",
+      };
+
+      console.log("PriorityDM Data to Save:", priorityDMData);
+
+      // Create PriorityDM
+      const priorityDM = await this.PriorityDMRepository.create(priorityDMData);
+      if (!priorityDM) {
+        throw new ApiError(500, "Failed to create Priority DM");
+      }
+
+      return priorityDM;
+    } catch (error) {
+      console.error("Error creating PriorityDM:", error);
+      throw error;
+    }
+  }
+
+  async getPriorityDMs(
+    serviceId: string,
+    menteeId: string
+  ): Promise<EPriorityDM[]> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+      }
+
+      const priorityDMs =
+        await this.PriorityDMRepository.findByServiceAndMentee(
+          serviceId,
+          menteeId
+        );
+
+      return priorityDMs;
+    } catch (error) {
+      console.error("Error fetching PriorityDMs:", error);
+      throw error;
     }
   }
 }

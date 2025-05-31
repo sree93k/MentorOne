@@ -23,7 +23,10 @@ import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 import CalendarRepository from "../../repositories/implementations/CalenderRepository";
 import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
+import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
 import mongoose from "mongoose";
+import { EPriorityDM } from "../../entities/priorityDMEntity";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -41,6 +44,7 @@ export default class MentorProfileService implements IMentorProfileService {
   private ServiceRepository: IServiceRepository;
   private SlotRepository: ISlotRepository;
   private CalendarRepository: ICalendarRepository;
+  private PriorityDMRepository: IPriorityDMRepository;
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
@@ -49,6 +53,7 @@ export default class MentorProfileService implements IMentorProfileService {
     this.ServiceRepository = new ServiceRepository();
     this.SlotRepository = new SlotRepository();
     this.CalendarRepository = new CalendarRepository();
+    this.PriorityDMRepository = new PriorityDMRepository();
   }
 
   async welcomeData(
@@ -698,6 +703,78 @@ export default class MentorProfileService implements IMentorProfileService {
       throw error instanceof ApiError
         ? error
         : new ApiError(500, `Failed to assign schedule: ${error.message}`);
+    }
+  }
+
+  async replyToPriorityDM(
+    priorityDMId: string,
+    mentorId: string,
+    data: {
+      content: string;
+      pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
+    }
+  ): Promise<EPriorityDM | null> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(priorityDMId)) {
+        throw new ApiError(400, `Invalid priorityDMId format: ${priorityDMId}`);
+      }
+
+      const priorityDM = await this.PriorityDMRepository.findById(priorityDMId);
+      if (!priorityDM) {
+        throw new ApiError(404, "Priority DM not found");
+      }
+
+      if (priorityDM.mentorId.toString() !== mentorId) {
+        throw new ApiError(403, "Unauthorized to reply to this Priority DM");
+      }
+
+      if (priorityDM.status !== "pending") {
+        throw new ApiError(
+          400,
+          "Priority DM has already been replied to or closed"
+        );
+      }
+
+      const updateData: Partial<EPriorityDM> = {
+        mentorReply: {
+          content: data.content,
+          pdfFiles: data.pdfFiles,
+          repliedAt: new Date(),
+        },
+        status: "replied",
+      };
+
+      const updatedDM = await this.PriorityDMRepository.update(
+        priorityDMId,
+        updateData
+      );
+
+      return updatedDM;
+    } catch (error) {
+      console.error("Error replying to PriorityDM:", error);
+      throw error;
+    }
+  }
+
+  async getPriorityDMs(
+    serviceId: string,
+    mentorId: string
+  ): Promise<EPriorityDM[]> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+      }
+
+      const priorityDMs =
+        await this.PriorityDMRepository.findByServiceAndMentor(
+          serviceId,
+          mentorId
+        );
+
+      return priorityDMs;
+    } catch (error) {
+      console.error("Error fetching PriorityDMs:", error);
+      throw error;
     }
   }
 }

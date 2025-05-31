@@ -542,6 +542,68 @@ class menteeController {
       next(error);
     }
   };
+
+  // controllers/implementation/menteeController.ts
+  public createPriorityDM = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const menteeId = req.user?.id;
+      if (!menteeId) {
+        throw new ApiError(401, "Unauthorized", "User ID is required");
+      }
+
+      const { serviceId, bookingId, content, pdfFiles } = req.body;
+      if (!serviceId || !content) {
+        throw new ApiError(400, "Service ID and content are required");
+      }
+
+      const priorityDM = await this.MenteeProfileService.createPriorityDM({
+        serviceId,
+        bookingId,
+        menteeId,
+        content,
+        pdfFiles,
+      });
+
+      res.json(
+        new ApiResponse(201, priorityDM, "Priority DM created successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getPriorityDMs = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const menteeId = req.user?.id;
+      if (!menteeId) {
+        throw new ApiError(401, "Unauthorized", "User ID is required");
+      }
+
+      const { serviceId } = req.params;
+      if (!serviceId) {
+        throw new ApiError(400, "Service ID is required");
+      }
+
+      const priorityDMs = await this.MenteeProfileService.getPriorityDMs(
+        serviceId,
+        menteeId
+      );
+
+      res.json(
+        new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default new menteeController();

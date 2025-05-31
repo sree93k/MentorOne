@@ -2,6 +2,7 @@ import { EService } from "../../entities/serviceEntity";
 import { EUsers } from "../../entities/userEntity";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
+import { EPriorityDM } from "../../entities/priorityDMEntity";
 export interface IMentorProfileService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   profileDatas(userId: string): Promise<EUsers | null>;
@@ -24,4 +25,13 @@ export interface IMentorProfileService {
     serviceId: string,
     scheduleId: string
   ): Promise<EService | null>;
+  replyToPriorityDM(
+    priorityDMId: string,
+    mentorId: string,
+    data: {
+      content: string;
+      pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
+    }
+  ): Promise<EPriorityDM | null>;
+  getPriorityDMs(serviceId: string, mentorId: string): Promise<EPriorityDM[]>;
 }
