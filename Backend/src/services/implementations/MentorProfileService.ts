@@ -25,6 +25,8 @@ import CalendarRepository from "../../repositories/implementations/CalenderRepos
 import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
+import BookingRepository from "../../repositories/implementations/BookingRepository";
+import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import mongoose from "mongoose";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 // Define interfaces
@@ -45,6 +47,8 @@ export default class MentorProfileService implements IMentorProfileService {
   private SlotRepository: ISlotRepository;
   private CalendarRepository: ICalendarRepository;
   private PriorityDMRepository: IPriorityDMRepository;
+  private BookingRepository: IBookingRepository;
+
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
@@ -54,6 +58,7 @@ export default class MentorProfileService implements IMentorProfileService {
     this.SlotRepository = new SlotRepository();
     this.CalendarRepository = new CalendarRepository();
     this.PriorityDMRepository = new PriorityDMRepository();
+    this.BookingRepository = new BookingRepository();
   }
 
   async welcomeData(
@@ -756,6 +761,15 @@ export default class MentorProfileService implements IMentorProfileService {
       const updatedDM = await this.PriorityDMRepository.update(
         priorityDMId,
         updateData
+      );
+
+      const bookingStatusChange = await this.BookingRepository.update(
+        priorityDM?.bookingId?._id,
+        { status: "completed" }
+      );
+      console.log(
+        "@@@@@Mentor servcie replyToPriorityDM step 7.5",
+        bookingStatusChange
       );
       console.log(
         "@@@@@Mentor servcie replyToPriorityDM step 8 final",

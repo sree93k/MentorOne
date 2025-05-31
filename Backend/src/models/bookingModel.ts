@@ -47,7 +47,7 @@ const BookingSchema = new Schema<EBooking>({
   },
   status: {
     type: String,
-    enum: ["confirmed", "rescheduled", "cancelled", "completed"],
+    enum: ["confirmed", "rescheduled", "cancelled", "pending", "completed"],
     default: "confirmed",
   },
   paymentDetails: {

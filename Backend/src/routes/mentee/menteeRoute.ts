@@ -106,7 +106,7 @@ menteeRoutes.post(
 );
 
 menteeRoutes.get(
-  "/priority-dm/:serviceId",
+  "/priority-dm/:bookingId",
   authenticate,
   menteeController.getPriorityDMs.bind(menteeController)
 );

@@ -396,7 +396,11 @@ export default class MenteeProfileService implements IMenteeProfileService {
       if (!priorityDM) {
         throw new ApiError(500, "Failed to create Priority DM");
       }
-
+      const bookingStatusChange = await this.BookingRepository.update(
+        bookingId,
+        { status: "pending" }
+      );
+      console.log("mnetee cretaion bookingStatusChange", bookingStatusChange);
       return priorityDM;
     } catch (error) {
       console.error("Error creating PriorityDM:", error);
@@ -405,20 +409,21 @@ export default class MenteeProfileService implements IMenteeProfileService {
   }
 
   async getPriorityDMs(
-    serviceId: string,
+    bookingId: string,
     menteeId: string
   ): Promise<EPriorityDM[]> {
     try {
-      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+      if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+        throw new ApiError(400, `Invalid serviceId format: ${bookingId}`);
       }
+      console.log("menteeservice getPriorityDMs step 1", bookingId, menteeId);
 
       const priorityDMs =
         await this.PriorityDMRepository.findByServiceAndMentee(
-          serviceId,
+          bookingId,
           menteeId
         );
-
+      console.log("menteeservice getPriorityDMs step 2", priorityDMs);
       return priorityDMs;
     } catch (error) {
       console.error("Error fetching PriorityDMs:", error);

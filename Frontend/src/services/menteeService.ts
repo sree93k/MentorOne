@@ -442,14 +442,14 @@ export const createPriorityDM = async (payload: {
   }
 };
 
-export const getPriorityDMs = async (serviceId: string) => {
+export const getPriorityDMs = async (bookingId: string) => {
   try {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
 
-    const response = await api.get(`/seeker/priority-dm/${serviceId}`, {
+    const response = await api.get(`/seeker/priority-dm/${bookingId}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
