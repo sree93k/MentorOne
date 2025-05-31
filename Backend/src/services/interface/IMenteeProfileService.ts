@@ -1,18 +1,5 @@
-// import { EUsers } from "../../entities/userEntity";
-
-// export interface IMenteeProfileService {
-//   welcomeData(formData: object, id: string): Promise<EUsers | null>;
-//   // editUserProfile(id: string, payload: any): Promise<EUsers | null>;
-//   deleteAccount(id: string): Promise<boolean>;
-//   userProfielData(
-//     id: string
-//   ): Promise<{ user: Omit<EUsers, "password">[] } | null>;
-//   getAllMentors(): Promise<EUsers[]>;
-//   getMentorById(mentorId: string): Promise<EUsers>;
-// }
-
 import { EUsers } from "../../entities/userEntity";
-
+import { EPriorityDM } from "../../entities/priorityDMEntity";
 export interface IMenteeProfileService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   deleteAccount(id: string): Promise<boolean>;
@@ -26,4 +13,12 @@ export interface IMenteeProfileService {
     searchQuery?: string
   ): Promise<{ mentors: EUsers[]; total: number }>;
   getMentorById(mentorId: string): Promise<EUsers>;
+  createPriorityDM(data: {
+    serviceId: string;
+    bookingId?: string;
+    menteeId: string;
+    content: string;
+    pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
+  }): Promise<EPriorityDM>;
+  getPriorityDMs(serviceId: string, menteeId: string): Promise<EPriorityDM[]>;
 }

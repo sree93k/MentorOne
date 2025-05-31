@@ -64,7 +64,7 @@ const BlockedDateSchema: Schema = new Schema(
 // Normalize `date` to end of day before saving
 BlockedDateSchema.pre("save", function (next) {
   if (this.date) {
-    const endOfDay = new Date(this.date);
+    const endOfDay = new Date(this?.date);
     endOfDay.setHours(23, 59, 59, 999);
     this.date = endOfDay;
   }

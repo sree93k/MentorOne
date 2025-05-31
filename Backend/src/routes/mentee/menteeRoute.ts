@@ -97,4 +97,17 @@ menteeRoutes.get(
   authenticate,
   menteeController.getMentorBlockedDates.bind(menteeController)
 );
+
+// routes/menteeRoutes.ts
+menteeRoutes.post(
+  "/priority-dm",
+  authenticate,
+  menteeController.createPriorityDM.bind(menteeController)
+);
+
+menteeRoutes.get(
+  "/priority-dm/:serviceId",
+  authenticate,
+  menteeController.getPriorityDMs.bind(menteeController)
+);
 export default menteeRoutes;

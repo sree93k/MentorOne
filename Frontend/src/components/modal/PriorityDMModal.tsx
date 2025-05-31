@@ -1,3 +1,783 @@
+// // // import React, { useEffect, useRef, useState } from "react";
+// // // import {
+// // //   X,
+// // //   Bold,
+// // //   Italic,
+// // //   Underline,
+// // //   List,
+// // //   ListOrdered,
+// // //   Link,
+// // //   Image,
+// // //   AlignLeft,
+// // //   AlignCenter,
+// // //   AlignRight,
+// // //   AlignJustify,
+// // //   Code,
+// // //   FileText,
+// // // } from "lucide-react";
+// // // import {
+// // //   Dialog,
+// // //   DialogContent,
+// // //   DialogHeader,
+// // //   DialogTitle,
+// // //   DialogFooter,
+// // // } from "@/components/ui/dialog";
+// // // import { Button } from "@/components/ui/button";
+// // // import Quill from "quill";
+// // // import "quill/dist/quill.snow.css";
+// // // import { useSelector } from "react-redux";
+// // // import { RootState } from "@/redux/store/store";
+// // // import {
+// // //   uploadToS3WithPresignedUrl,
+// // //   getPresignedUrlForView,
+// // // } from "@/services/userServices";
+// // // import { createPriorityDM } from "@/services/menteeService"; // Import new service functions
+// // // import { replyToPriorityDM } from "@/services/mentorService";
+// // // import toast from "react-hot-toast";
+
+// // // interface PriorityDMModalProps {
+// // //   isOpen: boolean;
+// // //   onClose: () => void;
+// // //   serviceId: string;
+// // //   bookingId?: string; // Added for booking reference
+// // //   title: string;
+// // //   productType: string;
+// // //   existingDM?: any; // For mentor reply: pass existing DM data
+// // // }
+
+// // // const PriorityDMModal: React.FC<PriorityDMModalProps> = ({
+// // //   isOpen,
+// // //   onClose,
+// // //   serviceId,
+// // //   bookingId,
+// // //   title,
+// // //   productType,
+// // //   existingDM,
+// // // }) => {
+// // //   const [editorContent, setEditorContent] = useState("");
+// // //   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+// // //   const [quillInitialized, setQuillInitialized] = useState(false);
+// // //   const editorRef = useRef<HTMLDivElement>(null);
+// // //   const quillRef = useRef<Quill | null>(null);
+// // //   const [editorReady, setEditorReady] = useState(false);
+// // //   const { user, isOnline } = useSelector((state: RootState) => state.user);
+// // //   const isMentee = isOnline?.role === "mentee";
+// // //   const [isSubmitting, setIsSubmitting] = useState(false);
+
+// // //   const colorOptions = [
+// // //     "#000000",
+// // //     "#e60000",
+// // //     "#ff9900",
+// // //     "#ffff00",
+// // //     "#008a00",
+// // //     "#0066cc",
+// // //     "#9933ff",
+// // //     "#ffffff",
+// // //     "#facccc",
+// // //     "#ffebcc",
+// // //     "#ffffcc",
+// // //     "#cce8cc",
+// // //     "#cce0f5",
+// // //     "#ebd6ff",
+// // //     "#bbbbbb",
+// // //     "#f06666",
+// // //     "#ffc266",
+// // //     "#ffff66",
+// // //     "#66b966",
+// // //     "#66a3e0",
+// // //     "#c285ff",
+// // //     "#888888",
+// // //     "#a10000",
+// // //     "#b26b00",
+// // //     "#b2b200",
+// // //     "#006100",
+// // //     "#0047b2",
+// // //     "#6b24b2",
+// // //     "#444444",
+// // //     "#5c0000",
+// // //     "#663d00",
+// // //     "#666600",
+// // //     "#003700",
+// // //     "#002966",
+// // //     "#3d1466",
+// // //   ];
+
+// // //   // Initialize editor when modal is open
+// // //   useEffect(() => {
+// // //     if (isOpen) {
+// // //       const timer = setTimeout(() => {
+// // //         setEditorReady(true);
+// // //       }, 300);
+// // //       return () => clearTimeout(timer);
+// // //     } else {
+// // //       setEditorReady(false);
+// // //       setQuillInitialized(false);
+// // //       setEditorContent("");
+// // //       setSelectedFiles([]);
+// // //     }
+// // //   }, [isOpen]);
+
+// // //   // Initialize Quill editor
+// // //   useEffect(() => {
+// // //     if (!editorReady || !editorRef.current || quillInitialized) return;
+
+// // //     if (quillRef.current) {
+// // //       quillRef.current.off("text-change");
+// // //       quillRef.current = null;
+// // //       if (editorRef.current) {
+// // //         editorRef.current.innerHTML = "";
+// // //       }
+// // //     }
+
+// // //     const toolbarOptions = [
+// // //       [{ font: [] }],
+// // //       [{ size: ["small", false, "large", "huge"] }],
+// // //       ["bold", "italic", "underline", "code-block"],
+// // //       [{ color: colorOptions }, { background: colorOptions }],
+// // //       [
+// // //         { align: null },
+// // //         { align: "center" },
+// // //         { align: "right" },
+// // //         { align: "justify" },
+// // //       ],
+// // //       [{ list: "ordered" }, { list: "bullet" }],
+// // //       ["clean"],
+// // //     ];
+
+// // //     quillRef.current = new Quill(editorRef.current, {
+// // //       modules: { toolbar: toolbarOptions },
+// // //       theme: "snow",
+// // //       placeholder: isMentee
+// // //         ? "Type your message here..."
+// // //         : "Type your reply here...",
+// // //     });
+
+// // //     quillRef.current.on("text-change", () => {
+// // //       if (quillRef.current) {
+// // //         setEditorContent(quillRef.current.root.innerHTML);
+// // //       }
+// // //     });
+
+// // //     if (existingDM && !isMentee) {
+// // //       quillRef.current.root.innerHTML = existingDM.content || "";
+// // //       setEditorContent(existingDM.content || "");
+// // //     }
+
+// // //     quillRef.current.focus();
+// // //     setQuillInitialized(true);
+// // //   }, [editorReady, quillInitialized, existingDM, isMentee]);
+
+// // //   // Cleanup Quill on unmount
+// // //   useEffect(() => {
+// // //     return () => {
+// // //       if (quillRef.current) {
+// // //         quillRef.current.off("text-change");
+// // //         quillRef.current = null;
+// // //       }
+// // //     };
+// // //   }, []);
+
+// // //   // Handle file selection
+// // //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+// // //     if (e.target.files) {
+// // //       const files = Array.from(e.target.files).filter((file) =>
+// // //         file.type.includes("pdf")
+// // //       );
+// // //       if (files.length + selectedFiles.length > 5) {
+// // //         toast.error("Maximum 5 PDF files allowed.");
+// // //         return;
+// // //       }
+// // //       setSelectedFiles([...selectedFiles, ...files]);
+// // //     }
+// // //   };
+
+// // //   // Remove selected file
+// // //   const removeFile = (index: number) => {
+// // //     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+// // //   };
+
+// // //   // View PDF file
+// // //   const viewFile = async (s3Key: string) => {
+// // //     try {
+// // //       const url = await getPresignedUrlForView(s3Key);
+// // //       window.open(url, "_blank");
+// // //     } catch (error) {
+// // //       toast.error("Failed to view PDF.");
+// // //       console.error("Error viewing PDF:", error);
+// // //     }
+// // //   };
+
+// // //   // Handle form submission
+// // //   const handleSubmit = async () => {
+// // //     if (!editorContent.trim() && selectedFiles.length === 0) {
+// // //       toast.error("Please provide content or upload a PDF.");
+// // //       return;
+// // //     }
+
+// // //     setIsSubmitting(true);
+// // //     try {
+// // //       const uploadedFiles = await Promise.all(
+// // //         selectedFiles.map(async (file) => {
+// // //           const url = await uploadToS3WithPresignedUrl(
+// // //             file,
+// // //             "pdfs",
+// // //             "application/pdf"
+// // //           );
+// // //           return {
+// // //             fileName: file.name,
+// // //             s3Key: url.split("/").slice(-2).join("/"),
+// // //             url,
+// // //           };
+// // //         })
+// // //       );
+
+// // //       if (isMentee) {
+// // //         // Mentee: Create new PriorityDM
+// // //         await createPriorityDM({
+// // //           serviceId,
+// // //           bookingId,
+// // //           content: editorContent,
+// // //           pdfFiles: uploadedFiles,
+// // //         });
+// // //         toast.success("Priority DM sent successfully!");
+// // //       } else {
+// // //         // Mentor: Reply to existing PriorityDM
+// // //         await replyToPriorityDM(existingDM._id, {
+// // //           content: editorContent,
+// // //           pdfFiles: uploadedFiles,
+// // //         });
+// // //         toast.success("Reply sent successfully!");
+// // //       }
+
+// // //       setEditorContent("");
+// // //       setSelectedFiles([]);
+// // //       onClose();
+// // //     } catch (error) {
+// // //       toast.error("Failed to submit. Please try again.");
+// // //       console.error("Error submitting PriorityDM:", error);
+// // //     } finally {
+// // //       setIsSubmitting(false);
+// // //     }
+// // //   };
+
+// // //   return (
+// // //     <Dialog open={isOpen} onOpenChange={onClose}>
+// // //       <DialogContent className="max-w-4xl bg-white overflow-visible">
+// // //         <DialogHeader>
+// // //           <DialogTitle>
+// // //             {isMentee ? title : `Reply to ${title}`} ({productType})
+// // //           </DialogTitle>
+// // //         </DialogHeader>
+// // //         <div className="py-4">
+// // //           {/* Display Existing DM Content for Mentor */}
+// // //           {!isMentee && existingDM && (
+// // //             <div className="mb-4 p-4 bg-gray-50 rounded-md">
+// // //               <h3 className="font-medium mb-2">Mentee's Message:</h3>
+// // //               <div
+// // //                 className="ql-editor"
+// // //                 dangerouslySetInnerHTML={{ __html: existingDM.content }}
+// // //               />
+// // //               {existingDM.pdfFiles?.length > 0 && (
+// // //                 <div className="mt-2">
+// // //                   <p className="font-medium">Mentee's Attachments:</p>
+// // //                   <div className="flex flex-wrap gap-2 mt-1">
+// // //                     {existingDM.pdfFiles.map((file: any, index: number) => (
+// // //                       <div
+// // //                         key={index}
+// // //                         className="flex items-center bg-gray-100 rounded-md px-2 py-1"
+// // //                       >
+// // //                         <FileText size={16} className="mr-1" />
+// // //                         <span className="text-sm truncate max-w-xs">
+// // //                           {file.fileName}
+// // //                         </span>
+// // //                         <button
+// // //                           onClick={() => viewFile(file.s3Key)}
+// // //                           className="ml-2 text-blue-500 hover:text-blue-700"
+// // //                         >
+// // //                           View
+// // //                         </button>
+// // //                       </div>
+// // //                     ))}
+// // //                   </div>
+// // //                 </div>
+// // //               )}
+// // //             </div>
+// // //           )}
+
+// // //           {/* Editor Container */}
+// // //           <div className="px-4">
+// // //             <div
+// // //               ref={editorRef}
+// // //               className="editor-container"
+// // //               style={{
+// // //                 height: "350px",
+// // //                 border: "1px solid #ccc",
+// // //                 borderRadius: "0.375rem",
+// // //                 marginBottom: "1rem",
+// // //               }}
+// // //             />
+// // //           </div>
+
+// // //           {/* File Upload Area */}
+// // //           <div className="p-4 border-t">
+// // //             <p className="mb-2 font-medium">Attachments</p>
+// // //             {selectedFiles.length > 0 && (
+// // //               <div className="mb-3 flex flex-wrap gap-2">
+// // //                 {selectedFiles.map((file, index) => (
+// // //                   <div
+// // //                     key={index}
+// // //                     className="flex items-center bg-gray-100 rounded-md px-2 py-1"
+// // //                   >
+// // //                     <FileText size={16} className="mr-1" />
+// // //                     <span className="text-sm truncate max-w-xs">
+// // //                       {file.name}
+// // //                     </span>
+// // //                     <button
+// // //                       onClick={() => removeFile(index)}
+// // //                       className="ml-1 text-gray-500 hover:text-red-500"
+// // //                     >
+// // //                       <X size={16} />
+// // //                     </button>
+// // //                   </div>
+// // //                 ))}
+// // //               </div>
+// // //             )}
+// // //             <div className="flex items-center">
+// // //               <label className="cursor-pointer px-3 py-1.5 bg-black text-white hover:bg-gray-800 rounded text-sm">
+// // //                 Upload PDF
+// // //                 <input
+// // //                   type="file"
+// // //                   accept=".pdf"
+// // //                   multiple
+// // //                   onChange={handleFileChange}
+// // //                   className="hidden"
+// // //                 />
+// // //               </label>
+// // //               <span className="ml-2 text-sm text-gray-500">
+// // //                 {selectedFiles.length > 0
+// // //                   ? `${selectedFiles.length} file(s) selected`
+// // //                   : "No files selected"}
+// // //               </span>
+// // //             </div>
+// // //           </div>
+// // //         </div>
+// // //         <DialogFooter>
+// // //           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+// // //             Cancel
+// // //           </Button>
+// // //           <Button
+// // //             className="bg-black text-white hover:bg-gray-800"
+// // //             onClick={handleSubmit}
+// // //             disabled={isSubmitting}
+// // //           >
+// // //             {isSubmitting
+// // //               ? "Submitting..."
+// // //               : isMentee
+// // //               ? "Send Message"
+// // //               : "Send Reply"}
+// // //           </Button>
+// // //         </DialogFooter>
+// // //       </DialogContent>
+// // //     </Dialog>
+// // //   );
+// // // };
+
+// // // export default PriorityDMModal;
+// // // components/modal/PriorityDMModal.tsx
+// // import React, { useEffect, useRef, useState } from "react";
+// // import {
+// //   X,
+// //   Bold,
+// //   Italic,
+// //   Underline,
+// //   List,
+// //   ListOrdered,
+// //   Link,
+// //   Image,
+// //   AlignLeft,
+// //   AlignCenter,
+// //   AlignRight,
+// //   AlignJustify,
+// //   Code,
+// //   FileText,
+// // } from "lucide-react";
+// // import {
+// //   Dialog,
+// //   DialogContent,
+// //   DialogHeader,
+// //   DialogTitle,
+// //   DialogFooter,
+// // } from "@/components/ui/dialog";
+// // import { Button } from "@/components/ui/button";
+// // import Quill from "quill";
+// // import "quill/dist/quill.snow.css";
+// // import { useSelector } from "react-redux";
+// // import { RootState } from "@/redux/store/store";
+// // import {
+// //   uploadToS3WithPresignedUrl,
+// //   getPresignedUrlForView,
+// // } from "@/services/userServices";
+// // import { createPriorityDM } from "@/services/menteeService";
+// // import { replyToPriorityDM } from "@/services/mentorService";
+// // import toast from "react-hot-toast";
+
+// // interface PriorityDMModalProps {
+// //   isOpen: boolean;
+// //   onClose: () => void;
+// //   serviceId: string;
+// //   bookingId?: string;
+// //   title: string;
+// //   productType: string;
+// //   existingDM?: any;
+// // }
+
+// // const PriorityDMModal: React.FC<PriorityDMModalProps> = ({
+// //   isOpen,
+// //   onClose,
+// //   serviceId,
+// //   bookingId,
+// //   title,
+// //   productType,
+// //   existingDM,
+// // }) => {
+// //   const [editorContent, setEditorContent] = useState("");
+// //   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+// //   const [quillInitialized, setQuillInitialized] = useState(false);
+// //   const editorRef = useRef<HTMLDivElement>(null);
+// //   const quillRef = useRef<Quill | null>(null);
+// //   const [editorReady, setIsEditorReady] = useState(false);
+// //   const { user } = useSelector((state: RootState) => state.user);
+// //   const isMentee = user?.role === "mentee"; // Updated to use user.role
+// //   const [isSubmitting, setIsSubmitting] = useState(false);
+
+// //   // Log bookingId to verify it's passed
+// //   useEffect(() => {
+// //     if (isOpen) {
+// //       console.log("PriorityDMModal opened with bookingId:", bookingId);
+// //     }
+// //   }, [isOpen, bookingId]);
+
+// //   const colorOptions = [
+// //     "#000000",
+// //     "#e60000",
+// //     "#ff9900",
+// //     "#ffff00",
+// //     "#008a00",
+// //     "#0066cc",
+// //     "#9933ff",
+// //     "#ffffff",
+// //     "#facccc",
+// //     "#ffebcc",
+// //     "#ffffcc",
+// //     "#cce8cc",
+// //     "#cce0f5",
+// //     "#ebd6ff",
+// //     "#bbbbbb",
+// //     "#f06666",
+// //     "#ffc266",
+// //     "#ffff66",
+// //     "#66b966",
+// //     "#66a3e0",
+// //     "#c285ff",
+// //     "#888888",
+// //     "#a10000",
+// //     "#b26b00",
+// //     "#b2b200",
+// //     "#006100",
+// //     "#0047b2",
+// //     "#6b24b2",
+// //     "#444444",
+// //     "#5c0000",
+// //     "#663d00",
+// //     "#666600",
+// //     "#003700",
+// //     "#002966",
+// //     "#3d1466",
+// //   ];
+
+// //   useEffect(() => {
+// //     if (isOpen) {
+// //       const timer = setTimeout(() => {
+// //         setIsEditorReady(true);
+// //       }, 300);
+// //       return () => clearTimeout(timer);
+// //     } else {
+// //       setIsEditorReady(false);
+// //       setQuillInitialized(false);
+// //       setEditorContent("");
+// //       setSelectedFiles([]);
+// //     }
+// //   }, [isOpen]);
+
+// //   useEffect(() => {
+// //     if (!editorReady || !editorRef.current || quillInitialized) return;
+
+// //     if (quillRef.current) {
+// //       quillRef.current.off("text-change");
+// //       quillRef.current = null;
+// //       if (editorRef.current) {
+// //         editorRef.current.innerHTML = "";
+// //       }
+// //     }
+
+// //     const toolbarOptions = [
+// //       [{ font: [] }],
+// //       [{ size: ["small", false, "large", "huge"] }],
+// //       ["bold", "italic", "underline", "code-block"],
+// //       [{ color: colorOptions }, { background: colorOptions }],
+// //       [
+// //         { align: null },
+// //         { align: "center" },
+// //         { align: "right" },
+// //         { align: "justify" },
+// //       ],
+// //       [{ list: "ordered" }, { list: "bullet" }],
+// //       ["clean"],
+// //     ];
+
+// //     quillRef.current = new Quill(editorRef.current, {
+// //       modules: { toolbar: toolbarOptions },
+// //       theme: "snow",
+// //       placeholder: isMentee
+// //         ? "Type your message here..."
+// //         : "Type your reply here...",
+// //     });
+
+// //     quillRef.current.on("text-change", () => {
+// //       if (quillRef.current) {
+// //         setEditorContent(quillRef.current.root.innerHTML);
+// //       }
+// //     });
+
+// //     if (existingDM && !isMentee) {
+// //       quillRef.current.root.innerHTML = existingDM.content || "";
+// //       setEditorContent(existingDM.content || "");
+// //     }
+
+// //     quillRef.current.focus();
+// //     setQuillInitialized(true);
+// //   }, [editorReady, quillInitialized, existingDM, isMentee]);
+
+// //   useEffect(() => {
+// //     return () => {
+// //       if (quillRef.current) {
+// //         quillRef.current.off("text-change");
+// //         quillRef.current = null;
+// //       }
+// //     };
+// //   }, []);
+
+// //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+// //     if (e.target.files) {
+// //       const files = Array.from(e.target.files).filter((file) =>
+// //         file.type.includes("pdf")
+// //       );
+// //       if (files.length + selectedFiles.length > 5) {
+// //         toast.error("Maximum 5 PDF files allowed.");
+// //         return;
+// //       }
+// //       setSelectedFiles([...selectedFiles, ...files]);
+// //     }
+// //   };
+
+// //   const removeFile = (index: number) => {
+// //     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+// //   };
+
+// //   const viewFile = async (s3Key: string) => {
+// //     try {
+// //       const url = await getPresignedUrlForView(s3Key);
+// //       window.open(url, "_blank");
+// //     } catch (error) {
+// //       toast.error("Failed to view PDF.");
+// //       console.error("Error viewing PDF:", error);
+// //     }
+// //   };
+
+// //   const handleSubmit = async () => {
+// //     if (!editorContent.trim() && selectedFiles.length === 0) {
+// //       toast.error("Please provide content or upload a PDF.");
+// //       return;
+// //     }
+
+// //     setIsSubmitting(true);
+// //     try {
+// //       console.log("######## PriorityDM is submiiting uploadedFiles step 1");
+// //       const uploadedFiles = await Promise.all(
+// //         selectedFiles.map(async (file) => {
+// //           const url = await uploadToS3WithPresignedUrl(
+// //             file,
+// //             "pdfs",
+// //             "application/pdf"
+// //           );
+// //           return {
+// //             fileName: file.name,
+// //             s3Key: url.split("/").slice(-2).join("/"),
+// //             url,
+// //           };
+// //         })
+// //       );
+// //       console.log(
+// //         "######## PriorityDM is submiiting uploadedFiles step 2",
+// //         uploadedFiles
+// //       );
+
+// //       if (isMentee) {
+// //         console.log("######## PriorityDM is submiiting uploadedFiles step 3");
+// //         console.log("Submitting PriorityDM with bookingId:", bookingId); // Log bookingId
+// //         await createPriorityDM({
+// //           serviceId,
+// //           bookingId,
+// //           content: editorContent,
+// //           pdfFiles: uploadedFiles,
+// //         });
+// //         toast.success("Priority DM sent successfully!");
+// //       } else {
+// //         console.log(
+// //           "######## PriorityDM is submiiting uploadedFiles step 4",
+// //           existingDM
+// //         );
+// //         await replyToPriorityDM(existingDM._id, {
+// //           content: editorContent,
+// //           pdfFiles: uploadedFiles,
+// //         });
+// //         console.log("######## PriorityDM is submiiting uploadedFiles step 5");
+// //         toast.success("Reply sent successfully!");
+// //       }
+// //       console.log("######## PriorityDM is submiiting uploadedFiles step 6");
+// //       setEditorContent("");
+// //       setSelectedFiles([]);
+// //       onClose();
+// //     } catch (error) {
+// //       console.log("######## PriorityDM is submiiting uploadedFiles step 7");
+// //       toast.error("Failed to submit. Please try again.");
+// //       console.error("Error submitting PriorityDM:", error);
+// //     } finally {
+// //       setIsSubmitting(false);
+// //     }
+// //   };
+
+// //   return (
+// //     <Dialog open={isOpen} onOpenChange={onClose}>
+// //       <DialogContent className="max-w-4xl bg-white overflow-visible">
+// //         <DialogHeader>
+// //           <DialogTitle>
+// //             {isMentee ? title : `Reply to ${title}`} ({productType})
+// //           </DialogTitle>
+// //         </DialogHeader>
+// //         <div className="py-4">
+// //           {!isMentee && existingDM && (
+// //             <div className="mb-4 p-4 bg-gray-50 rounded-md">
+// //               <h3 className="font-medium mb-2">Mentee's Message:</h3>
+// //               <div
+// //                 className="ql-editor"
+// //                 dangerouslySetInnerHTML={{ __html: existingDM.content }}
+// //               />
+// //               {existingDM.pdfFiles?.length > 0 && (
+// //                 <div className="mt-2">
+// //                   <p className="font-medium">Mentee's Attachments:</p>
+// //                   <div className="flex flex-wrap gap-2 mt-1">
+// //                     {existingDM.pdfFiles.map((file: any, index: number) => (
+// //                       <div
+// //                         key={index}
+// //                         className="flex items-center bg-gray-100 rounded-md px-2 py-1"
+// //                       >
+// //                         <FileText size={16} className="mr-1" />
+// //                         <span className="text-sm truncate max-w-xs">
+// //                           {file.fileName}
+// //                         </span>
+// //                         <button
+// //                           onClick={() => viewFile(file.s3Key)}
+// //                           className="ml-2 text-blue-500 hover:text-blue-700"
+// //                         >
+// //                           View
+// //                         </button>
+// //                       </div>
+// //                     ))}
+// //                   </div>
+// //                 </div>
+// //               )}
+// //             </div>
+// //           )}
+
+// //           <div className="px-4">
+// //             <div
+// //               ref={editorRef}
+// //               className="editor-container"
+// //               style={{
+// //                 height: "350px",
+// //                 border: "1px solid #ccc",
+// //                 borderRadius: "0.375rem",
+// //                 marginBottom: "1rem",
+// //               }}
+// //             />
+// //           </div>
+
+// //           <div className="p-4 border-t">
+// //             <p className="mb-2 font-medium">Attachments</p>
+// //             {selectedFiles.length > 0 && (
+// //               <div className="mb-3 flex flex-wrap gap-2">
+// //                 {selectedFiles.map((file, index) => (
+// //                   <div
+// //                     key={index}
+// //                     className="flex items-center bg-gray-100 rounded-md px-2 py-1"
+// //                   >
+// //                     <FileText size={16} className="mr-1" />
+// //                     <span className="text-sm truncate max-w-xs">
+// //                       {file.name}
+// //                     </span>
+// //                     <button
+// //                       onClick={() => removeFile(index)}
+// //                       className="ml-1 text-gray-500 hover:text-red-500"
+// //                     >
+// //                       <X size={16} />
+// //                     </button>
+// //                   </div>
+// //                 ))}
+// //               </div>
+// //             )}
+// //             <div className="flex items-center">
+// //               <label className="cursor-pointer px-3 py-1.5 bg-black text-white hover:bg-gray-800 rounded text-sm">
+// //                 Upload PDF
+// //                 <input
+// //                   type="file"
+// //                   accept=".pdf"
+// //                   multiple
+// //                   onChange={handleFileChange}
+// //                   className="hidden"
+// //                 />
+// //               </label>
+// //               <span className="ml-2 text-sm text-gray-500">
+// //                 {selectedFiles.length > 0
+// //                   ? `${selectedFiles.length} file(s) selected`
+// //                   : "No files selected"}
+// //               </span>
+// //             </div>
+// //           </div>
+// //         </div>
+// //         <DialogFooter>
+// //           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+// //             Cancel
+// //           </Button>
+// //           <Button
+// //             className="bg-black text-white hover:bg-gray-800"
+// //             onClick={handleSubmit}
+// //             disabled={isSubmitting}
+// //           >
+// //             {isSubmitting
+// //               ? "Submitting..."
+// //               : isMentee
+// //               ? "Send Message"
+// //               : "Send Reply"}
+// //           </Button>
+// //         </DialogFooter>
+// //       </DialogContent>
+// //     </Dialog>
+// //   );
+// // };
+
+// // export default PriorityDMModal;
+// // components/modal/PriorityDMModal.tsx
 // import React, { useEffect, useRef, useState } from "react";
 // import {
 //   X,
@@ -6,8 +786,14 @@
 //   Underline,
 //   List,
 //   ListOrdered,
+//   Link,
+//   Image,
+//   AlignLeft,
+//   AlignCenter,
+//   AlignRight,
+//   AlignJustify,
+//   Code,
 //   FileText,
-//   ChevronDown,
 // } from "lucide-react";
 // import {
 //   Dialog,
@@ -17,258 +803,320 @@
 //   DialogFooter,
 // } from "@/components/ui/dialog";
 // import { Button } from "@/components/ui/button";
+// import Quill from "quill";
+// import "quill/dist/quill.snow.css";
+// import { useSelector } from "react-redux";
+// import { RootState } from "@/redux/store/store";
+// import {
+//   uploadToS3WithPresignedUrl,
+//   getPresignedUrlForView,
+// } from "@/services/userServices";
+// import { createPriorityDM } from "@/services/menteeService";
+// import { replyToPriorityDM } from "@/services/mentorService";
+// import toast from "react-hot-toast";
 
 // interface PriorityDMModalProps {
 //   isOpen: boolean;
 //   onClose: () => void;
 //   serviceId: string;
+//   bookingId?: string;
 //   title: string;
 //   productType: string;
+//   existingDM?: any;
 // }
 
-// const PriorityDMModal = ({
+// const PriorityDMModal: React.FC<PriorityDMModalProps> = ({
 //   isOpen,
 //   onClose,
 //   serviceId,
+//   bookingId,
 //   title,
 //   productType,
-// }: PriorityDMModalProps) => {
+//   existingDM,
+// }) => {
 //   const [editorContent, setEditorContent] = useState("");
 //   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-//   const [fontStyle, setFontStyle] = useState("Arial");
-//   const [fontSize, setFontSize] = useState("medium");
-//   const [isBold, setIsBold] = useState(false);
-//   const [isItalic, setIsItalic] = useState(false);
-//   const [isUnderline, setIsUnderline] = useState(false);
-//   const [showFontMenu, setShowFontMenu] = useState(false);
-//   const [showSizeMenu, setShowSizeMenu] = useState(false);
-
+//   const [quillInitialized, setQuillInitialized] = useState(false);
 //   const editorRef = useRef<HTMLDivElement>(null);
+//   const quillRef = useRef<Quill | null>(null);
+//   const [editorReady, setIsEditorReady] = useState(false);
+//   const { user } = useSelector((state: RootState) => state.user);
+//   const isMentee = user?.role === "mentee";
+//   const [isSubmitting, setIsSubmitting] = useState(false);
+
+//   useEffect(() => {
+//     if (isOpen) {
+//       console.log("PriorityDMModal opened with:", {
+//         serviceId,
+//         bookingId,
+//         userId: user?._id,
+//       });
+//     }
+//   }, [isOpen, serviceId, bookingId, user]);
+
+//   const colorOptions = [
+//     "#000000",
+//     "#e60000",
+//     "#ff9900",
+//     "#ffff00",
+//     "#008a00",
+//     "#0066cc",
+//     "#9933ff",
+//     "#ffffff",
+//     "#facccc",
+//     "#ffebcc",
+//     "#ffffcc",
+//     "#cce8cc",
+//     "#cce0f5",
+//     "#ebd6ff",
+//     "#bbbbbb",
+//     "#f06666",
+//     "#ffc266",
+//     "#ffff66",
+//     "#66b966",
+//     "#66a3e0",
+//     "#c285ff",
+//     "#888888",
+//     "#a10000",
+//     "#b26b00",
+//     "#b2b200",
+//     "#006100",
+//     "#0047b2",
+//     "#6b24b2",
+//     "#444444",
+//     "#5c0000",
+//     "#663d00",
+//     "#666600",
+//     "#003700",
+//     "#002966",
+//     "#3d1466",
+//   ];
+
+//   useEffect(() => {
+//     if (isOpen) {
+//       const timer = setTimeout(() => {
+//         setIsEditorReady(true);
+//       }, 300);
+//       return () => clearTimeout(timer);
+//     } else {
+//       setIsEditorReady(false);
+//       setQuillInitialized(false);
+//       setEditorContent("");
+//       setSelectedFiles([]);
+//     }
+//   }, [isOpen]);
+
+//   useEffect(() => {
+//     if (!editorReady || !editorRef.current || quillInitialized) return;
+
+//     if (quillRef.current) {
+//       quillRef.current.off("text-change");
+//       quillRef.current = null;
+//       if (editorRef.current) {
+//         editorRef.current.innerHTML = "";
+//       }
+//     }
+
+//     const toolbarOptions = [
+//       [{ font: [] }],
+//       [{ size: ["small", false, "large", "huge"] }],
+//       ["bold", "italic", "underline", "code-block"],
+//       [{ color: colorOptions }, { background: colorOptions }],
+//       [
+//         { align: null },
+//         { align: "center" },
+//         { align: "right" },
+//         { align: "justify" },
+//       ],
+//       [{ list: "ordered" }, { list: "bullet" }],
+//       ["clean"],
+//     ];
+
+//     quillRef.current = new Quill(editorRef.current, {
+//       modules: { toolbar: toolbarOptions },
+//       theme: "snow",
+//       placeholder: isMentee
+//         ? "Type your message here..."
+//         : "Type your reply here...",
+//     });
+
+//     quillRef.current.on("text-change", () => {
+//       if (quillRef.current) {
+//         setEditorContent(quillRef.current.root.innerHTML);
+//       }
+//     });
+
+//     if (existingDM && !isMentee) {
+//       quillRef.current.root.innerHTML = existingDM.content || "";
+//       setEditorContent(existingDM.content || "");
+//     }
+
+//     quillRef.current.focus();
+//     setQuillInitialized(true);
+//   }, [editorReady, quillInitialized, existingDM, isMentee]);
+
+//   useEffect(() => {
+//     return () => {
+//       if (quillRef.current) {
+//         quillRef.current.off("text-change");
+//         quillRef.current = null;
+//       }
+//     };
+//   }, []);
 
 //   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 //     if (e.target.files) {
-//       const files = Array.from(e.target.files);
+//       const files = Array.from(e.target.files).filter((file) =>
+//         file.type.includes("pdf")
+//       );
+//       if (files.length + selectedFiles.length > 5) {
+//         toast.error("Maximum 5 PDF files allowed.");
+//         return;
+//       }
 //       setSelectedFiles([...selectedFiles, ...files]);
 //     }
 //   };
 
 //   const removeFile = (index: number) => {
-//     const newFiles = [...selectedFiles];
-//     newFiles.splice(index, 1);
-//     setSelectedFiles(newFiles);
+//     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
 //   };
 
-//   const handleSubmit = () => {
-//     // Log content and files (replace with API call to send message)
-//     console.log("Submitting Priority DM:", {
-//       serviceId,
-//       content: editorContent,
-//       files: selectedFiles,
-//     });
-//     setEditorContent("");
-//     setSelectedFiles([]);
-//     onClose();
-//   };
-
-//   const toggleFontMenu = () => {
-//     setShowFontMenu(!showFontMenu);
-//     setShowSizeMenu(false);
-//   };
-
-//   const toggleSizeMenu = () => {
-//     setShowSizeMenu(!showSizeMenu);
-//     setShowFontMenu(false);
-//   };
-
-//   const fontStyles = [
-//     "Arial",
-//     "Times New Roman",
-//     "Courier New",
-//     "Georgia",
-//     "Verdana",
-//   ];
-//   const fontSizes = ["small", "medium", "large", "x-large"];
-
-//   const applyFormat = (format: string) => {
-//     if (format === "bold") setIsBold(!isBold);
-//     if (format === "italic") setIsItalic(!isItalic);
-//     if (format === "underline") setIsUnderline(!isUnderline);
-//     // Update editor content with formatting
-//     if (editorRef.current) {
-//       document.execCommand(format, false, undefined);
+//   const viewFile = async (s3Key: string) => {
+//     try {
+//       const url = await getPresignedUrlForView(s3Key);
+//       window.open(url, "_blank");
+//     } catch (error) {
+//       toast.error("Failed to view PDF.");
+//       console.error("Error viewing PDF:", error);
 //     }
 //   };
 
-//   const applyFontStyle = (font: string) => {
-//     setFontStyle(font);
-//     setShowFontMenu(false);
-//     // Update editor font (not fully supported in contentEditable)
-//     if (editorRef.current) {
-//       editorRef.current.style.fontFamily = font;
+//   const handleSubmit = async () => {
+//     if (!editorContent.trim() && selectedFiles.length === 0) {
+//       toast.error("Please provide content or upload a PDF.");
+//       return;
+//     }
+
+//     if (!user?._id) {
+//       toast.error("User not logged in. Please log in again.");
+//       return;
+//     }
+
+//     setIsSubmitting(true);
+//     try {
+//       console.log("######## PriorityDM is submitting uploadedFiles step 1");
+//       const uploadedFiles = await Promise.all(
+//         selectedFiles.map(async (file) => {
+//           const url = await uploadToS3WithPresignedUrl(
+//             file,
+//             "pdfs",
+//             "application/pdf"
+//           );
+//           return {
+//             fileName: file.name,
+//             s3Key: url.split("/").slice(-2).join("/"),
+//             url,
+//           };
+//         })
+//       );
+//       console.log(
+//         "######## PriorityDM is submitting uploadedFiles step 2",
+//         uploadedFiles
+//       );
+
+//       if (isMentee) {
+//         console.log("######## PriorityDM is submitting uploadedFiles step 3");
+//         const priorityDMData = {
+//           serviceId,
+//           bookingId,
+//           menteeId: user._id, // Pass menteeId
+//           content: editorContent,
+//           pdfFiles: uploadedFiles,
+//         };
+//         console.log("Submitting PriorityDM with data:", priorityDMData);
+//         await createPriorityDM(priorityDMData);
+//         toast.success("Priority DM sent successfully!");
+//       } else {
+//         console.log(
+//           "######## PriorityDM is submitting uploadedFiles step 4",
+//           existingDM
+//         );
+//         await replyToPriorityDM(existingDM._id, {
+//           content: editorContent,
+//           pdfFiles: uploadedFiles,
+//         });
+//         console.log("######## PriorityDM is submitting uploadedFiles step 5");
+//         toast.success("Reply sent successfully!");
+//       }
+//       console.log("######## PriorityDM is submitting uploadedFiles step 6");
+//       setEditorContent("");
+//       setSelectedFiles([]);
+//       onClose();
+//     } catch (error) {
+//       console.log("######## PriorityDM is submitting uploadedFiles step 7");
+//       toast.error("Failed to submit. Please try again.");
+//       console.error("Error submitting PriorityDM:", error);
+//     } finally {
+//       setIsSubmitting(false);
 //     }
 //   };
-
-//   const applyFontSize = (size: string) => {
-//     setFontSize(size);
-//     setShowSizeMenu(false);
-//     // Update editor font size
-//     if (editorRef.current) {
-//       editorRef.current.style.fontSize =
-//         size === "small"
-//           ? "14px"
-//           : size === "medium"
-//           ? "16px"
-//           : size === "large"
-//           ? "18px"
-//           : "20px";
-//     }
-//   };
-
-//   const handleContentChange = () => {
-//     if (editorRef.current) {
-//       setEditorContent(editorRef.current.innerHTML);
-//     }
-//   };
-
-//   // Focus editor when modal opens
-//   useEffect(() => {
-//     if (isOpen && editorRef.current) {
-//       editorRef.current.focus();
-//     }
-//   }, [isOpen]);
 
 //   return (
 //     <Dialog open={isOpen} onOpenChange={onClose}>
 //       <DialogContent className="max-w-4xl bg-white overflow-visible">
 //         <DialogHeader>
 //           <DialogTitle>
-//             {title} ({productType})
+//             {isMentee ? title : `Reply to ${title}`} ({productType})
 //           </DialogTitle>
 //         </DialogHeader>
 //         <div className="py-4">
-//           {/* Toolbar */}
-//           <div className="flex items-center gap-1 p-2 border-b ">
-//             {/* Font Family Dropdown */}
-//             <div className="relative overflow-visible">
-//               <button
-//                 onClick={toggleFontMenu}
-//                 className="flex items-center w-40  px-2 py-1 text-sm border rounded hover:bg-gray-100"
-//               >
-//                 <div className="flex justify-between items-center w-full">
-//                   <span>{fontStyle}</span>
-//                   <ChevronDown size={16} className="ml-1" />
-//                 </div>
-//               </button>
-//               {showFontMenu && (
-//                 <div className="absolute top-full  left-0 mt-1  bg-white border rounded-md shadow-lg z-50">
-//                   {fontStyles.map((font) => (
-//                     <button
-//                       key={font}
-//                       onClick={() => applyFontStyle(font)}
-//                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-//                     >
-//                       {font}
-//                     </button>
-//                   ))}
-//                 </div>
-//               )}
-//             </div>
-
-//             {/* Font Size Dropdown */}
-//             <div className="relative">
-//               <button
-//                 onClick={toggleSizeMenu}
-//                 className="flex items-center px-2 py-1 text-sm border rounded hover:bg-gray-100"
-//               >
-//                 {fontSize} <ChevronDown size={16} className="ml-1" />
-//               </button>
-//               {showSizeMenu && (
-//                 <div className="absolute top-full left-0 mt-1 bg-white border rounded-md shadow-lg z-50">
-//                   {fontSizes.map((size) => (
-//                     <button
-//                       key={size}
-//                       onClick={() => applyFontSize(size)}
-//                       className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-//                     >
-//                       {size}
-//                     </button>
-//                   ))}
+//           {!isMentee && existingDM && (
+//             <div className="mb-4 p-4 bg-gray-50 rounded-md">
+//               <h3 className="font-medium mb-2">Mentee's Message:</h3>
+//               <div
+//                 className="ql-editor"
+//                 dangerouslySetInnerHTML={{ __html: existingDM.content }}
+//               />
+//               {existingDM.pdfFiles?.length > 0 && (
+//                 <div className="mt-2">
+//                   <p className="font-medium">Mentee's Attachments:</p>
+//                   <div className="flex flex-wrap gap-2 mt-1">
+//                     {existingDM.pdfFiles.map((file: any, index: number) => (
+//                       <div
+//                         key={index}
+//                         className="flex items-center bg-gray-100 rounded-md px-2 py-1"
+//                       >
+//                         <FileText size={16} className="mr-1" />
+//                         <span className="text-sm truncate max-w-xs">
+//                           {file.fileName}
+//                         </span>
+//                         <button
+//                           onClick={() => viewFile(file.s3Key)}
+//                           className="ml-2 text-blue-500 hover:text-blue-700"
+//                         >
+//                           View
+//                         </button>
+//                       </div>
+//                     ))}
+//                   </div>
 //                 </div>
 //               )}
 //             </div>
+//           )}
 
-//             <div className="h-6 w-px mx-1 bg-gray-300"></div>
-
-//             {/* Text Formatting */}
-//             <button
-//               onClick={() => applyFormat("bold")}
-//               className={`p-1.5 rounded ${
-//                 isBold ? "bg-gray-200" : "hover:bg-gray-100"
-//               }`}
-//             >
-//               <Bold size={18} />
-//             </button>
-//             <button
-//               onClick={() => applyFormat("italic")}
-//               className={`p-1.5 rounded ${
-//                 isItalic ? "bg-gray-200" : "hover:bg-gray-100"
-//               }`}
-//             >
-//               <Italic size={18} />
-//             </button>
-//             <button
-//               onClick={() => applyFormat("underline")}
-//               className={`p-1.5 rounded ${
-//                 isUnderline ? "bg-gray-200" : "hover:bg-gray-100"
-//               }`}
-//             >
-//               <Underline size={18} />
-//             </button>
-
-//             <div className="h-6 w-px mx-1 bg-gray-300"></div>
-
-//             {/* Lists */}
-//             <button
-//               onClick={() => applyFormat("insertUnorderedList")}
-//               className="p-1.5 rounded hover:bg-gray-100"
-//             >
-//               <List size={18} />
-//             </button>
-//             <button
-//               onClick={() => applyFormat("insertOrderedList")}
-//               className="p-1.5 rounded hover:bg-gray-100"
-//             >
-//               <ListOrdered size={18} />
-//             </button>
-//           </div>
-
-//           {/* Editor Area */}
-//           <div className="p-4">
+//           <div className="px-4">
 //             <div
 //               ref={editorRef}
-//               className="min-h-64 border rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//               contentEditable={true}
-//               onInput={handleContentChange}
+//               className="editor-container"
 //               style={{
-//                 fontFamily: fontStyle,
-//                 fontSize:
-//                   fontSize === "small"
-//                     ? "14px"
-//                     : fontSize === "medium"
-//                     ? "16px"
-//                     : fontSize === "large"
-//                     ? "18px"
-//                     : "20px",
-//                 fontWeight: isBold ? "bold" : "normal",
-//                 fontStyle: isItalic ? "italic" : "normal",
-//                 textDecoration: isUnderline ? "underline" : "none",
+//                 height: "350px",
+//                 border: "1px solid #ccc",
+//                 borderRadius: "0.375rem",
+//                 marginBottom: "1rem",
 //               }}
-//             >
-//               Type your message here...
-//             </div>
+//             />
 //           </div>
 
-//           {/* File Upload Area */}
 //           <div className="p-4 border-t">
 //             <p className="mb-2 font-medium">Attachments</p>
 //             {selectedFiles.length > 0 && (
@@ -278,6 +1126,7 @@
 //                     key={index}
 //                     className="flex items-center bg-gray-100 rounded-md px-2 py-1"
 //                   >
+//                     <FileText size={16} className="mr-1" />
 //                     <span className="text-sm truncate max-w-xs">
 //                       {file.name}
 //                     </span>
@@ -292,7 +1141,7 @@
 //               </div>
 //             )}
 //             <div className="flex items-center">
-//               <label className="cursor-pointer px-3 py-1.5 bg-black text-white hover:bg-gray-500 rounded text-sm">
+//               <label className="cursor-pointer px-3 py-1.5 bg-black text-white hover:bg-gray-800 rounded text-sm">
 //                 Upload PDF
 //                 <input
 //                   type="file"
@@ -311,11 +1160,19 @@
 //           </div>
 //         </div>
 //         <DialogFooter>
-//           <Button variant="outline" onClick={onClose}>
+//           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
 //             Cancel
 //           </Button>
-//           <Button className="bg-black text-white" onClick={handleSubmit}>
-//             Send Message
+//           <Button
+//             className="bg-black text-white hover:bg-gray-800"
+//             onClick={handleSubmit}
+//             disabled={isSubmitting}
+//           >
+//             {isSubmitting
+//               ? "Submitting..."
+//               : isMentee
+//               ? "Send Message"
+//               : "Send Reply"}
 //           </Button>
 //         </DialogFooter>
 //       </DialogContent>
@@ -324,6 +1181,7 @@
 // };
 
 // export default PriorityDMModal;
+// components/modal/PriorityDMModal.tsx
 import React, { useEffect, useRef, useState } from "react";
 import {
   X,
@@ -339,6 +1197,7 @@ import {
   AlignRight,
   AlignJustify,
   Code,
+  FileText,
 } from "lucide-react";
 import {
   Dialog,
@@ -349,29 +1208,63 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Quill from "quill";
-import "quill/dist/quill.snow.css"; // Import Quill styles
+import "quill/dist/quill.snow.css";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import {
+  uploadToS3WithPresignedUrl,
+  getPresignedUrlForView,
+} from "@/services/userServices";
+import { createPriorityDM } from "@/services/menteeService";
+import { replyToPriorityDM } from "@/services/mentorService";
+import toast from "react-hot-toast";
 
 interface PriorityDMModalProps {
   isOpen: boolean;
   onClose: () => void;
   serviceId: string;
+  bookingId?: string;
   title: string;
   productType: string;
+  existingDM?: any;
 }
 
-const PriorityDMModal = ({
+const PriorityDMModal: React.FC<PriorityDMModalProps> = ({
   isOpen,
   onClose,
   serviceId,
+  bookingId,
   title,
   productType,
-}: PriorityDMModalProps) => {
+  existingDM,
+}) => {
   const [editorContent, setEditorContent] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [quillInitialized, setQuillInitialized] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const quillRef = useRef<Quill | null>(null);
-  const [editorReady, setEditorReady] = useState(false);
+  const [editorReady, setIsEditorReady] = useState(false);
+  const { user } = useSelector((state: RootState) => state.user);
+
+  // Debug user and modal props
+  useEffect(() => {
+    if (isOpen) {
+      console.log("User object:", JSON.stringify(user, null, 2));
+      console.log("PriorityDMModal opened with:", {
+        serviceId,
+        bookingId,
+        userId: user?._id,
+        existingDM,
+        role: user?.role,
+      });
+    }
+  }, [isOpen, serviceId, bookingId, user, existingDM]);
+
+  // Determine if user is mentee
+  const isMentee = !existingDM || user?.role?.toLowerCase() === "mentee"; // Fallback: no existingDM implies mentee
+  console.log("isMentee:", isMentee);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const colorOptions = [
     "#000000",
@@ -411,37 +1304,31 @@ const PriorityDMModal = ({
     "#3d1466",
   ];
 
-  // Set editor as ready once the modal is fully visible
   useEffect(() => {
     if (isOpen) {
-      // Allow time for modal animation to complete and DOM to be fully rendered
       const timer = setTimeout(() => {
-        setEditorReady(true);
+        setIsEditorReady(true);
       }, 300);
-
       return () => clearTimeout(timer);
     } else {
-      setEditorReady(false);
+      setIsEditorReady(false);
       setQuillInitialized(false);
+      setEditorContent("");
+      setSelectedFiles([]);
     }
   }, [isOpen]);
 
-  // Initialize Quill when modal is fully open and DOM is ready
   useEffect(() => {
     if (!editorReady || !editorRef.current || quillInitialized) return;
 
-    // Clean up any existing instance
     if (quillRef.current) {
       quillRef.current.off("text-change");
       quillRef.current = null;
-
-      // Clear the editor container
       if (editorRef.current) {
         editorRef.current.innerHTML = "";
       }
     }
 
-    // Create toolbar options
     const toolbarOptions = [
       [{ font: [] }],
       [{ size: ["small", false, "large", "huge"] }],
@@ -454,33 +1341,32 @@ const PriorityDMModal = ({
         { align: "justify" },
       ],
       [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
       ["clean"],
     ];
 
-    // Initialize Quill with options
     quillRef.current = new Quill(editorRef.current, {
-      modules: {
-        toolbar: toolbarOptions,
-      },
+      modules: { toolbar: toolbarOptions },
       theme: "snow",
-      placeholder: "Type your message here...",
+      placeholder: isMentee
+        ? "Type your message here..."
+        : "Type your reply here...",
     });
 
-    // Update editor content state on change
     quillRef.current.on("text-change", () => {
       if (quillRef.current) {
         setEditorContent(quillRef.current.root.innerHTML);
       }
     });
 
-    // Focus editor after initialization
+    if (existingDM && !isMentee) {
+      quillRef.current.root.innerHTML = existingDM.content || "";
+      setEditorContent(existingDM.content || "");
+    }
+
     quillRef.current.focus();
-
     setQuillInitialized(true);
-  }, [editorReady, quillInitialized]);
+  }, [editorReady, quillInitialized, existingDM, isMentee]);
 
-  // Cleanup when component unmounts or modal closes
   useEffect(() => {
     return () => {
       if (quillRef.current) {
@@ -490,31 +1376,104 @@ const PriorityDMModal = ({
     };
   }, []);
 
-  // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
+      const files = Array.from(e.target.files).filter((file) =>
+        file.type.includes("pdf")
+      );
+      if (files.length + selectedFiles.length > 5) {
+        toast.error("Maximum 5 PDF files allowed.");
+        return;
+      }
       setSelectedFiles([...selectedFiles, ...files]);
     }
   };
 
-  // Remove uploaded file
   const removeFile = (index: number) => {
-    const newFiles = [...selectedFiles];
-    newFiles.splice(index, 1);
-    setSelectedFiles(newFiles);
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
   };
 
-  // Handle form submission
-  const handleSubmit = () => {
-    console.log("Submitting Priority DM:", {
-      serviceId,
-      content: editorContent,
-      files: selectedFiles,
-    });
-    setEditorContent("");
-    setSelectedFiles([]);
-    onClose();
+  const viewFile = async (s3Key: string) => {
+    try {
+      const url = await getPresignedUrlForView(s3Key);
+      window.open(url, "_blank");
+    } catch (error) {
+      toast.error("Failed to view PDF.");
+      console.error("Error viewing PDF:", error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!editorContent.trim() && selectedFiles.length === 0) {
+      toast.error("Please provide content or upload a PDF.");
+      return;
+    }
+
+    if (!user?._id) {
+      toast.error("User not logged in. Please log in again.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      console.log("######## PriorityDM is submitting uploadedFiles step 1");
+      const uploadedFiles = await Promise.all(
+        selectedFiles.map(async (file) => {
+          const url = await uploadToS3WithPresignedUrl(
+            file,
+            "pdfs",
+            "application/pdf"
+          );
+          return {
+            fileName: file.name,
+            s3Key: url.split("/").slice(-2).join("/"),
+            url,
+          };
+        })
+      );
+      console.log(
+        "######## PriorityDM is submitting uploadedFiles step 2",
+        uploadedFiles
+      );
+
+      if (isMentee) {
+        console.log("######## PriorityDM is submitting uploadedFiles step 3");
+        const priorityDMData = {
+          serviceId,
+          bookingId,
+          menteeId: user._id,
+          content: editorContent,
+          pdfFiles: uploadedFiles,
+        };
+        console.log("Submitting PriorityDM with data:", priorityDMData);
+        await createPriorityDM(priorityDMData);
+        toast.success("Priority DM sent successfully!");
+      } else {
+        console.log(
+          "######## PriorityDM is submitting uploadedFiles step 4",
+          existingDM
+        );
+        if (!existingDM?._id) {
+          throw new Error("Cannot reply: No existing DM provided.");
+        }
+        await replyToPriorityDM(existingDM._id, {
+          content: editorContent,
+          pdfFiles: uploadedFiles,
+        });
+        console.log("######## PriorityDM is submitting uploadedFiles step 5");
+        toast.success("Reply sent successfully!");
+      }
+      console.log("######## PriorityDM is submitting uploadedFiles step 6");
+      setEditorContent("");
+      setSelectedFiles([]);
+      onClose();
+    } catch (error) {
+      console.log("######## PriorityDM is submitting uploadedFiles step 7");
+      toast.error("Failed to submit. Please try again.");
+      console.error("Error submitting PriorityDM:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -522,13 +1481,45 @@ const PriorityDMModal = ({
       <DialogContent className="max-w-4xl bg-white overflow-visible">
         <DialogHeader>
           <DialogTitle>
-            {title} ({productType})
+            {isMentee ? title : `Reply to ${title}`} ({productType})
           </DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          {/* Editor Container */}
+          {!isMentee && existingDM && (
+            <div className="mb-4 p-4 bg-gray-50 rounded-md">
+              <h3 className="font-medium mb-2">Mentee's Message:</h3>
+              <div
+                className="ql-editor"
+                dangerouslySetInnerHTML={{ __html: existingDM.content }}
+              />
+              {existingDM.pdfFiles?.length > 0 && (
+                <div className="mt-2">
+                  <p className="font-medium">Mentee's Attachments:</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {existingDM.pdfFiles.map((file: any, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center bg-gray-100 rounded-md px-2 py-1"
+                      >
+                        <FileText size={16} className="mr-1" />
+                        <span className="text-sm truncate max-w-xs">
+                          {file.fileName}
+                        </span>
+                        <button
+                          onClick={() => viewFile(file.s3Key)}
+                          className="ml-2 text-blue-500 hover:text-blue-700"
+                        >
+                          View
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="px-4">
-            {/* This is where Quill will insert both toolbar and editor */}
             <div
               ref={editorRef}
               className="editor-container"
@@ -538,10 +1529,9 @@ const PriorityDMModal = ({
                 borderRadius: "0.375rem",
                 marginBottom: "1rem",
               }}
-            ></div>
+            />
           </div>
 
-          {/* File Upload Area */}
           <div className="p-4 border-t">
             <p className="mb-2 font-medium">Attachments</p>
             {selectedFiles.length > 0 && (
@@ -551,6 +1541,7 @@ const PriorityDMModal = ({
                     key={index}
                     className="flex items-center bg-gray-100 rounded-md px-2 py-1"
                   >
+                    <FileText size={16} className="mr-1" />
                     <span className="text-sm truncate max-w-xs">
                       {file.name}
                     </span>
@@ -584,14 +1575,19 @@ const PriorityDMModal = ({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button
             className="bg-black text-white hover:bg-gray-800"
             onClick={handleSubmit}
+            disabled={isSubmitting}
           >
-            Send Message
+            {isSubmitting
+              ? "Submitting..."
+              : isMentee
+              ? "Send Message"
+              : "Send Reply"}
           </Button>
         </DialogFooter>
       </DialogContent>

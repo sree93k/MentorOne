@@ -456,5 +456,64 @@ class mentorController {
       next(error);
     }
   };
+
+  // controllers/implementation/mentorController.ts
+  public replyToPriorityDM = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const mentorId = req.user?.id;
+      if (!mentorId) {
+        throw new ApiError(401, "Unauthorized", "User ID is required");
+      }
+
+      const { priorityDMId } = req.params;
+      const { content, pdfFiles } = req.body;
+      if (!priorityDMId || !content) {
+        throw new ApiError(400, "Priority DM ID and content are required");
+      }
+
+      const updatedDM = await this.MentorProfileService.replyToPriorityDM(
+        priorityDMId,
+        mentorId,
+        { content, pdfFiles }
+      );
+
+      res.json(new ApiResponse(200, updatedDM, "Reply sent successfully"));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getPriorityDMs = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const mentorId = req.user?.id;
+      if (!mentorId) {
+        throw new ApiError(401, "Unauthorized", "User ID is required");
+      }
+
+      const { serviceId } = req.params;
+      if (!serviceId) {
+        throw new ApiError(400, "Service ID is required");
+      }
+
+      const priorityDMs = await this.MentorProfileService.getPriorityDMs(
+        serviceId,
+        mentorId
+      );
+
+      res.json(
+        new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 export default new mentorController();
