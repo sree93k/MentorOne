@@ -332,7 +332,7 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log("getAllServices service step 3: No services found");
         return [];
       }
-      console.log("getAllServices service step 4: Services fetched", services);
+      console.log("getAllServices service step 4: Services fetched");
 
       return services;
     } catch (error: any) {
@@ -774,6 +774,22 @@ export default class MentorProfileService implements IMentorProfileService {
       return priorityDMs;
     } catch (error) {
       console.error("Error fetching PriorityDMs:", error);
+      throw error;
+    }
+  }
+
+  async getAllPriorityDMsByMentor(mentorId: string): Promise<EPriorityDM[]> {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+        throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
+      }
+
+      const priorityDMs = await this.PriorityDMRepository.findByMentor(
+        mentorId
+      );
+      return priorityDMs;
+    } catch (error) {
+      console.error("Error fetching all PriorityDMs by mentor:", error);
       throw error;
     }
   }
