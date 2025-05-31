@@ -586,17 +586,18 @@ class menteeController {
       if (!menteeId) {
         throw new ApiError(401, "Unauthorized", "User ID is required");
       }
+      console.log("Mentee controller getPriorityDMs step 1", menteeId);
 
-      const { serviceId } = req.params;
-      if (!serviceId) {
+      const { bookingId } = req.params;
+      if (!bookingId) {
         throw new ApiError(400, "Service ID is required");
       }
-
+      console.log("Mentee controller getPriorityDMs step 2", bookingId);
       const priorityDMs = await this.MenteeProfileService.getPriorityDMs(
-        serviceId,
+        bookingId,
         menteeId
       );
-
+      console.log("Mentee controller getPriorityDMs step 3", priorityDMs);
       res.json(
         new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
       );

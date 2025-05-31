@@ -20,5 +20,5 @@ export interface IMenteeProfileService {
     content: string;
     pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
   }): Promise<EPriorityDM>;
-  getPriorityDMs(serviceId: string, menteeId: string): Promise<EPriorityDM[]>;
+  getPriorityDMs(bookingId: string, menteeId: string): Promise<EPriorityDM[]>;
 }
