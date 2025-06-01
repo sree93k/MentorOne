@@ -34,5 +34,13 @@ export interface IMentorProfileService {
     }
   ): Promise<EPriorityDM | null>;
   getPriorityDMs(serviceId: string, mentorId: string): Promise<EPriorityDM[]>;
-  getAllPriorityDMsByMentor(mentorId: string): Promise<EPriorityDM[]>;
+  // getAllPriorityDMsByMentor(mentorId: string): Promise<EPriorityDM[]>;
+  getAllPriorityDMsByMentor(
+    mentorId: string,
+    page: number,
+    limit: number,
+    searchQuery: string,
+    status?: "pending" | "replied",
+    sort?: "asc" | "desc"
+  ): Promise<{ priorityDMs: EPriorityDM[]; total: number }>;
 }

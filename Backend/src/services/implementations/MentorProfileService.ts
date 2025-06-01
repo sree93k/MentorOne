@@ -306,7 +306,7 @@ export default class MentorProfileService implements IMentorProfileService {
         throw new ApiError(400, "Invalid service type");
       }
 
-      console.log("createService service step 14");
+      console.log("createService service step 14", service);
       const newService = await this.MentorRepository.createService(service);
       console.log("createService service step 15");
       if (!newService) {
@@ -804,16 +804,46 @@ export default class MentorProfileService implements IMentorProfileService {
     }
   }
 
-  async getAllPriorityDMsByMentor(mentorId: string): Promise<EPriorityDM[]> {
+  // async getAllPriorityDMsByMentor(mentorId: string): Promise<EPriorityDM[]> {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+  //       throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
+  //     }
+
+  //     const priorityDMs = await this.PriorityDMRepository.findByMentor(
+  //       mentorId
+  //     );
+  //     return priorityDMs;
+  //   } catch (error) {
+  //     console.error("Error fetching all PriorityDMs by mentor:", error);
+  //     throw error;
+  //   }
+  // }
+  // src/services/MentorProfileService.ts
+  async getAllPriorityDMsByMentor(
+    mentorId: string,
+    page: number = 1,
+    limit: number = 8,
+    searchQuery: string = "",
+    status?: "pending" | "replied",
+    sort?: "asc" | "desc"
+  ): Promise<{ priorityDMs: EPriorityDM[]; total: number }> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
         throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
       }
 
-      const priorityDMs = await this.PriorityDMRepository.findByMentor(
-        mentorId
-      );
-      return priorityDMs;
+      const { priorityDMs, total } =
+        await this.PriorityDMRepository.findByMentor(
+          mentorId,
+          page,
+          limit,
+          searchQuery,
+          status,
+          sort
+        );
+
+      return { priorityDMs, total };
     } catch (error) {
       console.error("Error fetching all PriorityDMs by mentor:", error);
       throw error;

@@ -797,7 +797,35 @@ export const getPriorityDMs = async (serviceId: string) => {
   }
 };
 
-export const getAllPriorityDMsByMentor = async () => {
+// export const getAllPriorityDMsByMentor = async () => {
+//   try {
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+
+//     const response = await api.get(`/expert/priority-dm`, {
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     });
+
+//     return response.data.data;
+//   } catch (error: any) {
+//     console.error("Error fetching all PriorityDMs by mentor:", error);
+//     throw new Error(
+//       error.response?.data?.error || "Failed to fetch PriorityDMs"
+//     );
+//   }
+// };
+// src/services/mentorService.ts
+export const getAllPriorityDMsByMentor = async (
+  page: number = 1,
+  limit: number = 8,
+  searchQuery: string = "",
+  status?: "pending" | "replied",
+  sort?: "asc" | "desc"
+): Promise<{ priorityDMs: any[]; total: number }> => {
   try {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
@@ -807,6 +835,13 @@ export const getAllPriorityDMsByMentor = async () => {
     const response = await api.get(`/expert/priority-dm`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        page,
+        limit,
+        search: searchQuery,
+        status,
+        sort,
       },
     });
 
