@@ -513,6 +513,32 @@ class mentorController {
     }
   };
 
+  // public getAllPriorityDMsByMentor = async (
+  //   req: Request & { user?: { id: string } },
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     const mentorId = req.user?.id;
+  //     if (!mentorId) {
+  //       throw new ApiError(401, "Unauthorized", "User ID is required");
+  //     }
+
+  //     const priorityDMs =
+  //       await this.MentorProfileService.getAllPriorityDMsByMentor(mentorId);
+
+  //     res.json(
+  //       new ApiResponse(
+  //         200,
+  //         priorityDMs,
+  //         "All Priority DMs fetched successfully"
+  //       )
+  //     );
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
+  // src/controllers/MentorController.ts
   public getAllPriorityDMsByMentor = async (
     req: Request & { user?: { id: string } },
     res: Response,
@@ -524,13 +550,27 @@ class mentorController {
         throw new ApiError(401, "Unauthorized", "User ID is required");
       }
 
-      const priorityDMs =
-        await this.MentorProfileService.getAllPriorityDMsByMentor(mentorId);
+      // Extract query parameters
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 8;
+      const searchQuery = (req.query.search as string) || "";
+      const status = (req.query.status as "pending" | "replied") || undefined;
+      const sort = (req.query.sort as "asc" | "desc") || undefined;
+
+      const { priorityDMs, total } =
+        await this.MentorProfileService.getAllPriorityDMsByMentor(
+          mentorId,
+          page,
+          limit,
+          searchQuery,
+          status,
+          sort
+        );
 
       res.json(
         new ApiResponse(
           200,
-          priorityDMs,
+          { priorityDMs, total, page, limit },
           "All Priority DMs fetched successfully"
         )
       );

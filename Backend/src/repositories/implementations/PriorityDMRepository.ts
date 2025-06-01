@@ -108,35 +108,108 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
     }
   }
 
-  async findByMentor(mentorId: string): Promise<EPriorityDM[]> {
+  // async findByMentor(mentorId: string): Promise<EPriorityDM[]> {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+  //       throw new ApiError(400, "Invalid mentorId format");
+  //     }
+  //     console.log(
+  //       "prioritydm repositoey , findby mentor  resposne step 1",
+  //       mentorId
+  //     );
+
+  //     const priorityDMs = await PriorityDMModel.find({
+  //       mentorId: new mongoose.Types.ObjectId(mentorId),
+  //     })
+  //       .populate("mentorId", "firstName lastName profilePicture")
+  //       .populate("menteeId", "firstName lastName profilePicture")
+  //       .populate("serviceId")
+  //       .populate("bookingId");
+  //     console.log(
+  //       "prioritydm repositoey , findby mentor  resposne step 2 ",
+  //       priorityDMs
+  //     );
+
+  //     return priorityDMs;
+  //   } catch (error: any) {
+  //     console.error("Error in PriorityDMRepository.findByMentor:", error);
+  //     throw new ApiError(500, `Failed to fetch PriorityDMs: ${error.message}`);
+  //   }
+  // }
+  // src/repositories/PriorityDMRepository.ts
+  async findByMentor(
+    mentorId: string,
+    page: number = 1,
+    limit: number = 8,
+    searchQuery: string = "",
+    status?: "pending" | "replied",
+    sort?: "asc" | "desc"
+  ): Promise<{ priorityDMs: EPriorityDM[]; total: number }> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
         throw new ApiError(400, "Invalid mentorId format");
       }
-      console.log(
-        "prioritydm repositoey , findby mentor  resposne step 1",
-        mentorId
-      );
 
-      const priorityDMs = await PriorityDMModel.find({
+      const query: any = {
         mentorId: new mongoose.Types.ObjectId(mentorId),
-      })
-        .populate("mentorId", "firstName lastName profilePicture")
-        .populate("menteeId", "firstName lastName profilePicture")
-        .populate("serviceId")
-        .populate("bookingId");
+      };
+
+      // Filter by status if provided
+      if (status) {
+        query.status = status;
+      }
+
+      // Search by mentee name or content
+      if (searchQuery) {
+        query.$or = [
+          {
+            "menteeId.firstName": { $regex: searchQuery, $options: "i" },
+          },
+          {
+            "menteeId.lastName": { $regex: searchQuery, $options: "i" },
+          },
+          {
+            content: { $regex: searchQuery, $options: "i" },
+          },
+        ];
+      }
+
+      // Calculate skip for pagination
+      const skip = (page - 1) * limit;
+
+      // Build sort options
+      const sortOptions: any = {};
+      if (sort) {
+        sortOptions.createdAt = sort === "asc" ? 1 : -1;
+      }
+
+      // Fetch DMs with pagination, search, and sort
+      const [priorityDMs, total] = await Promise.all([
+        PriorityDMModel.find(query)
+          .populate("mentorId", "firstName lastName profilePicture")
+          .populate("menteeId", "firstName lastName profilePicture")
+          .populate("serviceId")
+          .populate("bookingId")
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        PriorityDMModel.countDocuments(query),
+      ]);
+
       console.log(
-        "prioritydm repositoey , findby mentor  resposne step 2 ",
-        priorityDMs
+        "PriorityDMRepository.findByMentor response:",
+        priorityDMs.length,
+        "DMs, total:",
+        total
       );
 
-      return priorityDMs;
+      return { priorityDMs, total };
     } catch (error: any) {
       console.error("Error in PriorityDMRepository.findByMentor:", error);
       throw new ApiError(500, `Failed to fetch PriorityDMs: ${error.message}`);
     }
   }
-
   async update(
     id: string,
     data: Partial<EPriorityDM>

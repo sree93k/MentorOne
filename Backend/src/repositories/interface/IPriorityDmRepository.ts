@@ -11,6 +11,14 @@ export interface IPriorityDMRepository {
     serviceId: string,
     mentorId: string
   ): Promise<EPriorityDM[]>;
-  findByMentor(mentorId: string): Promise<EPriorityDM[]>;
+  // findByMentor(mentorId: string): Promise<EPriorityDM[]>;
+  findByMentor(
+    mentorId: string,
+    page: number,
+    limit: number,
+    searchQuery: string,
+    status?: "pending" | "replied",
+    sort?: "asc" | "desc"
+  ): Promise<{ priorityDMs: EPriorityDM[]; total: number }>;
   update(id: string, data: Partial<EPriorityDM>): Promise<EPriorityDM | null>;
 }
