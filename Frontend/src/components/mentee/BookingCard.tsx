@@ -12,6 +12,9 @@
 // import { Button } from "@/components/ui/button";
 // import DigitalProductModal from "@/components/modal/DocumentModal";
 // import PriorityDMModal from "@/components/modal/PriorityDMModal";
+// import AnswerModal from "@/components/modal/AnswerModal";
+// import { getPriorityDMs } from "@/services/menteeService";
+// import toast from "react-hot-toast";
 
 // interface Booking {
 //   id: string;
@@ -49,6 +52,8 @@
 //   const [isDigitalProductModalOpen, setIsDigitalProductModalOpen] =
 //     useState(false);
 //   const [isPriorityDMModalOpen, setIsPriorityDMModalOpen] = useState(false);
+//   const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
+//   const [selectedDM, setSelectedDM] = useState<any | null>(null);
 
 //   const isDigitalDocument = () => {
 //     const serviceType = booking.serviceType.toLowerCase().replace(/-/g, "");
@@ -63,11 +68,40 @@
 //     return serviceType === "prioritydm";
 //   };
 
-//   const handleCardClick = () => {
+//   const handleCardClick = async () => {
 //     if (isDigitalDocument()) {
 //       setIsDigitalProductModalOpen(true);
 //     } else if (isPriorityDM()) {
-//       setIsPriorityDMModalOpen(true);
+//       console.log("Bookingcards getPriorityDMs response is step 1", booking);
+
+//       if (
+//         booking.status.toLowerCase() === "completed" ||
+//         booking.status.toLowerCase() === "pending"
+//       ) {
+//         try {
+//           // Fetch Priority DMs for this booking
+//           console.log("Bookingcards getPriorityDMs response is step 1.5");
+//           const response = await getPriorityDMs(booking.id);
+//           console.log(
+//             "Bookingcards getPriorityDMs response is step 2",
+//             response
+//           );
+
+//           if (response.status === "replied" || response.status === "pending") {
+//             setSelectedDM(response); // Assume the first DM is the relevant one
+//             setIsAnswerModalOpen(true);
+//           } else {
+//             toast.error("No Priority DM found for this booking.");
+//           }
+//         } catch (error) {
+//           toast.error("Failed to fetch Priority DM.");
+//           console.error("Error fetching Priority DM:", error);
+//         }
+//         // } else if (booking.status.toLowerCase() === "pending") {
+//         //   setIsAnswerModalOpen(true);
+//       } else {
+//         setIsPriorityDMModalOpen(true);
+//       }
 //     }
 //   };
 
@@ -131,10 +165,10 @@
 //     return (
 //       <div
 //         className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium flex items-center ${
-//           statusStyles[booking.status]
+//           statusStyles[booking.status.toLowerCase()]
 //         }`}
 //       >
-//         {statusIcons[booking.status]}
+//         {statusIcons[booking.status.toLowerCase()]}
 //         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
 //       </div>
 //     );
@@ -267,7 +301,7 @@
 //                   <span className="ml-1 text-xs">{booking.rating}/5</span>
 //                 </div>
 //               ) : (
-//                 booking.status === "completed" &&
+//                 booking.status.toLowerCase() === "completed" &&
 //                 !booking.feedback && (
 //                   <Button
 //                     onClick={(e) => {
@@ -304,14 +338,25 @@
 //         />
 //       )}
 
-//       {isPriorityDM() && (
+//       {isPriorityDM() && booking.status.toLowerCase() !== "completed" && (
 //         <PriorityDMModal
 //           isOpen={isPriorityDMModalOpen}
 //           onClose={() => setIsPriorityDMModalOpen(false)}
 //           serviceId={booking.serviceId}
-//           bookingId={booking.id} // Pass bookingId
+//           bookingId={booking.id}
 //           title={booking.title}
 //           productType="Direct Message"
+//         />
+//       )}
+
+//       {isPriorityDM() && selectedDM && (
+//         <AnswerModal
+//           isOpen={isAnswerModalOpen}
+//           onClose={() => {
+//             setIsAnswerModalOpen(false);
+//             setSelectedDM(null);
+//           }}
+//           question={selectedDM}
 //         />
 //       )}
 //     </>
@@ -349,9 +394,9 @@ interface Booking {
   time: string;
   price: number;
   status: string;
+  serviceType: string;
   rating?: number;
   feedback?: string;
-  serviceType: string;
   oneToOneType?: string | null;
   digitalProductType?: string | null;
 }
@@ -361,6 +406,7 @@ interface BookingCardProps {
   type: "upcoming" | "completed";
   navigateToProfile?: () => void;
   onFeedbackClick?: () => void;
+  refreshBookings?: () => void; // Add refreshBookings prop
 }
 
 const BookingCard = ({
@@ -368,6 +414,7 @@ const BookingCard = ({
   type,
   navigateToProfile,
   onFeedbackClick,
+  refreshBookings, // Destructure new prop
 }: BookingCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isDigitalProductModalOpen, setIsDigitalProductModalOpen] =
@@ -400,7 +447,6 @@ const BookingCard = ({
         booking.status.toLowerCase() === "pending"
       ) {
         try {
-          // Fetch Priority DMs for this booking
           console.log("Bookingcards getPriorityDMs response is step 1.5");
           const response = await getPriorityDMs(booking.id);
           console.log(
@@ -409,7 +455,7 @@ const BookingCard = ({
           );
 
           if (response.status === "replied" || response.status === "pending") {
-            setSelectedDM(response); // Assume the first DM is the relevant one
+            setSelectedDM(response);
             setIsAnswerModalOpen(true);
           } else {
             toast.error("No Priority DM found for this booking.");
@@ -418,8 +464,6 @@ const BookingCard = ({
           toast.error("Failed to fetch Priority DM.");
           console.error("Error fetching Priority DM:", error);
         }
-        // } else if (booking.status.toLowerCase() === "pending") {
-        //   setIsAnswerModalOpen(true);
       } else {
         setIsPriorityDMModalOpen(true);
       }
@@ -474,6 +518,7 @@ const BookingCard = ({
       completed: "bg-white text-black border border-black",
       cancelled: "bg-gray-100 text-gray-500 border border-gray-300",
       rescheduled: "bg-white text-black border border-black",
+      pending: "bg-yellow-100 text-yellow-800 border border-yellow-300", // Add pending style
     };
 
     const statusIcons = {
@@ -481,6 +526,7 @@ const BookingCard = ({
       completed: <CheckCircle className="w-4 h-4 mr-1" />,
       cancelled: <XCircle className="w-4 h-4 mr-1" />,
       rescheduled: <Clock className="w-4 h-4 mr-1" />,
+      pending: <Clock className="w-4 h-4 mr-1" />, // Add pending icon
     };
 
     return (
@@ -667,6 +713,7 @@ const BookingCard = ({
           bookingId={booking.id}
           title={booking.title}
           productType="Direct Message"
+          refreshBookings={refreshBookings} // Pass refresh callback
         />
       )}
 
