@@ -110,6 +110,10 @@
 //         filtered = filtered.filter((booking) =>
 //           ["confirmed", "rescheduled"].includes(booking.status.toLowerCase())
 //         );
+//       } else if (tab === "pending") {
+//         filtered = filtered.filter(
+//           (booking) => booking.status.toLowerCase() === "pending"
+//         );
 //       } else if (tab === "completed") {
 //         filtered = filtered.filter((booking) =>
 //           ["completed", "cancelled"].includes(booking.status.toLowerCase())
@@ -193,7 +197,7 @@
 //               <TabsContent key={mainTab} value={mainTab}>
 //                 <Tabs defaultValue="upcoming" onValueChange={setSelectedTab}>
 //                   <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 mb-8">
-//                     {["upcoming", "completed"].map((tab) => (
+//                     {["upcoming", "pending", "completed"].map((tab) => (
 //                       <TabsTrigger
 //                         key={tab}
 //                         value={tab}
@@ -223,6 +227,25 @@
 //                         ))
 //                       ) : (
 //                         <div>No upcoming bookings found.</div>
+//                       )}
+//                     </div>
+//                   </TabsContent>
+
+//                   <TabsContent value="pending">
+//                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+//                       {filteredBookings.length > 0 ? (
+//                         filteredBookings.map((booking) => (
+//                           <BookingCard
+//                             key={booking.id}
+//                             booking={booking}
+//                             type="upcoming" // Treat pending as upcoming for BookingCard behavior
+//                             navigateToProfile={() =>
+//                               handleNavigateToProfile(booking.mentorId)
+//                             }
+//                           />
+//                         ))
+//                       ) : (
+//                         <div>No pending bookings found.</div>
 //                       )}
 //                     </div>
 //                   </TabsContent>
@@ -332,42 +355,42 @@ export default function BookingsPage() {
   const bookingsPerPage = 12;
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setIsLoading(true);
-        const response = await getBookings(currentPage, bookingsPerPage, "");
-        const fetchedBookings = response.data.map((booking: any) => ({
-          id: booking._id,
-          serviceId: booking.serviceId._id,
-          mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
-          mentorImage: booking.mentorId.profilePicture,
-          mentorId: booking.mentorId._id,
-          title: booking.serviceId.title,
-          technology: booking.serviceId.technology,
-          date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-          time: booking.startTime,
-          price: booking.serviceId.amount,
-          status: booking.status,
-          serviceType: booking.serviceId.type,
-          rating: booking.rating || undefined,
-          feedback: booking.feedback || undefined,
-          oneToOneType: booking.serviceId.oneToOneType || null,
-          digitalProductType: booking.serviceId.digitalProductType || null,
-        }));
-        setBookings(fetchedBookings);
-        setTotalBookings(response.total);
-      } catch (error) {
-        console.error("Failed to fetch bookings:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchBookings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await getBookings(currentPage, bookingsPerPage, "");
+      const fetchedBookings = response.data.map((booking: any) => ({
+        id: booking._id,
+        serviceId: booking.serviceId._id,
+        mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
+        mentorImage: booking.mentorId.profilePicture,
+        mentorId: booking.mentorId._id,
+        title: booking.serviceId.title,
+        technology: booking.serviceId.technology,
+        date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        time: booking.startTime,
+        price: booking.serviceId.amount,
+        status: booking.status,
+        serviceType: booking.serviceId.type,
+        rating: booking.rating || undefined,
+        feedback: booking.feedback || undefined,
+        oneToOneType: booking.serviceId.oneToOneType || null,
+        digitalProductType: booking.serviceId.digitalProductType || null,
+      }));
+      setBookings(fetchedBookings);
+      setTotalBookings(response.total);
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBookings();
   }, [currentPage]);
 
@@ -516,6 +539,7 @@ export default function BookingsPage() {
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
                             }
+                            refreshBookings={fetchBookings} // Pass refresh callback
                           />
                         ))
                       ) : (
@@ -535,6 +559,7 @@ export default function BookingsPage() {
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
                             }
+                            refreshBookings={fetchBookings} // Pass refresh callback
                           />
                         ))
                       ) : (
@@ -558,6 +583,7 @@ export default function BookingsPage() {
                               setSelectedBooking(booking);
                               setIsFeedbackModalOpen(true);
                             }}
+                            refreshBookings={fetchBookings} // Pass refresh callback
                           />
                         ))
                       ) : (
