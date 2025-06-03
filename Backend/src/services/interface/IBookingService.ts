@@ -1,5 +1,5 @@
 import { EService } from "../../entities/serviceEntity";
-
+import { EBooking } from "../../entities/bookingEntity";
 export interface BookingParams {
   serviceId: string;
   mentorId: string;
@@ -69,4 +69,9 @@ export interface IBookingService {
     status: string
   ): Promise<{ bookings: any[]; total: number }>;
   getServiceById(serviceId: string): Promise<EService | null>;
+  getAllVideoCalls(
+    mentorId: string,
+    status?: string,
+    limit?: number
+  ): Promise<EBooking[]>;
 }

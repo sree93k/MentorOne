@@ -150,6 +150,33 @@ class BookingController {
       next(error);
     }
   };
+
+  public getAllVideoCallsByMentor = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      console.log("booking controller getAllVideoCallsByMentor step 1");
+      const mentorId = req?.user?.id;
+      if (!mentorId) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+      const bookings = await this.bookingService.getAllVideoCalls(
+        mentorId,
+        "confirmed",
+        5
+      );
+      console.log(
+        "booking controller getAllVideoCallsByMentor step 2",
+        bookings
+      );
+      res.json({ data: bookings, total: bookings.length });
+    } catch (error: any) {
+      console.error("Error fetching video call bookings:", error);
+      next(error);
+    }
+  };
 }
 
 export default new BookingController();

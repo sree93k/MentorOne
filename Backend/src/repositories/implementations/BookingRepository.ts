@@ -2,6 +2,7 @@ import Booking from "../../models/bookingModel";
 import { ApiError } from "../../middlewares/errorHandler";
 import { IBookingRepository } from "../interface/IBookingRepository";
 import { EBooking } from "../../entities/bookingEntity";
+import { response } from "express";
 
 export default class BookingRepository implements IBookingRepository {
   async create(data: any) {
@@ -175,5 +176,70 @@ export default class BookingRepository implements IBookingRepository {
 
   async countAllBookings(query: any): Promise<number> {
     return await Booking.countDocuments(query).exec();
+  }
+
+  // async findAllVideoCalls(
+  //   mentorId: string,
+  //   status?: string,
+  //   limit?: number
+  // ): Promise<EBooking[]> {
+  //   console.log("BookingRepository findAllVideoCalls step 1", {
+  //     mentorId,
+  //     status,
+  //     limit,
+  //   });
+  //   const query: any = { mentorId, status: status || { $exists: true } };
+  //   console.log("BookingRepository findAllVideoCalls step 2", query);
+  //   let bookingsQuery = Booking.find(query)
+  //     .populate({
+  //       path: "serviceId",
+  //       match: { oneToOneType: "video" },
+  //     })
+  //     .populate("menteeId", "firstName lastName") // Populate mentee details
+  //     .lean();
+  //   console.log("BookingRepository findAllVideoCalls step 3", bookingsQuery);
+  //   if (limit) {
+  //     bookingsQuery = bookingsQuery.limit(limit);
+  //   }
+
+  //   const bookings = await bookingsQuery.exec();
+  //   console.log("BookingRepository findAllVideoCalls step 4", bookings);
+  //   const videoCallBookings = bookings.filter(
+  //     (booking) => booking.serviceId !== null
+  //   );
+  //   console.log(
+  //     "BookingRepository findAllVideoCalls step 5",
+  //     videoCallBookings
+  //   );
+
+  //   return videoCallBookings;
+  // }
+  async findAllVideoCalls(
+    mentorId: string,
+    status?: string,
+    limit?: number
+  ): Promise<EBooking[]> {
+    console.log("BookingRepository findAllVideoCalls step 1", {
+      mentorId,
+      status,
+      limit,
+    });
+    const query: any = { mentorId };
+    if (status) {
+      query.status = status;
+    }
+
+    let bookingsQuery = Booking.find(query)
+      .populate("serviceId")
+      .populate("menteeId", "firstName lastName")
+      .lean();
+
+    if (limit) {
+      bookingsQuery = bookingsQuery.limit(limit);
+    }
+
+    const bookings = await bookingsQuery.exec();
+    console.log("BookingRepository findAllVideoCalls step 2", bookings);
+    return bookings;
   }
 }

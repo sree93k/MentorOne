@@ -513,32 +513,6 @@ class mentorController {
     }
   };
 
-  // public getAllPriorityDMsByMentor = async (
-  //   req: Request & { user?: { id: string } },
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> => {
-  //   try {
-  //     const mentorId = req.user?.id;
-  //     if (!mentorId) {
-  //       throw new ApiError(401, "Unauthorized", "User ID is required");
-  //     }
-
-  //     const priorityDMs =
-  //       await this.MentorProfileService.getAllPriorityDMsByMentor(mentorId);
-
-  //     res.json(
-  //       new ApiResponse(
-  //         200,
-  //         priorityDMs,
-  //         "All Priority DMs fetched successfully"
-  //       )
-  //     );
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // };
-  // src/controllers/MentorController.ts
   public getAllPriorityDMsByMentor = async (
     req: Request & { user?: { id: string } },
     res: Response,

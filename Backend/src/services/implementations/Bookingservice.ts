@@ -18,6 +18,7 @@ import { IServiceRepository } from "../../repositories/interface/IServiceReposit
 import { IChatRepository } from "../../repositories/interface/IChatRepository";
 import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { EBooking } from "../../entities/bookingEntity";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -524,6 +525,30 @@ export default class BookingService implements IBookingService {
     } catch (error: any) {
       console.error("BookingService getAllBookings > error:", error);
       throw new ApiError(500, "Failed to fetch all bookings");
+    }
+  }
+
+  async getAllVideoCalls(
+    mentorId: string,
+    status?: string,
+    limit?: number
+  ): Promise<EBooking[]> {
+    try {
+      console.log("BookingService getAllVideoCalls step 1", {
+        mentorId,
+        status,
+        limit,
+      });
+      const allVideoCallBookings =
+        await this.bookingRepository.findAllVideoCalls(mentorId, status, limit);
+      console.log(
+        "BookingService getAllVideoCalls step 2",
+        allVideoCallBookings
+      );
+      return allVideoCallBookings;
+    } catch (error) {
+      console.error("BookingService getAllVideoCalls > error:", error);
+      throw new ApiError(500, "Failed to fetch video call bookings");
     }
   }
 }

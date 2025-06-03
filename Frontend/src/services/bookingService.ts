@@ -174,3 +174,24 @@ export const getBookingsByMentor = async (
     throw new Error(`Failed to fetch bookings: ${error.message}`);
   }
 };
+export const allVideoCallBookings = async () => {
+  try {
+    console.log("bookingservice allVideoCallBookings step 1");
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.get(`/expert/allvideocalls`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log("bookingservice allVideoCallBookings step 2", response.data);
+    return response.data; // Return the data directly
+  } catch (error: any) {
+    console.error("bookingservice allVideoCallBookings error:", error);
+    throw new Error(`Failed to fetch videocall bookings: ${error.message}`);
+  }
+};
