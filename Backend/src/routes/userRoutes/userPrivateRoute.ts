@@ -8,6 +8,7 @@ import socketController from "../../controllers/implementation/socketController"
 import videoCallController from "../../controllers/implementation/videoCallController";
 import chatController from "../../controllers/implementation/socketController";
 import notificationController from "../../controllers/implementation/notificationController";
+import bookingController from "../../controllers/implementation/bookingController";
 const userPrivateRoute = Router();
 
 // Configure multer to save files to an 'uploads' folder
@@ -129,5 +130,12 @@ userPrivateRoute.post(
   "/notifications/:notificationId/read",
   authenticate,
   notificationController.markNotificationAsRead.bind(notificationController)
+);
+
+// New route for updating booking status
+userPrivateRoute.patch(
+  "/booking/:bookingId/updatestatus",
+  authenticate,
+  bookingController.updateBookingStatus.bind(bookingController)
 );
 export default userPrivateRoute;

@@ -157,29 +157,112 @@ class BookingController {
     }
   };
 
+  // public getAllVideoCallsByMentor = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   try {
+  //     console.log("booking controller getAllVideoCallsByMentor step 1");
+  //     const mentorId = req?.user?.id;
+  //     if (!mentorId) {
+  //       throw new ApiError(400, "Mentor ID is required");
+  //     }
+  //     const bookings = await this.bookingService.getAllVideoCalls(
+  //       mentorId,
+  //       "confirmed",
+  //       5
+  //     );
+  //     console.log(
+  //       "booking controller getAllVideoCallsByMentor step 2",
+  //       bookings
+  //     );
+  //     res.json({ data: bookings, total: bookings.length });
+  //   } catch (error: any) {
+  //     console.error("Error fetching video call bookings:", error);
+  //     next(error);
+  //   }
+  // };
   public getAllVideoCallsByMentor = async (
     req: Request,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      console.log("booking controller getAllVideoCallsByMentor step 1");
+      console.log("BookingController getAllVideoCallsByMentor step 1");
       const mentorId = req?.user?.id;
+      const status = req.query.status
+        ? Array.isArray(req.query.status)
+          ? req.query.status
+          : [req.query.status as string]
+        : ["confirmed", "rescheduled"]; // Default statuses
+      const limit: number = parseInt(req.query.limit as string) || 5;
+
       if (!mentorId) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(400, "Invalid input");
       }
+
       const bookings = await this.bookingService.getAllVideoCalls(
         mentorId,
-        "confirmed",
-        5
+        status,
+        limit
       );
       console.log(
-        "booking controller getAllVideoCallsByMentor step 2",
+        "BookingController getAllVideoCallsByMentor step 2",
         bookings
       );
       res.json({ data: bookings, total: bookings.length });
     } catch (error: any) {
       console.error("Error fetching video call bookings:", error);
+      next(error);
+    }
+  };
+
+  public updateBookingStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { bookingId } = req.params;
+    const { status } = req.body;
+    const mentorId = req?.user?.id;
+
+    try {
+      if (!mentorId) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+      if (!status) {
+        throw new ApiError(400, "Status is required");
+      }
+      const validStatuses = [
+        "confirmed",
+        "rescheduled",
+        "cancelled",
+        "pending",
+        "completed",
+      ];
+      if (!validStatuses.includes(status)) {
+        throw new ApiError(400, "Invalid status value");
+      }
+      console.log(
+        "bookingserviuc update status step 1",
+        bookingId,
+        status,
+        mentorId
+      );
+
+      const updatedBooking = await this.bookingService.updateBookingStatus(
+        bookingId,
+        status,
+        mentorId
+      );
+      console.log("bookingserviuc update status step 2");
+      res.json({
+        message: "Booking status updated successfully",
+        booking: updatedBooking,
+      });
+    } catch (error: any) {
+      console.error("Error updating booking status:", error);
       next(error);
     }
   };

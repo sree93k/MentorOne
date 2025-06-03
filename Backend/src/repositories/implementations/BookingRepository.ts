@@ -3,6 +3,7 @@ import { ApiError } from "../../middlewares/errorHandler";
 import { IBookingRepository } from "../interface/IBookingRepository";
 import { EBooking } from "../../entities/bookingEntity";
 import { response } from "express";
+import mongoose from "mongoose";
 
 export default class BookingRepository implements IBookingRepository {
   async create(data: any) {
@@ -123,7 +124,9 @@ export default class BookingRepository implements IBookingRepository {
   }
   async update(id: string, data: any) {
     try {
-      return await Booking.findByIdAndUpdate(id, data, { new: true })
+      console.log("booking repository update step 1", id, data);
+
+      const response = await Booking.findByIdAndUpdate(id, data, { new: true })
         .populate({
           path: "mentorId",
           select: "firstName lastName profilePicture",
@@ -132,7 +135,11 @@ export default class BookingRepository implements IBookingRepository {
           path: "serviceId",
           select: "title technology price serviceType",
         });
+
+      console.log("booking repository update step 2");
+      return response;
     } catch (error: any) {
+      console.log("booking repository update step 3 error", error);
       throw new ApiError(500, "Failed to update booking", error.message);
     }
   }
@@ -178,45 +185,9 @@ export default class BookingRepository implements IBookingRepository {
     return await Booking.countDocuments(query).exec();
   }
 
-  // async findAllVideoCalls(
-  //   mentorId: string,
-  //   status?: string,
-  //   limit?: number
-  // ): Promise<EBooking[]> {
-  //   console.log("BookingRepository findAllVideoCalls step 1", {
-  //     mentorId,
-  //     status,
-  //     limit,
-  //   });
-  //   const query: any = { mentorId, status: status || { $exists: true } };
-  //   console.log("BookingRepository findAllVideoCalls step 2", query);
-  //   let bookingsQuery = Booking.find(query)
-  //     .populate({
-  //       path: "serviceId",
-  //       match: { oneToOneType: "video" },
-  //     })
-  //     .populate("menteeId", "firstName lastName") // Populate mentee details
-  //     .lean();
-  //   console.log("BookingRepository findAllVideoCalls step 3", bookingsQuery);
-  //   if (limit) {
-  //     bookingsQuery = bookingsQuery.limit(limit);
-  //   }
-
-  //   const bookings = await bookingsQuery.exec();
-  //   console.log("BookingRepository findAllVideoCalls step 4", bookings);
-  //   const videoCallBookings = bookings.filter(
-  //     (booking) => booking.serviceId !== null
-  //   );
-  //   console.log(
-  //     "BookingRepository findAllVideoCalls step 5",
-  //     videoCallBookings
-  //   );
-
-  //   return videoCallBookings;
-  // }
   async findAllVideoCalls(
     mentorId: string,
-    status?: string,
+    status?: string[],
     limit?: number
   ): Promise<EBooking[]> {
     console.log("BookingRepository findAllVideoCalls step 1", {
@@ -224,21 +195,68 @@ export default class BookingRepository implements IBookingRepository {
       status,
       limit,
     });
-    const query: any = { mentorId };
-    if (status) {
-      query.status = status;
-    }
 
-    let bookingsQuery = Booking.find(query)
-      .populate("serviceId")
-      .populate("menteeId", "firstName lastName")
-      .lean();
+    const pipeline: any = [
+      {
+        $match: {
+          mentorId: new mongoose.Types.ObjectId(mentorId),
+          ...(status && { status: { $in: status } }),
+        },
+      },
+      {
+        $lookup: {
+          from: "Service",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service",
+        },
+      },
+      {
+        $unwind: "$service",
+      },
+      {
+        $match: {
+          "service.oneToOneType": "video",
+        },
+      },
+      {
+        $lookup: {
+          from: "Users",
+          localField: "menteeId",
+          foreignField: "_id",
+          as: "mentee",
+        },
+      },
+      {
+        $unwind: "$mentee",
+      },
+      {
+        $project: {
+          _id: 1,
+          serviceId: "$service",
+          mentorId: 1,
+          menteeId: {
+            _id: "$mentee._id",
+            firstName: "$mentee.firstName",
+            lastName: "$mentee.lastName",
+          },
+          day: 1,
+          slotIndex: 1,
+          startTime: 1,
+          bookingDate: 1,
+          status: 1,
+          paymentDetails: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ];
 
     if (limit) {
-      bookingsQuery = bookingsQuery.limit(limit);
+      pipeline.push({ $limit: limit });
     }
 
-    const bookings = await bookingsQuery.exec();
+    const bookings = await Booking.aggregate(pipeline).exec();
     console.log("BookingRepository findAllVideoCalls step 2", bookings);
     return bookings;
   }
