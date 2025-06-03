@@ -5,6 +5,9 @@ export interface CreateCheckoutSessionParams {
   mentorId: string;
   menteeId: string;
   amount: number;
+  platformPercentage: number;
+  platformCharge: number;
+  total: number;
   bookingDate: string;
   startTime: string;
   endTime: string;

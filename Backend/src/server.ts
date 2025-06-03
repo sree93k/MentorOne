@@ -14,7 +14,7 @@ import multer from "multer";
 import { Server } from "socket.io";
 import { createClient } from "@redis/client";
 import { createAdapter } from "@socket.io/redis-adapter";
-
+// import { TransferJob } from "./services/implementations/TransferJobService";
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
   "REFRESH_TOKEN_SECRET",
@@ -34,6 +34,10 @@ for (const envVar of requiredEnvVars) {
 
 const app = express();
 const httpServer = createServer(app);
+
+// // Initialize TransferJob
+// const transferJob = new TransferJob();
+// transferJob.start();
 
 // Initialize Socket.IO server
 const io = new Server(httpServer, {

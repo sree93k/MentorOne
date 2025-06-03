@@ -4,12 +4,20 @@ import PaymentRepository from "../../repositories/implementations/PaymentReposit
 import ChatRepository from "../../repositories/implementations/ChatRepository";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import ChatService from "./ChatService";
+import { IChatService } from "../interface/IChatService";
 import NotificationService from "./NotificationService";
+import { INotificationService } from "../interface/INotificationService";
 import { ApiError } from "../../middlewares/errorHandler";
 import { EService } from "../../entities/serviceEntity";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { getIO } from "../../utils/socket/notification";
+import WalletRepository from "../../repositories/implementations/WalletRepository";
+import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
+import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
+import { IChatRepository } from "../../repositories/interface/IChatRepository";
+import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
+import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -22,6 +30,9 @@ interface SaveBookingAndPaymentParams {
   day: string;
   slotIndex: number;
   amount: number;
+  platformPercentage: number;
+  platformCharge: number;
+  total: number;
 }
 
 interface BookServiceParams {
@@ -32,13 +43,14 @@ interface BookServiceParams {
 }
 
 export default class BookingService implements IBookingService {
-  private bookingRepository: BookingRepository;
-  private paymentRepository: PaymentRepository;
-  private chatRepository: ChatRepository;
-  private serviceRepository: ServiceRepository;
-  private chatService: ChatService;
+  private bookingRepository: IBookingRepository;
+  private paymentRepository: IPaymentRepository;
+  private chatRepository: IChatRepository;
+  private serviceRepository: IServiceRepository;
+  private chatService: IChatService;
   private userRepository: IUserRepository;
-  private notificationService: NotificationService;
+  private notificationService: INotificationService;
+  private walletRepository: IWalletRepository;
 
   constructor() {
     this.bookingRepository = new BookingRepository();
@@ -48,6 +60,7 @@ export default class BookingService implements IBookingService {
     this.chatService = new ChatService();
     this.userRepository = new UserRepository();
     this.notificationService = new NotificationService();
+    this.walletRepository = new WalletRepository();
   }
 
   async createBooking(params: BookingParams): Promise<any> {
@@ -91,6 +104,9 @@ export default class BookingService implements IBookingService {
       day,
       slotIndex,
       amount,
+      platformPercentage,
+      platformCharge,
+      total,
     } = params;
 
     console.log("saveBookingAndPayment params:", params);
@@ -124,13 +140,35 @@ export default class BookingService implements IBookingService {
         slotIndex,
       });
 
+      // const payment = await this.paymentRepository.create({
+      //   bookingId: booking._id,
+      //   menteeId,
+      //   amount,
+      //   status: "completed",
+      //   transactionId: sessionId,
+      // });
       const payment = await this.paymentRepository.create({
         bookingId: booking._id,
         menteeId,
+        mentorId,
         amount,
+        platformPercentage,
+        platformCharge,
+        total,
         status: "completed",
         transactionId: sessionId,
       });
+
+      // Add to mentor's pending balance
+      let wallet = await this.walletRepository.findByUserId(mentorId);
+      if (!wallet) {
+        wallet = await this.walletRepository.create(mentorId);
+      }
+      await this.walletRepository.addPendingBalance(
+        mentorId,
+        amount,
+        payment._id.toString()
+      );
 
       let chat;
       if (service.oneToOneType === "chat") {
@@ -148,7 +186,7 @@ export default class BookingService implements IBookingService {
         console.log("Sending notifications for:", {
           paymentId: payment._id,
           bookingId: booking._id,
-          amount,
+          total,
           menteeId,
           mentorId,
         });
@@ -157,7 +195,7 @@ export default class BookingService implements IBookingService {
           booking._id.toString(),
           menteeId,
           mentorId,
-          amount,
+          total,
           io
         );
         console.log("Notifications sent successfully:", {

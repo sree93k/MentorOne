@@ -1549,7 +1549,8 @@ export default function CalendarPage() {
   const [isBlockDatesModalOpen, setIsBlockDatesModalOpen] = useState(false);
   const [isCreateScheduleModalOpen, setIsCreateScheduleModalOpen] =
     useState(false);
-
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   useEffect(() => {
     if (!isAuthenticated || !mentorId) {
       toast.error("Please log in to view your calendar.");
@@ -1943,12 +1944,45 @@ export default function CalendarPage() {
     toast.success("Schedule saved");
   };
 
+  // const handleBlockDates = async (date: { date: Date; dayOfWeek: string }) => {
+  //   if (!mentorId) {
+  //     toast.error("Mentor ID not found.");
+  //     return;
+  //   }
+
+  //   try {
+  //     console.log(
+  //       `Adding blocked date: ${date.date.toISOString()} (${date.dayOfWeek})`
+  //     );
+  //     const newBlockedDates = await addBlockedDates(mentorId, [
+  //       { date: date.date.toISOString(), day: date.dayOfWeek },
+  //     ]);
+  //     console.log("Received new blocked dates:", newBlockedDates);
+  //     setBlockedDates((prev) => {
+  //       const updatedDates = [
+  //         ...prev.filter((d) => !d._id.startsWith("temp-")),
+  //         ...newBlockedDates.map((bd: any) => ({
+  //           _id: bd._id,
+  //           date: bd.date,
+  //           day: bd.day || date.dayOfWeek,
+  //         })),
+  //       ];
+  //       console.log("Updated blockedDates state:", updatedDates);
+  //       return updatedDates;
+  //     });
+  //     setIsBlockDatesModalOpen(false);
+  //     toast.success("Blocked date added successfully");
+  //   } catch (error) {
+  //     console.error("Error adding blocked date:", error);
+  //     toast.error("Failed to add blocked date");
+  //   }
+  // };
+
   const handleBlockDates = async (date: { date: Date; dayOfWeek: string }) => {
     if (!mentorId) {
       toast.error("Mentor ID not found.");
       return;
     }
-
     try {
       console.log(
         `Adding blocked date: ${date.date.toISOString()} (${date.dayOfWeek})`
@@ -1976,7 +2010,6 @@ export default function CalendarPage() {
       toast.error("Failed to add blocked date");
     }
   };
-
   const removeBlockedDateHandler = useCallback(
     async (blockedDateId: string) => {
       if (!mentorId) {
@@ -2714,7 +2747,7 @@ export default function CalendarPage() {
                 {blockedDates.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Blocked Dates:</p>
-                    {blockedDates.map((date) => (
+                    {/* {blockedDates.map((date) => (
                       <div
                         key={date._id}
                         className="flex items-center justify-between border px-2 py-1"
@@ -2732,7 +2765,28 @@ export default function CalendarPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    ))}
+                    ))} */}
+                    {blockedDates
+                      .filter((date) => new Date(date.date) >= today) // Only show future blocked dates
+                      .map((date) => (
+                        <div
+                          key={date._id}
+                          className="flex items-center justify-between border px-2 py-1"
+                        >
+                          <span className="text-sm">
+                            {new Date(date.date).toLocaleDateString()} (
+                            {date.day || "N/A"})
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-1"
+                            onClick={() => removeBlockedDateHandler(date._id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                   </div>
                 )}
                 {blockedDates.length === 0 && (
@@ -2748,10 +2802,41 @@ export default function CalendarPage() {
         </TabsContent>
       </Tabs>
 
-      <BlockDatesModal
+      {/* <BlockDatesModal
         isOpen={isBlockDatesModalOpen}
         onClose={() => setIsBlockDatesModalOpen(false)}
         onBlock={handleBlockDates}
+        selectedDates={blockedDates.map((d) => new Date(d.date))}
+        setSelectedDates={(dates) => {
+          const newBlockedDates = dates.map((d) => {
+            const existing = blockedDates.find(
+              (bd) => new Date(bd.date).toDateString() === d.toDateString()
+            );
+            const dayOfWeek = [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday",
+            ][d.getDay()];
+            return (
+              existing || {
+                _id: `temp-${uuidv4()}`,
+                date: d.toISOString(),
+                day: dayOfWeek,
+              }
+            );
+          });
+          console.log("Setting new blocked dates in modal:", newBlockedDates);
+          setBlockedDates(newBlockedDates);
+        }}
+      /> */}
+      <BlockDatesModal
+        isOpen={isBlockDatesModalOpen}
+        onClose={() => setIsBlockDatesModalOpen(false)}
+        onBlockDates={handleBlockDates}
         selectedDates={blockedDates.map((d) => new Date(d.date))}
         setSelectedDates={(dates) => {
           const newBlockedDates = dates.map((d) => {
