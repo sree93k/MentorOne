@@ -14,4 +14,5 @@ export interface IServiceRepository {
     limit?: number
   ): Promise<{ tutorials: any[]; total: number }>;
   getTutorialById(tutorialId: string): Promise<any>;
+  findServicesByTitle(searchQuery: string): Promise<any[]>;
 }

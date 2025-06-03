@@ -5,6 +5,7 @@ import { authenticate } from "../../middlewares/authenticateuser";
 import multer from "multer";
 import bookingController from "../../controllers/implementation/bookingController";
 import paymentController from "../../controllers/implementation/paymentController";
+import { auth } from "../../utils/socket";
 const upload = multer({ storage: multer.memoryStorage() });
 const mentorRoutes = Router();
 
@@ -121,5 +122,11 @@ mentorRoutes.get(
   "/priority-dm",
   authenticate,
   mentorController.getAllPriorityDMsByMentor.bind(mentorController)
+);
+
+mentorRoutes.get(
+  "/allvideocalls",
+  authenticate,
+  bookingController.getAllVideoCallsByMentor.bind(bookingController)
 );
 export default mentorRoutes;
