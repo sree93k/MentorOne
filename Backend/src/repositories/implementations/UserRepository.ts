@@ -317,97 +317,6 @@ export default class UserRepository implements IUserRepository {
     }
   }
 
-  // async getAllMentors(serviceType?: string): Promise<EUsers[]> {
-  //   try {
-  //     console.log("getAllMentors repo step 1", { serviceType });
-  //     let mentorIds: string[] = [];
-
-  //     // Filter by serviceType if provided
-  //     if (serviceType && serviceType.toLowerCase() !== "all") {
-  //       const services = await Service.find({ type: serviceType }).lean();
-  //       mentorIds = services.map((s) => s.mentorId.toString());
-  //       console.log(
-  //         "getAllMentors repo step 2: Found mentorIds for service",
-  //         mentorIds
-  //       );
-  //     }
-
-  //     const query = {
-  //       mentorId: { $exists: true, $ne: null },
-  //       ...(mentorIds.length && { _id: { $in: mentorIds } }),
-  //     };
-
-  //     const mentors = await Users.find(query)
-  //       .populate({
-  //         path: "mentorId",
-  //         select: "bio skills isApproved",
-  //       })
-  //       .populate({
-  //         path: "schoolDetails",
-  //         select: "schoolName city class",
-  //       })
-  //       .populate({
-  //         path: "collegeDetails",
-  //         select: "collegeName city course specializedIn",
-  //       })
-  //       .populate({
-  //         path: "professionalDetails",
-  //         select: "company jobRole city",
-  //       })
-  //       .lean();
-
-  //     console.log("getAllMentors repo step 3: Found mentors", mentors.length);
-
-  //     return mentors.map((mentor, index) => {
-  //       let role = "N/A";
-  //       let work = "N/A";
-  //       let badge = "N/A";
-  //       let workRole = "N/A";
-
-  //       if (mentor.professionalDetails) {
-  //         role = "Professional";
-  //         work = mentor.professionalDetails.company || "Unknown";
-  //         badge = mentor.professionalDetails.jobRole || "N/A";
-  //         workRole = mentor.professionalDetails.jobRole || "Professional";
-  //       } else if (mentor.category === "college" && mentor.collegeDetails) {
-  //         role = "College Student";
-  //         work = mentor.collegDetails.collegeName || "Unknown";
-  //         badge = mentor.collegeDetails.course || "N/A";
-  //         workRole = mentor.collegeDetails.specializedIn || "N/A";
-  //       } else if (mentor.category === "school" && mentor.schoolDetails) {
-  //         role = "School Student";
-  //         work = mentor.schoolDetails.schoolName || "Unknown";
-  //         badge = mentor.schoolDetails.schoolName || "N/A";
-  //         workRole = mentor.schoolDetails.class
-  //           ? String(mentor.schoolDetails.class)
-  //           : "N/A";
-  //       }
-
-  //       return {
-  //         userId: mentor?._id.toString(),
-  //         mentorId: mentor.mentorId?._id.toString(),
-  //         name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
-  //         bio: mentor.mentorId?.bio,
-  //         role,
-  //         work,
-  //         workRole,
-  //         profileImage: mentor.profilePicture || undefined,
-  //         badge,
-  //         isBlocked: mentor.isBlocked,
-  //         isApproved:
-  //           mentor.mentorId && "isApproved" in mentor.mentorId
-  //             ? mentor.mentorId.isApproved
-  //             : "Pending",
-  //       };
-  //     });
-  //   } catch (error: any) {
-  //     console.error("getAllMentors repo step 5: Error", {
-  //       message: error.message,
-  //       stack: error.stack,
-  //     });
-  //     throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
-  //   }
-  // }
   async getAllMentors(
     role?: string,
     page: number = 1,
@@ -495,8 +404,8 @@ export default class UserRepository implements IUserRepository {
         }
 
         return {
-          userId: mentor?._id.toString(),
-          mentorId: mentor.mentorId?._id.toString(),
+          userId: mentor?._id?.toString(),
+          mentorId: mentor.mentorId?._id?.toString(),
           name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
           bio: mentor.mentorId?.bio,
           role: mappedRole, // Use mappedRole to ensure consistency
@@ -629,8 +538,8 @@ export default class UserRepository implements IUserRepository {
       console.log("the user datat in repo is 2", services);
 
       return {
-        userData: mentor._id.toString(),
-        mentorData: mentor.mentorId?._id.toString() || mentor._id.toString(),
+        userData: mentor?._id?.toString(),
+        mentorData: mentor.mentorId?._id?.toString() || mentor?._id?.toString(),
         name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
         role,
         work,

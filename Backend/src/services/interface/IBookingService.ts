@@ -22,6 +22,9 @@ interface SaveBookingAndPaymentParams {
   day: string;
   slotIndex: number;
   amount: number;
+  platformPercentage: number;
+  platformCharge: number;
+  total: number;
 }
 
 interface BookServiceParams {

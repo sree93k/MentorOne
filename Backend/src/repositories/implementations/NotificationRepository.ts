@@ -37,8 +37,8 @@ export default class NotificationRepository implements INotificationRepository {
             createdAt: n.createdAt,
             sender: n.senderId
               ? {
-                  firstName: n.senderId.firstName,
-                  lastName: n.senderId.lastName,
+                  firstName: n.senderId?.firstName,
+                  lastName: n.senderId?.lastName,
                 }
               : undefined,
           }))
