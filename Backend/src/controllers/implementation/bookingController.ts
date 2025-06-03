@@ -30,6 +30,9 @@ class BookingController {
       slotIndex,
       amount,
       sessionId,
+      platformPercentage,
+      platformCharge,
+      total,
     } = req.body;
     const menteeId = req?.user?.id;
     if (!menteeId) {
@@ -48,6 +51,9 @@ class BookingController {
         day,
         slotIndex,
         amount,
+        platformPercentage,
+        platformCharge,
+        total,
       });
       res.json({
         bookingId: result.booking._id,

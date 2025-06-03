@@ -105,6 +105,13 @@ userPrivateRoute.post(
   videoCallController.endMeeting.bind(videoCallController)
 );
 
+// New route for sending meeting notifications
+userPrivateRoute.post(
+  "/video-call/notify",
+  authenticate,
+  videoCallController.notifyMentee.bind(videoCallController)
+);
+
 userPrivateRoute.put(
   "/update-online-status",
   authenticate,
