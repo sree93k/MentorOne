@@ -71,7 +71,12 @@ export interface IBookingService {
   getServiceById(serviceId: string): Promise<EService | null>;
   getAllVideoCalls(
     mentorId: string,
-    status?: string,
+    status?: string[],
     limit?: number
   ): Promise<EBooking[]>;
+  updateBookingStatus(
+    bookingId: string,
+    status: string,
+    mentorId: string
+  ): Promise<EBooking>;
 }

@@ -195,3 +195,28 @@ export const allVideoCallBookings = async () => {
     throw new Error(`Failed to fetch videocall bookings: ${error.message}`);
   }
 };
+
+export const updateStatus = async (bookingId: string, payload: any) => {
+  try {
+    console.log("bookingservice updateStatus step 1");
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.patch(
+      `/user/booking/${bookingId}/updatestatus`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    console.log("bookingservice updateStatus step 2");
+    return response;
+  } catch (error) {
+    console.error("bookingservice  updateStatus error:", error);
+    throw new Error(`Failed to fetch  updateStatus: ${error.message}`);
+  }
+};

@@ -528,9 +528,32 @@ export default class BookingService implements IBookingService {
     }
   }
 
+  // async getAllVideoCalls(
+  //   mentorId: string,
+  //   status?: string,
+  //   limit?: number
+  // ): Promise<EBooking[]> {
+  //   try {
+  //     console.log("BookingService getAllVideoCalls step 1", {
+  //       mentorId,
+  //       status,
+  //       limit,
+  //     });
+  //     const allVideoCallBookings =
+  //       await this.bookingRepository.findAllVideoCalls(mentorId, status, limit);
+  //     console.log(
+  //       "BookingService getAllVideoCalls step 2",
+  //       allVideoCallBookings
+  //     );
+  //     return allVideoCallBookings;
+  //   } catch (error) {
+  //     console.error("BookingService getAllVideoCalls > error:", error);
+  //     throw new ApiError(500, "Failed to fetch video call bookings");
+  //   }
+  // }
   async getAllVideoCalls(
     mentorId: string,
-    status?: string,
+    status?: string[], // Changed from string to string[]
     limit?: number
   ): Promise<EBooking[]> {
     try {
@@ -540,15 +563,71 @@ export default class BookingService implements IBookingService {
         limit,
       });
       const allVideoCallBookings =
-        await this.bookingRepository.findAllVideoCalls(mentorId, status, limit);
+        await this.bookingRepository.findAllVideoCalls(
+          mentorId,
+          status || ["confirmed", "rescheduled"], // Default to ["confirmed", "rescheduled"]
+          limit
+        );
       console.log(
         "BookingService getAllVideoCalls step 2",
         allVideoCallBookings
       );
       return allVideoCallBookings;
-    } catch (error) {
+    } catch (error: any) {
       console.error("BookingService getAllVideoCalls > error:", error);
       throw new ApiError(500, "Failed to fetch video call bookings");
+    }
+  }
+
+  async updateBookingStatus(
+    bookingId: string,
+    status: string,
+    mentorId: string
+  ): Promise<EBooking> {
+    try {
+      console.log("BookingService updateBookingStatus step 1", {
+        bookingId,
+        status,
+        mentorId,
+      });
+
+      const booking = await this.bookingRepository.findById(bookingId);
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+      console.log("BookingService updateBookingStatus step 2", booking);
+      if (booking.mentorId._id.toString() !== mentorId) {
+        console.log("BookingService updateBookingStatus step 2.1", mentorId);
+        console.log(
+          "BookingService updateBookingStatus step 2.2",
+          booking.mentorId._id.toString()
+        );
+        throw new ApiError(
+          403,
+          "Not authorized to update this booking",
+          status,
+          bookingId
+        );
+      }
+      console.log("BookingService updateBookingStatus step 2.3");
+      const updatedBooking = await this.bookingRepository.update(bookingId, {
+        status,
+        updatedAt: new Date(),
+      });
+      console.log("BookingService updateBookingStatus step 3", updatedBooking);
+      if (!updatedBooking) {
+        throw new ApiError(500, "Failed to update booking status");
+      }
+
+      console.log("BookingService updateBookingStatus step 4");
+      return updatedBooking;
+    } catch (error: any) {
+      console.log("BookingService updateBookingStatus step 5 error,", error);
+      console.error("BookingService updateBookingStatus error:", error);
+      throw new ApiError(
+        500,
+        error.message || "Failed to update booking status"
+      );
     }
   }
 }
