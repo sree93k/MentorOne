@@ -4,6 +4,7 @@ import { EVideoCall } from "../entities/videoCallEntity";
 const VideoCallSchema: Schema<EVideoCall> = new Schema({
   meetingId: { type: String, required: true, unique: true },
   creatorId: { type: String, ref: "User", required: true },
+  bookingId: { type: String, ref: "Booking" }, // Added bookingId field
   participants: [
     {
       userId: { type: String, ref: "User", required: true },

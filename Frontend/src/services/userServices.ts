@@ -215,9 +215,45 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
   }
 };
 
-export const startVideoCall = async (): Promise<string> => {
+// export const startVideoCall = async (): Promise<string> => {
+//   try {
+//     console.log("USERSERVICE  startVideoCall step 1");
+//     const accessToken = localStorage.getItem("accessToken");
+
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+
+//     const response = await api.post(
+//       "/user/video-call/create",
+//       {},
+//       {
+//         headers: {
+//           Authorization: `Bearer ${accessToken}`,
+//         },
+//       }
+//     );
+
+//     console.log("USERSERVICE  startVideoCall step 2", response);
+
+//     if (!response.data.success || !response.data.data.meetingId) {
+//       throw new Error("Failed to create meeting room");
+//     }
+
+//     return response.data.data.meetingId;
+//   } catch (error: any) {
+//     console.error("Error creating meeting:", error);
+//     throw new Error(
+//       error.response?.data?.message || "Failed to create meeting room"
+//     );
+//   }
+//};
+export const startVideoCall = async (
+  menteeId?: string,
+  bookingId?: string
+): Promise<string> => {
   try {
-    console.log("USERSERVICE  startVideoCall step 1");
+    console.log("USERSERVICE startVideoCall step 1", { menteeId, bookingId });
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
@@ -226,7 +262,7 @@ export const startVideoCall = async (): Promise<string> => {
 
     const response = await api.post(
       "/user/video-call/create",
-      {},
+      { menteeId, bookingId },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -234,7 +270,7 @@ export const startVideoCall = async (): Promise<string> => {
       }
     );
 
-    console.log("USERSERVICE  startVideoCall step 2", response);
+    console.log("USERSERVICE startVideoCall step 2", response);
 
     if (!response.data.success || !response.data.data.meetingId) {
       throw new Error("Failed to create meeting room");
@@ -435,4 +471,40 @@ export const initializeNotifications = (
 
 export const cleanupNotifications = (): void => {
   SocketService.disconnect("/notifications");
+};
+
+export const sendMeetingNotification = async (
+  menteeId: string,
+  meetingId: string,
+  bookingId: string
+): Promise<void> => {
+  try {
+    console.log("sendMeetingNotification step 1", {
+      menteeId,
+      meetingId,
+      bookingId,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    await api.post(
+      "/user/video-call/notify",
+      { menteeId, meetingId, bookingId },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log(
+      "sendMeetingNotification step 2: Notification sent successfully"
+    );
+  } catch (error: any) {
+    console.error("sendMeetingNotification error:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to send meeting notification"
+    );
+  }
 };
