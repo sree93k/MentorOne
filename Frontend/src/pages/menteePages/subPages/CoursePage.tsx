@@ -50,6 +50,8 @@ export default function CoursesPage() {
           activeFilter,
           searchQuery
         );
+        console.log("^^^^^^^^^^fetchTutorials tutorials....>>>", tutorials);
+
         setTutorials(tutorials);
         setTotalTutorials(total);
       } catch (error: any) {
