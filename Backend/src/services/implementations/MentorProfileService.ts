@@ -323,23 +323,55 @@ export default class MentorProfileService implements IMentorProfileService {
     }
   }
 
-  async getAllServices(userId: string): Promise<EService[]> {
+  // async getAllServices(userId: string): Promise<EService[]> {
+  //   try {
+  //     console.log("getAllServices service step 1: Processing userId", userId);
+
+  //     // Fetch services using ServiceRepository
+  //     console.log(
+  //       "getAllServices service step 2: Fetching services for mentorId",
+  //       userId
+  //     );
+  //     const services = await this.ServiceRepository.getAllServices(userId);
+  //     if (!services) {
+  //       console.log("getAllServices service step 3: No services found");
+  //       return [];
+  //     }
+  //     console.log("getAllServices service step 4: Services fetched");
+
+  //     return services;
+  //   } catch (error: any) {
+  //     console.error("getAllServices service error:", {
+  //       message: error.message,
+  //       stack: error.stack,
+  //       userId,
+  //     });
+  //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+  //   }
+  // }
+  async getAllServices(
+    userId: string,
+    params: GetAllServicesParams
+  ): Promise<GetAllServicesResponse> {
     try {
       console.log("getAllServices service step 1: Processing userId", userId);
 
-      // Fetch services using ServiceRepository
       console.log(
         "getAllServices service step 2: Fetching services for mentorId",
-        userId
+        userId,
+        params
       );
-      const services = await this.ServiceRepository.getAllServices(userId);
-      if (!services) {
-        console.log("getAllServices service step 3: No services found");
-        return [];
-      }
-      console.log("getAllServices service step 4: Services fetched");
+      const { services, totalCount } =
+        await this.ServiceRepository.getAllServices(userId, params);
+      console.log("getAllServices service step 3: Services fetched");
 
-      return services;
+      const totalPages = Math.ceil(totalCount / params.limit);
+
+      return {
+        services,
+        totalPages,
+        currentPage: params.page,
+      };
     } catch (error: any) {
       console.error("getAllServices service error:", {
         message: error.message,
