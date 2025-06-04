@@ -40,6 +40,11 @@ export default function DigitalProducts() {
         ]);
         setTutorial(tutorialData);
         setIsBooked(bookingStatus);
+        console.log(
+          "*******DIgital products >>> Booking status ....",
+          bookingStatus
+        );
+
         setError(null);
       } catch (err: any) {
         console.error("Failed to fetch data:", err);
@@ -151,7 +156,7 @@ export default function DigitalProducts() {
             </Button>
           </div>
           <div className="w-2/3 p-8 pt-2 bg-white">
-            <div className="mb-6">
+            <div className="mb-6 mt-6">
               <h2 className="text-3xl font-bold mb-2">{tutorial.title}</h2>
               <div className="flex items-center">
                 <span className="text-red-500 font-bold mr-1">4.7</span>

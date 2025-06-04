@@ -76,6 +76,13 @@ export default class BookingService implements IBookingService {
       slotIndex,
     } = params;
 
+    let status;
+    const response = await this.serviceRepository.getServiceById(serviceId);
+    if (response?.type === "DigitalProducts") {
+      status = "completed";
+    } else {
+      status = "confirmed";
+    }
     const booking = await this.bookingRepository.create({
       serviceId,
       mentorId,
@@ -85,7 +92,7 @@ export default class BookingService implements IBookingService {
       startTime,
       endTime,
       bookingDate: new Date(bookingDate),
-      status: "confirmed",
+      status: status,
     });
 
     return booking;
@@ -110,7 +117,10 @@ export default class BookingService implements IBookingService {
       total,
     } = params;
 
-    console.log("saveBookingAndPayment params:", params);
+    console.log(
+      "Booking service saveBookingAndPayment  STEP 1 ...params:",
+      params
+    );
 
     try {
       if (!amount || amount <= 0) {
@@ -361,7 +371,7 @@ export default class BookingService implements IBookingService {
         serviceId
       );
       console.log("bookingservice checkBookingStatus step 2", booking);
-      return !!booking && booking.status === "confirmed";
+      return !!booking && booking.status === "completed";
     } catch (error: any) {
       console.error("Error checking booking status:", error);
       throw new ApiError(

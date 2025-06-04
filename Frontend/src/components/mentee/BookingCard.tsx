@@ -28,9 +28,9 @@
 //   time: string;
 //   price: number;
 //   status: string;
+//   serviceType: string;
 //   rating?: number;
 //   feedback?: string;
-//   serviceType: string;
 //   oneToOneType?: string | null;
 //   digitalProductType?: string | null;
 // }
@@ -40,6 +40,7 @@
 //   type: "upcoming" | "completed";
 //   navigateToProfile?: () => void;
 //   onFeedbackClick?: () => void;
+//   refreshBookings?: () => void; // Add refreshBookings prop
 // }
 
 // const BookingCard = ({
@@ -47,6 +48,7 @@
 //   type,
 //   navigateToProfile,
 //   onFeedbackClick,
+//   refreshBookings, // Destructure new prop
 // }: BookingCardProps) => {
 //   const [isHovered, setIsHovered] = useState(false);
 //   const [isDigitalProductModalOpen, setIsDigitalProductModalOpen] =
@@ -79,7 +81,6 @@
 //         booking.status.toLowerCase() === "pending"
 //       ) {
 //         try {
-//           // Fetch Priority DMs for this booking
 //           console.log("Bookingcards getPriorityDMs response is step 1.5");
 //           const response = await getPriorityDMs(booking.id);
 //           console.log(
@@ -88,7 +89,7 @@
 //           );
 
 //           if (response.status === "replied" || response.status === "pending") {
-//             setSelectedDM(response); // Assume the first DM is the relevant one
+//             setSelectedDM(response);
 //             setIsAnswerModalOpen(true);
 //           } else {
 //             toast.error("No Priority DM found for this booking.");
@@ -97,8 +98,6 @@
 //           toast.error("Failed to fetch Priority DM.");
 //           console.error("Error fetching Priority DM:", error);
 //         }
-//         // } else if (booking.status.toLowerCase() === "pending") {
-//         //   setIsAnswerModalOpen(true);
 //       } else {
 //         setIsPriorityDMModalOpen(true);
 //       }
@@ -153,6 +152,7 @@
 //       completed: "bg-white text-black border border-black",
 //       cancelled: "bg-gray-100 text-gray-500 border border-gray-300",
 //       rescheduled: "bg-white text-black border border-black",
+//       pending: "bg-yellow-100 text-yellow-800 border border-yellow-300", // Add pending style
 //     };
 
 //     const statusIcons = {
@@ -160,6 +160,7 @@
 //       completed: <CheckCircle className="w-4 h-4 mr-1" />,
 //       cancelled: <XCircle className="w-4 h-4 mr-1" />,
 //       rescheduled: <Clock className="w-4 h-4 mr-1" />,
+//       pending: <Clock className="w-4 h-4 mr-1" />, // Add pending icon
 //     };
 
 //     return (
@@ -346,6 +347,7 @@
 //           bookingId={booking.id}
 //           title={booking.title}
 //           productType="Direct Message"
+//           refreshBookings={refreshBookings} // Pass refresh callback
 //         />
 //       )}
 
@@ -376,6 +378,7 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import DigitalProductModal from "@/components/modal/DocumentModal";
 import PriorityDMModal from "@/components/modal/PriorityDMModal";
 import AnswerModal from "@/components/modal/AnswerModal";
@@ -406,7 +409,7 @@ interface BookingCardProps {
   type: "upcoming" | "completed";
   navigateToProfile?: () => void;
   onFeedbackClick?: () => void;
-  refreshBookings?: () => void; // Add refreshBookings prop
+  refreshBookings?: () => void;
 }
 
 const BookingCard = ({
@@ -414,7 +417,7 @@ const BookingCard = ({
   type,
   navigateToProfile,
   onFeedbackClick,
-  refreshBookings, // Destructure new prop
+  refreshBookings,
 }: BookingCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isDigitalProductModalOpen, setIsDigitalProductModalOpen] =
@@ -422,12 +425,21 @@ const BookingCard = ({
   const [isPriorityDMModalOpen, setIsPriorityDMModalOpen] = useState(false);
   const [isAnswerModalOpen, setIsAnswerModalOpen] = useState(false);
   const [selectedDM, setSelectedDM] = useState<any | null>(null);
+  const navigate = useNavigate();
 
   const isDigitalDocument = () => {
     const serviceType = booking.serviceType.toLowerCase().replace(/-/g, "");
     return (
       (serviceType === "digitalproducts" || serviceType === "digitalproduct") &&
       booking.digitalProductType === "documents"
+    );
+  };
+
+  const isDigitalVideoTutorial = () => {
+    const serviceType = booking.serviceType.toLowerCase().replace(/-/g, "");
+    return (
+      (serviceType === "digitalproducts" || serviceType === "digitalproduct") &&
+      booking.digitalProductType === "videoTutorials"
     );
   };
 
@@ -439,6 +451,8 @@ const BookingCard = ({
   const handleCardClick = async () => {
     if (isDigitalDocument()) {
       setIsDigitalProductModalOpen(true);
+    } else if (isDigitalVideoTutorial()) {
+      navigate(`/seeker/digitalcontent/${booking?.serviceId}`);
     } else if (isPriorityDM()) {
       console.log("Bookingcards getPriorityDMs response is step 1", booking);
 
@@ -518,7 +532,7 @@ const BookingCard = ({
       completed: "bg-white text-black border border-black",
       cancelled: "bg-gray-100 text-gray-500 border border-gray-300",
       rescheduled: "bg-white text-black border border-black",
-      pending: "bg-yellow-100 text-yellow-800 border border-yellow-300", // Add pending style
+      pending: "bg-yellow-100 text-yellow-800 border border-yellow-300",
     };
 
     const statusIcons = {
@@ -526,7 +540,7 @@ const BookingCard = ({
       completed: <CheckCircle className="w-4 h-4 mr-1" />,
       cancelled: <XCircle className="w-4 h-4 mr-1" />,
       rescheduled: <Clock className="w-4 h-4 mr-1" />,
-      pending: <Clock className="w-4 h-4 mr-1" />, // Add pending icon
+      pending: <Clock className="w-4 h-4 mr-1" />,
     };
 
     return (
@@ -582,7 +596,9 @@ const BookingCard = ({
     <>
       <div
         className={`relative overflow-hidden rounded-xl border border-black transition-all duration-300 flex flex-col max-w-[250px] ${
-          isDigitalDocument() || isPriorityDM() ? "cursor-pointer" : ""
+          isDigitalDocument() || isPriorityDM() || isDigitalVideoTutorial()
+            ? "cursor-pointer"
+            : ""
         }`}
         style={{
           transform: isHovered ? "translateY(-5px)" : "translateY(0)",
@@ -658,7 +674,7 @@ const BookingCard = ({
                       <Star
                         key={i}
                         className={`w-4 h-4 ${
-                          i < booking.rating
+                          i < booking.rating!
                             ? "fill-black text-black"
                             : "text-gray-300"
                         }`}
@@ -713,7 +729,7 @@ const BookingCard = ({
           bookingId={booking.id}
           title={booking.title}
           productType="Direct Message"
-          refreshBookings={refreshBookings} // Pass refresh callback
+          refreshBookings={refreshBookings}
         />
       )}
 
