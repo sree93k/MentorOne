@@ -167,6 +167,29 @@ class mentorController {
       next(error);
     }
   };
+  // public getAllServices = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     console.log("getAllServices controller step 1");
+  //     const userId = req?.user?.id;
+  //     if (!userId) {
+  //       console.log("getAllServices controller step 2: No user ID");
+  //       throw new ApiError(401, "User ID is required");
+  //     }
+  //     console.log("getAllServices controller step 2: User ID", userId);
+
+  //     const services = await this.MentorProfileService.getAllServices(userId);
+  //     console.log("getAllServices controller step 3: Services fetched");
+
+  //     res.json(new ApiResponse(200, services, "Services fetched successfully"));
+  //   } catch (error) {
+  //     console.log("getAllServices controller step 4");
+  //     next(error);
+  //   }
+  // };
   public getAllServices = async (
     req: Request,
     res: Response,
@@ -181,16 +204,26 @@ class mentorController {
       }
       console.log("getAllServices controller step 2: User ID", userId);
 
-      const services = await this.MentorProfileService.getAllServices(userId);
+      const { page = 1, limit = 8, search = "", type } = req.query;
+      const servicesData = await this.MentorProfileService.getAllServices(
+        userId,
+        {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          search: search as string,
+          type: type as string,
+        }
+      );
       console.log("getAllServices controller step 3: Services fetched");
 
-      res.json(new ApiResponse(200, services, "Services fetched successfully"));
+      res.json(
+        new ApiResponse(200, servicesData, "Services fetched successfully")
+      );
     } catch (error) {
       console.log("getAllServices controller step 4");
       next(error);
     }
   };
-
   // New methods
   public getServiceById = async (
     req: Request,

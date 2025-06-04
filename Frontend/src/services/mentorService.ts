@@ -355,9 +355,79 @@ export const CreateService = async (formData: FormData) => {
   }
 };
 
-export const getAllServices = async (): Promise<Service[]> => {
+// export const getAllServices = async (): Promise<Service[]> => {
+//   try {
+//     console.log("MentorServiceAPI.getAllServices step 1: Making API call");
+
+//     const accessToken = localStorage.getItem("accessToken");
+//     if (!accessToken) {
+//       throw new Error("No access token found. Please log in again.");
+//     }
+
+//     const response = await api.get("/expert/allServices", {
+//       headers: {
+//         "Content-Type": "application/json",
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     });
+//     console.log(
+//       "MentorServiceAPI.getAllServices step 2: API response",
+//       response
+//     );
+//     return response.data.data;
+//   } catch (error: any) {
+//     console.error("MentorServiceAPI.getAllServices error:", error);
+//     throw new Error("Failed to fetch services");
+//   }
+// };
+interface GetAllServicesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: string;
+}
+
+interface GetAllServicesResponse {
+  services: Service[];
+  totalPages: number;
+  currentPage: number;
+}
+
+interface Service {
+  _id: string;
+  title: string;
+  type: "1-1Call" | "priorityDM" | "DigitalProducts";
+  duration?: number;
+  amount: number;
+  shortDescription: string;
+  longDescription?: string;
+  oneToOneType?: "chat" | "video";
+  digitalProductType?: "documents" | "videoTutorials";
+  fileUrl?: string;
+  exclusiveContent?: Array<{
+    season: string;
+    episodes: Array<{
+      episode: string;
+      title: string;
+      description: string;
+      videoUrl: string;
+    }>;
+  }>;
+  stats?: {
+    views: number;
+    bookings: number;
+    earnings: number;
+    conversions: string;
+  };
+}
+export const getAllServices = async (
+  params: GetAllServicesParams = {}
+): Promise<GetAllServicesResponse> => {
   try {
-    console.log("MentorServiceAPI.getAllServices step 1: Making API call");
+    console.log(
+      "MentorServiceAPI.getAllServices step 1: Making API call with params",
+      params
+    );
 
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
@@ -368,6 +438,12 @@ export const getAllServices = async (): Promise<Service[]> => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        page: params.page || 1,
+        limit: params.limit || 8,
+        search: params.search || "",
+        type: params.type,
       },
     });
     console.log(
@@ -380,7 +456,6 @@ export const getAllServices = async (): Promise<Service[]> => {
     throw new Error("Failed to fetch services");
   }
 };
-
 export const getServiceById = async (serviceId: string): Promise<Service> => {
   try {
     console.log("getServiceById step 1: Fetching service", serviceId);

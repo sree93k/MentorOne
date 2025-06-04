@@ -3,18 +3,69 @@ import { IServiceRepository } from "../interface/IServiceRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
+interface GetAllServicesParams {
+  page: number;
+  limit: number;
+  search: string;
+  type?: string;
+}
+
+interface GetAllServicesResponse {
+  services: EService[];
+  totalCount: number;
+}
 
 export default class ServiceRepository implements IServiceRepository {
-  async getAllServices(mentorId: string): Promise<EService[]> {
+  // async getAllServices(mentorId: string): Promise<EService[]> {
+  //   try {
+  //     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+  //       throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
+  //     }
+
+  //     const allServices = await Service.find({
+  //       mentorId: new mongoose.Types.ObjectId(mentorId),
+  //     }).populate({ path: "slot" });
+  //     return allServices as EService[];
+  //   } catch (error: any) {
+  //     console.error("Error in ServiceRepository.getAllServices:", error);
+  //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+  //   }
+  // }
+
+  async getAllServices(
+    mentorId: string,
+    params: GetAllServicesParams
+  ): Promise<GetAllServicesResponse> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
         throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
       }
 
-      const allServices = await Service.find({
+      const { page, limit, search, type } = params;
+      const query: any = {
         mentorId: new mongoose.Types.ObjectId(mentorId),
-      }).populate({ path: "slot" });
-      return allServices as EService[];
+      };
+
+      if (search) {
+        query.title = { $regex: search, $options: "i" }; // Case-insensitive search on title
+      }
+
+      if (type && type !== "all") {
+        query.type = type;
+      }
+
+      const skip = (page - 1) * limit;
+
+      const [services, totalCount] = await Promise.all([
+        Service.find(query)
+          .populate({ path: "slot" })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Service.countDocuments(query),
+      ]);
+
+      return { services: services as EService[], totalCount };
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllServices:", error);
       throw new ApiError(500, `Failed to fetch services: ${error.message}`);

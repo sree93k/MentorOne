@@ -3,11 +3,28 @@ import { EUsers } from "../../entities/userEntity";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
+
+interface GetAllServicesParams {
+  page: number;
+  limit: number;
+  search: string;
+  type?: string;
+}
+
+interface GetAllServicesResponse {
+  services: EService[];
+  totalPages: number;
+  currentPage: number;
+}
 export interface IMentorProfileService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   profileDatas(userId: string): Promise<EUsers | null>;
   createService(formData: Record<string, any>): Promise<EService | null>;
-  getAllServices(userId: string): Promise<EService[]>;
+  // getAllServices(userId: string): Promise<EService[]>;
+  getAllServices(
+    userId: string,
+    params: GetAllServicesParams
+  ): Promise<GetAllServicesResponse>;
   getServiceById(serviceId: string): Promise<EService | null>;
   updateService(
     serviceId: string,

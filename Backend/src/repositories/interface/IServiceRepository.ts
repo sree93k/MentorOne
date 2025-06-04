@@ -1,7 +1,22 @@
 import { EService } from "../../entities/serviceEntity";
+interface GetAllServicesParams {
+  page: number;
+  limit: number;
+  search: string;
+  type?: string;
+}
+
+interface GetAllServicesResponse {
+  services: EService[];
+  totalCount: number;
+}
 
 export interface IServiceRepository {
-  getAllServices(mentorId: string): Promise<EService[]>;
+  // getAllServices(mentorId: string): Promise<EService[]>;
+  getAllServices(
+    mentorId: string,
+    params: GetAllServicesParams
+  ): Promise<GetAllServicesResponse>;
   getServiceById(serviceId: string): Promise<EService | null>;
   updateService(
     serviceId: string,
