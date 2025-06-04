@@ -38,6 +38,19 @@ interface WelcomeFormData {
   [key: string]: any;
 }
 import { EService } from "../../entities/serviceEntity";
+
+interface GetAllServicesParams {
+  page: number;
+  limit: number;
+  search: string;
+  type?: string;
+}
+
+interface GetAllServicesResponse {
+  services: EService[];
+  totalPages: number;
+  currentPage: number;
+}
 export default class MentorProfileService implements IMentorProfileService {
   private UserRepository: IUserRepository;
   private CareerRepository: ICareerRepository;
@@ -225,6 +238,103 @@ export default class MentorProfileService implements IMentorProfileService {
       return null;
     }
   }
+  // async createService(formData: Record<string, any>): Promise<EService | null> {
+  //   try {
+  //     console.log("createService service step 1", formData);
+  //     const {
+  //       mentorId,
+  //       type,
+  //       title,
+  //       shortDescription,
+  //       amount,
+  //       duration,
+  //       longDescription,
+  //       oneToOneType,
+  //       digitalProductType,
+  //       fileUrl,
+  //       exclusiveContent,
+  //     } = formData;
+
+  //     // Validate required fields
+  //     if (!mentorId || !type || !title || !shortDescription || !amount) {
+  //       console.log("createService service step 2");
+  //       throw new ApiError(400, "Missing required fields");
+  //     }
+
+  //     const service: Partial<EService> = {
+  //       mentorId,
+  //       type,
+  //       title,
+  //       shortDescription,
+  //       amount: parseFloat(amount),
+  //     };
+
+  //     console.log("createService service step 3");
+
+  //     if (type === "1-1Call" || type === "priorityDM") {
+  //       console.log("createService service step 4");
+  //       if (!duration || !longDescription) {
+  //         console.log("createService service step 5");
+  //         throw new ApiError(400, "Duration and long description are required");
+  //       }
+  //       service.duration = parseInt(duration);
+  //       service.longDescription = longDescription;
+  //       if (type === "1-1Call" && !oneToOneType) {
+  //         console.log("createService service step 6");
+  //         throw new ApiError(400, "One-to-one type is required");
+  //       }
+  //       if (type === "1-1Call") {
+  //         service.oneToOneType = oneToOneType;
+  //       }
+  //     } else if (type === "DigitalProducts") {
+  //       console.log("createService service step 7");
+  //       if (!digitalProductType) {
+  //         console.log("createService service step 8");
+  //         throw new ApiError(400, "Digital product type is required");
+  //       }
+  //       service.digitalProductType = digitalProductType;
+  //       if (digitalProductType === "documents") {
+  //         console.log("createService service step 9");
+  //         if (!fileUrl) {
+  //           console.log("createService service step 10");
+  //           throw new ApiError(400, "File URL is required for documents");
+  //         }
+  //         service.fileUrl = fileUrl;
+  //       } else if (digitalProductType === "videoTutorials") {
+  //         console.log("createService service step 11");
+  //         const parsedExclusiveContent = Array.isArray(exclusiveContent)
+  //           ? exclusiveContent
+  //           : JSON.parse(exclusiveContent || "[]");
+  //         if (!parsedExclusiveContent.length) {
+  //           console.log("createService service step 12");
+  //           throw new ApiError(
+  //             400,
+  //             "Exclusive content is required for video tutorials"
+  //           );
+  //         }
+  //         service.exclusiveContent = parsedExclusiveContent;
+  //       }
+  //     } else {
+  //       console.log("createService service step 13");
+  //       throw new ApiError(400, "Invalid service type");
+  //     }
+
+  //     console.log("createService service step 14", service);
+  //     const newService = await this.MentorRepository.createService(service);
+  //     console.log("createService service step 15");
+  //     if (!newService) {
+  //       console.log("createService service step 16");
+  //       throw new ApiError(500, "Failed to create service");
+  //     }
+
+  //     console.log("createService service step 17");
+  //     return newService;
+  //   } catch (error) {
+  //     console.log("createService service step 18");
+  //     console.error("Error in createService:", error);
+  //     throw error;
+  //   }
+  // }
   async createService(formData: Record<string, any>): Promise<EService | null> {
     try {
       console.log("createService service step 1", formData);
@@ -260,40 +370,45 @@ export default class MentorProfileService implements IMentorProfileService {
 
       if (type === "1-1Call" || type === "priorityDM") {
         console.log("createService service step 4");
-        if (!duration || !longDescription) {
+        if (!longDescription) {
           console.log("createService service step 5");
-          throw new ApiError(400, "Duration and long description are required");
+          throw new ApiError(400, "Long description is required");
         }
-        service.duration = parseInt(duration);
         service.longDescription = longDescription;
-        if (type === "1-1Call" && !oneToOneType) {
-          console.log("createService service step 6");
-          throw new ApiError(400, "One-to-one type is required");
-        }
+
         if (type === "1-1Call") {
+          if (!duration) {
+            console.log("createService service step 6");
+            throw new ApiError(400, "Duration is required for 1-1 Call");
+          }
+          if (!oneToOneType) {
+            console.log("createService service step 7");
+            throw new ApiError(400, "One-to-one type is required");
+          }
+          service.duration = parseInt(duration);
           service.oneToOneType = oneToOneType;
         }
       } else if (type === "DigitalProducts") {
-        console.log("createService service step 7");
+        console.log("createService service step 8");
         if (!digitalProductType) {
-          console.log("createService service step 8");
+          console.log("createService service step 9");
           throw new ApiError(400, "Digital product type is required");
         }
         service.digitalProductType = digitalProductType;
         if (digitalProductType === "documents") {
-          console.log("createService service step 9");
+          console.log("createService service step 10");
           if (!fileUrl) {
-            console.log("createService service step 10");
+            console.log("createService service step 11");
             throw new ApiError(400, "File URL is required for documents");
           }
           service.fileUrl = fileUrl;
         } else if (digitalProductType === "videoTutorials") {
-          console.log("createService service step 11");
+          console.log("createService service step 12");
           const parsedExclusiveContent = Array.isArray(exclusiveContent)
             ? exclusiveContent
             : JSON.parse(exclusiveContent || "[]");
           if (!parsedExclusiveContent.length) {
-            console.log("createService service step 12");
+            console.log("createService service step 13");
             throw new ApiError(
               400,
               "Exclusive content is required for video tutorials"
@@ -302,27 +417,26 @@ export default class MentorProfileService implements IMentorProfileService {
           service.exclusiveContent = parsedExclusiveContent;
         }
       } else {
-        console.log("createService service step 13");
+        console.log("createService service step 14");
         throw new ApiError(400, "Invalid service type");
       }
 
-      console.log("createService service step 14", service);
+      console.log("createService service step 15", service);
       const newService = await this.MentorRepository.createService(service);
-      console.log("createService service step 15");
+      console.log("createService service step 16");
       if (!newService) {
-        console.log("createService service step 16");
+        console.log("createService service step 17");
         throw new ApiError(500, "Failed to create service");
       }
 
-      console.log("createService service step 17");
+      console.log("createService service step 18");
       return newService;
     } catch (error) {
-      console.log("createService service step 18");
+      console.log("createService service step 19");
       console.error("Error in createService:", error);
       throw error;
     }
   }
-
   // async getAllServices(userId: string): Promise<EService[]> {
   //   try {
   //     console.log("getAllServices service step 1: Processing userId", userId);
@@ -349,6 +463,7 @@ export default class MentorProfileService implements IMentorProfileService {
   //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
   //   }
   // }
+
   async getAllServices(
     userId: string,
     params: GetAllServicesParams
