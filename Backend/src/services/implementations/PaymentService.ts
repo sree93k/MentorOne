@@ -254,15 +254,41 @@ export default class PaymentService implements IPaymentService {
     }
   }
 
-  async getAllMenteePayments(menteeId: string): Promise<{
-    payments: Payment[];
+  // async getAllMenteePayments(menteeId: string): Promise<{
+  //   payments: Payment[];
+  //   totalAmount: number;
+  //   totalCount: number;
+  // }> {
+  //   try {
+  //     console.log("payment service getAllMenteePayments step 1", menteeId);
+
+  //     const result = await this.paymentRepository.findAllByMenteeId(menteeId);
+
+  //     console.log("payment service getAllMenteePayments step 2", result);
+
+  //     return result;
+  //   } catch (error: any) {
+  //     console.error("Error in getAllMenteePayments service:", error);
+  //     throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+  //   }
+  // }
+  async getAllMenteePayments(
+    menteeId: string,
+    page: number,
+    limit: number
+  ): Promise<{
+    payments: any[];
     totalAmount: number;
     totalCount: number;
   }> {
     try {
       console.log("payment service getAllMenteePayments step 1", menteeId);
 
-      const result = await this.paymentRepository.findAllByMenteeId(menteeId);
+      const result = await this.paymentRepository.findAllByMenteeId(
+        menteeId,
+        page,
+        limit
+      );
 
       console.log("payment service getAllMenteePayments step 2", result);
 
@@ -272,7 +298,6 @@ export default class PaymentService implements IPaymentService {
       throw new ApiError(500, "Failed to fetch mentee payments", error.message);
     }
   }
-
   async getAllMentorPayments(mentorId: string): Promise<{
     payments: Payment[];
     totalAmount: number;
