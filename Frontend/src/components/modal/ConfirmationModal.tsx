@@ -33,7 +33,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       <DialogContent className="sm:max-w-md border-t-4 border-b-4 border-blue-600 rounded-lg p-0 bg-white">
         <DialogHeader className="text-center p-8">
           <div className="flex justify-center mb-2 text-red-500">
-            <ExclamationTriangleIcon className="w-10 h-10" />
+            {/* <ExclamationTriangleIcon className="w-10 h-10" /> */}
           </div>
           <DialogTitle className="text-xl">{title}</DialogTitle>
           <DialogDescription className="text-sm text-gray-500">

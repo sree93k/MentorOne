@@ -612,17 +612,14 @@ const MentorService: React.FC = () => {
                   >
                     <Link to={`/expert/editService/${service._id}`}>Edit</Link>
                   </Button>
-                  {(service.type === "1-1Call" ||
-                    service.type === "priorityDM") && (
+                  {service.type === "1-1Call" && (
                     <SlotManagementDrawer
                       mentorId={user._id}
                       serviceId={service._id}
                       onSlotAssigned={handleSlotAssigned}
                     />
                   )}
-                  {!service?.slot &&
-                  (service.type === "1-1Call" ||
-                    service.type === "priorityDM") ? (
+                  {!service?.slot && service.type === "1-1Call" ? (
                     <Badge
                       variant="destructive"
                       className="text-xs font-medium px-3 py-1.5 rounded-full animate-pulse bg-red-500 text-white"
