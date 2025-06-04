@@ -409,6 +409,39 @@ class menteeController {
     }
   };
 
+  // public getAllMenteePayments = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   try {
+  //     console.log("paymentcontroller getAllMenteePayments step 1");
+  //     const menteeId = req.user?.id;
+  //     if (!menteeId) {
+  //       throw new ApiError(
+  //         401,
+  //         "Unauthorized: No mentee ID",
+  //         "Authentication required"
+  //       );
+  //     }
+
+  //     const paymentData = await this.PaymentService.getAllMenteePayments(
+  //       menteeId.toString()
+  //     );
+  //     console.log("paymentcontroller getAllMenteePayments step 2", paymentData);
+
+  //     res.json(
+  //       new ApiResponse(
+  //         200,
+  //         "Mentee payments fetched successfully",
+  //         paymentData
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error("Error in getAllMenteePayments controller:", error);
+  //     next(error);
+  //   }
+  // };
   public getAllMenteePayments = async (
     req: Request,
     res: Response,
@@ -417,6 +450,8 @@ class menteeController {
     try {
       console.log("paymentcontroller getAllMenteePayments step 1");
       const menteeId = req.user?.id;
+      const { page = 1, limit = 10 } = req.query;
+
       if (!menteeId) {
         throw new ApiError(
           401,
@@ -426,7 +461,9 @@ class menteeController {
       }
 
       const paymentData = await this.PaymentService.getAllMenteePayments(
-        menteeId.toString()
+        menteeId.toString(),
+        Number(page),
+        Number(limit)
       );
       console.log("paymentcontroller getAllMenteePayments step 2", paymentData);
 
@@ -442,7 +479,6 @@ class menteeController {
       next(error);
     }
   };
-
   public getDocumentUrl = async (
     req: Request,
     res: Response,

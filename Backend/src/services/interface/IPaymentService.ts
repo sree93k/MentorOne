@@ -39,8 +39,17 @@ export interface IPaymentService {
     params: CreateCheckoutSessionParams
   ): Promise<Stripe.PaymentIntent>;
   constructEvent(payload: Buffer, signature: string): Promise<Stripe.Event>;
-  getAllMenteePayments(menteeId: string): Promise<{
-    payments: Payment[];
+  // getAllMenteePayments(menteeId: string): Promise<{
+  //   payments: Payment[];
+  //   totalAmount: number;
+  //   totalCount: number;
+  // }>;
+  getAllMenteePayments(
+    menteeId: string,
+    page: number,
+    limit: number
+  ): Promise<{
+    payments: any[];
     totalAmount: number;
     totalCount: number;
   }>;

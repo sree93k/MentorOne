@@ -781,7 +781,7 @@ const VideoCallHome: React.FC = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center">
-                        No confirmed bookings found.
+                        No bookings found.
                       </TableCell>
                     </TableRow>
                   )}
