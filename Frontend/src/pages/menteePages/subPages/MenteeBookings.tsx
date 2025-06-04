@@ -39,42 +39,42 @@
 //   const bookingsPerPage = 12;
 //   const navigate = useNavigate();
 
-//   useEffect(() => {
-//     const fetchBookings = async () => {
-//       try {
-//         setIsLoading(true);
-//         const response = await getBookings(currentPage, bookingsPerPage, "");
-//         const fetchedBookings = response.data.map((booking: any) => ({
-//           id: booking._id,
-//           serviceId: booking.serviceId._id,
-//           mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
-//           mentorImage: booking.mentorId.profilePicture,
-//           mentorId: booking.mentorId._id,
-//           title: booking.serviceId.title,
-//           technology: booking.serviceId.technology,
-//           date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
-//             day: "2-digit",
-//             month: "2-digit",
-//             year: "numeric",
-//           }),
-//           time: booking.startTime,
-//           price: booking.serviceId.amount,
-//           status: booking.status,
-//           serviceType: booking.serviceId.type,
-//           rating: booking.rating || undefined,
-//           feedback: booking.feedback || undefined,
-//           oneToOneType: booking.serviceId.oneToOneType || null,
-//           digitalProductType: booking.serviceId.digitalProductType || null,
-//         }));
-//         setBookings(fetchedBookings);
-//         setTotalBookings(response.total);
-//       } catch (error) {
-//         console.error("Failed to fetch bookings:", error);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
+//   const fetchBookings = async () => {
+//     try {
+//       setIsLoading(true);
+//       const response = await getBookings(currentPage, bookingsPerPage, "");
+//       const fetchedBookings = response.data.map((booking: any) => ({
+//         id: booking._id,
+//         serviceId: booking.serviceId._id,
+//         mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
+//         mentorImage: booking.mentorId.profilePicture,
+//         mentorId: booking.mentorId._id,
+//         title: booking.serviceId.title,
+//         technology: booking.serviceId.technology,
+//         date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
+//           day: "2-digit",
+//           month: "2-digit",
+//           year: "numeric",
+//         }),
+//         time: booking.startTime,
+//         price: booking.serviceId.amount,
+//         status: booking.status,
+//         serviceType: booking.serviceId.type,
+//         rating: booking.rating || undefined,
+//         feedback: booking.feedback || undefined,
+//         oneToOneType: booking.serviceId.oneToOneType || null,
+//         digitalProductType: booking.serviceId.digitalProductType || null,
+//       }));
+//       setBookings(fetchedBookings);
+//       setTotalBookings(response.total);
+//     } catch (error) {
+//       console.error("Failed to fetch bookings:", error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
+//   useEffect(() => {
 //     fetchBookings();
 //   }, [currentPage]);
 
@@ -106,17 +106,21 @@
 //       }
 
 //       // Status filter
-//       if (tab === "upcoming") {
-//         filtered = filtered.filter((booking) =>
-//           ["confirmed", "rescheduled"].includes(booking.status.toLowerCase())
-//         );
-//       } else if (tab === "pending") {
+//       if (tab === "confirmed") {
 //         filtered = filtered.filter(
-//           (booking) => booking.status.toLowerCase() === "pending"
+//           (booking) => booking.status.toLowerCase() === "confirmed"
+//         );
+//       } else if (tab === "rescheduled") {
+//         filtered = filtered.filter(
+//           (booking) => booking.status.toLowerCase() === "rescheduled"
 //         );
 //       } else if (tab === "completed") {
-//         filtered = filtered.filter((booking) =>
-//           ["completed", "cancelled"].includes(booking.status.toLowerCase())
+//         filtered = filtered.filter(
+//           (booking) => booking.status.toLowerCase() === "completed"
+//         );
+//       } else if (tab === "cancelled") {
+//         filtered = filtered.filter(
+//           (booking) => booking.status.toLowerCase() === "cancelled"
 //         );
 //       }
 
@@ -135,7 +139,7 @@
 
 //       return filtered;
 //     };
-//   }, [searchQuery, selectedTab, selectedMainTab]);
+//   }, [searchQuery]);
 
 //   const filteredBookings = filterBookings(
 //     bookings,
@@ -195,57 +199,61 @@
 //           {["all", "1-1-call", "Priority DM", "Digital Products"].map(
 //             (mainTab) => (
 //               <TabsContent key={mainTab} value={mainTab}>
-//                 <Tabs defaultValue="upcoming" onValueChange={setSelectedTab}>
+//                 <Tabs defaultValue="confirmed" onValueChange={setSelectedTab}>
 //                   <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 mb-8">
-//                     {["upcoming", "pending", "completed"].map((tab) => (
-//                       <TabsTrigger
-//                         key={tab}
-//                         value={tab}
-//                         className={`pb-3 capitalize transition-all rounded-none ${
-//                           selectedTab === tab
-//                             ? "border-b-2 border-black font-semibold"
-//                             : "text-muted-foreground"
-//                         }`}
-//                       >
-//                         {tab}
-//                       </TabsTrigger>
-//                     ))}
+//                     {["confirmed", "rescheduled", "completed", "cancelled"].map(
+//                       (tab) => (
+//                         <TabsTrigger
+//                           key={tab}
+//                           value={tab}
+//                           className={`pb-3 capitalize transition-all rounded-none ${
+//                             selectedTab === tab
+//                               ? "border-b-2 border-black font-semibold"
+//                               : "text-muted-foreground"
+//                           }`}
+//                         >
+//                           {tab}
+//                         </TabsTrigger>
+//                       )
+//                     )}
 //                   </TabsList>
 
-//                   <TabsContent value="upcoming">
+//                   <TabsContent value="confirmed">
 //                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
 //                       {filteredBookings.length > 0 ? (
 //                         filteredBookings.map((booking) => (
 //                           <BookingCard
 //                             key={booking.id}
 //                             booking={booking}
-//                             type="upcoming"
+//                             type="upcoming" // Treat confirmed as upcoming for BookingCard behavior
 //                             navigateToProfile={() =>
 //                               handleNavigateToProfile(booking.mentorId)
 //                             }
+//                             refreshBookings={fetchBookings}
 //                           />
 //                         ))
 //                       ) : (
-//                         <div>No upcoming bookings found.</div>
+//                         <div>No confirmed bookings found.</div>
 //                       )}
 //                     </div>
 //                   </TabsContent>
 
-//                   <TabsContent value="pending">
+//                   <TabsContent value="rescheduled">
 //                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
 //                       {filteredBookings.length > 0 ? (
 //                         filteredBookings.map((booking) => (
 //                           <BookingCard
 //                             key={booking.id}
 //                             booking={booking}
-//                             type="upcoming" // Treat pending as upcoming for BookingCard behavior
+//                             type="upcoming" // Treat rescheduled as upcoming for BookingCard behavior
 //                             navigateToProfile={() =>
 //                               handleNavigateToProfile(booking.mentorId)
 //                             }
+//                             refreshBookings={fetchBookings}
 //                           />
 //                         ))
 //                       ) : (
-//                         <div>No pending bookings found.</div>
+//                         <div>No rescheduled bookings found.</div>
 //                       )}
 //                     </div>
 //                   </TabsContent>
@@ -265,10 +273,35 @@
 //                               setSelectedBooking(booking);
 //                               setIsFeedbackModalOpen(true);
 //                             }}
+//                             refreshBookings={fetchBookings}
 //                           />
 //                         ))
 //                       ) : (
-//                         <div>No completed or cancelled bookings found.</div>
+//                         <div>No completed bookings found.</div>
+//                       )}
+//                     </div>
+//                   </TabsContent>
+
+//                   <TabsContent value="cancelled">
+//                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+//                       {filteredBookings.length > 0 ? (
+//                         filteredBookings.map((booking) => (
+//                           <BookingCard
+//                             key={booking.id}
+//                             booking={booking}
+//                             type="completed" // Treat cancelled as completed for BookingCard behavior
+//                             navigateToProfile={() =>
+//                               handleNavigateToProfile(booking.mentorId)
+//                             }
+//                             onFeedbackClick={() => {
+//                               setSelectedBooking(booking);
+//                               setIsFeedbackModalOpen(true);
+//                             }}
+//                             refreshBookings={fetchBookings}
+//                           />
+//                         ))
+//                       ) : (
+//                         <div>No cancelled bookings found.</div>
 //                       )}
 //                     </div>
 //                   </TabsContent>
@@ -346,7 +379,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("upcoming");
+  const [selectedTab, setSelectedTab] = useState("confirmed");
   const [selectedMainTab, setSelectedMainTab] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -401,6 +434,7 @@ export default function BookingsPage() {
   ) => {
     console.log("Feedback submitted:", { bookingId, rating, feedback });
     setIsFeedbackModalOpen(false);
+    setSelectedBooking(null);
   };
 
   const handleNavigateToProfile = (mentorId: string) => {
@@ -422,17 +456,21 @@ export default function BookingsPage() {
       }
 
       // Status filter
-      if (tab === "upcoming") {
-        filtered = filtered.filter((booking) =>
-          ["confirmed", "rescheduled"].includes(booking.status.toLowerCase())
-        );
-      } else if (tab === "pending") {
+      if (tab === "confirmed") {
         filtered = filtered.filter(
-          (booking) => booking.status.toLowerCase() === "pending"
+          (booking) => booking.status.toLowerCase() === "confirmed"
+        );
+      } else if (tab === "rescheduled") {
+        filtered = filtered.filter(
+          (booking) => booking.status.toLowerCase() === "rescheduled"
         );
       } else if (tab === "completed") {
-        filtered = filtered.filter((booking) =>
-          ["completed", "cancelled"].includes(booking.status.toLowerCase())
+        filtered = filtered.filter(
+          (booking) => booking.status.toLowerCase() === "completed"
+        );
+      } else if (tab === "cancelled") {
+        filtered = filtered.filter(
+          (booking) => booking.status.toLowerCase() === "cancelled"
         );
       }
 
@@ -451,7 +489,7 @@ export default function BookingsPage() {
 
       return filtered;
     };
-  }, [searchQuery, selectedTab, selectedMainTab]);
+  }, [searchQuery]);
 
   const filteredBookings = filterBookings(
     bookings,
@@ -473,23 +511,23 @@ export default function BookingsPage() {
   return (
     <div className="mx-16 p-2">
       {isLoading ? (
-        <div>Loading bookings...</div>
+        <div className="text-center py-4 text-gray-600 dark:text-gray-300">
+          Loading bookings...
+        </div>
       ) : (
-        <Tabs defaultValue="all" onValueChange={setSelectedMainTab}>
-          <TabsList className="flex justify-between items-center mb-6 gap-3 border-b border-gray-200 rounded-none w-full pb-6">
+        <Tabs value={selectedMainTab} onValueChange={setSelectedMainTab}>
+          <TabsList className="flex justify-between items-center mb-6 gap-3 border-b border-gray-200 dark:border-gray-700 rounded-none w-full pb-6 bg-transparent">
             <div className="flex gap-3">
               {["all", "Priority DM", "1-1-call", "Digital Products"].map(
                 (tab) => (
                   <TabsTrigger
                     key={tab}
                     value={tab}
-                    className={`rounded-full px-4 py-1 border border-black transition-colors duration-200
-                    ${
+                    className={`rounded-full px-4 py-1 border border-gray-300 dark:border-gray-600 font-medium transition-all duration-200 ${
                       selectedMainTab === tab
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
-                    }
-                    hover:bg-black hover:text-white`}
+                        ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                        : "bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
                   >
                     {tab === "1-1-call"
                       ? "1:1 Call"
@@ -505,30 +543,32 @@ export default function BookingsPage() {
               placeholder="Search by mentor name or service title..."
               value={searchQuery}
               onChange={handleSearch}
-              className="w-full sm:w-64 rounded-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+              className="w-full sm:w-64 rounded-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 pr-4"
             />
           </TabsList>
           {["all", "1-1-call", "Priority DM", "Digital Products"].map(
             (mainTab) => (
               <TabsContent key={mainTab} value={mainTab}>
-                <Tabs defaultValue="upcoming" onValueChange={setSelectedTab}>
-                  <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 mb-8">
-                    {["upcoming", "pending", "completed"].map((tab) => (
-                      <TabsTrigger
-                        key={tab}
-                        value={tab}
-                        className={`pb-3 capitalize transition-all rounded-none ${
-                          selectedTab === tab
-                            ? "border-b-2 border-black font-semibold"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        {tab}
-                      </TabsTrigger>
-                    ))}
+                <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+                  <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 dark:border-gray-700 mb-8 bg-transparent">
+                    {["confirmed", "rescheduled", "completed", "cancelled"].map(
+                      (tab) => (
+                        <TabsTrigger
+                          key={tab}
+                          value={tab}
+                          className={`pb-3 capitalize transition-all rounded-none text-lg font-semibold ${
+                            selectedTab === tab
+                              ? "border-b-2 border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100"
+                              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                          }`}
+                        >
+                          {tab}
+                        </TabsTrigger>
+                      )
+                    )}
                   </TabsList>
 
-                  <TabsContent value="upcoming">
+                  <TabsContent value="confirmed">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
                       {filteredBookings.length > 0 ? (
                         filteredBookings.map((booking) => (
@@ -539,31 +579,35 @@ export default function BookingsPage() {
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
                             }
-                            refreshBookings={fetchBookings} // Pass refresh callback
+                            refreshBookings={fetchBookings}
                           />
                         ))
                       ) : (
-                        <div>No upcoming bookings found.</div>
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No confirmed bookings found.
+                        </div>
                       )}
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="pending">
+                  <TabsContent value="rescheduled">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
                       {filteredBookings.length > 0 ? (
                         filteredBookings.map((booking) => (
                           <BookingCard
                             key={booking.id}
                             booking={booking}
-                            type="upcoming" // Treat pending as upcoming for BookingCard behavior
+                            type="upcoming"
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
                             }
-                            refreshBookings={fetchBookings} // Pass refresh callback
+                            refreshBookings={fetchBookings}
                           />
                         ))
                       ) : (
-                        <div>No pending bookings found.</div>
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No rescheduled bookings found.
+                        </div>
                       )}
                     </div>
                   </TabsContent>
@@ -583,11 +627,39 @@ export default function BookingsPage() {
                               setSelectedBooking(booking);
                               setIsFeedbackModalOpen(true);
                             }}
-                            refreshBookings={fetchBookings} // Pass refresh callback
+                            refreshBookings={fetchBookings}
                           />
                         ))
                       ) : (
-                        <div>No completed or cancelled bookings found.</div>
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No completed bookings found.
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="cancelled">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            type="completed"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            onFeedbackClick={() => {
+                              setSelectedBooking(booking);
+                              setIsFeedbackModalOpen(true);
+                            }}
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No cancelled bookings found.
+                        </div>
                       )}
                     </div>
                   </TabsContent>
@@ -595,35 +667,49 @@ export default function BookingsPage() {
               </TabsContent>
             )
           )}
-          <div className="flex justify-center gap-2 mt-6">
-            <Button
-              disabled={currentPage === 1}
-              onClick={() => handlePageChange(currentPage - 1)}
-            >
-              Previous
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
               <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                onClick={() => handlePageChange(page)}
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
               >
-                {page}
+                Previous
               </Button>
-            ))}
-            <Button
-              disabled={currentPage === totalPages}
-              onClick={() => handlePageChange(currentPage + 1)}
-            >
-              Next
-            </Button>
-          </div>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    onClick={() => handlePageChange(page)}
+                    className={`${
+                      currentPage === page
+                        ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                        : "bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+                    } border-gray-300 dark:border-gray-600`}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+              <Button
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </Tabs>
       )}
 
       <FeedbackModal
         isOpen={isFeedbackModalOpen}
-        onClose={() => setIsFeedbackModalOpen(false)}
+        onClose={() => {
+          setIsFeedbackModalOpen(false);
+          setSelectedBooking(null);
+        }}
         onSubmit={(rating, feedback) => {
           if (selectedBooking) {
             handleFeedbackSubmit(selectedBooking.id, rating, feedback);
