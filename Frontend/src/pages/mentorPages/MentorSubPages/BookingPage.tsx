@@ -100,6 +100,42 @@ export default function BookingsPage() {
     setSelectedBookingId(null);
   };
 
+  // const filterBookings = useMemo(() => {
+  //   return (bookings: Booking[]) => {
+  //     let filtered = bookings;
+
+  //     // Service type filter
+  //     if (selectedFilter !== "All") {
+  //       const serviceMap: { [key: string]: string } = {
+  //         "1:1 Call": "1-1Call",
+  //         "Priority DM": "priorityDM",
+  //         "Digital product": "DigitalProducts",
+  //       };
+  //       filtered = filtered.filter((b) => b.service === selectedFilter);
+  //     }
+
+  //     // Global search filter
+  //     if (globalSearch) {
+  //       const query = globalSearch.toLowerCase();
+  //       filtered = filtered.filter(
+  //         (b) =>
+  //           b.userName.toLowerCase().includes(query) ||
+  //           b.product.toLowerCase().includes(query)
+  //       );
+  //     }
+
+  //     return filtered;
+  //   };
+  // }, [selectedFilter, globalSearch]);
+
+  // const upcomingBookings = filterBookings(
+  //   bookings.filter(
+  //     (b) => b.status === "Confirmed" || b.status === "Rescheduled"
+  //   )
+  // );
+  // const completedBookings = filterBookings(
+  //   bookings.filter((b) => b.status === "Completed" || b.status === "Cancelled")
+  // );
   const filterBookings = useMemo(() => {
     return (bookings: Booking[]) => {
       let filtered = bookings;
@@ -129,14 +165,17 @@ export default function BookingsPage() {
   }, [selectedFilter, globalSearch]);
 
   const upcomingBookings = filterBookings(
-    bookings.filter(
-      (b) => b.status === "Confirmed" || b.status === "Rescheduled"
-    )
+    bookings.filter((b) => b.status === "Confirmed")
+  );
+  const rescheduledBookings = filterBookings(
+    bookings.filter((b) => b.status === "Rescheduled")
   );
   const completedBookings = filterBookings(
-    bookings.filter((b) => b.status === "Completed" || b.status === "Cancelled")
+    bookings.filter((b) => b.status === "Completed")
   );
-
+  const cancelledBookings = filterBookings(
+    bookings.filter((b) => b.status === "Cancelled")
+  );
   const totalPages = Math.ceil(total / limit);
 
   if (isLoading)
@@ -172,7 +211,6 @@ export default function BookingsPage() {
       <h1 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
         Bookings
       </h1>
-
       {/* Service Type Filter and Search */}
       <div className="flex items-center gap-2 mb-8 border-b border-gray-200 dark:border-gray-700 pb-2">
         {allServiceTypes.map((type) => (
@@ -196,11 +234,27 @@ export default function BookingsPage() {
           className="ml-auto w-full sm:w-64 rounded-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 pr-4 mr-4"
         />
       </div>
-
       {/* Tabs */}
+      {/* <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 dark:border-gray-700 mb-8 bg-transparent">
+          {["upcoming", "rescheduled", "completed", "cancelled"].map((tab) => (
+            <TabsTrigger
+              key={tab}
+              value={tab}
+              className={`pb-3 capitalize transition-all rounded-none text-lg font-semibold ${
+                selectedTab === tab
+                  ? "border-b-2 border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100"
+                  : "text-gray-500 dark:text-gray-400"
+              }`}
+            >
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList> */}
+
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 dark:border-gray-700 mb-8 bg-transparent">
-          {["upcoming", "completed"].map((tab) => (
+          {["upcoming", "rescheduled", "completed", "cancelled"].map((tab) => (
             <TabsTrigger
               key={tab}
               value={tab}
@@ -215,6 +269,147 @@ export default function BookingsPage() {
           ))}
         </TabsList>
 
+        {/*  
+        <TabsContent value="upcoming">
+          {upcomingBookings.length === 0 ? (
+            renderNoBookings("upcoming")
+          ) : (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Date
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Product
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Service
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      User Name
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Time Slot
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Amount
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {upcomingBookings.map((booking) => (
+                    <TableRow
+                      key={booking._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.date}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.product}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.service}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.userName}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.timeSlot}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        ₹ {booking.amount}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3 flex items-center gap-2">
+                        {booking.status === "Confirmed" && (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
+                        {booking.status}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+
+        <TabsContent value="completed">
+          {completedBookings.length === 0 ? (
+            renderNoBookings("completed")
+          ) : (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Date
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Product
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Service
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      User Name
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Time Slot
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Amount
+                    </TableHead>
+                
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Feedback
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {completedBookings.map((booking) => (
+                    <TableRow
+                      key={booking._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.date}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.product}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.service}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.userName}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.timeSlot}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        ₹ {booking.amount}
+                      </TableCell>
+        
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3 flex items-center gap-2">
+                        <Check className="h-4 w-4 text-green-500" />
+
+                        {booking.status}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs> */}
         {/* Upcoming Tab */}
         <TabsContent value="upcoming">
           {upcomingBookings.length === 0 ? (
@@ -285,6 +480,76 @@ export default function BookingsPage() {
           )}
         </TabsContent>
 
+        {/* Rescheduled Tab */}
+        <TabsContent value="rescheduled">
+          {rescheduledBookings.length === 0 ? (
+            renderNoBookings("rescheduled")
+          ) : (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Date
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Product
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Service
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      User Name
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Time Slot
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Amount
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rescheduledBookings.map((booking) => (
+                    <TableRow
+                      key={booking._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.date}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.product}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.service}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.userName}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.timeSlot}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        ₹ {booking.amount}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3 flex items-center gap-2">
+                        {booking.status === "Rescheduled" && (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
+                        {booking.status}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
         {/* Completed Tab */}
         <TabsContent value="completed">
           {completedBookings.length === 0 ? (
@@ -313,10 +578,7 @@ export default function BookingsPage() {
                       Amount
                     </TableHead>
                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Payment Status
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Feedback
+                      Status
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -344,20 +606,81 @@ export default function BookingsPage() {
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
                         ₹ {booking.amount}
                       </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.paymentStatus}
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3 flex items-center gap-2">
+                        {booking.status === "Completed" && (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
+                        {booking.status}
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal underline text-blue-600 dark:text-blue-400"
-                          onClick={() => {
-                            setSelectedBookingId(booking._id);
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          {booking.status}
-                        </Button>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Cancelled Tab */}
+        <TabsContent value="cancelled">
+          {cancelledBookings.length === 0 ? (
+            renderNoBookings("cancelled")
+          ) : (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Date
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Product
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Service
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      User Name
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Time Slot
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Amount
+                    </TableHead>
+                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {cancelledBookings.map((booking) => (
+                    <TableRow
+                      key={booking._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.date}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.product}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.service}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.userName}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        {booking.timeSlot}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
+                        ₹ {booking.amount}
+                      </TableCell>
+                      <TableCell className="text-gray-700 dark:text-gray-300 py-3 flex items-center gap-2">
+                        {booking.status === "Cancelled" && (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
+                        {booking.status}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -367,8 +690,6 @@ export default function BookingsPage() {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-between items-center mt-6">
           <Button
@@ -403,7 +724,6 @@ export default function BookingsPage() {
           </Button>
         </div>
       )}
-
       {/* Feedback Modal */}
       <FeedbackModal
         isOpen={isModalOpen}
