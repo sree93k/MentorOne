@@ -97,6 +97,11 @@ menteeRoutes.get(
   authenticate,
   menteeController.getMentorBlockedDates.bind(menteeController)
 );
+menteeRoutes.get(
+  "/mentor/:mentorId/policy",
+  authenticate,
+  menteeController.getMentorPolicy.bind(menteeController)
+);
 
 // routes/menteeRoutes.ts
 menteeRoutes.post(

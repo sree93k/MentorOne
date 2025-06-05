@@ -102,7 +102,7 @@ const MentorsList = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="flex-1 max-w-7xl mx-auto">
-        <div className="p-6">
+        <div className="pt-0 p-6">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -271,12 +271,6 @@ const MentorsList = () => {
                                 }
                               >
                                 View Profile
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="w-10 h-10 p-0 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                              >
-                                <Bookmark className="w-4 h-4" />
                               </Button>
                             </div>
                           </div>

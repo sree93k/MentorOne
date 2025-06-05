@@ -6,7 +6,7 @@ export interface ICalendarService {
     schedules: any[];
     blockedDates: any[];
   }>;
-
+  getMentorPolicy(mentorId: string): Promise<any>;
   updatePolicy(mentorId: string, data: any): Promise<any>;
 
   createSchedule(mentorId: string, data: ESchedule): Promise<any>;
