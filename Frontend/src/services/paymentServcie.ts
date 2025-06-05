@@ -57,7 +57,10 @@ export const createCheckoutSession = async (payload: {
   customerPhone?: string | number;
 }) => {
   try {
-    console.log("Payment service createCheckoutSession step 1", payload);
+    console.log(
+      "&&&&&&&&&&&&&&& Payment service createCheckoutSession step 1",
+      payload
+    );
     const accessToken = localStorage.getItem("accessToken");
     console.log("access Token is ", accessToken);
 
