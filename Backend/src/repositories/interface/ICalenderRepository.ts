@@ -23,11 +23,17 @@ export interface ScheduleData {
   }[];
 }
 
+// export interface BlockedDateData {
+//   date: Date;
+//   day: string;
+//   slotTime: number;
+// }
 export interface BlockedDateData {
   date: Date;
   day: string;
+  slotTime?: string; // Add slotTime as optional
+  type?: "blocked" | "booking"; // Add type as optional
 }
-
 export interface ICalendarRepository {
   getPolicy(mentorId: string | mongoose.Types.ObjectId): Promise<any | null>;
   updatePolicy(
