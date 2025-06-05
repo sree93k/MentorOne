@@ -76,6 +76,7 @@ export default function PaymentModal({
       "Stripe Publishable Key:",
       import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
     );
+
     stripePromise
       .then((stripe) => console.log("Stripe initialized:", !!stripe))
       .catch((error) => console.error("Stripe initialization failed:", error));
@@ -161,75 +162,6 @@ export default function PaymentModal({
     selectedTime && service.duration
       ? calculateEndTime(selectedTime, service.duration)
       : "N/A";
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   try {
-  //     if (!service._id || !mentor.userData) {
-  //       console.error("Invalid service or mentor ID:", { service, mentor });
-  //       throw new Error("Service or mentor ID is missing");
-  //     }
-
-  //     const slotIndex = selectedSlotIndex ?? 0; // Use 0 for DigitalProducts or fallback
-
-  //     const payload = {
-  //       amount: totalAmount,
-  //       serviceId: service._id,
-  //       mentorId: mentor.userData,
-  //       menteeId,
-  //       bookingDate: selectedDate || "",
-  //       startTime,
-  //       endTime,
-  //       day: selectedDate
-  //         ? new Date(selectedDate)
-  //             .toLocaleDateString("en-US", { weekday: "long" })
-  //             .toLowerCase()
-  //         : "",
-  //       slotIndex,
-  //       customerEmail: formData.email,
-  //       customerName: formData.name,
-  //       customerPhone: formData.phone || undefined,
-  //     };
-
-  //     console.log("Submitting checkout session with payload:", payload);
-
-  //     const stripe = await stripePromise;
-  //     if (!stripe) {
-  //       console.error("Stripe not initialized");
-  //       throw new Error("Stripe.js failed to load");
-  //     }
-
-  //     const response = await createCheckoutSession(payload);
-  //     console.log("Checkout session response:", response);
-
-  //     if (!response.sessionId || typeof response.sessionId !== "string") {
-  //       console.error("Invalid sessionId:", response);
-  //       throw new Error("Invalid or missing sessionId from backend");
-  //     }
-
-  //     console.log(
-  //       "Redirecting to Stripe Checkout with sessionId:",
-  //       response.sessionId
-  //     );
-  //     const { error } = await stripe.redirectToCheckout({
-  //       sessionId: response.sessionId,
-  //     });
-
-  //     if (error) {
-  //       console.error("Stripe redirect error:", error);
-  //       throw new Error(
-  //         error.message || "Failed to redirect to Stripe Checkout"
-  //       );
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Payment error:", error);
-  //     toast.error(error.message || "Payment failed");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

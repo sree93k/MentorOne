@@ -761,6 +761,7 @@ export default class MentorProfileService implements IMentorProfileService {
       console.log("getMentorSchedule service step 1", { serviceId });
       const response = await this.SlotRepository.findAvailableSlots(serviceId);
       // const schedule = await Schedule.findOne({ mentorId }).exec();
+
       console.log("getMentorSchedule service step 2", response);
       return response;
     } catch (error: any) {

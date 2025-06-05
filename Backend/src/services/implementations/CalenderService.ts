@@ -21,6 +21,12 @@ export default class CalendarService implements ICalendarService {
     console.log("getMentorCalendar data blockedDates", blockedDates);
     return { policy, schedules, blockedDates };
   }
+  async getMentorPolicy(mentorId: string) {
+    console.log("calnderservcie getMentorPolicy  step 1", mentorId);
+    const response = await this.repository.getPolicy(mentorId);
+    console.log("calnderservcie getMentorPolicy  step 2", response);
+    return response;
+  }
 
   async updatePolicy(mentorId: string, data: any) {
     return await this.repository.updatePolicy(mentorId, data);

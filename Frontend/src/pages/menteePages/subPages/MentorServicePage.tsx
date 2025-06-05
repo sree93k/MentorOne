@@ -113,7 +113,7 @@ export default function MentorServicePage() {
         </Button>
       </div>
       <div className="flex-1 flex flex-row justify-between gap-10 max-w-7xl mx-auto p-4">
-        <div className="flex-[2] p-4">
+        <div className="flex-[2] p-0">
           <BookingDetails
             onConfirmClick={handleConfirmClick}
             service={service}
@@ -121,7 +121,7 @@ export default function MentorServicePage() {
           />
         </div>
 
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-0">
           <BookingConfirm
             onConfirm={handleBookingConfirm}
             mentor={mentor}

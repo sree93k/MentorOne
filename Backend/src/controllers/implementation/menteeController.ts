@@ -17,6 +17,8 @@ import BookingService from "../../services/implementations/Bookingservice";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import PaymentService from "../../services/implementations/PaymentService";
+import CalendarService from "../../services/implementations/CalenderService";
+import { ICalendarService } from "../../services/interface/ICalenderService";
 import sharp from "sharp";
 import stripe from "../../config/stripe";
 
@@ -29,6 +31,7 @@ class menteeController {
   private MentorProfileService: IMentorProfileService;
   private bookingService: IBookingService;
   private PaymentService: IPaymentService;
+  private CalendarService: ICalendarService;
   private options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -45,6 +48,7 @@ class menteeController {
     this.MentorProfileService = new MentorProfileService();
     this.bookingService = new BookingService();
     this.PaymentService = new PaymentService();
+    this.CalendarService = new CalendarService();
   }
 
   public getBookings = async (
@@ -636,6 +640,24 @@ class menteeController {
       console.log("Mentee controller getPriorityDMs step 3", priorityDMs);
       res.json(
         new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getMentorPolicy = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const mentorId = req.params.mentorId;
+      console.log("Mentee controller getMentorPolicy step 1", mentorId);
+      const repsonse = await this.CalendarService.getMentorPolicy(mentorId);
+      console.log("Mentee controller getMentorPolicy step 2", repsonse);
+      res.json(
+        new ApiResponse(200, repsonse, "getMentorPolicy  fetched successfully")
       );
     } catch (error) {
       next(error);

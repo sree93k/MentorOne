@@ -463,3 +463,23 @@ export const getPriorityDMs = async (bookingId: string) => {
     );
   }
 };
+
+export const getMentorPolicy = async (mentorId: string) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get(`/seeker/mentor/${mentorId}/policy`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching getMMentorPolicy:", error);
+    throw new Error(error?.message || "Failed to fetch getMMentorPolicy");
+  }
+};

@@ -122,7 +122,7 @@ export default function CoursesPage() {
   return (
     <div className="flex min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="flex-1 max-w-7xl mx-auto">
-        <div className="p-6">
+        <div className="pt-0 p-6">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Courses & Tutorials
