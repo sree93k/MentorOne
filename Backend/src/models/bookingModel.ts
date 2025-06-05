@@ -39,7 +39,7 @@ const BookingSchema = new Schema<EBooking>({
   startTime: {
     type: String,
     required: true,
-    match: /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/,
+    match: /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i,
   },
   bookingDate: {
     type: Date,
@@ -56,6 +56,17 @@ const BookingSchema = new Schema<EBooking>({
     currency: { type: String },
     status: { type: String },
     createdAt: { type: Date },
+  },
+  rescheduleRequest: {
+    requestedDate: { type: String },
+    requestedTime: { type: String },
+    requestedSlotIndex: { type: Number },
+    mentorDecides: { type: Boolean, default: false },
+    rescheduleStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
   },
   createdAt: {
     type: Date,

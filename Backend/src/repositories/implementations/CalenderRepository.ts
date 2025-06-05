@@ -108,10 +108,12 @@ export default class CalendarRepository implements ICalendarRepository {
   ) {
     console.log("calendar repo addBlockedDates step1", mentorId, dates);
 
-    const blockedDates = dates.map(({ date, day }) => ({
+    const blockedDates = dates.map(({ date, day, slotTime, type }) => ({
       mentorId: new mongoose.Types.ObjectId(mentorId),
       date,
       day,
+      slotTime: slotTime || undefined, // Include slotTime if provided
+      type: type || "blocked", // Default to "blocked" if type not provided
       createdAt: new Date(),
     }));
 

@@ -18,6 +18,10 @@ import { IServiceRepository } from "../../repositories/interface/IServiceReposit
 import { IChatRepository } from "../../repositories/interface/IChatRepository";
 import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import SlotRepository from "../../repositories/implementations/SlotRepository";
+import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
+import CalendarRepository from "../../repositories/implementations/CalenderRepository";
+import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
 import { EBooking } from "../../entities/bookingEntity";
 
 interface SaveBookingAndPaymentParams {
@@ -52,7 +56,8 @@ export default class BookingService implements IBookingService {
   private userRepository: IUserRepository;
   private notificationService: INotificationService;
   private walletRepository: IWalletRepository;
-
+  private slotRepository: ISlotRepository;
+  private calendarRepository: ICalendarRepository;
   constructor() {
     this.bookingRepository = new BookingRepository();
     this.paymentRepository = new PaymentRepository();
@@ -62,6 +67,8 @@ export default class BookingService implements IBookingService {
     this.userRepository = new UserRepository();
     this.notificationService = new NotificationService();
     this.walletRepository = new WalletRepository();
+    this.slotRepository = new SlotRepository();
+    this.calendarRepository = new CalendarRepository();
   }
 
   async createBooking(params: BookingParams): Promise<any> {
@@ -83,6 +90,30 @@ export default class BookingService implements IBookingService {
     } else {
       status = "confirmed";
     }
+    console.log("++++++++++BOOKING SERVICE createBooking step 1", response);
+    console.log(
+      "++++++++++BOOKING SERVICE createBooking step 2",
+      response?.type
+    );
+    // if (response?.type === "1-1Call") {
+    //   const dates = [
+    //     {
+    //       date: bookingDate,
+    //       day,
+    //       slotTime: startTime,
+    //       type: "booking",
+    //     },
+    //   ];
+    //   console.log("++++++++++BOOKING SERVICE createBooking step 3", dates);
+    //   const blockedDate = await this.calendarRepository.addBlockedDates(
+    //     mentorId,
+    //     dates
+    //   );
+    //   console.log(
+    //     "++++++++++BOOKING SERVICE createBooking step 4",
+    //     blockedDate
+    //   );
+    // }
     const booking = await this.bookingRepository.create({
       serviceId,
       mentorId,

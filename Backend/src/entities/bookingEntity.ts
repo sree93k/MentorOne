@@ -8,6 +8,14 @@ export interface PaymentDetails {
   createdAt?: Date;
 }
 
+interface rescheduleRequest {
+  requestedDate: string;
+  requestedTime: string;
+  requestedSlotIndex: number;
+  mentorDecides: boolean;
+  rescheduleStatus: string;
+}
+
 export interface EBooking extends Document {
   _id: ObjectId;
   serviceId: ObjectId;
@@ -25,6 +33,7 @@ export interface EBooking extends Document {
   startTime: string;
   bookingDate: Date;
   status: "confirmed" | "rescheduled" | "cancelled" | "completed";
+  rescheduleRequest: rescheduleRequest;
   paymentDetails?: PaymentDetails;
   createdAt: Date;
   updatedAt: Date;

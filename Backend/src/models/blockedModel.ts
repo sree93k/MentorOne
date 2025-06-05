@@ -12,9 +12,19 @@ const BlockedDateSchema: Schema = new Schema(
       type: Date,
       required: true,
     },
+    slotTime: {
+      type: String,
+      required: false,
+    },
     day: {
       type: String,
       required: true,
+    },
+    type: {
+      type: String,
+      enum: ["blocked", "booking"],
+      default: "blocked",
+      required: false,
     },
   },
   {
