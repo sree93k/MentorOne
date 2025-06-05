@@ -95,25 +95,25 @@ export default class BookingService implements IBookingService {
       "++++++++++BOOKING SERVICE createBooking step 2",
       response?.type
     );
-    // if (response?.type === "1-1Call") {
-    //   const dates = [
-    //     {
-    //       date: bookingDate,
-    //       day,
-    //       slotTime: startTime,
-    //       type: "booking",
-    //     },
-    //   ];
-    //   console.log("++++++++++BOOKING SERVICE createBooking step 3", dates);
-    //   const blockedDate = await this.calendarRepository.addBlockedDates(
-    //     mentorId,
-    //     dates
-    //   );
-    //   console.log(
-    //     "++++++++++BOOKING SERVICE createBooking step 4",
-    //     blockedDate
-    //   );
-    // }
+    if (response?.type === "1-1Call") {
+      const dates = [
+        {
+          date: bookingDate,
+          day,
+          slotTime: startTime,
+          type: "booking",
+        },
+      ];
+      console.log("++++++++++BOOKING SERVICE createBooking step 3", dates);
+      const blockedDate = await this.calendarRepository.addBlockedDates(
+        mentorId,
+        dates
+      );
+      console.log(
+        "++++++++++BOOKING SERVICE createBooking step 4",
+        blockedDate
+      );
+    }
     const booking = await this.bookingRepository.create({
       serviceId,
       mentorId,

@@ -69,7 +69,7 @@ class PaymentController {
     } = req.body;
 
     console.log(
-      "payemntcontroller createCheckoutSession request: step 1",
+      "OOOOOOOOOOOOOOO Payemntcontroller createCheckoutSession request: step 1",
       req.body
     );
     try {
