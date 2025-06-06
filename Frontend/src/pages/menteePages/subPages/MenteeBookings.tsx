@@ -24,6 +24,7 @@ interface Booking {
   feedback?: string;
   oneToOneType?: string | null;
   digitalProductType?: string | null;
+  slot: string;
 }
 
 export default function BookingsPage() {
@@ -36,13 +37,52 @@ export default function BookingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
+
   const bookingsPerPage = 12;
   const navigate = useNavigate();
 
+  // const fetchBookings = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await getBookings(currentPage, bookingsPerPage, "");
+  //     console.log(" MMMMMMMM Mentee bookings fetchBookings step 1", response);
+
+  //     const fetchedBookings = response.data.map((booking: any) => ({
+  //       id: booking._id,
+  //       serviceId: booking.serviceId._id,
+  //       mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
+  //       mentorImage: booking.mentorId.profilePicture,
+  //       mentorId: booking.mentorId._id,
+  //       title: booking.serviceId.title,
+  //       technology: booking.serviceId.technology,
+  //       date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
+  //         day: "2-digit",
+  //         month: "2-digit",
+  //         year: "numeric",
+  //       }),
+  //       time: booking.startTime,
+  //       price: booking.serviceId.amount,
+  //       status: booking.status,
+  //       serviceType: booking.serviceId.type,
+  //       rating: booking.rating || undefined,
+  //       feedback: booking.feedback || undefined,
+  //       oneToOneType: booking.serviceId.oneToOneType || null,
+  //       digitalProductType: booking.serviceId.digitalProductType || null,
+  //     }));
+  //     setBookings(fetchedBookings);
+  //     setTotalBookings(response.total);
+  //   } catch (error) {
+  //     console.error("Failed to fetch bookings:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
       const response = await getBookings(currentPage, bookingsPerPage, "");
+      console.log(" MMMMMMMM Mentee bookings fetchBookings step 1", response);
+
       const fetchedBookings = response.data.map((booking: any) => ({
         id: booking._id,
         serviceId: booking.serviceId._id,
@@ -64,6 +104,7 @@ export default function BookingsPage() {
         feedback: booking.feedback || undefined,
         oneToOneType: booking.serviceId.oneToOneType || null,
         digitalProductType: booking.serviceId.digitalProductType || null,
+        slot: booking.serviceId.slot || "", // Add slot field
       }));
       setBookings(fetchedBookings);
       setTotalBookings(response.total);
@@ -73,7 +114,6 @@ export default function BookingsPage() {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchBookings();
   }, [currentPage]);
@@ -218,7 +258,7 @@ export default function BookingsPage() {
                       )
                     )}
                   </TabsList>
-
+                  {/* 0
                   <TabsContent value="confirmed">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
                       {filteredBookings.length > 0 ? (
@@ -226,6 +266,7 @@ export default function BookingsPage() {
                           <BookingCard
                             key={booking.id}
                             booking={booking}
+                         serviceSlot={booking.slot}
                             type="upcoming"
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
@@ -248,6 +289,7 @@ export default function BookingsPage() {
                           <BookingCard
                             key={booking.id}
                             booking={booking}
+                            serviceSlot={booking.serviceId.slot}
                             type="upcoming"
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
@@ -270,6 +312,7 @@ export default function BookingsPage() {
                           <BookingCard
                             key={booking.id}
                             booking={booking}
+                            serviceSlot={booking.serviceId.slot}
                             type="completed"
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)
@@ -296,6 +339,106 @@ export default function BookingsPage() {
                           <BookingCard
                             key={booking.id}
                             booking={booking}
+                            serviceSlot={booking.serviceId.slot}
+                            type="completed"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            onFeedbackClick={() => {
+                              setSelectedBooking(booking);
+                              setIsFeedbackModalOpen(true);
+                            }}
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No cancelled bookings found.
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent> */}
+                  <TabsContent value="confirmed">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot} // Pass slot ID
+                            type="upcoming"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No confirmed bookings found.
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="rescheduled">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot} // Pass slot ID
+                            type="upcoming"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No rescheduled bookings found.
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="completed">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot} // Pass slot ID
+                            type="completed"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            onFeedbackClick={() => {
+                              setSelectedBooking(booking);
+                              setIsFeedbackModalOpen(true);
+                            }}
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-12 text-gray-600 dark:text-gray-300">
+                          No completed bookings found.
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="cancelled">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot}
                             type="completed"
                             navigateToProfile={() =>
                               handleNavigateToProfile(booking.mentorId)

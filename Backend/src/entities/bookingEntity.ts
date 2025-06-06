@@ -14,6 +14,7 @@ interface rescheduleRequest {
   requestedSlotIndex: number;
   mentorDecides: boolean;
   rescheduleStatus: string;
+  reason: string;
 }
 
 export interface EBooking extends Document {

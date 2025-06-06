@@ -67,6 +67,7 @@ const BookingSchema = new Schema<EBooking>({
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    reason: { type: String },
   },
   createdAt: {
     type: Date,
