@@ -69,7 +69,7 @@ export default class BookingRepository implements IBookingRepository {
         .populate({
           path: "serviceId",
           select:
-            "title technology amount type digitalProductType oneToOneType",
+            "title technology amount type digitalProductType oneToOneType slot",
         })
         .skip(skip)
         .limit(limit)
