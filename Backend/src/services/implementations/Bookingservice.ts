@@ -47,6 +47,13 @@ interface BookServiceParams {
   sessionId: string;
 }
 
+interface RescheduleParams {
+  requestedDate?: string;
+  requestedTime?: string;
+  requestedSlotIndex?: number;
+  mentorDecides: boolean;
+}
+
 export default class BookingService implements IBookingService {
   private bookingRepository: IBookingRepository;
   private paymentRepository: IPaymentRepository;
@@ -668,6 +675,78 @@ export default class BookingService implements IBookingService {
       throw new ApiError(
         500,
         error.message || "Failed to update booking status"
+      );
+    }
+  }
+
+  async requestReschedule(
+    bookingId: string,
+    menteeId: string,
+    params: RescheduleParams
+  ): Promise<EBooking> {
+    try {
+      console.log("BookingService requestReschedule step 1", {
+        bookingId,
+        menteeId,
+        params,
+      });
+
+      const booking = await this.bookingRepository.findById(bookingId);
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+
+      if (booking.menteeId.toString() !== menteeId) {
+        throw new ApiError(403, "Not authorized to reschedule this booking");
+      }
+
+      if (booking.status !== "confirmed") {
+        throw new ApiError(400, "Only confirmed bookings can be rescheduled");
+      }
+
+      const rescheduleRequest = {
+        requestedDate: params.requestedDate,
+        requestedTime: params.requestedTime,
+        requestedSlotIndex: params.requestedSlotIndex,
+        mentorDecides: params.mentorDecides,
+        rescheduleStatus: "pending" as "pending",
+        reason: params.mentorDecides ? "Mentor to decide" : undefined,
+      };
+
+      const updatedBooking = await this.bookingRepository.update(bookingId, {
+        rescheduleRequest,
+        updatedAt: new Date(),
+      });
+
+      if (!updatedBooking) {
+        throw new ApiError(500, "Failed to submit reschedule request");
+      }
+
+      // Notify mentor about the reschedule request
+      try {
+        const io = getIO();
+        const notificationMessage = `A reschedule request has been submitted for booking ${bookingId}`;
+        await this.notificationService.createNotification(
+          booking.mentorId.toString(), // recipientId
+          "booking", // type
+          notificationMessage, // message (string)
+          bookingId, // relatedId
+          io // optional io
+        );
+      } catch (notificationError: any) {
+        console.error(
+          "Failed to send reschedule notification:",
+          notificationError.message
+        );
+      }
+
+      console.log("BookingService requestReschedule step 2", updatedBooking);
+      return updatedBooking;
+    } catch (error: any) {
+      console.error("BookingService requestReschedule error:", error);
+      throw new ApiError(
+        500,
+        error.message || "Failed to submit reschedule request"
       );
     }
   }

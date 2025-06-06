@@ -157,32 +157,6 @@ class BookingController {
     }
   };
 
-  // public getAllVideoCallsByMentor = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) => {
-  //   try {
-  //     console.log("booking controller getAllVideoCallsByMentor step 1");
-  //     const mentorId = req?.user?.id;
-  //     if (!mentorId) {
-  //       throw new ApiError(400, "Mentor ID is required");
-  //     }
-  //     const bookings = await this.bookingService.getAllVideoCalls(
-  //       mentorId,
-  //       "confirmed",
-  //       5
-  //     );
-  //     console.log(
-  //       "booking controller getAllVideoCallsByMentor step 2",
-  //       bookings
-  //     );
-  //     res.json({ data: bookings, total: bookings.length });
-  //   } catch (error: any) {
-  //     console.error("Error fetching video call bookings:", error);
-  //     next(error);
-  //   }
-  // };
   public getAllVideoCallsByMentor = async (
     req: Request,
     res: Response,
@@ -263,6 +237,55 @@ class BookingController {
       });
     } catch (error: any) {
       console.error("Error updating booking status:", error);
+      next(error);
+    }
+  };
+
+  // BookingController.ts
+  public requestReschedule = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { bookingId } = req.params;
+    const { requestedDate, requestedTime, requestedSlotIndex, mentorDecides } =
+      req.body;
+    const menteeId = req?.user?.id;
+
+    try {
+      if (!menteeId) {
+        return next(new ApiError(400, "Mentee ID is required"));
+      }
+
+      if (
+        !mentorDecides &&
+        (!requestedDate || !requestedTime || requestedSlotIndex === undefined)
+      ) {
+        return next(
+          new ApiError(
+            400,
+            "Requested date, time, and slot index are required unless mentor decides"
+          )
+        );
+      }
+
+      const updatedBooking = await this.bookingService.requestReschedule(
+        bookingId,
+        menteeId,
+        {
+          requestedDate,
+          requestedTime,
+          requestedSlotIndex,
+          mentorDecides,
+        }
+      );
+
+      res.json({
+        message: "Reschedule request submitted successfully",
+        booking: updatedBooking,
+      });
+    } catch (error: any) {
+      console.error("Error requesting reschedule:", error);
       next(error);
     }
   };
