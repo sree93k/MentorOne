@@ -426,7 +426,18 @@ export default function BookingConfirm({
         {renderPolicyDetails()}
         <h3 className="font-semibold text-lg mb-1">Select Date</h3>
         <div className="flex items-center justify-between mb-6">
-          <button className="p-2 hover:bg-gray-200 rounded-full">
+          <button
+            className="p-2 hover:bg-gray-200 rounded-full flex-shrink-0"
+            onClick={() => {
+              const container = document.querySelector(".overflow-x-auto");
+              if (container) {
+                container.scrollBy({
+                  left: -200,
+                  behavior: "smooth",
+                });
+              }
+            }}
+          >
             <svg
               width="20"
               height="20"
@@ -464,7 +475,18 @@ export default function BookingConfirm({
             ))}
           </div>
 
-          <button className="p-2 hover:bg-gray-200 rounded-full">
+          <button
+            className="p-2 hover:bg-gray-200 rounded-full flex-shrink-0"
+            onClick={() => {
+              const container = document.querySelector(".overflow-x-auto");
+              if (container) {
+                container.scrollBy({
+                  left: 200,
+                  behavior: "smooth",
+                });
+              }
+            }}
+          >
             <svg
               width="20"
               height="20"

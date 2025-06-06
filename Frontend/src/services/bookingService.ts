@@ -220,3 +220,37 @@ export const updateStatus = async (bookingId: string, payload: any) => {
     throw new Error(`Failed to fetch  updateStatus: ${error.message}`);
   }
 };
+interface RescheduleRequestParams {
+  requestedDate?: string;
+  requestedTime?: string;
+  requestedSlotIndex?: number;
+  mentorDecides: boolean;
+}
+
+export const requestReschedule = async (
+  bookingId: string,
+  params: RescheduleRequestParams
+) => {
+  try {
+    console.log("Booking service requestReschedule step 1", {
+      bookingId,
+      params,
+    });
+    const response = await api.post(
+      `/seeker/bookings/${bookingId}/reschedule`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+    console.log("Booking service requestReschedule step 2", response);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error requesting reschedule:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to request reschedule"
+    );
+  }
+};

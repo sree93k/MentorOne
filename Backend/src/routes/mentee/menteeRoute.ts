@@ -115,4 +115,10 @@ menteeRoutes.get(
   authenticate,
   menteeController.getPriorityDMs.bind(menteeController)
 );
+
+menteeRoutes.post(
+  "/bookings/:bookingId/reschedule",
+  authenticate,
+  bookingController.requestReschedule.bind(bookingController)
+);
 export default menteeRoutes;

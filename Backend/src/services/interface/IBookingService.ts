@@ -33,7 +33,12 @@ interface BookServiceParams {
   menteeId: string;
   sessionId: string;
 }
-
+interface RescheduleParams {
+  requestedDate?: string;
+  requestedTime?: string;
+  requestedSlotIndex?: number;
+  mentorDecides: boolean;
+}
 export interface IBookingService {
   createBooking(params: BookingParams): Promise<any>;
   getBookingsByMentee(
@@ -78,5 +83,10 @@ export interface IBookingService {
     bookingId: string,
     status: string,
     mentorId: string
+  ): Promise<EBooking>;
+  requestReschedule(
+    bookingId: string,
+    menteeId: string,
+    params: RescheduleParams
   ): Promise<EBooking>;
 }
