@@ -52,5 +52,10 @@ export interface ICalendarRepository {
     mentorId: string | mongoose.Types.ObjectId,
     dates: BlockedDateData[]
   ): Promise<any[]>;
-  removeBlockedDate(blockedDateId: string): Promise<any | null>;
+  // removeBlockedDate(blockedDateId: string): Promise<any | null>;
+  removeBlockedDate(
+    mentorId: string,
+    date: string,
+    slotTime: string
+  ): Promise<void>;
 }

@@ -163,13 +163,17 @@ export const getAllMenteePayments = async (page: number, limit: number) => {
   }
 };
 //mentorpayments
-export const getAllMentorPayments = async () => {
+export const getAllMentorPayments = async (page: number, limit: number) => {
   try {
     console.log("payment service getAllMentorPayments step 1");
     const accessToken = localStorage.getItem("accessToken");
     const response = await api.get("/expert/payment/mentor-payments", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        page,
+        limit,
       },
     });
     console.log("payment service getAllMentorPayments step 2", response.data);

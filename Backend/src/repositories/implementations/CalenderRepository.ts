@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Policy from "../../models/policyModel";
 import Schedule from "../../models/scheduleModel";
 import BlockedDate from "../../models/blockedModel";
+import ApiError from "../../utils/apiResponse";
 
 import {
   ICalendarRepository,
@@ -122,7 +123,22 @@ export default class CalendarRepository implements ICalendarRepository {
     return response;
   }
 
-  async removeBlockedDate(blockedDateId: string) {
-    return await BlockedDate.findByIdAndDelete(blockedDateId);
+  // async removeBlockedDate(blockedDateId: string) {
+  //   return await BlockedDate.findByIdAndDelete(blockedDateId);
+  // }
+  // CalendarRepository.ts
+  async removeBlockedDate(
+    mentorId: string,
+    date: string,
+    slotTime: string
+  ): Promise<void> {
+    try {
+      await BlockedDate.updateOne(
+        { mentorId },
+        { $pull: { blockedDates: { date, slotTime, type: "booking" } } }
+      );
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to remove blocked date", error.message);
+    }
   }
 }

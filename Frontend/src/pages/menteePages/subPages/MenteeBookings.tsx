@@ -38,7 +38,7 @@ export default function BookingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
 
-  const bookingsPerPage = 12;
+  const bookingsPerPage = 40;
   const navigate = useNavigate();
 
   // const fetchBookings = async () => {

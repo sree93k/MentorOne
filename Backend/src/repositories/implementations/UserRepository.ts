@@ -489,11 +489,11 @@ export default class UserRepository implements IUserRepository {
         mentorId: mentor._id,
         $or: [
           {
-            type: { $in: ["1-1Call", "priorityDM"] },
+            type: "1-1Call",
             slot: { $exists: true, $ne: null },
           },
           {
-            type: "DigitalProducts",
+            type: { $in: ["DigitalProducts", "priorityDM"] },
           },
         ],
       }).lean();

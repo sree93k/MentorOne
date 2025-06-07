@@ -43,6 +43,7 @@ interface UserProfileData {
     bio?: string;
     skills?: string[];
     userType?: "school" | "college" | "fresher" | "professional";
+    profilePicture?: string;
     schoolName?: string;
     class?: string;
     city?: string;
@@ -193,6 +194,7 @@ const UserProfile: React.FC = () => {
         }
       } catch (err) {
         setError("An error occurred while fetching user data");
+        console.error("Fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -259,6 +261,593 @@ const UserProfile: React.FC = () => {
   const { user, menteeData, mentorData, serviceData, bookingData } =
     userProfile;
 
+  //   return (
+  //     <div className="flex min-h-screen flex-col pl-24">
+  //       <main className="flex-1">
+  //         <div className="max-w-6xl mx-auto p-2">
+  //           <div className="rounded-md border p-8 bg-white">
+  //             <div className="mb-6 flex items-start gap-6">
+  //               <div className="mb-6 flex items-center">
+  //                 <div
+  //                   className="flex h-8 w-8 items-center justify-start rounded-full border"
+  //                   onClick={() => navigate(-1)}
+  //                 >
+  //                   <ArrowLeft className="h-6 w-8" />
+  //                 </div>
+  //               </div>
+  //               <Avatar className="h-24 w-24 rounded-full">
+  //                 <AvatarImage src={user?.profilePicture} alt={user.firstName} />
+  //                 <AvatarFallback>{user.firstName?.charAt(0)}</AvatarFallback>
+  //               </Avatar>
+  //               <div>
+  //                 <h2 className="text-xl font-semibold">{`${user.firstName} ${user.lastName}`}</h2>
+  //               </div>
+  //             </div>
+
+  //             {error && (
+  //               <div className="mb-4 p-4 text-red-500 bg-red-100 rounded-md">
+  //                 {error}
+  //               </div>
+  //             )}
+
+  //             <Tabs value={activeTab} onValueChange={setActiveTab}>
+  //               <TabsList className="flex justify-start gap-24 border-b mb-12">
+  //                 <TabsTrigger
+  //                   value="profile"
+  //                   className={`pb-2 ${
+  //                     activeTab === "profile"
+  //                       ? "border-b-2 border-black bg-green-800 text-white"
+  //                       : ""
+  //                   }`}
+  //                 >
+  //                   Profile
+  //                 </TabsTrigger>
+  //                 <TabsTrigger
+  //                   value="account"
+  //                   className={`pb-2 ${
+  //                     activeTab === "account"
+  //                       ? "border-b-2 border-black bg-green-800 text-white"
+  //                       : ""
+  //                   }`}
+  //                 >
+  //                   Account
+  //                 </TabsTrigger>
+  //                 <TabsTrigger
+  //                   value="experience"
+  //                   className={`pb-2 ${
+  //                     activeTab === "experience"
+  //                       ? "border-b-2 border-black bg-green-800 text-white"
+  //                       : ""
+  //                   }`}
+  //                 >
+  //                   Experience
+  //                 </TabsTrigger>
+  //                 <TabsTrigger
+  //                   value="services"
+  //                   className={`pb-2 ${
+  //                     activeTab === "services"
+  //                       ? "border-b-2 border-black bg-green-800 text-white"
+  //                       : ""
+  //                   }`}
+  //                 >
+  //                   Services
+  //                 </TabsTrigger>
+  //                 <TabsTrigger
+  //                   value="bookings"
+  //                   className={`pb-2 ${
+  //                     activeTab === "bookings"
+  //                       ? "border-b-2 border-black bg-green-800 text-white"
+  //                       : ""
+  //                   }`}
+  //                 >
+  //                   Bookings
+  //                 </TabsTrigger>
+  //               </TabsList>
+  //               <TabsContent value="profile">
+  //                 <div className="space-y-4">
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Email ID
+  //                     </span>
+  //                     <span className="text-sm">{user.email}</span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Phone
+  //                     </span>
+  //                     <span className="text-sm">{user.phone || "N/A"}</span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Status
+  //                     </span>
+  //                     {isEditingStatus ? (
+  //                       <div className="flex items-center gap-2">
+  //                         <Select value={status} onValueChange={setStatus}>
+  //                           <SelectTrigger className="h-8 w-32">
+  //                             <SelectValue placeholder="Select status" />
+  //                           </SelectTrigger>
+  //                           <SelectContent className="bg-white">
+  //                             <SelectItem value="Active">Active</SelectItem>
+  //                             <SelectItem value="Blocked">Blocked</SelectItem>
+  //                           </SelectContent>
+  //                         </Select>
+  //                         <Button
+  //                           size="icon"
+  //                           variant="ghost"
+  //                           className="h-6 w-6"
+  //                           onClick={() => {
+  //                             setModalTitle("Confirm Status Update");
+  //                             setModalDescription(
+  //                               `Are you sure you want to set the status to ${status}?`
+  //                             );
+  //                             setConfirmAction(() => handleStatusUpdate);
+  //                             setIsModalOpen(true);
+  //                           }}
+  //                         >
+  //                           <Check className="h-4 w-4" />
+  //                         </Button>
+  //                       </div>
+  //                     ) : (
+  //                       <div className="flex items-center gap-2">
+  //                         {status === "Active" ? (
+  //                           <CircleCheckBig
+  //                             size={28}
+  //                             color="#198041"
+  //                             strokeWidth={1.75}
+  //                           />
+  //                         ) : (
+  //                           <Ban size={28} color="#cc141d" strokeWidth={1.75} />
+  //                         )}
+  //                         <span className="text-sm">{status}</span>
+  //                         <Button
+  //                           size="icon"
+  //                           variant="ghost"
+  //                           className="h-6 w-6"
+  //                           onClick={() => setIsEditingStatus(true)}
+  //                         >
+  //                           <Pencil className="h-4 w-4" />
+  //                         </Button>
+  //                       </div>
+  //                     )}
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Joined Date
+  //                     </span>
+  //                     <span className="text-sm">
+  //                       {new Date(user.createdAt).toLocaleString()}
+  //                     </span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Role
+  //                     </span>
+  //                     <span className="text-sm">{user.role.join(", ")}</span>
+  //                   </div>
+  //                   {user.role.includes("mentor") && (
+  //                     <div className="flex py-2">
+  //                       <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                         Mentor Status
+  //                       </span>
+  //                       {isEditingMentorStatus ? (
+  //                         <div className="flex items-center gap-2">
+  //                           <Select
+  //                             value={mentorStatus}
+  //                             onValueChange={setMentorStatus}
+  //                           >
+  //                             <SelectTrigger className="h-8 w-32">
+  //                               <SelectValue placeholder="Select status" />
+  //                             </SelectTrigger>
+  //                             <SelectContent className="bg-white">
+  //                               <SelectItem value="Approved">Approved</SelectItem>
+  //                               <SelectItem value="Pending">Pending</SelectItem>
+  //                               <SelectItem value="Rejected">Rejected</SelectItem>
+  //                             </SelectContent>
+  //                           </Select>
+  //                           {(mentorStatus === "Approved" ||
+  //                             mentorStatus === "Rejected") && (
+  //                             <input
+  //                               type="text"
+  //                               placeholder="Enter reason"
+  //                               value={reason}
+  //                               onChange={(e) => setReason(e.target.value)}
+  //                               className="h-10 w-96 border rounded-md p-2"
+  //                             />
+  //                           )}
+  //                           <Button
+  //                             size="icon"
+  //                             variant="ghost"
+  //                             className="h-6 w-6"
+  //                             onClick={() => {
+  //                               if (
+  //                                 (mentorStatus === "Approved" ||
+  //                                   mentorStatus === "Rejected") &&
+  //                                 !reason.trim()
+  //                               ) {
+  //                                 toast.error(
+  //                                   "Please provide a reason for the status change."
+  //                                 );
+  //                                 return;
+  //                               }
+  //                               setModalTitle("Confirm Mentor Status Update");
+  //                               setModalDescription(
+  //                                 `Are you sure you want to set the mentor status to ${mentorStatus}${
+  //                                   reason ? ` with reason: "${reason}"` : ""
+  //                                 }?`
+  //                               );
+  //                               setConfirmAction(
+  //                                 () => () => handleMentorStatusUpdate(reason)
+  //                               );
+  //                               setIsModalOpen(true);
+  //                             }}
+  //                             disabled={
+  //                               (mentorStatus === "Approved" ||
+  //                                 mentorStatus === "Rejected") &&
+  //                               !reason.trim()
+  //                             }
+  //                           >
+  //                             <Check className="h-4 w-4" />
+  //                           </Button>
+  //                         </div>
+  //                       ) : (
+  //                         <div className="flex items-center gap-2">
+  //                           {mentorStatus === "Approved" ? (
+  //                             <CircleCheckBig
+  //                               size={28}
+  //                               color="#198041"
+  //                               strokeWidth={1.75}
+  //                             />
+  //                           ) : mentorStatus === "Pending" ? (
+  //                             <CircleDashed
+  //                               size={28}
+  //                               color="#291aff"
+  //                               strokeWidth={1.75}
+  //                             />
+  //                           ) : (
+  //                             <Ban size={28} color="#cc141d" strokeWidth={1.75} />
+  //                           )}
+  //                           <span className="text-sm">{mentorStatus}</span>
+  //                           <Button
+  //                             size="icon"
+  //                             variant="ghost"
+  //                             className="h-6 w-6"
+  //                             onClick={() => setIsEditingMentorStatus(true)}
+  //                           >
+  //                             <Pencil className="h-4 w-4" />
+  //                           </Button>
+  //                         </div>
+  //                       )}
+  //                     </div>
+  //                   )}
+  //                   <div>
+  //                     <h3 className="mb-2 text-sm font-medium text-gray-500">
+  //                       Bio
+  //                     </h3>
+  //                     <div className="w-full min-h-[100px] border border-gray-300 p-4 rounded-md">
+  //                       <p className="text-sm">
+  //                         {mentorData?.bio || user.bio || "N/A"}
+  //                       </p>
+  //                     </div>
+  //                   </div>
+  //                 </div>
+  //               </TabsContent>
+
+  //               <TabsContent value="account">
+  //                 <div className="space-y-4">
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Skills
+  //                     </span>
+  //                     <div className="flex flex-wrap gap-2">
+  //                       {user.skills?.map((skill: string) => (
+  //                         <Badge
+  //                           key={skill}
+  //                           variant="outline"
+  //                           className="rounded-md"
+  //                         >
+  //                           {skill}
+  //                         </Badge>
+  //                       ))}
+  //                     </div>
+  //                   </div>
+  //                   {user?.schoolDetails?.userType === "school" && (
+  //                     <>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           School Name
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.schoolDetails?.schoolName || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Class
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.schoolDetails?.class || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           City
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.schoolDetails?.city || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                     </>
+  //                   )}
+  //                   {(user?.collegeDetails?.userType === "college" ||
+  //                     user?.collegeDetails?.userType === "fresher") && (
+  //                     <>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           College Name
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.collegeDetails?.collegeName || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Course
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.collegeDetails?.course || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Specialized In
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.collegeDetails?.specializedIn || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Start Year
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.collegeDetails?.startDate || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           End Year
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.collegeDetails?.endDate || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                     </>
+  //                   )}
+  //                   {user?.professionalDetails?.userType === "professional" && (
+  //                     <>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Job Role
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.professionalDetails?.jobRole || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Company
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.professionalDetails?.company || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Total Experience
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.professionalDetails?.experience || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           Start Year
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.professionalDetails?.startDate || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                       <div className="flex py-2">
+  //                         <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                           End Year
+  //                         </span>
+  //                         <div className="text-sm">
+  //                           {user?.professionalDetails?.endDate || "N/A"}
+  //                         </div>
+  //                       </div>
+  //                     </>
+  //                   )}
+  //                 </div>
+  //               </TabsContent>
+
+  //               <TabsContent value="experience">
+  //                 <div className="space-y-4">
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Achievements
+  //                     </span>
+
+  //                     <span className="text-sm">
+  //                       {userProfile?.mentorData?.achievements?.length
+  //                         ? userProfile?.mentorData?.achievements.join(", ")
+  //                         : "N/A"}
+  //                     </span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Portfolio URL
+  //                     </span>
+  //                     <span className="text-sm">
+  //                       {userProfile?.mentorData?.portfolio || "N/A"}
+  //                     </span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Interested New Career
+  //                     </span>
+  //                     <span className="text-sm">
+  //                       {userProfile?.mentorData?.interestedNewCareer?.length
+  //                         ? userProfile.mentorData.interestedNewCareer.join(", ")
+  //                         : "N/A"}
+  //                     </span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Featured Article
+  //                     </span>
+  //                     <span className="text-sm">
+  //                       {userProfile?.mentorData?.featuredArticle || "N/A"}
+  //                     </span>
+  //                   </div>
+  //                   <div className="flex py-2">
+  //                     <span className="w-1/3 text-sm font-medium text-gray-500">
+  //                       Mentor Motivation
+  //                     </span>
+  //                     <span className="text-sm">
+  //                       {userProfile?.mentorData?.mentorMotivation || "N/A"}
+  //                     </span>
+  //                   </div>
+  //                 </div>
+  //               </TabsContent>
+  //               <TabsContent value="services">
+  //                 <div className="px-12">
+  //                   <h3 className="mb-4 text-base font-medium">Services</h3>
+  //                   {serviceData && serviceData.length > 0 ? (
+  //                     <div className="space-y-4">
+  //                       <table className="w-full">
+  //                         <thead>
+  //                           <tr className="border-b text-left">
+  //                             <th className="pb-2 text-sm font-medium">#</th>
+  //                             <th className="pb-2 text-sm font-medium">Date</th>
+  //                             <th className="pb-2 text-sm font-medium">Type</th>
+  //                             <th className="pb-2 text-sm font-medium">Title</th>
+  //                             <th className="pb-2 text-sm font-medium">
+  //                               Short Description
+  //                             </th>
+  //                             <th className="pb-2 text-sm font-medium">Amount</th>
+  //                           </tr>
+  //                         </thead>
+  //                         <tbody>
+  //                           {serviceData.map((service, index) => (
+  //                             <tr key={service._id} className="border-b">
+  //                               <td className="py-3 text-sm">{index + 1}</td>
+  //                               <td className="py-3 text-sm">
+  //                                 {new Date(
+  //                                   service.createdAt
+  //                                 ).toLocaleDateString()}
+  //                               </td>
+  //                               <td className="py-3 text-sm">{service.type}</td>
+  //                               <td className="py-3 text-sm">{service.title}</td>
+  //                               <td className="py-3 text-sm">
+  //                                 {service.shortDescription}
+  //                               </td>
+  //                               <td className="py-3 text-sm">
+  //                                 ₹ {service.amount}
+  //                               </td>
+  //                             </tr>
+  //                           ))}
+  //                         </tbody>
+  //                       </table>
+  //                     </div>
+  //                   ) : (
+  //                     <div className="flex items-center justify-center p-6 bg-gray-100 rounded-md">
+  //                       <AlertTriangle className="h-6 w-6 text-yellow-500 mr-2" />
+  //                       <span className="text-sm font-medium text-gray-700">
+  //                         No services available
+  //                       </span>
+  //                     </div>
+  //                   )}
+  //                 </div>
+  //               </TabsContent>
+  //               <TabsContent value="bookings">
+  //                 <div className="px-12">
+  //                   <h3 className="mb-4 text-base font-medium">Bookings</h3>
+  //                   {bookingData && bookingData.length > 0 ? (
+  //                     <div className="space-y-4">
+  //                       <table className="w-full">
+  //                         <thead>
+  //                           <tr className="border-b text-left">
+  //                             <th className="pb-2 text-sm font-medium">#</th>
+  //                             <th className="pb-2 text-sm font-medium">Date</th>
+  //                             <th className="pb-2 text-sm font-medium">
+  //                               Mentor Name
+  //                             </th>
+  //                             <th className="pb-2 text-sm font-medium">
+  //                               Booking Date
+  //                             </th>
+  //                             <th className="pb-2 text-sm font-medium">Time</th>
+  //                             <th className="pb-2 text-sm font-medium">Status</th>
+  //                             <th className="pb-2 text-sm font-medium">
+  //                               Payment Details
+  //                             </th>
+  //                           </tr>
+  //                         </thead>
+  //                         <tbody>
+  //                           {bookingData.map((booking, index) => (
+  //                             <tr key={booking._id} className="border-b">
+  //                               <td className="py-3 text-sm">{index + 1}</td>
+  //                               <td className="py-3 text-sm">
+  //                                 {new Date(
+  //                                   booking.createdAt
+  //                                 ).toLocaleDateString()}
+  //                               </td>
+  //                               <td className="py-3 text-sm">{`${booking.mentorId.firstName} ${booking.mentorId.lastName}`}</td>
+  //                               <td className="py-3 text-sm">
+  //                                 {new Date(
+  //                                   booking.bookingDate
+  //                                 ).toLocaleDateString()}
+  //                               </td>
+  //                               <td className="py-3 text-sm">
+  //                                 {booking.startTime}
+  //                               </td>
+  //                               <td className="py-3 text-sm">{booking.status}</td>
+  //                               <td className="py-3 text-sm">
+  //                                 {booking.paymentDetails
+  //                                   ? `$${booking.paymentDetails.amount} (${booking.paymentDetails.status})`
+  //                                   : "N/A"}
+  //                               </td>
+  //                             </tr>
+  //                           ))}
+  //                         </tbody>
+  //                       </table>
+  //                     </div>
+  //                   ) : (
+  //                     <div className="flex items-center justify-center p-6 bg-gray-100 rounded-md">
+  //                       <AlertTriangle className="h-6 w-6 text-yellow-500 mr-2" />
+  //                       <span className="text-sm font-medium text-gray-700">
+  //                         No bookings available
+  //                       </span>
+  //                     </div>
+  //                   )}
+  //                 </div>
+  //               </TabsContent>
+  //             </Tabs>
+  //           </div>
+  //         </div>
+  //       </main>
+  //       <ConfirmationModal
+  //         open={isModalOpen}
+  //         onOpenChange={setIsModalOpen}
+  //         onConfirm={confirmAction}
+  //         title={modalTitle}
+  //         description={modalDescription}
+  //       />
+  //     </div>
+  //   );
+  // };
+
+  // export default UserProfile;
   return (
     <div className="flex min-h-screen flex-col pl-24">
       <main className="flex-1">
@@ -274,7 +863,7 @@ const UserProfile: React.FC = () => {
                 </div>
               </div>
               <Avatar className="h-24 w-24 rounded-full">
-                <AvatarImage src={user?.profilePicture} alt={user.firstName} />
+                <AvatarImage src={user.profilePicture} alt={user.firstName} />
                 <AvatarFallback>{user.firstName?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>
@@ -538,131 +1127,115 @@ const UserProfile: React.FC = () => {
                       Skills
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {user.skills?.map((skill: string) => (
-                        <Badge
-                          key={skill}
-                          variant="outline"
-                          className="rounded-md"
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
+                      {(mentorData?.skills || user.skills || []).map(
+                        (skill: string) => (
+                          <Badge
+                            key={skill}
+                            variant="outline"
+                            className="rounded-md"
+                          >
+                            {skill}
+                          </Badge>
+                        )
+                      )}
                     </div>
                   </div>
-                  {user?.schoolDetails?.userType === "school" && (
+                  {user.userType === "school" && (
                     <>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           School Name
                         </span>
                         <div className="text-sm">
-                          {user?.schoolDetails?.schoolName || "N/A"}
+                          {user.schoolName || "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Class
                         </span>
-                        <div className="text-sm">
-                          {user?.schoolDetails?.class || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.class || "N/A"}</div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           City
                         </span>
-                        <div className="text-sm">
-                          {user?.schoolDetails?.city || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.city || "N/A"}</div>
                       </div>
                     </>
                   )}
-                  {(user?.collegeDetails?.userType === "college" ||
-                    user?.collegeDetails?.userType === "fresher") && (
+                  {(user.userType === "college" ||
+                    user.userType === "fresher") && (
                     <>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           College Name
                         </span>
                         <div className="text-sm">
-                          {user?.collegeDetails?.collegeName || "N/A"}
+                          {user.collegeName || "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Course
                         </span>
-                        <div className="text-sm">
-                          {user?.collegeDetails?.course || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.course || "N/A"}</div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Specialized In
                         </span>
                         <div className="text-sm">
-                          {user?.collegeDetails?.specializedIn || "N/A"}
+                          {user.specializedIn || "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Start Year
                         </span>
-                        <div className="text-sm">
-                          {user?.collegeDetails?.startDate || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.startYear || "N/A"}</div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           End Year
                         </span>
-                        <div className="text-sm">
-                          {user?.collegeDetails?.endDate || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.endYear || "N/A"}</div>
                       </div>
                     </>
                   )}
-                  {user?.professionalDetails?.userType === "professional" && (
+                  {user.userType === "professional" && (
                     <>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Job Role
                         </span>
-                        <div className="text-sm">
-                          {user?.professionalDetails?.jobRole || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.jobRole || "N/A"}</div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Company
                         </span>
-                        <div className="text-sm">
-                          {user?.professionalDetails?.company || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.company || "N/A"}</div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Total Experience
                         </span>
                         <div className="text-sm">
-                          {user?.professionalDetails?.experience || "N/A"}
+                          {user.totalExperience || "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Start Year
                         </span>
-                        <div className="text-sm">
-                          {user?.professionalDetails?.startDate || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.startYear || "N/A"}</div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           End Year
                         </span>
-                        <div className="text-sm">
-                          {user?.professionalDetails?.endDate || "N/A"}
-                        </div>
+                        <div className="text-sm">{user.endYear || "N/A"}</div>
                       </div>
                     </>
                   )}
@@ -675,10 +1248,11 @@ const UserProfile: React.FC = () => {
                     <span className="w-1/3 text-sm font-medium text-gray-500">
                       Achievements
                     </span>
-
                     <span className="text-sm">
-                      {userProfile?.mentorData?.achievements?.length
-                        ? userProfile?.mentorData?.achievements.join(", ")
+                      {mentorData?.achievements?.length
+                        ? mentorData.achievements.join(", ")
+                        : user.achievements?.length
+                        ? user.achievements.join(", ")
                         : "N/A"}
                     </span>
                   </div>
@@ -687,7 +1261,7 @@ const UserProfile: React.FC = () => {
                       Portfolio URL
                     </span>
                     <span className="text-sm">
-                      {userProfile?.mentorData?.portfolio || "N/A"}
+                      {mentorData?.portfolioUrl || user.portfolioUrl || "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -695,8 +1269,10 @@ const UserProfile: React.FC = () => {
                       Interested New Career
                     </span>
                     <span className="text-sm">
-                      {userProfile?.mentorData?.interestedNewCareer?.length
-                        ? userProfile.mentorData.interestedNewCareer.join(", ")
+                      {mentorData?.interestedNewCareer?.length
+                        ? mentorData.interestedNewCareer.join(", ")
+                        : user.interestedNewCareer?.length
+                        ? user.interestedNewCareer.join(", ")
                         : "N/A"}
                     </span>
                   </div>
@@ -705,7 +1281,9 @@ const UserProfile: React.FC = () => {
                       Featured Article
                     </span>
                     <span className="text-sm">
-                      {userProfile?.mentorData?.featuredArticle || "N/A"}
+                      {mentorData?.featuredArticle ||
+                        user.featuredArticle ||
+                        "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -713,7 +1291,9 @@ const UserProfile: React.FC = () => {
                       Mentor Motivation
                     </span>
                     <span className="text-sm">
-                      {userProfile?.mentorData?.mentorMotivation || "N/A"}
+                      {mentorData?.mentorMotivation ||
+                        user.mentorMotivation ||
+                        "N/A"}
                     </span>
                   </div>
                 </div>

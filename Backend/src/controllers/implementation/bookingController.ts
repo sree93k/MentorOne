@@ -192,13 +192,77 @@ class BookingController {
     }
   };
 
+  // public updateBookingStatus = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   const { bookingId } = req.params;
+  //   const { status, bookingDate, startTime, slotIndex } = req.body;
+  //   const mentorId = req?.user?.id;
+
+  //   try {
+  //     if (!mentorId) {
+  //       throw new ApiError(400, "Mentor ID is required");
+  //     }
+  //     if (!status) {
+  //       throw new ApiError(400, "Status is required");
+  //     }
+  //     const validStatuses = [
+  //       "confirmed",
+  //       "rescheduled",
+  //       "cancelled",
+  //       "pending",
+  //       "completed",
+  //     ];
+  //     if (!validStatuses.includes(status)) {
+  //       throw new ApiError(400, "Invalid status value");
+  //     }
+  //     console.log(
+  //       "bookingserviuc update status step 1",
+  //       bookingId,
+  //       status,
+  //       mentorId
+  //     );
+  //     const updates: any = {
+  //       status,
+  //       rescheduleRequest: {
+  //         rescheduleStatus: status === "rescheduled" ? "approved" : "rejected",
+  //       },
+  //     };
+  //     if (bookingDate) updates.bookingDate = bookingDate;
+  //     if (startTime) updates.startTime = startTime;
+  //     if (slotIndex !== undefined) updates.slotIndex = slotIndex;
+
+  //     console.log("BookingController updateBookingStatus step 1", {
+  //       bookingId,
+  //       updates,
+  //       mentorId,
+  //     });
+  //     const updatedBooking = await this.bookingService.updateBookingStatus(
+  //       bookingId,
+  //       status,
+  //       mentorId
+  //     );
+  //     console.log("bookingserviuc update status step 2");
+  //     res.json({
+  //       message: "Booking status updated successfully",
+  //       booking: updatedBooking,
+  //     });
+  //   } catch (error: any) {
+  //     console.error("Error updating booking status:", error);
+  //     next(error);
+  //   }
+  // };
+  // BookingController.ts
   public updateBookingStatus = async (
     req: Request,
     res: Response,
     next: NextFunction
   ) => {
     const { bookingId } = req.params;
-    const { status } = req.body;
+    const { status, bookingDate, startTime, slotIndex, rescheduleRequest } =
+      req.body;
     const mentorId = req?.user?.id;
 
     try {
@@ -218,19 +282,33 @@ class BookingController {
       if (!validStatuses.includes(status)) {
         throw new ApiError(400, "Invalid status value");
       }
-      console.log(
-        "bookingserviuc update status step 1",
+      if (
+        rescheduleRequest &&
+        !["noreschedule", "pending", "accepted", "rejected"].includes(
+          rescheduleRequest.rescheduleStatus
+        )
+      ) {
+        throw new ApiError(400, "Invalid reschedule status value");
+      }
+
+      const updates: any = { status };
+      if (bookingDate) updates.bookingDate = bookingDate;
+      if (startTime) updates.startTime = startTime;
+      if (slotIndex !== undefined) updates.slotIndex = slotIndex;
+      if (rescheduleRequest) updates.rescheduleRequest = rescheduleRequest;
+
+      console.log("BookingController updateBookingStatus step 1", {
         bookingId,
-        status,
-        mentorId
-      );
+        updates,
+        mentorId,
+      });
 
       const updatedBooking = await this.bookingService.updateBookingStatus(
         bookingId,
-        status,
+        updates,
         mentorId
       );
-      console.log("bookingserviuc update status step 2");
+      console.log("BookingController updateBookingStatus step 2");
       res.json({
         message: "Booking status updated successfully",
         booking: updatedBooking,

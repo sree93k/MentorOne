@@ -209,12 +209,87 @@ export default class AdminService implements IAdminService {
   //     return null;
   //   }
   // }
+  // async getUserDatas(id: string): Promise<{
+  //   user: EUsers;
+  //   menteeData: EMentee | null;
+  //   mentorData: EMentor | null;
+  //   serviceData: EService[] | null; // Updated to array to match getAllServices return type
+  //   bookingData: EBooking[] | null; // Updated to array to match findByMentee return type
+  // } | null> {
+  //   try {
+  //     console.log("AdminService getUserDatas step 1:", id);
+  //     const user = await this.BaseRepository.findById(id);
+  //     console.log("AdminService getUserDatas step 2:", user);
+  //     if (!user) {
+  //       console.log("AdminService getUserDatas: User not found");
+  //       return null;
+  //     }
+
+  //     let menteeData: EMentee | null = null;
+  //     let mentorData: EMentor | null = null;
+  //     let serviceData: EService[] | null = null;
+  //     let bookingData: EBooking[] | null = null;
+
+  //     // Fetch mentee data if user has mentee role
+  //     if (user.role?.includes("mentee") && user.menteeId) {
+  //       menteeData = await this.MenteeRepository.getMentee(
+  //         user.menteeId.toString()
+  //       );
+  //       console.log(
+  //         "AdminService getUserDatas step 3 - menteeData:",
+  //         menteeData
+  //       );
+  //     }
+
+  //     // Fetch booking data if user has mentee role
+  //     if (user.role?.includes("mentee") && user.menteeId) {
+  //       bookingData = await this.BookingRepository.findByMentee(id);
+  //       console.log(
+  //         "AdminService getUserDatas step 4 - bookingData:",
+  //         bookingData
+  //       );
+  //     }
+
+  //     // Fetch mentor data if user has mentor role
+  //     if (user.role?.includes("mentor") && user.mentorId) {
+  //       mentorData = await this.MentorRepository.getMentor(
+  //         user.mentorId.toString()
+  //       );
+  //       console.log(
+  //         "AdminService getUserDatas step 5 - mentorData:",
+  //         mentorData
+  //       );
+  //     }
+
+  //     // Fetch service data if user has mentor role
+  //     if (user.role?.includes("mentor") && user.mentorId) {
+  //       serviceData = await this.ServiceRepository.getAllServices(id);
+  //       console.log(
+  //         "AdminService getUserDatas step 6 - serviceData:",
+  //         serviceData
+  //       );
+  //     }
+
+  //     console.log("AdminService getUserDatas final response:", {
+  //       user,
+  //       menteeData,
+  //       mentorData,
+  //       serviceData,
+  //       bookingData,
+  //     });
+
+  //     return { user, menteeData, mentorData, serviceData, bookingData };
+  //   } catch (error) {
+  //     console.error("Error in getUserDatas:", error);
+  //     return null;
+  //   }
+  // }
   async getUserDatas(id: string): Promise<{
     user: EUsers;
     menteeData: EMentee | null;
     mentorData: EMentor | null;
-    serviceData: EService[] | null; // Updated to array to match getAllServices return type
-    bookingData: EBooking[] | null; // Updated to array to match findByMentee return type
+    serviceData: EService[] | null;
+    bookingData: EBooking[] | null;
   } | null> {
     try {
       console.log("AdminService getUserDatas step 1:", id);
@@ -263,11 +338,20 @@ export default class AdminService implements IAdminService {
 
       // Fetch service data if user has mentor role
       if (user.role?.includes("mentor") && user.mentorId) {
-        serviceData = await this.ServiceRepository.getAllServices(id);
+        // Provide default pagination parameters to avoid TypeError
+        const params = {
+          page: 1,
+          limit: 10,
+          search: "",
+          type: "all",
+        };
+        serviceData = await this.ServiceRepository.getAllServices(id, params);
         console.log(
           "AdminService getUserDatas step 6 - serviceData:",
           serviceData
         );
+        // Extract services array from response
+        serviceData = serviceData ? serviceData.services : null;
       }
 
       console.log("AdminService getUserDatas final response:", {
