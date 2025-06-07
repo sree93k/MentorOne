@@ -35,6 +35,7 @@ export interface EBooking extends Document {
   bookingDate: Date;
   status: "confirmed" | "rescheduled" | "cancelled" | "completed";
   rescheduleRequest: rescheduleRequest;
+  testimonials: ObjectId;
   paymentDetails?: PaymentDetails;
   createdAt: Date;
   updatedAt: Date;

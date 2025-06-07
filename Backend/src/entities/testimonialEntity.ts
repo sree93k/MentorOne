@@ -3,6 +3,8 @@ import { Document, ObjectId } from "mongoose";
 export interface ETestimonial extends Document {
   _id: ObjectId;
   menteeId: ObjectId;
+  mentorId: ObjectId;
+  serviceId: ObjectId;
   bookingId: ObjectId;
   comment: string;
   rating: number; // from 1 to 5

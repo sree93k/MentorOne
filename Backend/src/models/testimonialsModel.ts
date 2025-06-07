@@ -7,6 +7,16 @@ const TestimonialSchema = new Schema<ETestimonial>({
     ref: "User",
     required: true,
   },
+  mentorId: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  serviceId: {
+    type: Schema.Types.ObjectId,
+    ref: "Service",
+    required: true,
+  },
   bookingId: {
     type: Schema.Types.ObjectId,
     ref: "Booking",
@@ -20,7 +30,7 @@ const TestimonialSchema = new Schema<ETestimonial>({
   rating: {
     type: Number,
     required: true,
-    min: 1,
+    min: 0,
     max: 5,
   },
   createdAt: {
