@@ -69,6 +69,11 @@ const BookingSchema = new Schema<EBooking>({
     },
     reason: { type: String },
   },
+  testimonials: {
+    type: Schema.Types.ObjectId,
+    ref: "Testimonial",
+    required: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
