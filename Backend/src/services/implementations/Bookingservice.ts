@@ -627,15 +627,170 @@ export default class BookingService implements IBookingService {
     }
   }
 
+  // async updateBookingStatus(
+  //   bookingId: string,
+  //   status: string,
+  //   mentorId: string
+  // ): Promise<EBooking> {
+  //   try {
+  //     console.log("BookingService updateBookingStatus step 1", {
+  //       bookingId,
+  //       status,
+  //       mentorId,
+  //     });
+
+  //     const booking = await this.bookingRepository.findById(bookingId);
+  //     if (!booking) {
+  //       throw new ApiError(404, "Booking not found");
+  //     }
+  //     console.log("BookingService updateBookingStatus step 2", booking);
+  //     if (booking.mentorId._id.toString() !== mentorId) {
+  //       console.log("BookingService updateBookingStatus step 2.1", mentorId);
+  //       console.log(
+  //         "BookingService updateBookingStatus step 2.2",
+  //         booking.mentorId._id.toString()
+  //       );
+  //       throw new ApiError(
+  //         403,
+  //         "Not authorized to update this booking",
+  //         status,
+  //         bookingId
+  //       );
+  //     }
+  //     console.log("BookingService updateBookingStatus step 2.3");
+  //     const updatedBooking = await this.bookingRepository.update(bookingId, {
+  //       status,
+  //       updatedAt: new Date(),
+  //     });
+  //     console.log("BookingService updateBookingStatus step 3", updatedBooking);
+  //     if (!updatedBooking) {
+  //       throw new ApiError(500, "Failed to update booking status");
+  //     }
+
+  //     console.log("BookingService updateBookingStatus step 4");
+  //     return updatedBooking;
+  //   } catch (error: any) {
+  //     console.log("BookingService updateBookingStatus step 5 error,", error);
+  //     console.error("BookingService updateBookingStatus error:", error);
+  //     throw new ApiError(
+  //       500,
+  //       error.message || "Failed to update booking status"
+  //     );
+  //   }
+  // }
+  // BookingService.ts
+  // async updateBookingStatus(
+  //   bookingId: string,
+  //   updates: {
+  //     status: string;
+  //     bookingDate?: string;
+  //     startTime?: string;
+  //     slotIndex?: number;
+  //     rescheduleRequest?: {
+  //       rescheduleStatus: "approved" | "rejected";
+  //     };
+  //   },
+  //   mentorId: string
+  // ): Promise<EBooking> {
+  //   try {
+  //     console.log("BookingService updateBookingStatus step 1", {
+  //       bookingId,
+  //       updates,
+  //       mentorId,
+  //     });
+
+  //     const booking = await this.bookingRepository.findById(bookingId);
+  //     if (!booking) {
+  //       throw new ApiError(404, "Booking not found");
+  //     }
+  //     if (booking.mentorId._id.toString() !== mentorId) {
+  //       throw new ApiError(403, "Not authorized to update this booking");
+  //     }
+
+  //     // Update calendar if reschedule is approved
+  //     if (
+  //       updates.status === "rescheduled" &&
+  //       updates.rescheduleRequest?.rescheduleStatus === "approved" &&
+  //       updates.bookingDate &&
+  //       updates.startTime
+  //     ) {
+  //       // Remove old blocked date
+  //       await this.calendarRepository.removeBlockedDate(
+  //         mentorId,
+  //         booking.bookingDate.toISOString().split("T")[0],
+  //         booking.startTime
+  //       );
+  //       // Add new blocked date
+  //       await this.calendarRepository.addBlockedDates(mentorId, [
+  //         {
+  //           date: updates.bookingDate,
+  //           day: new Date(updates.bookingDate)
+  //             .toLocaleString("en-US", { weekday: "long" })
+  //             .toLowerCase(),
+  //           slotTime: updates.startTime,
+  //           type: "booking",
+  //         },
+  //       ]);
+  //     }
+
+  //     const updatedBooking = await this.bookingRepository.update(bookingId, {
+  //       ...updates,
+  //       updatedAt: new Date(),
+  //     });
+
+  //     if (!updatedBooking) {
+  //       throw new ApiError(500, "Failed to update booking status");
+  //     }
+
+  //     // Notify mentee
+  //     try {
+  //       const io = getIO();
+  //       const notificationMessage =
+  //         updates.rescheduleRequest?.rescheduleStatus === "approved"
+  //           ? `Your reschedule request for booking ${bookingId} has been approved.`
+  //           : `Your reschedule request for booking ${bookingId} has been rejected.`;
+  //       await this.notificationService.createNotification(
+  //         booking.menteeId.toString(),
+  //         "booking",
+  //         notificationMessage,
+  //         bookingId,
+  //         io
+  //       );
+  //     } catch (notificationError: any) {
+  //       console.error(
+  //         "Failed to send notification:",
+  //         notificationError.message
+  //       );
+  //     }
+
+  //     console.log("BookingService updateBookingStatus step 2", updatedBooking);
+  //     return updatedBooking;
+  //   } catch (error: any) {
+  //     console.error("BookingService updateBookingStatus error:", error);
+  //     throw new ApiError(
+  //       500,
+  //       error.message || "Failed to update booking status"
+  //     );
+  //   }
+  // }
+  // BookingService.ts
   async updateBookingStatus(
     bookingId: string,
-    status: string,
+    updates: {
+      status: string;
+      bookingDate?: string;
+      startTime?: string;
+      slotIndex?: number;
+      rescheduleRequest?: {
+        rescheduleStatus: "noreschedule" | "pending" | "accepted" | "rejected";
+      };
+    },
     mentorId: string
   ): Promise<EBooking> {
     try {
       console.log("BookingService updateBookingStatus step 1", {
         bookingId,
-        status,
+        updates,
         mentorId,
       });
 
@@ -643,34 +798,71 @@ export default class BookingService implements IBookingService {
       if (!booking) {
         throw new ApiError(404, "Booking not found");
       }
-      console.log("BookingService updateBookingStatus step 2", booking);
       if (booking.mentorId._id.toString() !== mentorId) {
-        console.log("BookingService updateBookingStatus step 2.1", mentorId);
-        console.log(
-          "BookingService updateBookingStatus step 2.2",
-          booking.mentorId._id.toString()
-        );
-        throw new ApiError(
-          403,
-          "Not authorized to update this booking",
-          status,
-          bookingId
-        );
+        throw new ApiError(403, "Not authorized to update this booking");
       }
-      console.log("BookingService updateBookingStatus step 2.3");
+
+      // Update calendar if status is confirmed and date/time changes
+      if (
+        updates.status === "confirmed" &&
+        updates.bookingDate &&
+        updates.startTime &&
+        (updates.bookingDate !==
+          booking.bookingDate.toISOString().split("T")[0] ||
+          updates.startTime !== booking.startTime)
+      ) {
+        // Remove old blocked date
+        await this.calendarRepository.removeBlockedDate(
+          mentorId,
+          booking.bookingDate.toISOString().split("T")[0],
+          booking.startTime
+        );
+        // Add new blocked date
+        await this.calendarRepository.addBlockedDates(mentorId, [
+          {
+            date: updates.bookingDate,
+            day: new Date(updates.bookingDate)
+              .toLocaleString("en-US", { weekday: "long" })
+              .toLowerCase(),
+            slotTime: updates.startTime,
+            type: "booking",
+          },
+        ]);
+      }
+
       const updatedBooking = await this.bookingRepository.update(bookingId, {
-        status,
+        ...updates,
         updatedAt: new Date(),
       });
-      console.log("BookingService updateBookingStatus step 3", updatedBooking);
+
       if (!updatedBooking) {
         throw new ApiError(500, "Failed to update booking status");
       }
 
-      console.log("BookingService updateBookingStatus step 4");
+      // Notify mentee
+      try {
+        const io = getIO();
+        const notificationMessage =
+          updates.rescheduleRequest?.rescheduleStatus === "accepted"
+            ? `Your reschedule request for booking ${bookingId} has been accepted.`
+            : `Your reschedule request for booking ${bookingId} has been rejected.`;
+        await this.notificationService.createNotification(
+          booking.menteeId.toString(),
+          "reschedule_request",
+          notificationMessage,
+          bookingId,
+          io
+        );
+      } catch (notificationError: any) {
+        console.error(
+          "Failed to send notification:",
+          notificationError.message
+        );
+      }
+
+      console.log("BookingService updateBookingStatus step 2", updatedBooking);
       return updatedBooking;
     } catch (error: any) {
-      console.log("BookingService updateBookingStatus step 5 error,", error);
       console.error("BookingService updateBookingStatus error:", error);
       throw new ApiError(
         500,
@@ -678,7 +870,6 @@ export default class BookingService implements IBookingService {
       );
     }
   }
-
   async requestReschedule(
     bookingId: string,
     menteeId: string,
@@ -715,6 +906,7 @@ export default class BookingService implements IBookingService {
 
       const updatedBooking = await this.bookingRepository.update(bookingId, {
         rescheduleRequest,
+        status: "rescheduled",
         updatedAt: new Date(),
       });
 

@@ -79,9 +79,35 @@ export interface IBookingService {
     status?: string[],
     limit?: number
   ): Promise<EBooking[]>;
+  // updateBookingStatus(
+  //   bookingId: string,
+  //   status: string,
+  //   mentorId: string
+  // ): Promise<EBooking>;
+  // updateBookingStatus(
+  //   bookingId: string,
+  //   updates: {
+  //     status: string;
+  //     bookingDate?: string;
+  //     startTime?: string;
+  //     slotIndex?: number;
+  //     rescheduleRequest?: {
+  //       rescheduleStatus: "approved" | "rejected";
+  //     };
+  //   },
+  //   mentorId: string
+  // ): Promise<EBooking>;
   updateBookingStatus(
     bookingId: string,
-    status: string,
+    updates: {
+      status: string;
+      bookingDate?: string;
+      startTime?: string;
+      slotIndex?: number;
+      rescheduleRequest?: {
+        rescheduleStatus: "noreschedule" | "pending" | "accepted" | "rejected";
+      };
+    },
     mentorId: string
   ): Promise<EBooking>;
   requestReschedule(

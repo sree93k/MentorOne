@@ -61,7 +61,7 @@ export default function MentorPaymentsPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [globalSearch, setGlobalSearch] = useState("");
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = 22;
 
   const { user } = useSelector((state: RootState) => state.user);
   const mentorId = user?._id;
@@ -72,8 +72,7 @@ export default function MentorPaymentsPage() {
     error,
   } = useQuery({
     queryKey: ["mentorPayments", mentorId, page, statusFilter], // Removed globalSearch from queryKey
-    queryFn: () =>
-      getAllMentorPayments(mentorId!, page, limit, "", statusFilter), // Pass empty searchQuery for client-side filtering
+    queryFn: () => getAllMentorPayments(page, limit), // Pass empty searchQuery for client-side filtering
     enabled: !!mentorId,
     select: (data) => ({
       payments: data.payments.map((payment: PaymentItem) => ({

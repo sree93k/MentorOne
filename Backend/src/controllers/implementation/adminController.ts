@@ -65,6 +65,31 @@ class AdminController {
       next(error);
     }
   };
+  // public userDatas = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     console.log("userDatas admin controller step 1:", req.params.id);
+  //     const id = req.params.id;
+  //     const response = await this.adminService.getUserDatas(id);
+  //     console.log("userDatas admin controller step 2:", response);
+  //     if (response) {
+  //       res
+  //         .status(200)
+  //         .json(
+  //           new ApiResponse(200, response, "User data fetched successfully")
+  //         );
+  //     } else {
+  //       res.status(404).json(new ApiResponse(404, null, "User not found"));
+  //     }
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
+
+  // src/controllers/implementation/adminController.ts
   public userDatas = async (
     req: Request,
     res: Response,
@@ -82,13 +107,22 @@ class AdminController {
             new ApiResponse(200, response, "User data fetched successfully")
           );
       } else {
-        res.status(404).json(new ApiResponse(404, null, "User not found"));
+        res
+          .status(404)
+          .json(
+            new ApiResponse(
+              404,
+              null,
+              "User not found or data retrieval failed"
+            )
+          );
       }
     } catch (error) {
+      console.error("Error in userDatas:", error);
+      res.status(500).json(new ApiResponse(500, null, "Internal server error"));
       next(error);
     }
   };
-
   public mentorStatusUpdate = async (
     req: Request,
     res: Response,

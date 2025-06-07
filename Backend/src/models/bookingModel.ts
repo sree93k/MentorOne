@@ -64,8 +64,8 @@ const BookingSchema = new Schema<EBooking>({
     mentorDecides: { type: Boolean, default: false },
     rescheduleStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: ["noreschedule", "pending", "approved", "rejected"],
+      default: "noreschedule",
     },
     reason: { type: String },
   },
