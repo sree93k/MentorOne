@@ -9,4 +9,8 @@ export interface IChatRepository {
     role: "mentee" | "mentor"
   ): Promise<EChat[]>;
   findByBookingId(bookingId: string): Promise<EChat | null>;
+  updateByBookingId(
+    bookingId: string,
+    isActive: boolean
+  ): Promise<EChat | null>;
 }

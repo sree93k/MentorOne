@@ -87,6 +87,7 @@ interface ChatUser {
   timestamp?: string;
   unread?: number;
   isOnline?: boolean;
+  bookingStatus?: "pending" | "confirmed" | "completed";
 }
 
 interface ChatHistoryResponse {
@@ -215,39 +216,6 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
   }
 };
 
-// export const startVideoCall = async (): Promise<string> => {
-//   try {
-//     console.log("USERSERVICE  startVideoCall step 1");
-//     const accessToken = localStorage.getItem("accessToken");
-
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     const response = await api.post(
-//       "/user/video-call/create",
-//       {},
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//       }
-//     );
-
-//     console.log("USERSERVICE  startVideoCall step 2", response);
-
-//     if (!response.data.success || !response.data.data.meetingId) {
-//       throw new Error("Failed to create meeting room");
-//     }
-
-//     return response.data.data.meetingId;
-//   } catch (error: any) {
-//     console.error("Error creating meeting:", error);
-//     throw new Error(
-//       error.response?.data?.message || "Failed to create meeting room"
-//     );
-//   }
-//};
 export const startVideoCall = async (
   menteeId?: string,
   bookingId?: string

@@ -123,10 +123,6 @@ export default class CalendarRepository implements ICalendarRepository {
     return response;
   }
 
-  // async removeBlockedDate(blockedDateId: string) {
-  //   return await BlockedDate.findByIdAndDelete(blockedDateId);
-  // }
-  // CalendarRepository.ts
   async removeBlockedDate(
     mentorId: string,
     date: string,

@@ -376,3 +376,32 @@ export const getTestimonialByBookingId = async (
     );
   }
 };
+export const updateBookingStatus = async (
+  bookingId: string,
+  status: "pending" | "confirmed" | "completed"
+): Promise<any> => {
+  try {
+    console.log("updateBookingStatus step 1", { bookingId, status });
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.put(
+      `/user/booking/${bookingId}/updatestatus`,
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("updateBookingStatus step 2, response:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("updateBookingStatus error:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to update booking status"
+    );
+  }
+};

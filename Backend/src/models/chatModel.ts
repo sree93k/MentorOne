@@ -15,6 +15,7 @@ const ChatSchema = new Schema<EChat>(
     bookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
     latestMessage: { type: Schema.Types.ObjectId, ref: "Message" },
     groupAdmin: { type: Schema.Types.ObjectId, ref: "Users" },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

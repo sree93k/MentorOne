@@ -133,9 +133,9 @@ userPrivateRoute.post(
 );
 
 // New route for updating booking status
-userPrivateRoute.patch(
+userPrivateRoute.put(
   "/booking/:bookingId/updatestatus",
   authenticate,
-  bookingController.updateBookingStatus.bind(bookingController)
+  bookingController.updateBookingServiceStatus.bind(bookingController)
 );
 export default userPrivateRoute;

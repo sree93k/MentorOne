@@ -192,4 +192,82 @@ export default class TestimonialRepository implements ITestimonialRepository {
       );
     }
   }
+
+  async findByMentorAndService(
+    mentorId: string,
+    serviceId: string,
+    skip: number,
+    limit: number
+  ): Promise<ETestimonial[]> {
+    try {
+      console.log("TestimonialRepository findByMentorAndService step 1", {
+        mentorId,
+        serviceId,
+      });
+      if (
+        !mongoose.Types.ObjectId.isValid(mentorId) ||
+        !mongoose.Types.ObjectId.isValid(serviceId)
+      ) {
+        throw new ApiError(400, "Invalid Mentor or Service ID");
+      }
+      const response = await Testimonial.find({ mentorId, serviceId })
+        .populate({
+          path: "menteeId",
+          select: "firstName lastName",
+          model: "Users",
+        })
+        .populate({
+          path: "serviceId",
+          select: "title type",
+          model: "Service",
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+      console.log(
+        "TestimonialRepository findByMentorAndService step 2",
+        response
+      );
+      return response;
+    } catch (error: any) {
+      console.error(
+        "TestimonialRepository findByMentorAndService error",
+        error
+      );
+      throw new ApiError(500, "Failed to find testimonials", error.message);
+    }
+  }
+
+  async countByMentorAndService(
+    mentorId: string,
+    serviceId: string
+  ): Promise<number> {
+    try {
+      console.log("TestimonialRepository countByMentorAndService step 1", {
+        mentorId,
+        serviceId,
+      });
+      if (
+        !mongoose.Types.ObjectId.isValid(mentorId) ||
+        !mongoose.Types.ObjectId.isValid(serviceId)
+      ) {
+        throw new ApiError(400, "Invalid Mentor or Service ID");
+      }
+      const response = await Testimonial.countDocuments({
+        mentorId,
+        serviceId,
+      });
+      console.log(
+        "TestimonialRepository countByMentorAndService step 2",
+        response
+      );
+      return response;
+    } catch (error: any) {
+      console.error(
+        "TestimonialRepository countByMentorAndService error",
+        error
+      );
+      throw new ApiError(500, "Failed to count testimonials", error.message);
+    }
+  }
 }

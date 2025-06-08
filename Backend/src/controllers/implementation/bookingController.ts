@@ -549,6 +549,104 @@ class BookingController {
       next(error);
     }
   };
+  public getTestimonialsByMentorAndService = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { mentorId, serviceId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    console.log(
+      "TestimonialController getTestimonialsByMentorAndService step 1",
+      {
+        mentorId,
+        serviceId,
+        page,
+        limit,
+      }
+    );
+
+    try {
+      if (!mentorId || !serviceId) {
+        throw new ApiError(400, "Mentor ID and Service ID are required");
+      }
+      const { testimonials, total } =
+        await this.testimonialService.getTestimonialsByMentorAndService(
+          mentorId,
+          serviceId,
+          page,
+          limit
+        );
+      // console.log("TestimonialController getTestimonialsByMentorAndService step 2", {
+      //   testimonials.length,
+      //   total,
+      // });
+
+      res.status(200).json({
+        success: true,
+        message: "Testimonials fetched successfully",
+        testimonials,
+        total,
+        page,
+        limit,
+      });
+    } catch (error: any) {
+      console.error(
+        "TestimonialController getTestimonialsByMentorAndService error",
+        error
+      );
+      next(error);
+    }
+  };
+
+  public updateBookingServiceStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { bookingId } = req.params;
+    const { status } = req.body;
+    const user = req.user; // Assuming auth middleware attaches user
+    console.log("BookingController updateBookingServiceStatus step 1", {
+      bookingId,
+      status,
+      userId: user?.id,
+    });
+
+    try {
+      if (!bookingId || !status) {
+        throw new ApiError(400, "Booking ID and status are required");
+      }
+      if (!["pending", "confirmed", "completed"].includes(status)) {
+        throw new ApiError(400, "Invalid status");
+      }
+      // if (user?.role !== "mentor") {
+      //   throw new ApiError(403, "Only mentors can update booking status");
+      // }
+      console.log("BookingController updateBookingServiceStatus step 2");
+
+      const booking = await this.bookingService.updateBookingServiceStatus(
+        bookingId,
+        status
+      );
+      console.log(
+        "BookingController updateBookingServiceStatus step 3",
+        booking
+      );
+      res.status(200).json({
+        success: true,
+        message: "Booking status updated successfully",
+        booking,
+      });
+    } catch (error: any) {
+      console.error(
+        "BookingController updateBookingServiceStatus error",
+        error
+      );
+      next(error);
+    }
+  };
 }
 
 export default new BookingController();

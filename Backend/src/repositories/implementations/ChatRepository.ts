@@ -70,4 +70,33 @@ export default class ChatRepository {
       throw new ApiError(500, "Failed to find chat", error.message);
     }
   }
+  async updateByBookingId(
+    bookingId: string,
+    isActive: boolean
+  ): Promise<EChat | null> {
+    try {
+      console.log(
+        "Chatrepository updateByBookingId step 1 bookingId",
+        bookingId
+      );
+      console.log("Chatrepository updateByBookingId step 2 isActive", isActive);
+      const chat = await Chat.findOneAndUpdate(
+        { bookingId },
+        { $set: { isActive } },
+        { new: true } // Return the updated document
+      ).exec();
+      console.log("Chatrepository updateByBookingId step 3 chat", chat);
+      if (!chat) {
+        throw new ApiError(404, "Chat not found for the provided booking ID");
+      }
+
+      return chat as EChat;
+    } catch (error: any) {
+      throw new ApiError(
+        500,
+        "Failed to update chat",
+        process.env.NODE_ENV === "development" ? error.message : undefined
+      );
+    }
+  }
 }

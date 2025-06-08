@@ -251,4 +251,49 @@ export default class TestimonialService {
       throw new ApiError(500, error.message || "Failed to fetch testimonial");
     }
   }
+
+  async getTestimonialsByMentorAndService(
+    mentorId: string,
+    serviceId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ testimonials: ETestimonial[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+      console.log(
+        "TestimonialService getTestimonialsByMentorAndService step 1",
+        { mentorId, serviceId }
+      );
+
+      const [testimonials, total] = await Promise.all([
+        this.testimonialRepository.findByMentorAndService(
+          mentorId,
+          serviceId,
+          skip,
+          limit
+        ),
+        this.testimonialRepository.countByMentorAndService(mentorId, serviceId),
+      ]);
+      console.log(
+        "TestimonialService getTestimonialsByMentorAndService step 2 testimonials response",
+        testimonials
+      );
+      console.log(
+        "TestimonialService getTestimonialsByMentorAndService step 2 total response",
+        total
+      );
+      return { testimonials, total };
+    } catch (error: any) {
+      console.error(
+        "TestimonialService getTestimonialsByMentorAndService error",
+        error
+      );
+      throw new ApiError(
+        500,
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Failed to fetch testimonials"
+      );
+    }
+  }
 }
