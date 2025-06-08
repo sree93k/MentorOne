@@ -1006,16 +1006,36 @@ export default class MentorProfileService implements IMentorProfileService {
       if (testimonialIds.length > 5) {
         throw new ApiError(400, "Cannot select more than 5 testimonials");
       }
-
-      const mentor = await this.MentorRepository.findById(mentorId);
-      if (!mentor) {
+      console.log(
+        "Mentor service updateTopTestimonials step 1 mentorId",
+        mentorId
+      );
+      console.log(
+        "Mentor service updateTopTestimonials step 2 testimonialIds",
+        testimonialIds
+      );
+      const mentor = await this.UserRepository.findById(mentorId);
+      console.log(
+        "Mentor service updateTopTestimonials step 2.5 mentor",
+        mentor
+      );
+      if (!mentor?.mentorId) {
         throw new ApiError(404, "Mentor not found");
       }
-
-      const updatedMentor = await this.MentorRepository.update(mentorId, {
-        topTestimonials: testimonialIds,
-      });
-
+      console.log(
+        "Mentor service updateTopTestimonials step 3 mentor repsonse",
+        mentor
+      );
+      const updatedMentor = await this.MentorRepository.update(
+        mentor?.mentorId?._id,
+        {
+          topTestimonials: testimonialIds,
+        }
+      );
+      console.log(
+        "Mentor service updateTopTestimonials step 4 updatedMentor repsonse",
+        updatedMentor
+      );
       return updatedMentor;
     } catch (error: any) {
       throw new ApiError(

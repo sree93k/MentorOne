@@ -37,6 +37,7 @@ export const updateTopTestimonials = async (
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
+    console.log("updateTopTestimonials step 1", updateTopTestimonials);
 
     const response = await api.put(
       `/expert/top-testimonials`,
@@ -47,6 +48,7 @@ export const updateTopTestimonials = async (
         },
       }
     );
+    console.log("updateTopTestimonials step 2", response);
     return response.data;
   } catch (error: any) {
     console.error("Error updating top testimonials:", error);
