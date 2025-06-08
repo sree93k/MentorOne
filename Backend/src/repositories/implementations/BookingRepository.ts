@@ -15,18 +15,42 @@ export default class BookingRepository implements IBookingRepository {
     }
   }
 
+  // async findById(id: string) {
+  //   try {
+  //     return await Booking.findById(id)
+  //       .populate({
+  //         path: "mentorId",
+  //         select: "firstName lastName profilePicture",
+  //       })
+  //       .populate({
+  //         path: "serviceId",
+  //         select: "title technology price serviceType",
+  //       });
+  //   } catch (error: any) {
+  //     throw new ApiError(500, "Failed to find booking", error.message);
+  //   }
+  // }
   async findById(id: string) {
     try {
-      return await Booking.findById(id)
+      console.log("BookingRepository findById step 1", id);
+      const booking = await Booking.findById(id)
         .populate({
           path: "mentorId",
           select: "firstName lastName profilePicture",
         })
         .populate({
           path: "serviceId",
-          select: "title technology price serviceType",
+          select:
+            "title technology amount type digitalProductType oneToOneType slot",
+        })
+        .populate({
+          path: "menteeId",
+          select: "firstName lastName",
         });
+      console.log("BookingRepository findById step 2", booking);
+      return booking;
     } catch (error: any) {
+      console.error("BookingRepository findById error", error);
       throw new ApiError(500, "Failed to find booking", error.message);
     }
   }
@@ -259,5 +283,47 @@ export default class BookingRepository implements IBookingRepository {
     const bookings = await Booking.aggregate(pipeline).exec();
     console.log("BookingRepository findAllVideoCalls step 2", bookings);
     return bookings;
+  }
+
+  async findByMenteeWithTestimonials(
+    menteeId: string,
+    skip: number = 0,
+    limit: number = 12,
+    query: any = { menteeId }
+  ): Promise<any[]> {
+    try {
+      console.log("Booking repository findByMenteeWithTestimonials step 1", {
+        menteeId,
+        skip,
+        limit,
+        query,
+      });
+
+      const response = await Booking.find(query)
+        .populate({
+          path: "mentorId",
+          select: "firstName lastName profilePicture",
+        })
+        .populate({
+          path: "serviceId",
+          select:
+            "title technology amount type digitalProductType oneToOneType slot",
+        })
+        .populate({
+          path: "testimonials",
+          select: "comment rating",
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+      console.log("Booking repository findByMenteeWithTestimonials step 2");
+      return response;
+    } catch (error: any) {
+      console.log(
+        "booking repository findByMenteeWithTestimonials step 3 error",
+        error
+      );
+      throw new ApiError(500, "Failed to find bookings", error.message);
+    }
   }
 }

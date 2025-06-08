@@ -115,4 +115,11 @@ export interface IBookingService {
     menteeId: string,
     params: RescheduleParams
   ): Promise<EBooking>;
+  getBookingsWithTestimonialsByMentee(
+    menteeId: string,
+    page: number,
+    limit: number,
+    searchQuery: string
+  ): Promise<{ bookings: any[]; total: number }>;
+  findById(bookingId: string): Promise<any>;
 }

@@ -133,4 +133,24 @@ export default class MentorRepository implements IMentorRepository {
       throw new ApiError(500, "Failed to create video tutorial");
     }
   }
+
+  async findById(id: string): Promise<EMentor | null> {
+    try {
+      return await Mentor.findById(id);
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to find mentor", error.message);
+    }
+  }
+
+  async update(id: string, data: any): Promise<EMentor> {
+    try {
+      const mentor = await Mentor.findByIdAndUpdate(id, data, { new: true });
+      if (!mentor) {
+        throw new ApiError(404, "Mentor not found");
+      }
+      return mentor;
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to update mentor", error.message);
+    }
+  }
 }

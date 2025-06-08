@@ -27,6 +27,7 @@ import PriorityDMRepository from "../../repositories/implementations/PriorityDMR
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { EMentor } from "../../entities/mentorEntity";
 import mongoose from "mongoose";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 // Define interfaces
@@ -995,6 +996,32 @@ export default class MentorProfileService implements IMentorProfileService {
     } catch (error) {
       console.error("Error fetching all PriorityDMs by mentor:", error);
       throw error;
+    }
+  }
+  async updateTopTestimonials(
+    mentorId: string,
+    testimonialIds: string[]
+  ): Promise<EMentor> {
+    try {
+      if (testimonialIds.length > 5) {
+        throw new ApiError(400, "Cannot select more than 5 testimonials");
+      }
+
+      const mentor = await this.MentorRepository.findById(mentorId);
+      if (!mentor) {
+        throw new ApiError(404, "Mentor not found");
+      }
+
+      const updatedMentor = await this.MentorRepository.update(mentorId, {
+        topTestimonials: testimonialIds,
+      });
+
+      return updatedMentor;
+    } catch (error: any) {
+      throw new ApiError(
+        500,
+        error.message || "Failed to update top testimonials"
+      );
     }
   }
 }

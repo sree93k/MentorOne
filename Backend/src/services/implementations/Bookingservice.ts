@@ -848,7 +848,7 @@ export default class BookingService implements IBookingService {
             : `Your reschedule request for booking ${bookingId} has been rejected.`;
         await this.notificationService.createNotification(
           booking.menteeId.toString(),
-          "reschedule_request",
+          "booking",
           notificationMessage,
           bookingId,
           io
@@ -940,6 +940,70 @@ export default class BookingService implements IBookingService {
         500,
         error.message || "Failed to submit reschedule request"
       );
+    }
+  }
+  async getBookingsWithTestimonialsByMentee(
+    menteeId: string,
+    page: number = 1,
+    limit: number = 12,
+    searchQuery: string = ""
+  ): Promise<{ bookings: any[]; total: number }> {
+    console.log("booking service getBookingsWithTestimonialsByMentee step 1", {
+      menteeId,
+      page,
+      limit,
+      searchQuery,
+    });
+
+    const skip = (page - 1) * limit;
+    const query: any = { menteeId };
+
+    if (searchQuery) {
+      query.$or = [
+        { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+        { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+        { "serviceId.title": { $regex: searchQuery, $options: "i" } },
+      ];
+    }
+
+    try {
+      const [bookings, total] = await Promise.all([
+        this.bookingRepository.findByMenteeWithTestimonials(
+          menteeId,
+          skip,
+          limit,
+          query
+        ),
+        this.bookingRepository.countByMentee(menteeId, query),
+      ]);
+      console.log(
+        "booking service getBookingsWithTestimonialsByMentee step 2",
+        {
+          bookings,
+          total,
+        }
+      );
+      return { bookings, total };
+    } catch (error: any) {
+      console.log(
+        "booking service getBookingsWithTestimonialsByMentee step error",
+        error
+      );
+      throw new ApiError(500, "Failed to fetch bookings");
+    }
+  }
+  async findById(bookingId: string): Promise<any> {
+    try {
+      console.log("BookingService findById step 1 bookingId", bookingId);
+      const booking = await this.bookingRepository.findById(bookingId);
+      console.log("BookingService findById step 2 booking response", booking);
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+      return booking;
+    } catch (error: any) {
+      console.error("BookingService findById error", error);
+      throw new ApiError(500, "Failed to find booking", error.message);
     }
   }
 }
