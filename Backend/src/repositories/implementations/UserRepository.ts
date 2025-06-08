@@ -457,7 +457,7 @@ export default class UserRepository implements IUserRepository {
 
   async getMentorById(mentorId: string): Promise<EUsers> {
     try {
-      console.log("getMentorById repo step 1", { mentorId });
+      console.log("getMentorById repo step 1", mentorId);
       const mentor = await Users.findOne({
         _id: mentorId,
         mentorId: { $exists: true, $ne: null },
@@ -519,7 +519,8 @@ export default class UserRepository implements IUserRepository {
           },
         ],
       }).lean();
-      console.log("getMentorById repo step 3: Found services", services.length);
+      console.log("getMentorById repo step 2.5", mentor);
+      console.log("getMentorById repo step 3: Found services", services);
 
       let role = "N/A";
       let work = "N/A";
@@ -529,6 +530,8 @@ export default class UserRepository implements IUserRepository {
       let workExperience: EUsers["workExperience"] = undefined;
 
       if (mentor.professionalDetails) {
+        console.log("professionalDetails");
+
         role = "Professional";
         work = mentor.professionalDetails.company || "Unknown";
         badge = mentor.professionalDetails.company || "N/A";
@@ -538,14 +541,16 @@ export default class UserRepository implements IUserRepository {
           jobRole: mentor.professionalDetails.jobRole || "Professional",
           city: mentor.professionalDetails.city,
         };
-      } else if (mentor.category === "college" && mentor.collegeDetails) {
+      } else if (mentor.collegeDetails) {
+        console.log("collegeDetails");
         role = "College Student";
         work = mentor.collegeDetails.collegeName || "Unknown";
         badge = mentor.collegeDetails.course || "N/A";
         workRole = mentor.collegeDetails.specializedIn || "N/A";
         education.collegeName = mentor.collegeDetails.collegeName;
         education.city = mentor.collegeDetails.city;
-      } else if (mentor.category === "school" && mentor.schoolDetails) {
+      } else if (mentor.schoolDetails) {
+        console.log("schoolDetails");
         role = "School Student";
         work = mentor.schoolDetails.schoolName || "Unknown";
         badge = mentor.schoolDetails.schoolName || "N/A";

@@ -144,4 +144,13 @@ menteeRoutes.get(
   authenticate,
   bookingController.getTestimonialsByMentor.bind(bookingController)
 );
+menteeRoutes.get(
+  "/testimonials/mentor/:mentorId/service/:serviceId",
+  bookingController.getTestimonialsByMentorAndService.bind(bookingController)
+);
+menteeRoutes.put(
+  "/bookings/:bookingId/status",
+  authenticate,
+  bookingController.updateBookingServiceStatus.bind(bookingController)
+);
 export default menteeRoutes;

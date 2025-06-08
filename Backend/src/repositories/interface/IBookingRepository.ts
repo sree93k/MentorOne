@@ -36,4 +36,8 @@ export interface IBookingRepository {
     limit: number,
     query: any
   ): Promise<any[]>;
+  updateBookingStatus(
+    bookingId: string,
+    status: "pending" | "confirmed" | "completed"
+  ): Promise<any>;
 }

@@ -14,6 +14,7 @@ export interface EChat extends Document {
   bookingId?: ObjectId;
   latestMessage?: ObjectId;
   groupAdmin?: ObjectId;
+  isActive: Boolean;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -341,7 +341,6 @@
 //     </div>
 //   );
 // }
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -401,7 +400,7 @@ interface Mentor {
     title: string;
     description: string;
     duration: string;
-    price: number;
+    amount: number;
   }[];
   education?: {
     schoolName?: string;
@@ -523,7 +522,7 @@ export default function MentorProfile() {
                         <Badge
                           key={index}
                           variant="outline"
-                          className="bg-gray-200"
+                          className="bg-gray-200 text-black"
                         >
                           {skill}
                         </Badge>
@@ -617,7 +616,7 @@ export default function MentorProfile() {
                       title={service.title}
                       description={service.description}
                       duration={service.duration}
-                      price={`₹${service.price}`}
+                      price={`₹${service.amount}`}
                       onClick={() =>
                         navigate("/seeker/mentorservice", {
                           state: { service, mentor },

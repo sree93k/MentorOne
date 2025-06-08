@@ -15,21 +15,6 @@ export default class BookingRepository implements IBookingRepository {
     }
   }
 
-  // async findById(id: string) {
-  //   try {
-  //     return await Booking.findById(id)
-  //       .populate({
-  //         path: "mentorId",
-  //         select: "firstName lastName profilePicture",
-  //       })
-  //       .populate({
-  //         path: "serviceId",
-  //         select: "title technology price serviceType",
-  //       });
-  //   } catch (error: any) {
-  //     throw new ApiError(500, "Failed to find booking", error.message);
-  //   }
-  // }
   async findById(id: string) {
     try {
       console.log("BookingRepository findById step 1", id);
@@ -328,6 +313,33 @@ export default class BookingRepository implements IBookingRepository {
         error
       );
       throw new ApiError(500, "Failed to find bookings", error.message);
+    }
+  }
+  async updateBookingStatus(
+    bookingId: string,
+    status: "pending" | "confirmed" | "completed"
+  ): Promise<any> {
+    try {
+      console.log("BookingRepository updateBookingStatus step 1", {
+        bookingId,
+        status,
+      });
+      if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+        throw new ApiError(400, "Invalid Booking ID");
+      }
+      const booking = await Booking.findByIdAndUpdate(
+        bookingId,
+        { status },
+        { new: true }
+      );
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+      console.log("BookingRepository updateBookingStatus step 2", booking);
+      return booking;
+    } catch (error: any) {
+      console.error("BookingRepository updateBookingStatus error", error);
+      throw new ApiError(500, "Failed to update booking status", error.message);
     }
   }
 }

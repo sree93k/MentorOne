@@ -20,4 +20,10 @@ export interface ITestimonialService {
     limit: number
   ): Promise<{ testimonials: ETestimonial[]; total: number }>;
   getTestimonialByBookingId(bookingId: string): Promise<ETestimonial | null>;
+  getTestimonialsByMentorAndService(
+    mentorId: string,
+    serviceId: string,
+    page: number,
+    limit: number
+  ): Promise<{ testimonials: ETestimonial[]; total: number }>;
 }

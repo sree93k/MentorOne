@@ -16,4 +16,11 @@ export interface ITestimonialRepository {
     bookingId: string,
     testimonialId: string
   ): Promise<void>;
+  findByMentorAndService(
+    mentorId: string,
+    serviceId: string,
+    skip: number,
+    limit: number
+  ): Promise<ETestimonial[]>;
+  countByMentorAndService(mentorId: string, serviceId: string): Promise<number>;
 }

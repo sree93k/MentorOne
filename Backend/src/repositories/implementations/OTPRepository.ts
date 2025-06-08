@@ -34,9 +34,6 @@ export default class OTPRepository implements IOTPRepository {
   }
   async findOTP(email: Partial<EUsers>): Promise<EOTP | null> {
     try {
-      //   console.log("find otp repo 1", user);
-      //   const email = user.email; // Extract the email string
-      //   const matchOTP = await OTPModel.findOne({ email });
       console.log("find otp repo 1>>>>", email);
       const matchOTP = await OTPModel.findOne({ email });
       console.log("find otp repo 2", matchOTP);

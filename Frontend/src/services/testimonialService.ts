@@ -57,3 +57,47 @@ export const updateTopTestimonials = async (
     );
   }
 };
+interface ETestimonial {
+  _id: string;
+  menteeId: { firstName: string; lastName: string };
+  mentorId: string;
+  serviceId: { title: string; type: string };
+  bookingId: string;
+  comment: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+interface TestimonialResponse {
+  success: boolean;
+  message: string;
+  testimonials: ETestimonial[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export const getMentorServiceTestimonials = async (
+  mentorId: string,
+  serviceId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<TestimonialResponse> => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await api.get(
+      `/seeker/testimonials/mentor/${mentorId}/service/${serviceId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: { page, limit },
+      }
+    );
+    console.log("getMentorServiceTestimonials response", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("getMentorServiceTestimonials error", error);
+    throw error.response?.data?.error || "Failed to fetch testimonials";
+  }
+};
