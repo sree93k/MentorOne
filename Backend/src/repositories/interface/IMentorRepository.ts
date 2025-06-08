@@ -15,4 +15,6 @@ export interface IMentorRepository {
   createOnlineService(onlineService: Record<string, any>): Promise<string>;
   createDigitalProduct(digitalProduct: Record<string, any>): Promise<string>;
   createVideoTutorial(videoTutorial: Record<string, any>): Promise<string>;
+  findById(id: string): Promise<EMentor | null>;
+  update(id: string, data: any): Promise<EMentor>;
 }

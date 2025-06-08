@@ -4,15 +4,18 @@ import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { ApiError } from "../../middlewares/errorHandler";
+import TestimonialService from "../../services/implementations/TestimonialService";
+import { ITestimonialService } from "../../services/interface/ITestimonialService";
 import stripe from "../../config/stripe";
 
 class BookingController {
   private paymentService: IPaymentService;
   private bookingService: IBookingService;
-
+  private testimonialService: ITestimonialService;
   constructor() {
     this.paymentService = new PaymentService();
     this.bookingService = new BookingService();
+    this.testimonialService = new TestimonialService();
   }
 
   public createBooking = async (
@@ -301,6 +304,233 @@ class BookingController {
       });
     } catch (error: any) {
       console.error("Error requesting reschedule:", error);
+      next(error);
+    }
+  };
+
+  // public submitTestimonial = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   const { bookingId } = req.params; // Fix: Extract from params
+  //   const { comment, rating } = req.body;
+  //   const menteeId = req?.user?.id;
+  //   console.log(
+  //     "BookingController submitTestimonial step 1 bookingId",
+  //     bookingId
+  //   );
+  //   console.log("BookingController submitTestimonial step 2 comment", comment);
+  //   console.log("BookingController submitTestimonial step 3 rating", rating);
+  //   console.log(
+  //     "BookingController submitTestimonial step 4 menteeId",
+  //     menteeId
+  //   );
+
+  //   try {
+  //     if (!menteeId) {
+  //       throw new ApiError(400, "Mentee ID is required");
+  //     }
+  //     if (!bookingId) {
+  //       throw new ApiError(400, "Booking ID is required");
+  //     }
+
+  //     // Verify booking exists
+  //     const booking = await this.bookingService.findById(bookingId); // Use findById instead of verifyBookingBySessionId
+  //     console.log(
+  //       "BookingController submitTestimonial step 5 booking response",
+  //       booking
+  //     );
+  //     if (!booking) {
+  //       throw new ApiError(404, "Booking not found");
+  //     }
+
+  //     const testimonial = await this.testimonialService.saveTestimonial({
+  //       menteeId,
+  //       mentorId: booking.mentorId.toString(),
+  //       serviceId: booking.serviceId.toString(),
+  //       bookingId,
+  //       comment,
+  //       rating,
+  //     });
+  //     console.log(
+  //       "BookingController submitTestimonial step 6 testimonial response",
+  //       testimonial
+  //     );
+
+  //     res.json({
+  //       message: "Testimonial submitted successfully",
+  //       testimonial,
+  //     });
+  //   } catch (error: any) {
+  //     console.error("Error submitting testimonial:", error);
+  //     next(error);
+  //   }
+  // };
+  public submitTestimonial = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { bookingId } = req.params;
+    const { comment, rating } = req.body;
+    const menteeId = req?.user?.id;
+    console.log(
+      "BookingController submitTestimonial step 1 bookingId",
+      bookingId
+    );
+    console.log("BookingController submitTestimonial step 2 comment", comment);
+    console.log("BookingController submitTestimonial step 3 rating", rating);
+    console.log(
+      "BookingController submitTestimonial step 4 menteeId",
+      menteeId
+    );
+
+    try {
+      if (!menteeId) {
+        throw new ApiError(400, "Mentee ID is required");
+      }
+      if (!bookingId) {
+        throw new ApiError(400, "Booking ID is required");
+      }
+
+      // Verify booking exists
+      const booking = await this.bookingService.findById(bookingId);
+      console.log(
+        "BookingController submitTestimonial step 5 booking response",
+        booking
+      );
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+
+      const testimonial = await this.testimonialService.saveTestimonial({
+        menteeId,
+        mentorId: booking.mentorId._id.toString(), // Extract _id as string
+        serviceId: booking.serviceId._id.toString(), // Extract _id as string
+        bookingId,
+        comment,
+        rating,
+      });
+      console.log(
+        "BookingController submitTestimonial step 6 testimonial response",
+        testimonial
+      );
+
+      res.json({
+        message: "Testimonial submitted successfully",
+        testimonial,
+      });
+    } catch (error: any) {
+      console.error("Error submitting testimonial:", error);
+      next(error);
+    }
+  };
+
+  public updateTestimonial = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { testimonialId, comment, rating } = req.body;
+    const menteeId = req?.user?.id;
+    console.log(
+      "BookingController updateTestimonial step 1 testimonialId",
+      testimonialId
+    );
+    console.log("BookingController updateTestimonial step 2 comment", comment);
+    console.log("BookingController updateTestimonial step 3 rating", rating);
+    console.log(
+      "BookingController updateTestimonial step 4 menteeId",
+      menteeId
+    );
+    try {
+      if (!menteeId) {
+        throw new ApiError(400, "Mentee ID is required");
+      }
+
+      const testimonial = await this.testimonialService.updateTestimonial({
+        testimonialId,
+        comment,
+        rating,
+      });
+      console.log(
+        "BookingController updateTestimonial step 4 testimonial reponse",
+        testimonial
+      );
+      res.json({
+        message: "Testimonial updated successfully",
+        testimonial,
+      });
+    } catch (error: any) {
+      console.error("Error updating testimonial:", error);
+      next(error);
+    }
+  };
+
+  public getTestimonialByBookingId = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { bookingId } = req.params;
+    console.log(
+      "BookingController getTestimonialByBookingId step 1 bookingId",
+      bookingId
+    );
+    try {
+      const testimonial =
+        await this.testimonialService.getTestimonialByBookingId(bookingId);
+      console.log(
+        "BookingController getTestimonialByBookingId step 2 testimonial response",
+        testimonial
+      );
+      res.json({ testimonial });
+    } catch (error: any) {
+      console.error("Error fetching testimonial:", error);
+      next(error);
+    }
+  };
+
+  public getTestimonialsByMentor = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const mentorId = req?.user?.id;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    console.log(
+      "BookingController getTestimonialsByMentor step 1 mentorId",
+      mentorId
+    );
+    console.log("BookingController getTestimonialsByMentor step 2 page", page);
+    console.log(
+      "BookingController getTestimonialsByMentor step 3 limit",
+      limit
+    );
+    try {
+      if (!mentorId) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+
+      const { testimonials, total } =
+        await this.testimonialService.getTestimonialsByMentor(
+          mentorId,
+          page,
+          limit
+        );
+      console.log(
+        "BookingController getTestimonialsByMentor step 4 testimonials response",
+        testimonials
+      );
+      console.log(
+        "BookingController getTestimonialsByMentor step 4 total response",
+        total
+      );
+      res.json({ testimonials, total });
+    } catch (error: any) {
+      console.error("Error fetching testimonials:", error);
       next(error);
     }
   };

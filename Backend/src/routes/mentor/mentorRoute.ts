@@ -129,4 +129,9 @@ mentorRoutes.get(
   authenticate,
   bookingController.getAllVideoCallsByMentor.bind(bookingController)
 );
+mentorRoutes.put(
+  "/top-testimonials",
+  authenticate,
+  mentorController.updateTopTestimonials.bind(mentorController)
+);
 export default mentorRoutes;

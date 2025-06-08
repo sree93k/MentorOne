@@ -254,3 +254,124 @@ export const requestReschedule = async (
     );
   }
 };
+
+export const getBookingsWithTestimonials = async (
+  page: number = 1,
+  limit: number = 12,
+  searchQuery: string = ""
+): Promise<{ data: any[]; total: number }> => {
+  try {
+    console.log("bookingservice getBookingsWithTestimonials.. step 1", {
+      page,
+      limit,
+      searchQuery,
+    });
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get(`/seeker/bookings/with-testimonials`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      params: { page, limit, searchQuery },
+    });
+    console.log(
+      "bookingservice getBookingsWithTestimonials.. step 2",
+      response
+    );
+    return {
+      data: response.data.data,
+      total: response.data.total,
+    };
+  } catch (error: any) {
+    console.error("Error fetching bookings:", error);
+    throw new Error(error.response?.data?.error || "Failed to fetch bookings");
+  }
+};
+
+export const submitTestimonial = async (
+  bookingId: string,
+  rating: number,
+  comment: string
+): Promise<any> => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.post(
+      `/seeker/bookings/${bookingId}/testimonial`,
+      { comment, rating },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error("Error submitting testimonial:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to submit testimonial"
+    );
+  }
+};
+
+export const updateTestimonial = async (
+  testimonialId: string,
+  rating: number,
+  comment: string
+): Promise<any> => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.put(
+      `/seeker/testimonials/${testimonialId}`,
+      { comment, rating },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error("Error updating testimonial:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to update testimonial"
+    );
+  }
+};
+
+export const getTestimonialByBookingId = async (
+  bookingId: string
+): Promise<any> => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get(
+      `/seeker/bookings/${bookingId}/testimonial`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return response.data.testimonial;
+  } catch (error: any) {
+    console.error("Error fetching testimonial:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch testimonial"
+    );
+  }
+};

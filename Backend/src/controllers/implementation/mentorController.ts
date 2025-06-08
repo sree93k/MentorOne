@@ -585,5 +585,39 @@ class mentorController {
       next(error);
     }
   };
+  public updateTopTestimonials = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { testimonialIds } = req.body;
+    const mentorId = req?.user?.id;
+    console.log(
+      "Mentor controller updateTopTestimonials step 1 mentorId",
+      mentorId
+    );
+    try {
+      if (!mentorId) {
+        throw new ApiError(400, "Mentor ID is required");
+      }
+
+      const updatedMentor =
+        await this.MentorProfileService.updateTopTestimonials(
+          mentorId,
+          testimonialIds
+        );
+      console.log(
+        "Mentor controller updateTopTestimonials step 2 updatedMentor",
+        updatedMentor
+      );
+      res.json({
+        message: "Top testimonials updated successfully",
+        topTestimonials: updatedMentor.topTestimonials,
+      });
+    } catch (error: any) {
+      console.error("Error updating top testimonials:", error);
+      next(error);
+    }
+  };
 }
 export default new mentorController();

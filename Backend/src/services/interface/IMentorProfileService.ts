@@ -3,7 +3,7 @@ import { EUsers } from "../../entities/userEntity";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
-
+import { EMentor } from "../../entities/mentorEntity";
 interface GetAllServicesParams {
   page: number;
   limit: number;
@@ -60,4 +60,8 @@ export interface IMentorProfileService {
     status?: "pending" | "replied",
     sort?: "asc" | "desc"
   ): Promise<{ priorityDMs: EPriorityDM[]; total: number }>;
+  updateTopTestimonials(
+    mentorId: string,
+    testimonialIds: string[]
+  ): Promise<EMentor>;
 }

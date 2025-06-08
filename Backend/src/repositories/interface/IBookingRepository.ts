@@ -30,4 +30,10 @@ export interface IBookingRepository {
     status?: string[],
     limit?: number
   ): Promise<EBooking[]>;
+  findByMenteeWithTestimonials(
+    menteeId: string,
+    skip: number,
+    limit: number,
+    query: any
+  ): Promise<any[]>;
 }

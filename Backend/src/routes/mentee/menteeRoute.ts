@@ -121,4 +121,27 @@ menteeRoutes.post(
   authenticate,
   bookingController.requestReschedule.bind(bookingController)
 );
+
+menteeRoutes.post(
+  "/bookings/:bookingId/testimonial",
+  authenticate,
+  bookingController.submitTestimonial.bind(bookingController)
+);
+
+menteeRoutes.put(
+  "/testimonials/:testimonialId",
+  authenticate,
+  bookingController.updateTestimonial.bind(bookingController)
+);
+
+menteeRoutes.get(
+  "/bookings/:bookingId/testimonial",
+  authenticate,
+  bookingController.getTestimonialByBookingId.bind(bookingController)
+);
+menteeRoutes.get(
+  "/testimonials",
+  authenticate,
+  bookingController.getTestimonialsByMentor.bind(bookingController)
+);
 export default menteeRoutes;
