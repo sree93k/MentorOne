@@ -462,9 +462,31 @@ export default class UserRepository implements IUserRepository {
         _id: mentorId,
         mentorId: { $exists: true, $ne: null },
       })
+        // .populate({
+        //   path: "mentorId",
+        //   select: "bio skills isApproved topTestimonials",
+        // })
         .populate({
           path: "mentorId",
-          select: "bio skills isApproved",
+          select: "bio skills isApproved topTestimonials",
+          populate: {
+            path: "topTestimonials",
+            model: "Testimonial",
+            select:
+              "_id menteeId mentorId serviceId bookingId comment rating createdAt updatedAt",
+            populate: [
+              {
+                path: "menteeId",
+                model: "Users",
+                select: "firstName lastName",
+              },
+              {
+                path: "serviceId",
+                model: "Service",
+                select: "title type",
+              },
+            ],
+          },
         })
         .populate({
           path: "schoolDetails",
@@ -544,6 +566,7 @@ export default class UserRepository implements IUserRepository {
         role,
         work,
         workRole,
+        topTestimonials: mentor.mentorId?.topTestimonials || [],
         profileImage: mentor.profilePicture || undefined,
         badge,
         isBlocked: mentor.isBlocked || false,
@@ -553,13 +576,7 @@ export default class UserRepository implements IUserRepository {
             : "Pending",
         bio: mentor.mentorId?.bio || "No bio available",
         skills: mentor.mentorId?.skills || [],
-        // services: services.map((s) => ({
-        //   type: s.type,
-        //   title: s.title || "Untitled Service",
-        //   description: s.description || "No description available",
-        //   duration: s.duration || "N/A",
-        //   price: s.amount || 0,
-        // })),
+
         services: services,
         education: Object.keys(education).length ? education : undefined,
         workExperience,
