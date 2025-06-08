@@ -107,6 +107,8 @@ export default function TestimonialPage() {
 
   const handleSave = async () => {
     try {
+      console.log("tempSelectedIds is ", tempSelectedIds);
+
       await updateTopTestimonials(tempSelectedIds);
       setSelectedTestimonialIds(tempSelectedIds);
       setIsEditing(false);
@@ -198,7 +200,7 @@ export default function TestimonialPage() {
           ))}
         </div>
         <div className="flex gap-4 ml-auto">
-          <select
+          {/* <select
             value={selectedRating}
             onChange={(e) => handleRatingChange(e.target.value as RatingFilter)}
             className="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm"
@@ -208,7 +210,7 @@ export default function TestimonialPage() {
                 {filter} Ratings
               </option>
             ))}
-          </select>
+          </select> */}
           <select
             value={sortOption}
             onChange={(e) => handleSortChange(e.target.value as SortOption)}

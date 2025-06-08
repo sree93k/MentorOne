@@ -593,6 +593,10 @@ class mentorController {
       "Mentor controller updateTopTestimonials step 1 mentorId",
       mentorId
     );
+    console.log(
+      "Mentor controller updateTopTestimonials step 1.5 testimonialIds",
+      testimonialIds
+    );
     try {
       if (!mentorId) {
         throw new ApiError(400, "Mentor ID is required");
