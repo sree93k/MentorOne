@@ -129,6 +129,13 @@ mentorRoutes.get(
   authenticate,
   bookingController.getAllVideoCallsByMentor.bind(bookingController)
 );
+
+mentorRoutes.get(
+  "/testimonials",
+  authenticate,
+  bookingController.getTestimonialsByMentor.bind(mentorController)
+);
+
 mentorRoutes.put(
   "/top-testimonials",
   authenticate,

@@ -739,7 +739,7 @@ export default class MentorProfileService implements IMentorProfileService {
     try {
       console.log("isApprovalChecking step1", userId);
       const response = await this.MentorRepository.getMentor(userId);
-      console.log("isApprovalChecking step2", response);
+      console.log("isApprovalChecking step2");
       return {
         isApproved: response?.isApproved || null,
         approvalReason: response?.approvalReason || null,

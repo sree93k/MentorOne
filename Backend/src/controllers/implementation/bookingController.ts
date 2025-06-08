@@ -432,7 +432,9 @@ class BookingController {
     res: Response,
     next: NextFunction
   ) => {
-    const { testimonialId, comment, rating } = req.body;
+    const { comment, rating } = req.body;
+
+    const testimonialId = req.params.testimonialId;
     const menteeId = req?.user?.id;
     console.log(
       "BookingController updateTestimonial step 1 testimonialId",
@@ -478,16 +480,26 @@ class BookingController {
       "BookingController getTestimonialByBookingId step 1 bookingId",
       bookingId
     );
+
     try {
+      if (!bookingId) {
+        throw new ApiError(400, "Booking ID is required");
+      }
       const testimonial =
         await this.testimonialService.getTestimonialByBookingId(bookingId);
       console.log(
         "BookingController getTestimonialByBookingId step 2 testimonial response",
         testimonial
       );
-      res.json({ testimonial });
+
+      res.status(200).json({
+        message: testimonial
+          ? "Testimonial fetched successfully"
+          : "No testimonial found",
+        testimonial,
+      });
     } catch (error: any) {
-      console.error("Error fetching testimonial:", error);
+      console.error("BookingController getTestimonialByBookingId error", error);
       next(error);
     }
   };
@@ -499,7 +511,7 @@ class BookingController {
   ) => {
     const mentorId = req?.user?.id;
     const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = parseInt(req.query.limit as string) || 9;
     console.log(
       "BookingController getTestimonialsByMentor step 1 mentorId",
       mentorId
@@ -509,28 +521,31 @@ class BookingController {
       "BookingController getTestimonialsByMentor step 3 limit",
       limit
     );
+
     try {
       if (!mentorId) {
         throw new ApiError(400, "Mentor ID is required");
       }
-
       const { testimonials, total } =
         await this.testimonialService.getTestimonialsByMentor(
           mentorId,
           page,
           limit
         );
-      console.log(
-        "BookingController getTestimonialsByMentor step 4 testimonials response",
-        testimonials
-      );
-      console.log(
-        "BookingController getTestimonialsByMentor step 4 total response",
-        total
-      );
-      res.json({ testimonials, total });
+      console.log("BookingController getTestimonialsByMentor step 4 response", {
+        testimonials,
+        total,
+      });
+
+      res.status(200).json({
+        message: "Testimonials fetched successfully",
+        testimonials,
+        total,
+        page,
+        limit,
+      });
     } catch (error: any) {
-      console.error("Error fetching testimonials:", error);
+      console.error("BookingController getTestimonialsByMentor error", error);
       next(error);
     }
   };

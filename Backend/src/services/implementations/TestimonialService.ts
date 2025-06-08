@@ -25,206 +25,6 @@ export default class TestimonialService {
     this.testimonialRepository = new TestimonialRepository();
   }
 
-  //   async saveTestimonial(params: SaveTestimonialParams): Promise<ETestimonial> {
-  //     try {
-  //       const { menteeId, mentorId, serviceId, bookingId, comment, rating } =
-  //         params;
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 1 menteeId",
-  //         menteeId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 2 mentorId",
-  //         mentorId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 3 menteeId",
-  //         serviceId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 4 menteeId",
-  //         bookingId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 5 menteeId",
-  //         comment
-  //       );
-  //       console.log("Testimonialservice saveTestimonial step 6 menteeId", rating);
-  //       // Validate inputs
-  //       if (!comment || comment.trim() === "") {
-  //         throw new ApiError(400, "Comment is required");
-  //       }
-  //       if (!rating || rating < 0 || rating > 5) {
-  //         throw new ApiError(400, "Rating must be between 0 and 5");
-  //       }
-
-  //       // Check if booking exists and is completed
-  //       const booking = await this.testimonialRepository.findBookingById(
-  //         bookingId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 6 booking reponse",
-  //         booking
-  //       );
-  //       if (!booking) {
-  //         throw new ApiError(404, "Booking not found");
-  //       }
-  //       if (booking.status !== "completed") {
-  //         throw new ApiError(
-  //           400,
-  //           "Booking must be completed to leave a testimonial"
-  //         );
-  //       }
-  //       if (booking.menteeId.toString() !== menteeId) {
-  //         throw new ApiError(
-  //           403,
-  //           "Not authorized to leave a testimonial for this booking"
-  //         );
-  //       }
-
-  //       // Check if testimonial already exists for this booking
-  //       const existingTestimonial =
-  //         await this.testimonialRepository.findByBookingId(bookingId);
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 7 existingTestimonial reponse",
-  //         existingTestimonial
-  //       );
-  //       if (existingTestimonial) {
-  //         throw new ApiError(400, "Testimonial already exists for this booking");
-  //       }
-
-  //       const testimonial = await this.testimonialRepository.create({
-  //         menteeId,
-  //         mentorId,
-  //         serviceId,
-  //         bookingId,
-  //         comment,
-  //         rating,
-  //       });
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 8 testimonial reponse",
-  //         testimonial
-  //       );
-  //       // Update booking with testimonial reference
-  //       const updateTestimonial =
-  //         await this.testimonialRepository.updateBookingWithTestimonial(
-  //           bookingId,
-  //           testimonial._id.toString()
-  //         );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 9 updateTestimonial reponse",
-  //         testimonial
-  //       );
-  //       return testimonial;
-  //     } catch (error: any) {
-  //       throw new ApiError(500, error.message || "Failed to save testimonial");
-  //     }
-  //   }
-  //   async saveTestimonial(params: SaveTestimonialParams): Promise<ETestimonial> {
-  //     try {
-  //       const { menteeId, mentorId, serviceId, bookingId, comment, rating } =
-  //         params;
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 1 menteeId",
-  //         menteeId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 2 mentorId",
-  //         mentorId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 3 serviceId",
-  //         serviceId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 4 bookingId",
-  //         bookingId
-  //       );
-  //       console.log("Testimonialservice saveTestimonial step 5 comment", comment);
-  //       console.log("Testimonialservice saveTestimonial step 6 rating", rating);
-
-  //       // Validate inputs
-  //       if (!mongoose.Types.ObjectId.isValid(bookingId)) {
-  //         throw new ApiError(400, "Invalid Booking ID");
-  //       }
-  //       if (!comment || comment.trim() === "") {
-  //         throw new ApiError(400, "Comment is required");
-  //       }
-  //       if (!rating || rating < 1 || rating > 5) {
-  //         throw new ApiError(400, "Rating must be between 1 and 5");
-  //       }
-
-  //       // Check if booking exists and is completed
-  //       const booking = await this.testimonialRepository.findBookingById(
-  //         bookingId
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 7 booking response",
-  //         booking
-  //       );
-  //       if (!booking) {
-  //         console.log("Testimonialservice saveTestimonial step 7.1");
-  //         throw new ApiError(404, "Booking not found");
-  //       }
-  //       if (booking.status !== "completed") {
-  //         console.log("Testimonialservice saveTestimonial step 7.2");
-  //         throw new ApiError(
-  //           400,
-  //           "Booking must be completed to leave a testimonial"
-  //         );
-  //       }
-  //       if (booking.menteeId._id.toString() !== menteeId) {
-  //         console.log(
-  //           "Testimonialservice saveTestimonial step 7.3",
-  //           menteeId,
-  //           booking.menteeId._id.toString()
-  //         );
-  //         throw new ApiError(
-  //           403,
-  //           "Not authorized to leave a testimonial for this booking"
-  //         );
-  //       }
-  //       console.log("Testimonialservice saveTestimonial step 7.4");
-  //       // Check if testimonial already exists for this booking
-  //       const existingTestimonial =
-  //         await this.testimonialRepository.findByBookingId(bookingId);
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 8 existingTestimonial response",
-  //         existingTestimonial
-  //       );
-  //       if (existingTestimonial) {
-  //         throw new ApiError(400, "Testimonial already exists for this booking");
-  //       }
-
-  //       const testimonial = await this.testimonialRepository.create({
-  //         menteeId,
-  //         mentorId,
-  //         serviceId,
-  //         bookingId,
-  //         comment,
-  //         rating,
-  //       });
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 9 testimonial response",
-  //         testimonial
-  //       );
-
-  //       // Update booking with testimonial reference
-  //       await this.testimonialRepository.updateBookingWithTestimonial(
-  //         bookingId,
-  //         testimonial._id.toString()
-  //       );
-  //       console.log(
-  //         "Testimonialservice saveTestimonial step 10 booking updated with testimonial"
-  //       );
-
-  //       return testimonial;
-  //     } catch (error: any) {
-  //       console.error("Testimonialservice saveTestimonial error", error);
-  //       throw new ApiError(500, error.message || "Failed to save testimonial");
-  //     }
-  //   }
-
   async saveTestimonial(params: SaveTestimonialParams): Promise<ETestimonial> {
     try {
       const { menteeId, mentorId, serviceId, bookingId, comment, rating } =
@@ -398,6 +198,9 @@ export default class TestimonialService {
     limit: number = 10
   ): Promise<{ testimonials: ETestimonial[]; total: number }> {
     try {
+      if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+        throw new ApiError(400, "Invalid Mentor ID");
+      }
       const skip = (page - 1) * limit;
       console.log(
         "Testimonialservice getTestimonialsByMentor step 1 mentorId",
@@ -418,7 +221,13 @@ export default class TestimonialService {
       );
       return { testimonials, total };
     } catch (error: any) {
-      throw new ApiError(500, error.message || "Failed to fetch testimonials");
+      console.error("Testimonialservice getTestimonialsByMentor error", error);
+      throw new ApiError(
+        500,
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Failed to fetch testimonials"
+      );
     }
   }
 
@@ -430,14 +239,14 @@ export default class TestimonialService {
         "Testimonialservice getTestimonialByBookingId step 1 bookingId",
         bookingId
       );
-      const response = await this.testimonialRepository.findByBookingId(
+      const testimonial = await this.testimonialRepository.findByBookingId(
         bookingId
       );
       console.log(
         "Testimonialservice getTestimonialByBookingId step 2 findByBookingId response",
-        response
+        testimonial
       );
-      return response;
+      return testimonial;
     } catch (error: any) {
       throw new ApiError(500, error.message || "Failed to fetch testimonial");
     }

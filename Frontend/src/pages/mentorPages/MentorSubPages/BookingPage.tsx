@@ -790,7 +790,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import FeedbackModal from "@/components/modal/FeedbackModal";
+import FeedbackModal from "@/components/mentee/FeedbackModal";
 import RescheduleModal from "@/components/modal/ResheduleModal";
 import ConfirmationModal from "@/components/modal/ConfirmationModal";
 import { getBookingsByMentor, updateStatus } from "@/services/bookingService";
