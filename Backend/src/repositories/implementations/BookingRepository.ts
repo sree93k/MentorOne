@@ -95,10 +95,14 @@ export default class BookingRepository implements IBookingRepository {
           select:
             "title technology amount type digitalProductType oneToOneType slot",
         })
+        .populate({
+          path: "testimonials",
+          select: "rating",
+        })
         .skip(skip)
         .limit(limit)
         .lean();
-      console.log("booking repository findByMentee step 2");
+      console.log("booking repository findByMentee step 2", response);
       return response;
     } catch (error: any) {
       console.log("booking repository findByMentee step 3 error", error);

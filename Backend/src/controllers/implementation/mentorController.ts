@@ -411,10 +411,7 @@ class mentorController {
     next: NextFunction
   ): Promise<void> {
     try {
-      console.log(
-        "mentor controller isApprovalChecking step 1",
-        req.params.mentorId
-      );
+      console.log("mentor controller isApprovalChecking step 1");
       const mentorId = req.params.mentorId;
 
       if (!mentorId) {
@@ -425,7 +422,7 @@ class mentorController {
       const response = await this.MentorProfileService.isApprovalChecking(
         mentorId
       );
-      console.log("mentor controller isApprovalChecking step 3", response);
+      console.log("mentor controller isApprovalChecking step 3");
       res
         .status(200)
         .json(new ApiResponse(200, response, "Approval status fetched"));

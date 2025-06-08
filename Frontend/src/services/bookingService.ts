@@ -358,6 +358,7 @@ export const getTestimonialByBookingId = async (
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
+    console.log("getTestimonialByBookingId BookingId ", bookingId);
 
     const response = await api.get(
       `/seeker/bookings/${bookingId}/testimonial`,

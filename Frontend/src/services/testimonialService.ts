@@ -2,7 +2,6 @@ import { userAxiosInstance } from "./instances/userInstance";
 
 const api = userAxiosInstance;
 export const getTestimonialsByMentor = async (
-  mentorId: string,
   page: number = 1,
   limit: number = 10
 ): Promise<{ testimonials: any[]; total: number }> => {
