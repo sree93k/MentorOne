@@ -109,4 +109,8 @@ export interface IBookingService {
     bookingId: string,
     status: "pending" | "confirmed" | "completed"
   ): Promise<any>;
+  getBookingData(
+    dashboard: "mentor" | "mentee",
+    bookingId: string
+  ): Promise<EBooking[]>;
 }

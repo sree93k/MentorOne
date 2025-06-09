@@ -308,65 +308,6 @@ class BookingController {
     }
   };
 
-  // public submitTestimonial = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) => {
-  //   const { bookingId } = req.params; // Fix: Extract from params
-  //   const { comment, rating } = req.body;
-  //   const menteeId = req?.user?.id;
-  //   console.log(
-  //     "BookingController submitTestimonial step 1 bookingId",
-  //     bookingId
-  //   );
-  //   console.log("BookingController submitTestimonial step 2 comment", comment);
-  //   console.log("BookingController submitTestimonial step 3 rating", rating);
-  //   console.log(
-  //     "BookingController submitTestimonial step 4 menteeId",
-  //     menteeId
-  //   );
-
-  //   try {
-  //     if (!menteeId) {
-  //       throw new ApiError(400, "Mentee ID is required");
-  //     }
-  //     if (!bookingId) {
-  //       throw new ApiError(400, "Booking ID is required");
-  //     }
-
-  //     // Verify booking exists
-  //     const booking = await this.bookingService.findById(bookingId); // Use findById instead of verifyBookingBySessionId
-  //     console.log(
-  //       "BookingController submitTestimonial step 5 booking response",
-  //       booking
-  //     );
-  //     if (!booking) {
-  //       throw new ApiError(404, "Booking not found");
-  //     }
-
-  //     const testimonial = await this.testimonialService.saveTestimonial({
-  //       menteeId,
-  //       mentorId: booking.mentorId.toString(),
-  //       serviceId: booking.serviceId.toString(),
-  //       bookingId,
-  //       comment,
-  //       rating,
-  //     });
-  //     console.log(
-  //       "BookingController submitTestimonial step 6 testimonial response",
-  //       testimonial
-  //     );
-
-  //     res.json({
-  //       message: "Testimonial submitted successfully",
-  //       testimonial,
-  //     });
-  //   } catch (error: any) {
-  //     console.error("Error submitting testimonial:", error);
-  //     next(error);
-  //   }
-  // };
   public submitTestimonial = async (
     req: Request,
     res: Response,
@@ -632,6 +573,56 @@ class BookingController {
       );
       console.log(
         "BookingController updateBookingServiceStatus step 3",
+        booking
+      );
+      res.status(200).json({
+        success: true,
+        message: "Booking status updated successfully",
+        booking,
+      });
+    } catch (error: any) {
+      console.error(
+        "BookingController updateBookingServiceStatus error",
+        error
+      );
+      next(error);
+    }
+  };
+  public getBookingData = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { dashboard } = req.query;
+      const { bookingId } = req.params;
+
+      if (!dashboard || !["mentor", "mentee"].includes(dashboard as string)) {
+        throw new ApiError(400, "Invalid or missing dashboard parameter");
+      }
+      if (!bookingId) {
+        throw new ApiError(400, "Missing bookingId parameter");
+      }
+
+      const userId = (req as any).user?._id;
+      if (!userId) {
+        throw new ApiError(401, "Unauthorized: User ID not found");
+      }
+      if (!dashboard) {
+        throw new ApiError(
+          400,
+          "Dashboard must be either 'mentor' or 'mentee'"
+        );
+      }
+
+      console.log("BookingController getBookingData step 3");
+
+      const booking = await this.bookingService.getBookingData(
+        dashboard as "mentor" | "mentee",
+        bookingId
+      );
+      console.log(
+        "BookingController updateBookingServiceStatus step 4",
         booking
       );
       res.status(200).json({

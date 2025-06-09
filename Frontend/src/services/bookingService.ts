@@ -405,3 +405,27 @@ export const updateBookingStatus = async (
     );
   }
 };
+
+export const getBookingData = async (
+  dashboard: "mentor" | "mentee",
+  bookingId: String
+) => {
+  try {
+    const response = await api.get(`/user/bookings/:${bookingId}`, {
+      params: { dashboard },
+    });
+    console.log("getBookingData response:", {
+      dashboard,
+      status: response.status,
+      data: response.data,
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("getBookingData error:", error);
+    const message =
+      error.response?.data?.error ||
+      error.message ||
+      "Failed to fetch booking data";
+    throw new Error(message);
+  }
+};

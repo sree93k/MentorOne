@@ -138,4 +138,10 @@ userPrivateRoute.put(
   authenticate,
   bookingController.updateBookingServiceStatus.bind(bookingController)
 );
+
+userPrivateRoute.get(
+  "/bookings/:bookingId",
+  authenticate,
+  bookingController.getBookingData.bind(bookingController)
+);
 export default userPrivateRoute;

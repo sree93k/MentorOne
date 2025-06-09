@@ -1497,6 +1497,11 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
     null
   );
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<
+    "pending" | "confirmed" | "completed" | null
+  >(null);
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
@@ -1510,6 +1515,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
   const { user, dashboard, isOnline } = useSelector(
     (state: RootState) => state.user
   );
@@ -1609,6 +1615,8 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     setMediaUrls({});
     setAudioProgress({});
     setIsPlaying({});
+    console.log("OOooooooooooooooo==", selectedUser);
+
     console.log("Chatting component mounted, state cleared");
     return () => {
       console.log("Chatting component unmounted");
@@ -1808,7 +1816,41 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
       );
     });
-
+    socketInstance.on("bookingStatus", ({ bookingId, status }) => {
+      setChatUsers((prev) =>
+        prev.map((user) =>
+          user.bookingId === bookingId
+            ? {
+                ...user,
+                bookingStatus: status,
+                isActive: status === "confirmed",
+              }
+            : user
+        )
+      );
+      setFilteredChatUsers((prev) =>
+        prev.map((user) =>
+          user.bookingId === bookingId
+            ? {
+                ...user,
+                bookingStatus: status,
+                isActive: status === "confirmed",
+              }
+            : user
+        )
+      );
+      if (selectedUser?.bookingId === bookingId) {
+        setSelectedUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                bookingStatus: status,
+                isActive: status === "confirmed",
+              }
+            : null
+        );
+      }
+    });
     return () => {
       socketInstance.disconnect();
     };
@@ -1824,7 +1866,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       try {
         setError(null);
         const response = await getChatHistory(dashboard);
-        console.log("fetchChatHistory response:", {
+        console.log("FFFF fetchChatHistory response:", {
           dashboard,
           statusCode: response.statusCode,
           data: response.data,
@@ -1850,10 +1892,10 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       }
     };
 
-    if (role && dashboard) {
+    if (isOnline.role && dashboard) {
       fetchChatHistory();
     }
-  }, [role, dashboard]);
+  }, [isOnline.role, dashboard]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -2034,7 +2076,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       return;
     }
 
-    if (role === "mentee" && selectedUser && !selectedUser.isActive) {
+    if (isOnline.role === "mentee" && selectedUser && !selectedUser.isActive) {
       setError("Cannot send message: Booking is not confirmed");
       return;
     }
@@ -2074,7 +2116,11 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         return;
       }
 
-      if (role === "mentee" && selectedUser && !selectedUser.isActive) {
+      if (
+        isOnline.role === "mentee" &&
+        selectedUser &&
+        !selectedUser.isActive
+      ) {
         setError("Cannot send message: Booking is not confirmed");
         return;
       }
@@ -2129,7 +2175,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   };
 
   const startRecording = async () => {
-    if (role === "mentee" && selectedUser && !selectedUser.isActive) {
+    if (isOnline.role === "mentee" && selectedUser && !selectedUser.isActive) {
       setError("Cannot send message: Booking is not confirmed");
       return;
     }
@@ -2259,47 +2305,102 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
+  // const handleUpdateBookingStatus = async (
+  //   bookingId: string,
+  //   status: "pending" | "confirmed" | "completed"
+  // ) => {
+  //   try {
+  //     await updateBookingStatus(bookingId, status);
+  //     setChatUsers((prev) =>
+  //       prev.map((user) =>
+  //         user.bookingId === bookingId
+  //           ? {
+  //               ...user,
+  //               bookingStatus: status,
+  //               isActive: status === "confirmed",
+  //             }
+  //           : user
+  //       )
+  //     );
+  //     setFilteredChatUsers((prev) =>
+  //       prev.map((user) =>
+  //         user.bookingId === bookingId
+  //           ? {
+  //               ...user,
+  //               bookingStatus: status,
+  //               isActive: status === "confirmed",
+  //             }
+  //           : user
+  //       )
+  //     );
+  //     if (selectedUser?.bookingId === bookingId) {
+  //       setSelectedUser((prev) =>
+  //         prev
+  //           ? {
+  //               ...prev,
+  //               bookingStatus: status,
+  //               isActive: status === "confirmed",
+  //             }
+  //           : null
+  //       );
+  //     }
+  //   } catch (error: any) {
+  //     setError(error.message || "Failed to update booking status");
+  //   }
+  // };
   const handleUpdateBookingStatus = async (
     bookingId: string,
     status: "pending" | "confirmed" | "completed"
   ) => {
+    setPendingBookingId(bookingId);
+    setPendingStatus(status);
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmUpdateBookingStatus = async () => {
+    if (!pendingBookingId || !pendingStatus) return;
+
     try {
-      await updateBookingStatus(bookingId, status);
+      await updateBookingStatus(pendingBookingId, pendingStatus);
       setChatUsers((prev) =>
         prev.map((user) =>
-          user.bookingId === bookingId
+          user.bookingId === pendingBookingId
             ? {
                 ...user,
-                bookingStatus: status,
-                isActive: status === "confirmed",
+                bookingStatus: pendingStatus,
+                isActive: pendingStatus === "confirmed",
               }
             : user
         )
       );
       setFilteredChatUsers((prev) =>
         prev.map((user) =>
-          user.bookingId === bookingId
+          user.bookingId === pendingBookingId
             ? {
                 ...user,
-                bookingStatus: status,
-                isActive: status === "confirmed",
+                bookingStatus: pendingStatus,
+                isActive: pendingStatus === "confirmed",
               }
             : user
         )
       );
-      if (selectedUser?.bookingId === bookingId) {
+      if (selectedUser?.bookingId === pendingBookingId) {
         setSelectedUser((prev) =>
           prev
             ? {
                 ...prev,
-                bookingStatus: status,
-                isActive: status === "confirmed",
+                bookingStatus: pendingStatus,
+                isActive: pendingStatus === "confirmed",
               }
             : null
         );
       }
+      setIsConfirmModalOpen(false);
+      setPendingBookingId(null);
+      setPendingStatus(null);
     } catch (error: any) {
       setError(error.message || "Failed to update booking status");
+      setIsConfirmModalOpen(false);
     }
   };
 
@@ -2343,7 +2444,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                     <button
                       key={user.id}
                       onClick={() => handleUserClick(user)}
-                      className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 
+                      className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50
                         ${
                           selectedUser?.id === user.id
                             ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
@@ -2426,6 +2527,39 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                   </div>
                   <div className="flex items-center space-x-1">
                     {isOnline.role === "mentor" && (
+                      // <DropdownMenu>
+                      //   <DropdownMenuTrigger asChild>
+                      //     <Button
+                      //       variant="ghost"
+                      //       size="icon"
+                      //       className="rounded-lg h-9 w-9 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50"
+                      //     >
+                      //       <MoreVertical className="h-5 w-5" />
+                      //     </Button>
+                      //   </DropdownMenuTrigger>
+                      //   <DropdownMenuContent className="bg-white">
+                      //     {["pending", "confirmed", "completed"].map(
+                      //       (status) => (
+                      //         <DropdownMenuItem
+                      //           key={status}
+                      //           onClick={() =>
+                      //             handleUpdateBookingStatus(
+                      //               selectedUser.bookingId,
+                      //               status as
+                      //                 | "pending"
+                      //                 | "confirmed"
+                      //                 | "completed"
+                      //             )
+                      //           }
+                      //           disabled={selectedUser.bookingStatus === status}
+                      //         >
+                      //           {status.charAt(0).toUpperCase() +
+                      //             status.slice(1)}
+                      //         </DropdownMenuItem>
+                      //       )
+                      //     )}
+                      //   </DropdownMenuContent>
+                      // </DropdownMenu>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -2452,7 +2586,8 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                                 }
                                 disabled={selectedUser.bookingStatus === status}
                               >
-                                {status}
+                                {status.charAt(0).toUpperCase() +
+                                  status.slice(1)}
                               </DropdownMenuItem>
                             )
                           )}
@@ -2682,7 +2817,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                     </div>
                   )}
                 </ScrollArea>
-                <div className="p-1 border-t border-gray-200 bg-white relative shadow-sm">
+                {/* <div className="p-1 border-t border-gray-200 bg-white relative shadow-sm">
                   {role === "mentee" &&
                     selectedUser &&
                     !selectedUser.isActive && (
@@ -2801,6 +2936,126 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       </Button>
                     </div>
                   </div>
+                </div> */}
+                <div className="p-1 border-t border-gray-200 bg-white relative shadow-sm">
+                  {isOnline.role === "mentee" &&
+                    selectedUser &&
+                    !selectedUser.isActive && (
+                      <div className="p-2 bg-red-100 text-red-600 text-center text-sm">
+                        This chat is inactive. Please wait for the booking to be
+                        confirmed to send messages.
+                      </div>
+                    )}
+                  {showEmojiPicker && (
+                    <div
+                      ref={emojiPickerRef}
+                      className="absolute bottom-12 left-4 z-10 shadow-lg rounded-lg overflow-hidden"
+                    >
+                      <EmojiPicker onEmojiClick={handleEmojiClick} />
+                    </div>
+                  )}
+                  {isRecording && (
+                    <div className="absolute bottom-12 left-4 right-4 bg-white p-4 rounded-lg shadow-lg flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Mic className="h-5 w-5 text-red-500 animate-pulse" />
+                        <span className="text-sm text-gray-700">
+                          Recording: {formatTime(recordingTime)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={stopRecording}
+                      >
+                        Stop
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 bg-gray-50 rounded-full p-1 pl-4 pr-1 border border-gray-200 hover:border-blue-200 transition-colors shadow-sm">
+                    <Input
+                      ref={inputRef}
+                      placeholder="Type your message here..."
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      className="flex-1 border-none bg-transparent text-gray-700 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      disabled={
+                        isRecording ||
+                        (isOnline.role === "mentee" &&
+                          selectedUser &&
+                          !selectedUser.isActive)
+                      }
+                    />
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowEmojiPicker((prev) => !prev)}
+                        className="rounded-full h-9 w-9 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                        disabled={
+                          isRecording ||
+                          (isOnline.role === "mentee" &&
+                            selectedUser &&
+                            !selectedUser.isActive)
+                        }
+                      >
+                        <Smile className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={triggerFileInput}
+                        className="rounded-full h-9 w-9 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                        disabled={
+                          isRecording ||
+                          (isOnline.role === "mentee" &&
+                            selectedUser &&
+                            !selectedUser.isActive)
+                        }
+                      >
+                        <ImageIcon className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          isRecording ? stopRecording() : startRecording()
+                        }
+                        className={`rounded-full h-9 w-9 ${
+                          isRecording
+                            ? "text-red-600 hover:text-red-600 hover:bg-red-50"
+                            : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                        }`}
+                        disabled={
+                          isOnline.role === "mentee" &&
+                          selectedUser &&
+                          !selectedUser.isActive
+                        }
+                      >
+                        <Mic className="h-5 w-5" />
+                      </Button>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                      />
+                      <Button
+                        size="icon"
+                        onClick={handleSendMessage}
+                        className="rounded-full h-10 w-10 bg-blue-500 hover:bg-blue-600 text-white ml-1 shadow-sm transition-colors"
+                        disabled={
+                          isRecording ||
+                          (isOnline.role === "mentee" &&
+                            selectedUser &&
+                            !selectedUser.isActive)
+                        }
+                      >
+                        <Send className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (
@@ -2820,6 +3075,21 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
               </div>
             )}
           </div>
+          <ConfirmationModal
+            open={isConfirmModalOpen}
+            onOpenChange={(open) => {
+              setIsConfirmModalOpen(open);
+              if (!open) {
+                setPendingBookingId(null);
+                setPendingStatus(null);
+              }
+            }}
+            onConfirm={confirmUpdateBookingStatus}
+            title="Confirm Booking Status Update"
+            description={`Are you sure you want to update the booking status to "${
+              pendingStatus || "unknown"
+            }"?`}
+          />
         </div>
       </SheetContent>
     </Sheet>

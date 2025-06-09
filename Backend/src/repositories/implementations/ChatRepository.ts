@@ -15,10 +15,11 @@ export default class ChatRepository {
 
   async findById(id: string): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findById step 1");
       const chat = await Chat.findById(id)
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findById step 2", chat);
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new ApiError(500, "Failed to find chat", error.message);
@@ -30,10 +31,11 @@ export default class ChatRepository {
     update: Partial<EChat>
   ): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findByIdAndUpdate step 1");
       const chat = await Chat.findByIdAndUpdate(id, update, { new: true })
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findByIdAndUpdate step 2", chat);
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new ApiError(500, "Failed to update chat", error.message);
@@ -45,6 +47,7 @@ export default class ChatRepository {
     role: "mentee" | "mentor"
   ): Promise<EChat[]> {
     try {
+      console.log("CHAT REPOSITORY findByUserAndRole step 1");
       const chats = await Chat.find({
         "roles.userId": userId,
         "roles.role": role,
@@ -52,6 +55,7 @@ export default class ChatRepository {
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage")
         .sort({ updatedAt: -1 });
+      console.log("CHAT REPOSITORY findByUserAndRole step 2", chats);
 
       return chats as unknown as EChat[];
     } catch (error: any) {
@@ -61,10 +65,11 @@ export default class ChatRepository {
 
   async findByBookingId(bookingId: string): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findByBookingId step 1");
       const chat = await Chat.findOne({ bookingId })
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findByBookingId step 2", chat);
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new ApiError(500, "Failed to find chat", error.message);

@@ -36,11 +36,13 @@ class SocketController {
           "Dashboard must be 'mentor' or 'mentee'"
         );
       }
+      console.log("Socket contorller CHAT getChatUsers step1 ");
 
       const chats = await this.chatService.getChatsByUserAndRole(
         userId,
         role as "mentee" | "mentor"
       );
+      console.log("Socket contorller CHAT getChatUsers step 2", chats);
       const chatUsers = await Promise.all(
         chats.map(async (chat) => {
           const otherUser = chat.users.find((u) => u._id.toString() !== userId);
@@ -76,6 +78,7 @@ class SocketController {
                 ? 1
                 : 0,
             isOnline,
+            isActive: chat.isActive,
           };
         })
       );

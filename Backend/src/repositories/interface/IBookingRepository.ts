@@ -40,4 +40,8 @@ export interface IBookingRepository {
     bookingId: string,
     status: "pending" | "confirmed" | "completed"
   ): Promise<any>;
+  getBookingsByDashboard(
+    dashboard: "mentor" | "mentee",
+    bookingId: string
+  ): Promise<EBooking>;
 }

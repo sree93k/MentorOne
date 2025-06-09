@@ -916,4 +916,29 @@ export default class BookingService implements IBookingService {
       );
     }
   }
+
+  async getBookingData(
+    dashboard: "mentor" | "mentee",
+    bookingId: string
+  ): Promise<EBooking[]> {
+    try {
+      console.log("BookingService getBookingData", { dashboard });
+      const bookings = await this.bookingRepository.getBookingsByDashboard(
+        dashboard,
+        bookingId
+      );
+      console.log("BookingService getBookingData success", {
+        count: bookings.length,
+      });
+      return bookings as EBooking[];
+    } catch (error: any) {
+      console.error("BookingService getBookingData error", error);
+      throw new ApiError(
+        500,
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Failed to fetch booking data"
+      );
+    }
+  }
 }

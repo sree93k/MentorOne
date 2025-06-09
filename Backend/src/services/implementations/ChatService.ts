@@ -37,6 +37,10 @@ export default class ChatService implements IChatService {
   }
 
   async getChatsByUserAndRole(userId: string, role: "mentee" | "mentor") {
-    return await this.chatRepository.findByUserAndRole(userId, role);
+    console.log("CHAT service getChatsByUserAndRole step 1");
+
+    const chat = await this.chatRepository.findByUserAndRole(userId, role);
+    console.log("CHAT service getChatsByUserAndRole step 2", chat);
+    return chat;
   }
 }
