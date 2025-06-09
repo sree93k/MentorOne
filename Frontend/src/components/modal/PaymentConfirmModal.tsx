@@ -530,6 +530,7 @@ export default function PaymentModal({
         console.error("Stripe not initialized");
         throw new Error("Stripe.js failed to load");
       }
+      console.log("laod createCheckoutSession");
 
       const response = await createCheckoutSession(payload);
       console.log("Checkout session response:", response);
