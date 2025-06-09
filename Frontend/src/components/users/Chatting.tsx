@@ -2946,6 +2946,13 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                         confirmed to send messages.
                       </div>
                     )}
+                  {isOnline.role === "mentor" &&
+                    selectedUser &&
+                    !selectedUser.isActive && (
+                      <div className="p-2 bg-red-100 text-red-600 text-center text-sm">
+                        Service is completed.
+                      </div>
+                    )}
                   {showEmojiPicker && (
                     <div
                       ref={emojiPickerRef}

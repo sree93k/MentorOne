@@ -13,4 +13,13 @@ export interface IChatRepository {
     bookingId: string,
     isActive: boolean
   ): Promise<EChat | null>;
+  findByUsersAndRoles(
+    menteeId: string,
+    mentorId: string
+  ): Promise<EChat | null>;
+  updateByUsersAndRoles(
+    menteeId: string,
+    mentorId: string,
+    update: { isActive: boolean; bookingId: string }
+  ): Promise<EChat | null>;
 }

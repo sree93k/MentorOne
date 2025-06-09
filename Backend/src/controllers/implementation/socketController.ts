@@ -42,7 +42,7 @@ class SocketController {
         userId,
         role as "mentee" | "mentor"
       );
-      console.log("Socket contorller CHAT getChatUsers step 2", chats);
+      console.log("Socket contorller CHAT getChatUsers step 2");
       const chatUsers = await Promise.all(
         chats.map(async (chat) => {
           const otherUser = chat.users.find((u) => u._id.toString() !== userId);

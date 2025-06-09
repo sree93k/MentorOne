@@ -300,10 +300,7 @@ export default class BookingService implements IBookingService {
         this.bookingRepository.findByMentee(menteeId, skip, limit, query),
         this.bookingRepository.countByMentee(menteeId, query),
       ]);
-      console.log("booking service getBookingsByMentee step 2", {
-        bookings,
-        total,
-      });
+      console.log("booking service getBookingsByMentee step 2");
       return { bookings, total };
     } catch (error: any) {
       console.log("booking service getBookingsByMentee step error", error);

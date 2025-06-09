@@ -87,7 +87,7 @@ export default class BookingRepository implements IBookingRepository {
         .skip(skip)
         .limit(limit)
         .lean();
-      console.log("booking repository findByMentee step 2", response);
+      console.log("booking repository findByMentee step 2");
       return response;
     } catch (error: any) {
       console.log("booking repository findByMentee step 3 error", error);
