@@ -30,6 +30,7 @@ import {
   getChatHistory,
   uploadToS3WithPresignedUrl,
   getMediaUrl,
+  checkUserOnlineStatus,
 } from "@/services/userServices";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
@@ -46,6 +47,7 @@ import {
   getBookingData,
 } from "../../services/bookingService";
 import ConfirmationModal from "../modal/ConfirmationModal";
+
 interface ChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -70,8 +72,9 @@ interface ChatUser {
   timestamp?: string;
   unread?: number;
   isOnline?: boolean;
-  isActive?: boolean;
   bookingStatus?: "pending" | "confirmed" | "completed";
+  isActive: boolean;
+  otherUserId?: string;
 }
 
 const debounce = <T extends (...args: any[]) => void>(
@@ -278,7 +281,19 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     isMessagesLoaded,
     chatHistories,
   ]);
-
+  {
+    // Add this useEffect after the existing useEffects in Chatting.tsx
+    useEffect(() => {
+      if (selectedUser) {
+        const updatedUser = chatUsers.find((u) => u.id === selectedUser.id);
+        if (updatedUser && updatedUser.isOnline !== selectedUser.isOnline) {
+          setSelectedUser((prev) =>
+            prev ? { ...prev, isOnline: updatedUser.isOnline } : null
+          );
+        }
+      }
+    }, [chatUsers, selectedUser]);
+  }
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
@@ -651,6 +666,14 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       });
     });
 
+    socketInstance.on("userStatus", ({ userId, isOnline }) => {
+      setChatUsers((prev) =>
+        prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
+      );
+      setFilteredChatUsers((prev) =>
+        prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
+      );
+    });
     // socketInstance.on("messageRead", ({ messageId, chatId }) => {
     //   setChatHistories((prev) => {
     //     const updatedMessages = (prev[chatId] || []).map((msg) =>
@@ -964,7 +987,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     return key;
   };
 
-  const handleUserClick = (user: ChatUser) => {
+  const handleUserClick = async (user: ChatUser) => {
     setSelectedUser(user);
     setActiveChatId(user.id);
     setError(null);
@@ -982,6 +1005,28 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
     );
 
+    // Check online status from Redis via backend
+    try {
+      console.log(
+        "**********checkUserOnlineStatus isonline step 1",
+        user.otherUserId
+      );
+      const isOnline = await checkUserOnlineStatus(user?.otherUserId);
+      console.log("**********checkUserOnlineStatus isonline step 2", isOnline);
+
+      setSelectedUser((prev) =>
+        prev ? { ...prev, isOnline } : { ...user, isOnline }
+      );
+      setChatUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
+      );
+      setFilteredChatUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
+      );
+    } catch (error: any) {
+      console.error("Failed to check online status:", error);
+      setError("Failed to load user online status");
+    }
     // Mark messages as read
     if (socket && socket.connected) {
       socket.emit("markAsRead", { chatId: user.id }, (response: any) => {
@@ -1478,9 +1523,9 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                             {user.name[0]}
                           </AvatarFallback>
                         </Avatar>
-                        {user.isOnline && (
+                        {/* {user.isOnline && (
                           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></span>
-                        )}
+                        )} */}
                       </div>
                       <div className="flex-1 ml-3 text-left">
                         <div className="flex justify-between items-center">
