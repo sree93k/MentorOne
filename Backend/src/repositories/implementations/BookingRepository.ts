@@ -342,4 +342,30 @@ export default class BookingRepository implements IBookingRepository {
       throw new ApiError(500, "Failed to update booking status", error.message);
     }
   }
+
+  async getBookingsByDashboard(
+    dashboard: "mentor" | "mentee",
+    bookingId: string
+  ): Promise<EBooking> {
+    try {
+      console.log("BookingRepository getBookingById", {
+        dashboard,
+        bookingId,
+      });
+      if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+        throw new ApiError(400, "Invalid Booking ID");
+      }
+      const query = { _id: bookingId };
+
+      const booking = await Booking.findOne(query).select(
+        "_id status userId mentorId"
+      );
+      if (!booking) {
+        throw new ApiError(404, "Booking not found");
+      }
+      return booking;
+    } catch (error: any) {
+      throw new ApiError(500, error.message);
+    }
+  }
 }

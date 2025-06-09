@@ -1,6 +1,6 @@
 import { Model } from "mongoose";
 import { IBaseRepository } from "../interface/IBaseRepository";
-
+import { ApiError } from "../../middlewares/errorHandler";
 export default class BaseRepository<T> implements IBaseRepository<T> {
   private model: Model<T>;
 

@@ -101,7 +101,10 @@ export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
   try {
-    console.log("user service getChatHistory step 1, dashboard:", dashboard);
+    console.log(
+      "CHATTTT1user service getChatHistory step 1, dashboard:",
+      dashboard
+    );
     const response = await api.get<ChatHistoryResponse>(
       `/user/${dashboard}/chat-history`,
       {
@@ -111,7 +114,10 @@ export const getChatHistory = async (
         },
       }
     );
-    console.log("user service getChatHistory step 2, response:", response.data);
+    console.log(
+      "CHATTT2user service getChatHistory step 2, response:",
+      response
+    );
     if (!response.data.data || !Array.isArray(response.data.data)) {
       throw new Error("Invalid chat history response format");
     }
