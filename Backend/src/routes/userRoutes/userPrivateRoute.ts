@@ -144,4 +144,10 @@ userPrivateRoute.get(
   authenticate,
   bookingController.getBookingData.bind(bookingController)
 );
+
+userPrivateRoute.get(
+  `/:userId/online-status`,
+  authenticate,
+  socketController.getUserOnlineStatus.bind(socketController) // Fixed typo
+);
 export default userPrivateRoute;

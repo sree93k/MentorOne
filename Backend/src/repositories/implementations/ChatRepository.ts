@@ -44,12 +44,33 @@ export default class ChatRepository {
     }
   }
 
+  // async findByUserAndRole(
+  //   userId: string,
+  //   role: "mentee" | "mentor"
+  // ): Promise<EChat[]> {
+  //   try {
+  //     console.log("CHAT REPOSITORY findByUserAndRole step 1");
+  //     const chats = await Chat.find({
+  //       "roles.userId": userId,
+  //       "roles.role": role,
+  //     })
+  //       .populate("users", "firstName lastName profilePicture")
+  //       .populate("latestMessage")
+  //       .sort({ updatedAt: -1 });
+  //     console.log("CHAT REPOSITORY findByUserAndRole step 2");
+
+  //     return chats as unknown as EChat[];
+  //   } catch (error: any) {
+  //     throw new ApiError(500, "Failed to find chats", error.message);
+  //   }
+  // }
   async findByUserAndRole(
     userId: string,
     role: "mentee" | "mentor"
   ): Promise<EChat[]> {
     try {
-      console.log("CHAT REPOSITORY findByUserAndRole step 1");
+      console.log("ChatRepository: findByUserAndRole start", { userId, role });
+
       const chats = await Chat.find({
         "roles.userId": userId,
         "roles.role": role,
@@ -57,14 +78,53 @@ export default class ChatRepository {
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage")
         .sort({ updatedAt: -1 });
-      console.log("CHAT REPOSITORY findByUserAndRole step 2");
 
-      return chats as unknown as EChat[];
+      console.log("ChatRepository: findByUserAndRole - Chats found", {
+        chatCount: chats.length,
+        chatIds: chats.map((chat) => chat._id.toString()),
+      });
+
+      // Map chats to include otherUserId
+      const enhancedChats = chats.map((chat) => {
+        // Find the other user's ID (opposite role)
+        const otherUserRole = role === "mentee" ? "mentor" : "mentee";
+        const otherUser = chat.roles.find((r) => r.role === otherUserRole);
+        const otherUserId = otherUser ? otherUser.userId.toString() : null;
+
+        console.log(
+          "ChatRepository: findByUserAndRole - Other user extracted",
+          {
+            chatId: chat._id.toString(),
+            userId,
+            role,
+            otherUserRole,
+            otherUserId,
+          }
+        );
+
+        return {
+          ...chat.toObject(),
+          otherUserId,
+        } as unknown as EChat;
+      });
+
+      console.log(
+        "ChatRepository: findByUserAndRole - Enhanced chats prepared",
+        {
+          chatCount: enhancedChats.length,
+        }
+      );
+
+      return enhancedChats;
     } catch (error: any) {
+      console.error("ChatRepository: findByUserAndRole error", {
+        userId,
+        role,
+        error: error.message,
+      });
       throw new ApiError(500, "Failed to find chats", error.message);
     }
   }
-
   async findByBookingId(bookingId: string): Promise<EChat | null> {
     try {
       console.log("CHAT REPOSITORY findByBookingId step 1");

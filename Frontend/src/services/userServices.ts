@@ -88,6 +88,8 @@ interface ChatUser {
   unread?: number;
   isOnline?: boolean;
   bookingStatus?: "pending" | "confirmed" | "completed";
+  isActive: boolean;
+  otherUserId?: string;
 }
 
 interface ChatHistoryResponse {
@@ -97,38 +99,95 @@ interface ChatHistoryResponse {
   success: boolean;
 }
 
+// export const getChatHistory = async (
+//   dashboard: string
+// ): Promise<ChatHistoryResponse> => {
+//   try {
+//     console.log(
+//       "CHATTTT1user service getChatHistory step 1, dashboard:",
+//       dashboard
+//     );
+//     const response = await api.get<ChatHistoryResponse>(
+//       `/user/${dashboard}/chat-history`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+//           "Content-Type": "application/json",
+//         },
+//       }
+//     );
+//     console.log(
+//       "CHATTT2user service getChatHistory step 2, response:",
+//       response
+//     );
+//     if (!response.data.data || !Array.isArray(response.data.data)) {
+//       throw new Error("Invalid chat history response format");
+//     }
+//     // Map response to ensure isOnline is included
+//     const updatedData = response.data.data.map((user) => ({
+//       ...user,
+//       isOnline: user.isOnline ?? false,
+//     }));
+//     return { ...response.data, data: updatedData };
+//   } catch (error: any) {
+//     console.error("Error fetching chat history:", error);
+//     throw new Error(
+//       error.response?.data?.error || "Failed to fetch chat history"
+//     );
+//   }
+// };
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
   try {
-    console.log(
-      "CHATTTT1user service getChatHistory step 1, dashboard:",
-      dashboard
-    );
+    console.log("userServices: getChatHistory start", { dashboard });
+
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      console.error("userServices: getChatHistory - No access token");
+      throw new Error("No access token found. Please log in again.");
+    }
+
     const response = await api.get<ChatHistoryResponse>(
       `/user/${dashboard}/chat-history`,
       {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }
     );
-    console.log(
-      "CHATTT2user service getChatHistory step 2, response:",
-      response
-    );
+
+    console.log("userServices: getChatHistory - API response", {
+      statusCode: response.data.statusCode,
+      dataCount: response.data.data.length,
+      message: response.data.message,
+    });
+
     if (!response.data.data || !Array.isArray(response.data.data)) {
+      console.error("userServices: getChatHistory - Invalid response format", {
+        data: response.data.data,
+      });
       throw new Error("Invalid chat history response format");
     }
-    // Map response to ensure isOnline is included
+
+    // Ensure isOnline is boolean
     const updatedData = response.data.data.map((user) => ({
       ...user,
       isOnline: user.isOnline ?? false,
     }));
+
+    console.log("userServices: getChatHistory - Data processed", {
+      userCount: updatedData.length,
+    });
+
     return { ...response.data, data: updatedData };
   } catch (error: any) {
-    console.error("Error fetching chat history:", error);
+    console.error("userServices: getChatHistory error", {
+      dashboard,
+      error: error.message || error,
+      responseError: error.response?.data?.error,
+    });
     throw new Error(
       error.response?.data?.error || "Failed to fetch chat history"
     );
@@ -480,5 +539,42 @@ export const sendMeetingNotification = async (
     throw new Error(
       error.response?.data?.message || "Failed to send meeting notification"
     );
+  }
+};
+
+interface OnlineStatusResponse {
+  statusCode: number;
+  data: { isOnline: boolean };
+  message: string;
+}
+
+export const checkUserOnlineStatus = async (
+  userId: string
+): Promise<boolean> => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+
+    const response = await api.get<OnlineStatusResponse>(
+      `/user/${userId}/online-status`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("checkUserOnlineStatus: API response", response.data);
+    if (response.data.statusCode !== 200) {
+      throw new Error(response.data.message || "Failed to check online status");
+    }
+
+    return response.data.data.isOnline;
+  } catch (error: any) {
+    console.error("checkUserOnlineStatus: Error", error.message || error);
+    throw error;
   }
 };
