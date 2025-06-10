@@ -99,43 +99,6 @@ interface ChatHistoryResponse {
   success: boolean;
 }
 
-// export const getChatHistory = async (
-//   dashboard: string
-// ): Promise<ChatHistoryResponse> => {
-//   try {
-//     console.log(
-//       "CHATTTT1user service getChatHistory step 1, dashboard:",
-//       dashboard
-//     );
-//     const response = await api.get<ChatHistoryResponse>(
-//       `/user/${dashboard}/chat-history`,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-//     console.log(
-//       "CHATTT2user service getChatHistory step 2, response:",
-//       response
-//     );
-//     if (!response.data.data || !Array.isArray(response.data.data)) {
-//       throw new Error("Invalid chat history response format");
-//     }
-//     // Map response to ensure isOnline is included
-//     const updatedData = response.data.data.map((user) => ({
-//       ...user,
-//       isOnline: user.isOnline ?? false,
-//     }));
-//     return { ...response.data, data: updatedData };
-//   } catch (error: any) {
-//     console.error("Error fetching chat history:", error);
-//     throw new Error(
-//       error.response?.data?.error || "Failed to fetch chat history"
-//     );
-//   }
-// };
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {

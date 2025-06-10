@@ -122,13 +122,13 @@ const AdminSidebar: React.FC = () => {
             active={activeItem === "Dashboard"}
             onClick={() => handleItemClick("Dashboard", "/admin/dashboard")}
           />
-          <SidebarItem
+          {/* <SidebarItem
             icon={Bell}
             text="Notifications"
             isExpanded={isExpanded}
             active={activeItem === "Notifications"}
             onClick={openNotification}
-          />
+          /> */}
           <SidebarItem
             icon={Users}
             text="Users"
