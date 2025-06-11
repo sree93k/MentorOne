@@ -7,7 +7,7 @@ export interface EMentor extends Document {
   selfIntro: string | null;
   shortIntro: string | null;
   displayName: string | null;
-  achievements: string[] | null;
+  achievements: string | null;
   services: ObjectId[] | null;
   linkedinURL: string | null;
   youtubeURL: string | null;

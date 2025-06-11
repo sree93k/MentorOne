@@ -25,13 +25,9 @@ const MentorSchema: Schema<EMentor> = new Schema(
       required: false,
     },
     achievements: {
-      type: [String],
+      type: String,
       required: false,
     },
-    // services: {
-    //   type: [{ type: Schema.Types.ObjectId, ref: "Services" }],
-    //   required: false,
-    // },
     linkedinURL: {
       type: String,
       required: false,

@@ -12,7 +12,7 @@ import { EService } from "../../entities/serviceEntity";
 export default class MentorRepository implements IMentorRepository {
   async createMentor(mentorData: EMentor): Promise<EMentor | null> {
     console.log("mentor repo statt 1", mentorData);
-    //const newMentor = await Mentor.create(mentorData);
+
     const newMentor = new Mentor(mentorData);
     await newMentor.save();
     console.log("mentor repo statt 2", newMentor);
@@ -27,23 +27,6 @@ export default class MentorRepository implements IMentorRepository {
     return response;
   }
 
-  // async updateField(
-  //   id: string,
-  //   field: string,
-  //   status: string
-  // ): Promise<EMentor | null> {
-  //   console.log("mentor repo updateMentorStatus step1", id, status);
-
-  //   const response = await Mentor.findByIdAndUpdate(
-  //     id,
-  //     {
-  //       $set: { [field]: status },
-  //     },
-  //     { new: true }
-  //   );
-  //   console.log("mentor repo updateMentorStatus repsonse", response);
-  //   return response;
-  // }
   async updateField(
     id: string,
     field: string,
@@ -144,7 +127,10 @@ export default class MentorRepository implements IMentorRepository {
 
   async update(id: string, data: any): Promise<EMentor> {
     try {
+      console.log("UPdate mentor rpsository step 1", id, data);
+
       const mentor = await Mentor.findByIdAndUpdate(id, data, { new: true });
+      console.log("UPdate mentor rpsository step 2", mentor);
       if (!mentor) {
         throw new ApiError(404, "Mentor not found");
       }

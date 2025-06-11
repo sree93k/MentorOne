@@ -293,6 +293,8 @@ import Mentees from "../../models/menteeModel";
 import Mentors from "../../models/mentorModel";
 import bcrypt from "bcryptjs";
 import * as Yup from "yup";
+import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
+import MentorRepository from "../../repositories/implementations/MentorRepository";
 
 // Define collection types
 type CollectionType = "user" | "mentee" | "mentor";
@@ -320,6 +322,7 @@ export default class UserService implements IUserService {
   private menteeBaseRepository: IBaseRepository<EMentee>;
   private mentorBaseRepository: IBaseRepository<EMentor>;
   private careerRepository: ICareerRepository;
+  private mentorRepository: IMentorRepository;
 
   constructor() {
     this.UserRepository = new UserRespository();
@@ -327,6 +330,7 @@ export default class UserService implements IUserService {
     this.menteeBaseRepository = new BaseRepositotry<EMentee>(Mentees);
     this.mentorBaseRepository = new BaseRepositotry<EMentor>(Mentors);
     this.careerRepository = new CareerRepository();
+    this.mentorRepository = new MentorRepository();
   }
 
   async findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null> {
@@ -369,6 +373,41 @@ export default class UserService implements IUserService {
         payload
       );
       let updateData: T | null = null;
+
+      const editableFields = [
+        "featuredArticle",
+        "portfolioURL",
+        "youTubeURL",
+        "linkedinURL",
+        "achievements",
+        "portfolio",
+      ];
+
+      if (editableFields.some((key) => key in payload)) {
+        console.log(
+          "Updating portfolio-related or achievements-related fields.step 1 "
+        );
+        const user = await this.userBaseRepository.findById(id);
+        console.log(
+          "Updating portfolio-related or achievements-related fields.step 2 "
+        );
+        const mentorId = user?.mentorId?.toString();
+        console.log(
+          "Updating portfolio-related or achievements-related fields.step 3 ",
+          mentorId
+        );
+        if (!mentorId) {
+          throw new Error("Mentor ID is undefined for this user.");
+        }
+        const updateMentor = await this.mentorRepository.update(
+          mentorId,
+          payload
+        );
+        console.log(
+          "Updating portfolio-related or achievements-related fields.step 4",
+          updateMentor
+        );
+      }
       if ("schoolDetails" in payload) {
         console.log("Payload has schoolDetails:step 1", payload.schoolDetails);
 
