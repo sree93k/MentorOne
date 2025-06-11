@@ -381,6 +381,7 @@ export default class UserService implements IUserService {
         "linkedinURL",
         "achievements",
         "portfolio",
+        "bio",
       ];
 
       if (editableFields.some((key) => key in payload)) {

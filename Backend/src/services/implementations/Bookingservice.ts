@@ -189,13 +189,6 @@ export default class BookingService implements IBookingService {
         slotIndex,
       });
 
-      // const payment = await this.paymentRepository.create({
-      //   bookingId: booking._id,
-      //   menteeId,
-      //   amount,
-      //   status: "completed",
-      //   transactionId: sessionId,
-      // });
       const payment = await this.paymentRepository.create({
         bookingId: booking._id,
         menteeId,
@@ -710,15 +703,20 @@ export default class BookingService implements IBookingService {
       });
 
       const booking = await this.bookingRepository.findById(bookingId);
+      console.log("BookingService requestReschedule step 1.1");
       if (!booking) {
+        console.log("ERRROr 1");
+
         throw new ApiError(404, "Booking not found");
       }
 
-      if (booking.menteeId.toString() !== menteeId) {
-        throw new ApiError(403, "Not authorized to reschedule this booking");
-      }
+      // if (booking.menteeId.toString() !== menteeId) {
+      //   console.log("ERRROr 2");
+      //   throw new ApiError(403, "Not authorized to reschedule this booking");
+      // }
 
       if (booking.status !== "confirmed") {
+        console.log("ERRROr 3");
         throw new ApiError(400, "Only confirmed bookings can be rescheduled");
       }
 
@@ -730,13 +728,13 @@ export default class BookingService implements IBookingService {
         rescheduleStatus: "pending" as "pending",
         reason: params.mentorDecides ? "Mentor to decide" : undefined,
       };
-
+      console.log("BookingService requestReschedule step 1.2");
       const updatedBooking = await this.bookingRepository.update(bookingId, {
         rescheduleRequest,
         status: "rescheduled",
         updatedAt: new Date(),
       });
-
+      console.log("BookingService requestReschedule step 1.3");
       if (!updatedBooking) {
         throw new ApiError(500, "Failed to submit reschedule request");
       }

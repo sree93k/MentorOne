@@ -203,7 +203,7 @@ export const updateStatus = async (bookingId: string, payload: any) => {
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    const response = await api.patch(
+    const response = await api.put(
       `/user/booking/${bookingId}/updatestatus`,
       payload,
       {

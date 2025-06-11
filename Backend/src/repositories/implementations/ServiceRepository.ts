@@ -209,4 +209,8 @@ export default class ServiceRepository implements IServiceRepository {
       .select("_id")
       .exec();
   }
+
+  async findServicesById(id: string): Promise<any> {
+    return await Service.findOne({ _id: id }).exec();
+  }
 }

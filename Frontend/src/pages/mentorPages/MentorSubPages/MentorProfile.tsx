@@ -358,11 +358,11 @@ const MentorProfile: React.FC = () => {
             lastName: data.lastName || "",
             phone: data.phone ? String(data.phone) : "",
             email: data.email || "",
-            bio: data.bio || "",
+            bio: data.mentorId?.bio || "",
             skills: data.skills || [],
             shortInfo: data.shortInfo || "",
             profilePicture: data.profilePicture || "",
-            achievements: data.achievements || "",
+            achievements: data.mentorId?.achievements || "",
             linkedinURL: data.mentorId?.linkedinURL || "",
             portfolioURL: data.mentorId?.portfolio || "",
             interestedNewCareer: data.mentorId?.interestedNewCareer || [],
@@ -1669,57 +1669,6 @@ const MentorProfile: React.FC = () => {
                     </Select>
                   </EditableField>
                   <EditableField
-                    label="End Year"
-                    field="professionalDetails.endDate"
-                    value={mentorData.professionalDetails.endDate}
-                    isEditing={
-                      editingMentorField === "professionalDetails.endDate"
-                    }
-                    onEdit={() =>
-                      setEditingMentorField("professionalDetails.endDate")
-                    }
-                    onSave={async () =>
-                      await handleMentorSave("professionalDetails", "endDate")
-                    }
-                    onCancel={() =>
-                      handleMentorCancel("professionalDetails", "endDate")
-                    }
-                    onChange={(value) =>
-                      handleMentorChange(
-                        "professionalDetails",
-                        "endDate",
-                        value
-                      )
-                    }
-                    error={formErrors["professionalDetails.endDate"]}
-                  >
-                    <Select
-                      value={mentorData.professionalDetails.endDate}
-                      onValueChange={(value) =>
-                        handleMentorChange(
-                          "professionalDetails",
-                          "endDate",
-                          value
-                        )
-                      }
-                      disabled={
-                        editingMentorField !== "professionalDetails.endDate" ||
-                        mentorData.professionalDetails.currentlyWorking
-                      }
-                    >
-                      <SelectTrigger className="bg-white">
-                        <SelectValue placeholder="Select Year" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white max-h-56 overflow-y-auto">
-                        {yearOptions.map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </EditableField>
-                  <EditableField
                     label="Currently Working"
                     field="professionalDetails.currentlyWorking"
                     value={mentorData.professionalDetails.currentlyWorking}
@@ -1775,6 +1724,57 @@ const MentorProfile: React.FC = () => {
                         Currently Working
                       </Label>
                     </div>
+                  </EditableField>
+                  <EditableField
+                    label="End Year"
+                    field="professionalDetails.endDate"
+                    value={mentorData.professionalDetails.endDate}
+                    isEditing={
+                      editingMentorField === "professionalDetails.endDate"
+                    }
+                    onEdit={() =>
+                      setEditingMentorField("professionalDetails.endDate")
+                    }
+                    onSave={async () =>
+                      await handleMentorSave("professionalDetails", "endDate")
+                    }
+                    onCancel={() =>
+                      handleMentorCancel("professionalDetails", "endDate")
+                    }
+                    onChange={(value) =>
+                      handleMentorChange(
+                        "professionalDetails",
+                        "endDate",
+                        value
+                      )
+                    }
+                    error={formErrors["professionalDetails.endDate"]}
+                  >
+                    <Select
+                      value={mentorData.professionalDetails.endDate}
+                      onValueChange={(value) =>
+                        handleMentorChange(
+                          "professionalDetails",
+                          "endDate",
+                          value
+                        )
+                      }
+                      disabled={
+                        editingMentorField !== "professionalDetails.endDate" ||
+                        mentorData.professionalDetails.currentlyWorking
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Year" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white max-h-56 overflow-y-auto">
+                        {yearOptions.map((year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </EditableField>
                 </>
               )}

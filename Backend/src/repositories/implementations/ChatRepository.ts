@@ -153,9 +153,9 @@ export default class ChatRepository {
         { new: true } // Return the updated document
       ).exec();
       console.log("Chatrepository updateByBookingId step 3 chat");
-      if (!chat) {
-        throw new ApiError(404, "Chat not found for the provided booking ID");
-      }
+      // if (!chat) {
+      //   throw new ApiError(404, "Chat not found for the provided booking ID");
+      // }
 
       return chat as EChat;
     } catch (error: any) {

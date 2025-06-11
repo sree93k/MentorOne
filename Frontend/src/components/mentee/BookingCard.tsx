@@ -103,18 +103,78 @@ const BookingCard = ({
 
     // Check if rescheduling is allowed based on reschedulePeriod
     const checkRescheduleEligibility = async () => {
+      // try {
+      //   const policy = await getMentorPolicy(booking.mentorId);
+      //   setMentorPolicy(policy);
+      //   console.log(
+      //     "bookif date and time ",
+      //     booking.date,
+      //     " and ",
+      //     booking.time
+      //   );
+
+      //   const bookedDateTime = new Date(`${booking.date} ${booking.time}`);
+      //   const currentTime = new Date(); // Current time: June 07, 2025, 09:55 PM IST
+      //   console.log("bookedDateTime >>>>>STEP 1", bookedDateTime);
+
+      //   let rescheduleDeadline = new Date(bookedDateTime);
+      //   console.log("bookedDateTime >>>>>STEP 2", rescheduleDeadline);
+      //   const { unit, value } = policy.reschedulePeriod || {
+      //     unit: "hours",
+      //     value: 0,
+      //   };
+      //   if (unit === "days") {
+      //     rescheduleDeadline.setDate(rescheduleDeadline.getDate() - value);
+      //   } else if (unit === "hours") {
+      //     rescheduleDeadline.setHours(rescheduleDeadline.getHours() - value);
+      //   } else if (unit === "minutes") {
+      //     rescheduleDeadline.setMinutes(
+      //       rescheduleDeadline.getMinutes() - value
+      //     );
+      //   }
+      //   console.log(
+      //     "setCanReschedule >>>>>>>>>>>",
+      //     currentTime,
+      //     "  and ",
+      //     rescheduleDeadline
+      //   );
+
+      //   setCanReschedule(currentTime <= rescheduleDeadline);
+      // } catch (error) {
+      //   console.error("Error checking reschedule eligibility:", error);
+      //   setCanReschedule(false);
+      // }
       try {
         const policy = await getMentorPolicy(booking.mentorId);
         setMentorPolicy(policy);
 
-        const bookedDateTime = new Date(`${booking.date} ${booking.time}`);
-        const currentTime = new Date(); // Current time: June 07, 2025, 09:55 PM IST
+        // Convert booking.date from DD/MM/YYYY to YYYY-MM-DD
+        const [day, month, year] = booking.date.split("/");
+        const formattedDate = `${year}-${month}-${day}`;
+
+        // Combine date and time
+        const bookedDateTime = new Date(`${formattedDate} ${booking.time}`);
+
+        if (isNaN(bookedDateTime.getTime())) {
+          console.error(
+            "Invalid date format:",
+            `${formattedDate} ${booking.time}`
+          );
+          setCanReschedule(false);
+          return;
+        }
+
+        const currentTime = new Date();
+        console.log("bookedDateTime >>>>> STEP 1", bookedDateTime);
 
         let rescheduleDeadline = new Date(bookedDateTime);
+        console.log("rescheduleDeadline >>>>> STEP 2", rescheduleDeadline);
+
         const { unit, value } = policy.reschedulePeriod || {
           unit: "hours",
           value: 0,
         };
+
         if (unit === "days") {
           rescheduleDeadline.setDate(rescheduleDeadline.getDate() - value);
         } else if (unit === "hours") {
@@ -124,6 +184,13 @@ const BookingCard = ({
             rescheduleDeadline.getMinutes() - value
           );
         }
+
+        console.log(
+          "setCanReschedule >>>>>>>>>>>",
+          currentTime,
+          " and ",
+          rescheduleDeadline
+        );
 
         setCanReschedule(currentTime <= rescheduleDeadline);
       } catch (error) {
@@ -266,10 +333,10 @@ const BookingCard = ({
     return (
       <div
         className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium flex items-center ${
-          statusStyles[booking.status.toLowerCase()]
+          statusStyles[booking?.status?.toLowerCase()]
         }`}
       >
-        {statusIcons[booking.status.toLowerCase()]}
+        {statusIcons[booking?.status?.toLowerCase()]}
         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
       </div>
     );
