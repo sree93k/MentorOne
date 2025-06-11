@@ -52,8 +52,7 @@ const profileSchema = Yup.object().shape({
   shortInfo: Yup.string().optional(),
   achievements: Yup.string()
     .required("achievements is required")
-    .min(2, "Too short")
-    .matches(/^[A-Za-z]+$/, "Last name must contain only letters"),
+    .min(2, "Too short"),
   linkedinURL: Yup.string().url("Invalid URL").nullable().optional(),
   portfolioURL: Yup.string().url("Invalid URL").nullable().optional(),
   interestedNewCareer: Yup.array()
