@@ -73,7 +73,7 @@ const MenteePage = () => {
       <Footer />
 
       {/* Render the ChatbotWidget here, outside the main content flow but within the page's root div */}
-      <ChatbotWidget />
+      {/* <ChatbotWidget /> */}
     </div>
   );
 };

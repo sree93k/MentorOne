@@ -83,6 +83,12 @@ const RescheduleModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      console.log("open the modal ");
+      console.log("bookingId", bookingId);
+      console.log("serviceSlot", serviceSlot);
+      console.log("mentorId", mentorId);
+      console.log("refreshBookings", refreshBookings);
+
       fetchScheduleAndBlockedDates();
     }
   }, [isOpen]);
@@ -99,6 +105,8 @@ const RescheduleModal = ({
 
   const fetchScheduleAndBlockedDates = async () => {
     try {
+      console.log("AAAAAAAAAAAAAAAAAAA");
+
       setLoading(true);
       if (!serviceSlot) {
         console.error(
@@ -108,11 +116,14 @@ const RescheduleModal = ({
         return;
       }
 
+      console.log("TTTTTTTTTTTTTTT  serviceSlot.....", serviceSlot);
+      console.log("TTTTTTTTTTTTTTT  mentorId.....", mentorId);
       const [schedules, fetchedBlockedDates] = await Promise.all([
         getMentorSchedule(serviceSlot),
         getMentorBlockedDates(mentorId),
       ]);
-
+      console.log("TTTTTTTTTTTTTTT  schdules.....", schedules);
+      console.log("TTTTTTTTTTTTTTT  blocked dates .....", fetchedBlockedDates);
       const blockedDateSet = new Set(
         fetchedBlockedDates
           .filter((bd: BlockedDate) => bd.type === "blocked")
@@ -298,7 +309,7 @@ const RescheduleModal = ({
             </div>
           ) : (
             <>
-              <div className="flex items-center space-x-2 mb-6 bg-white p-3 rounded-lg shadow-sm">
+              {/* <div className="flex items-center space-x-2 mb-6 bg-white p-3 rounded-lg shadow-sm">
                 <Switch
                   id="mentor-decides"
                   checked={mentorDecides}
@@ -321,7 +332,7 @@ const RescheduleModal = ({
                 >
                   Let Mentor Decide
                 </Label>
-              </div>
+              </div> */}
 
               {!mentorDecides && (
                 <>

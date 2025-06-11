@@ -468,7 +468,8 @@ export default class UserRepository implements IUserRepository {
         // })
         .populate({
           path: "mentorId",
-          select: "bio skills isApproved topTestimonials",
+          select:
+            "bio skills isApproved topTestimonials portfolio linkedinURL featuredArticle",
           populate: {
             path: "topTestimonials",
             model: "Testimonial",
@@ -585,6 +586,9 @@ export default class UserRepository implements IUserRepository {
         services: services,
         education: Object.keys(education).length ? education : undefined,
         workExperience,
+        linkedinURL: mentor?.mentorId?.linkedinURL,
+        portfolio: mentor?.mentorId?.portfolio,
+        featuredArticle: mentor?.mentorId?.featuredArticle,
       };
     } catch (error: any) {
       console.error("getMentorById repo step 5: Error", {

@@ -547,6 +547,8 @@ class menteeController {
       if (!id) {
         throw new ApiError(400, "Mentor ID is required");
       }
+      console.log("Mnetee contoller getMentorSchedule step 1", id);
+
       const schedule = await this.MentorProfileService.getMentorSchedule(id);
       if (!schedule) {
         throw new ApiError(404, "Schedule not found for this mentor");
