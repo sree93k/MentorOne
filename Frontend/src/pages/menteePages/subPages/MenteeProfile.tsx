@@ -6,108 +6,84 @@ import {
   Pencil,
   UploadIcon,
   Loader2,
-  HardDriveUpload,
   EyeIcon,
   EyeOffIcon,
+  XIcon,
+  CircleCheckBig,
+  SearchIcon,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { updateUserProfile } from "@/services/userServices";
+import { updateUserProfile, updateUserPassword } from "@/services/userServices";
 import { uploadProfileImage } from "@/services/uploadService";
 import { toast } from "react-hot-toast";
-import { XIcon, SearchIcon } from "lucide-react";
-import { updateUserPassword } from "@/services/userServices";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import * as Yup from "yup";
 import { userProfileData } from "@/services/menteeService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import { CircleCheckBig, Ban, CircleDashed } from "lucide-react";
-
-// Define the EditableField component props
-interface EditableFieldProps {
-  label: string;
-  field: string;
-  value: string;
-  workAs: string;
-  onEdit: () => void;
-  isEditing?: boolean;
-  onSave?: () => void;
-  onCancel?: () => void;
-  onChange?: (value: string) => void;
-  type?: string;
-}
-
-// Yup validation schema for profile fields
 const profileSchema = Yup.object().shape({
   firstName: Yup.string()
     .required("First name is required")
     .min(2, "Too short")
-    .matches(
-      /^[A-Za-z]+$/,
-      "First name must contain only letters (no spaces or numbers)"
-    )
-    .test(
-      "no-whitespace",
-      "First name cannot be empty or whitespace",
-      (value) => value?.trim().length !== 0
-    ),
+    .matches(/^[A-Za-z]+$/, "First name must contain only letters"),
   lastName: Yup.string()
     .required("Last name is required")
     .min(2, "Too short")
-    .matches(
-      /^[A-Za-z]+$/,
-      "Last name must contain only letters (no spaces or numbers)"
-    )
-    .test(
-      "no-whitespace",
-      "Last name cannot be empty or whitespace",
-      (value) => value?.trim().length !== 0
-    ),
+    .matches(/^[A-Za-z]+$/, "Last name must contain only letters"),
   phone: Yup.string()
     .matches(/^\d{10}$/, "Phone number must be 10 digits")
     .required("Phone number is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-  workAs: Yup.string().optional(),
-  course: Yup.string().when("workAs", {
-    is: (val: string) => ["college", "fresher"].includes(val),
-    then: (schema) => schema.required("Course is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  college: Yup.string().when("workAs", {
-    is: (val: string) => ["college", "fresher"].includes(val),
-    then: (schema) => schema.required("College is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  courseStart: Yup.string().when("workAs", {
-    is: (val: string) => ["college", "fresher"].includes(val),
-    then: (schema) => schema.required("Start date is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  courseEnd: Yup.string().when("workAs", {
-    is: (val: string) => ["college", "fresher"].includes(val),
-    then: (schema) => schema.required("End date is required"),
-    otherwise: (schema) => schema.optional(),
-  }),
-  city: Yup.string().required("City is required"),
   bio: Yup.string().max(500, "Bio must be 500 characters or less").optional(),
-  schoolName: Yup.string().optional(),
-  class: Yup.string().optional(),
-  jobRole: Yup.string().optional(),
-  company: Yup.string().optional(),
-  totalExperience: Yup.string().optional(),
-  startYear: Yup.string().optional(),
-  endYear: Yup.string().optional(),
-  achievements: Yup.string().optional(),
-  linkedinUrl: Yup.string().url("Invalid URL").nullable().optional(),
-  portfolioUrl: Yup.string().url("Invalid URL").nullable().optional(),
-  interestedNewCareer: Yup.string().optional(),
-  featuredArticle: Yup.string().optional(),
-  mentorMotivation: Yup.string().optional(),
-  shortInfo: Yup.string().optional(),
   skills: Yup.array().of(Yup.string()).optional(),
+});
+
+const schoolDetailsSchema = Yup.object().shape({
+  schoolName: Yup.string().required("School name is required"),
+  class: Yup.string().required("Class is required"),
+  city: Yup.string().required("City is required"),
+  startDate: Yup.string().required("Start year is required"),
+  endDate: Yup.string().required("End year is required"),
+  userType: Yup.string()
+    .oneOf(["school"], "Invalid user type")
+    .required("User type is required"),
+});
+
+const collegeDetailsSchema = Yup.object().shape({
+  collegeName: Yup.string().required("College name is required"),
+  course: Yup.string().required("Course is required"),
+  specializedIn: Yup.string().optional(),
+  city: Yup.string().required("City is required"),
+  startDate: Yup.string().required("Start year is required"),
+  endDate: Yup.string().required("End year is required"),
+  userType: Yup.string()
+    .oneOf(["college", "fresher"], "Invalid user type")
+    .required("User type is required"),
+});
+
+const professionalDetailsSchema = Yup.object().shape({
+  jobRole: Yup.string().required("Job role is required"),
+  company: Yup.string().required("Company is required"),
+  experience: Yup.string().required("Experience is required"),
+  city: Yup.string().required("City is required"),
+  startDate: Yup.string().required("Start year is required"),
+  endDate: Yup.string().optional(),
+  currentlyWorking: Yup.bool(),
+  userType: Yup.string()
+    .oneOf(["professional"], "Invalid user type")
+    .required("User type is required"),
 });
 
 const passwordSchema = Yup.object().shape({
@@ -131,80 +107,118 @@ const passwordSchema = Yup.object().shape({
     .required("Please confirm your new password"),
 });
 
-// EditableField component
+interface EditableFieldProps {
+  label: string;
+  field: string;
+  value: string;
+  onChange: (value: string) => void;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: () => Promise<void>;
+  onCancel: () => void;
+  type?: string;
+  error?: string;
+  children?: React.ReactNode;
+}
+
 const EditableField: React.FC<EditableFieldProps> = ({
   label,
   field,
   value,
-  workAs,
+  onChange,
+  isEditing,
   onEdit,
-  isEditing = false,
   onSave,
   onCancel,
-  onChange,
   type = "text",
+  error,
+  children,
 }) => {
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSaveWithValidation = async () => {
-    try {
-      await profileSchema.validateAt(field, {
-        [field]: value,
-        workAs: workAs,
-      });
-      setError(null);
-      onSave?.();
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        setError(err.message);
-      } else {
-        console.error(err);
-      }
-    }
-  };
-
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-2">
-        <label className="text-sm font-medium">{label}</label>
+        <Label>{label}</Label>
         {!isEditing ? (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onEdit}
-            className="text-sm text-black hover:underline"
+            className="text-black hover:underline"
           >
             Edit
-          </button>
+          </Button>
         ) : (
           <div className="flex gap-2">
-            <button
-              onClick={handleSaveWithValidation}
-              className="text-sm text-green-600 hover:underline"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSave}
+              className="text-green-600 hover:underline"
             >
               Save
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onCancel}
-              className="text-sm text-red-600 hover:underline"
+              className="text-red-600 hover:underline"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         )}
       </div>
-      <Input
-        type={type}
-        value={value}
-        onChange={(e) => onChange && onChange(e.target.value)}
-        readOnly={!isEditing}
-        className="w-full bg-white"
-      />
+      {children ? (
+        <div>{children}</div>
+      ) : (
+        <Input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          readOnly={!isEditing}
+          className="bg-white"
+        />
+      )}
       {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
     </div>
   );
 };
 
-// Main MenteeProfile component
+const initialMenteeData = {
+  schoolDetails: {
+    schoolName: "",
+    class: "",
+    city: "",
+    startDate: "",
+    endDate: "",
+    userType: "school",
+  },
+  collegeDetails: {
+    collegeName: "",
+    course: "",
+    specializedIn: "",
+    city: "",
+    startDate: "",
+    endDate: "",
+    userType: "college",
+  },
+  professionalDetails: {
+    jobRole: "",
+    company: "",
+    experience: "",
+    city: "",
+    startDate: "",
+    endDate: "",
+    currentlyWorking: false,
+    userType: "professional",
+  },
+};
+
 const MenteeProfile: React.FC = () => {
+  const dispatch = useDispatch();
+  const { user, error, loading } = useSelector(
+    (state: RootState) => state.user
+  );
   const [activeTab, setActiveTab] = useState("overview");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -213,7 +227,6 @@ const MenteeProfile: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState("");
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -221,12 +234,26 @@ const MenteeProfile: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [originalValues, setOriginalValues] = useState<{
     [key: string]: string;
   }>({});
-  const dispatch = useDispatch();
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isFormValid, setIsFormValid] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    bio: "",
+    skills: [] as string[],
+
+    profilePicture: "",
+  });
+  const [menteeData, setMenteeData] = useState(initialMenteeData);
+  const [originalMenteeData, setOriginalMenteeData] =
+    useState(initialMenteeData);
+  const [editingMenteeField, setEditingMenteeField] = useState<string | null>(
+    null
+  );
 
   const presetSkills = [
     "Javascript",
@@ -241,47 +268,17 @@ const MenteeProfile: React.FC = () => {
     "Docker",
   ];
 
-  const { user, error, loading, isAuthenticated } = useSelector(
-    (state: RootState) => state.user
+  // Year options for dropdowns
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 21 }, (_, i) =>
+    (currentYear - 20 + i).toString()
   );
 
-  const [profileData, setProfileData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    workAs: "",
-    course: "",
-    college: "",
-    courseStart: "",
-    courseEnd: "",
-    city: "",
-    bio: "",
-    schoolName: "",
-    class: "",
-    jobRole: "",
-    company: "",
-    profilePicture: "",
-    totalExperience: "",
-    startYear: "",
-    endYear: "",
-    achievements: "",
-    linkedinUrl: "",
-    youtubeUrl: "",
-    portfolioUrl: "",
-    interestedNewCareer: "",
-    featuredArticle: "",
-    mentorMotivation: "",
-    shortInfo: "",
-    skills: [] as string[],
-  });
   useEffect(() => {
     const fetchUserData = async () => {
       dispatch(setLoading(true));
-      dispatch(setError(null));
       try {
         const response = await userProfileData();
-        console.log("<<<<<<<<<Mnteeee response data<<<<<<<<<<<<", response);
         if (response) {
           dispatch(setUser(response));
         } else {
@@ -296,7 +293,6 @@ const MenteeProfile: React.FC = () => {
     fetchUserData();
   }, [dispatch]);
 
-  // Sync profileData with Redux user state
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -304,69 +300,73 @@ const MenteeProfile: React.FC = () => {
         lastName: user.lastName || "",
         phone: user.phone ? String(user.phone) : "",
         email: user.email || "",
-        workAs: user?.collegeDetails?.userType || "",
-        course: user?.collegeDetails?.course || "",
-        college: user?.collegeDetails?.collegeName || "",
-        courseStart: user?.collegeDetails?.startDate?.slice(0, 10) || "",
-        courseEnd: user?.collegeDetails?.endDate?.slice(0, 10) || "",
-        city: user?.collegeDetails?.city || "",
-        bio: user?.mentorId?.bio || "",
-        schoolName: "",
-        class: "",
-        jobRole: "",
-        company: "",
-        totalExperience: "",
-        startYear: "",
-        endYear: "",
-        achievements: user?.mentorId?.achievements?.[0] || "",
-        linkedinUrl: "",
-        youtubeUrl: "",
-        portfolioUrl: user?.mentorId?.portfolio || "",
-        interestedNewCareer: user?.menteeId?.interestedNewcareer?.[0] || "",
-        featuredArticle: user?.mentorId?.featuredArticle || "",
-        mentorMotivation: user?.mentorId?.mentorMotivation || "",
-        shortInfo: user?.mentorId?.shortInfo || "",
-        skills: user?.skills || [],
-        profilePicture: user?.profilePicture || "",
+        bio: user.bio || "",
+        skills: user.skills || [],
+
+        profilePicture: user.profilePicture || "",
+      });
+      setMenteeData({
+        schoolDetails: {
+          schoolName: user.schoolDetails?.schoolName || "",
+          class: user.schoolDetails?.class?.toString() || "", // Ensure string
+          city: user.schoolDetails?.city || "",
+          startDate: user.schoolDetails?.startDate?.slice(0, 4) || "",
+          endDate: user.schoolDetails?.endDate?.slice(0, 4) || "",
+          userType: user.schoolDetails?.userType || "school",
+        },
+        collegeDetails: {
+          collegeName: user.collegeDetails?.collegeName || "",
+          course: user.collegeDetails?.course || "",
+          specializedIn: user.collegeDetails?.specializedIn || "",
+          city: user.collegeDetails?.city || "",
+          startDate: user.collegeDetails?.startDate?.slice(0, 4) || "",
+          endDate: user.collegeDetails?.endDate?.slice(0, 4) || "",
+          userType: user.collegeDetails?.userType || "college",
+        },
+        professionalDetails: {
+          jobRole: user.professionalDetails?.jobRole || "",
+          company: user.professionalDetails?.company || "",
+          experience: user.professionalDetails?.experience || "",
+          city: user.professionalDetails?.city || "",
+          startDate: user.professionalDetails?.startDate?.slice(0, 4) || "",
+          endDate: user.professionalDetails?.endDate?.slice(0, 4) || "",
+          currentlyWorking: user.professionalDetails?.currentlyWorking || false,
+          userType: user.professionalDetails?.userType || "professional",
+        },
+      });
+      setOriginalMenteeData({
+        schoolDetails: {
+          schoolName: user.schoolDetails?.schoolName || "",
+          class: user.schoolDetails?.class?.toString() || "",
+          city: user.schoolDetails?.city || "",
+          startDate: user.schoolDetails?.startDate?.slice(0, 4) || "",
+          endDate: user.schoolDetails?.endDate?.slice(0, 4) || "",
+          userType: user.schoolDetails?.userType || "school",
+        },
+        collegeDetails: {
+          collegeName: user.collegeDetails?.collegeName || "",
+          course: user.collegeDetails?.course || "",
+          specializedIn: user.collegeDetails?.specializedIn || "",
+          city: user.collegeDetails?.city || "",
+          startDate: user.collegeDetails?.startDate?.slice(0, 4) || "",
+          endDate: user.collegeDetails?.endDate?.slice(0, 4) || "",
+          userType: user.collegeDetails?.userType || "college",
+        },
+        professionalDetails: {
+          jobRole: user.professionalDetails?.jobRole || "",
+          company: user.professionalDetails?.company || "",
+          experience: user.professionalDetails?.experience || "",
+          city: user.professionalDetails?.city || "",
+          startDate: user.professionalDetails?.startDate?.slice(0, 4) || "",
+          endDate: user.professionalDetails?.endDate?.slice(0, 4) || "",
+          currentlyWorking: user.professionalDetails?.currentlyWorking || false,
+          userType: user.professionalDetails?.userType || "professional",
+        },
       });
       setPreviewUrl(user.profilePicture || null);
     }
   }, [user]);
 
-  // Update preview URL when profile picture changes
-  useEffect(() => {
-    if (user && user.profilePicture && !selectedFile) {
-      setPreviewUrl(user.profilePicture);
-    }
-  }, [user, selectedFile]);
-
-  useEffect(() => {
-    const validate = async () => {
-      try {
-        await passwordSchema.validate(
-          {
-            currentPassword,
-            newPassword,
-            confirmPassword,
-          },
-          { abortEarly: false }
-        );
-        setErrors({});
-        setIsFormValid(true);
-      } catch (validationErrors: any) {
-        const errorObj: Record<string, string> = {};
-        validationErrors.inner.forEach((err: any) => {
-          errorObj[err.path] = err.message;
-        });
-        setErrors(errorObj);
-        setIsFormValid(false);
-      }
-    };
-
-    validate();
-  }, [currentPassword, newPassword, confirmPassword]);
-
-  // Handle image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -381,7 +381,6 @@ const MenteeProfile: React.FC = () => {
     }
   };
 
-  // Save uploaded image to backend
   const handleImageSave = async () => {
     if (!selectedFile) {
       toast.error("No image selected to upload");
@@ -391,23 +390,11 @@ const MenteeProfile: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
-      console.log("FormData entries:", [...formData.entries()]);
-      console.log("mentee rpofile poage formdata image", formData);
-
       const response = await uploadProfileImage(formData);
-      console.log("response of image uplaodi us ", response);
-
-      const newProfilePictureUrl = response.profilePicture;
-      if (newProfilePictureUrl) {
-        setPreviewUrl(newProfilePictureUrl);
-        setProfileData((prev) => ({
-          ...prev,
-          profilePicture: newProfilePictureUrl,
-        }));
-      }
-      toast.success("Profile image uploaded successfully");
       dispatch(setUser(response.data.data));
       setSelectedFile(null);
+      setPreviewUrl(response.data.data.profilePicture);
+      toast.success("Profile image uploaded successfully");
     } catch (error) {
       toast.error("Failed to upload image");
       console.error(error);
@@ -416,66 +403,105 @@ const MenteeProfile: React.FC = () => {
     }
   };
 
-  // Update profile field and send to backend
-  const updateProfileField = async (
-    field: string,
-    value: string | string[]
-  ) => {
+  const updateProfileField = async (field: string, value: any) => {
     try {
-      await profileSchema.validateAt(field, {
-        [field]: value,
-        workAs: profileData.workAs,
-      });
-      let payload = {};
-      if (
-        [
-          "workAs",
-          "course",
-          "college",
-          "city",
-          "courseStart",
-          "courseEnd",
-        ].includes(field)
-      ) {
-        payload = { collegeDetails: { [field]: value } };
-      } else if (
-        [
-          "bio",
-          "achievements",
-          "portfolioUrl",
-          "featuredArticle",
-          "mentorMotivation",
-          "shortInfo",
-          "skills",
-        ].includes(field)
-      ) {
-        // payload = { mentorId: { [field]: value } };
-        payload = { [field]: value };
-      } else if (field === "interestedNewCareer") {
-        payload = {
-          menteeId: {
-            interestedNewcareer: Array.isArray(value) ? value : [value],
-          },
-        };
-      } else {
-        payload = { [field]: value };
-      }
-      const updateData = await updateUserProfile(payload);
-      console.log("user data receievd>>>", updateData);
-
+      await profileSchema.validateAt(field, { [field]: value });
+      const payload = { [field]: value };
+      const updatedUser = await updateUserProfile(payload);
+      dispatch(setUser(updatedUser));
       setProfileData((prev) => ({ ...prev, [field]: value }));
-      dispatch(setUser(updateData));
-      console.log("redux user updatd is >>>>>>>>>>>>>>>", user);
-
+      setEditingField(null); // Reset editing state
       toast.success(`${field} updated successfully`);
     } catch (error) {
       if (error instanceof Yup.ValidationError) {
+        setFormErrors({ [field]: error.message });
         toast.error(error.message);
       } else {
         toast.error(`Failed to update ${field}`);
         console.error(error);
       }
     }
+  };
+
+  const handleMenteeChange = (
+    section: "schoolDetails" | "collegeDetails" | "professionalDetails",
+    field: string,
+    value: any
+  ) => {
+    setMenteeData((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value,
+      },
+    }));
+    setFormErrors((prev) => ({ ...prev, [`${section}.${field}`]: "" }));
+  };
+
+  const validateMenteeField = async (
+    section: "schoolDetails" | "collegeDetails" | "professionalDetails",
+    field: string,
+    value: any
+  ) => {
+    try {
+      const sectionData = menteeData[section];
+      const schema =
+        section === "schoolDetails"
+          ? schoolDetailsSchema
+          : section === "collegeDetails"
+          ? collegeDetailsSchema
+          : professionalDetailsSchema;
+      await schema.validateAt(field, sectionData);
+      return { isValid: true, error: "" };
+    } catch (error) {
+      if (error instanceof Yup.ValidationError) {
+        return { isValid: false, error: error.message };
+      }
+      throw error;
+    }
+  };
+
+  const handleMenteeSave = async (
+    section: "schoolDetails" | "collegeDetails" | "professionalDetails",
+    field: string
+  ) => {
+    try {
+      const value = menteeData[section][field];
+      const validation = await validateMenteeField(section, field, value);
+      if (!validation.isValid) {
+        setFormErrors({ [`${section}.${field}`]: validation.error });
+        toast.error(validation.error);
+        return;
+      }
+
+      const payload = {
+        [section]: { [field]: value },
+      };
+      const updatedUser = await updateUserProfile(payload);
+      dispatch(setUser(updatedUser));
+      setEditingMenteeField(null);
+      setOriginalMenteeData(menteeData); // Update original data
+      setFormErrors({});
+      toast.success(`${field} updated successfully`);
+    } catch (error) {
+      toast.error(`Failed to update ${field}`);
+      console.error(error);
+    }
+  };
+
+  const handleMenteeCancel = (
+    section: "schoolDetails" | "collegeDetails" | "professionalDetails",
+    field: string
+  ) => {
+    setMenteeData((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: originalMenteeData[section][field],
+      },
+    }));
+    setFormErrors({});
+    setEditingMenteeField(null);
   };
 
   // Handle edit button click
@@ -508,7 +534,6 @@ const MenteeProfile: React.FC = () => {
     }
     setEditingField(null);
   };
-
   // Add a skill
   const addSkill = (skill: string) => {
     if (skill && !profileData.skills.includes(skill)) {
@@ -532,64 +557,30 @@ const MenteeProfile: React.FC = () => {
       !profileData.skills.includes(skill)
   );
 
-  // Generate year options for dropdowns
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 21 }, (_, i) =>
-    (currentYear - 20 + i).toString()
-  );
-
   const handlePasswordUpdate = async () => {
     try {
       await passwordSchema.validate(
         { currentPassword, newPassword, confirmPassword },
         { abortEarly: false }
       );
-
       setIsPasswordUpdating(true);
-
       const response = await updateUserPassword(currentPassword, newPassword);
-      if (response && response?.status === 200) {
+      if (response?.status === 200) {
         toast.success(response.data.message);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-        setShowCurrentPassword(false);
-        setShowNewPassword(false);
-        setShowConfirmPassword(false);
         setEditingField(null);
       } else {
         toast.error(response.message);
       }
-    } catch (error: any) {
-      if (error.name === "ValidationError") {
-        error.inner.forEach((err: any) => {
-          setError(err.message);
-          toast.error(err.message);
-        });
-      } else {
-        toast.error("An error occurred while updating password");
-        console.error(error);
-      }
+    } catch (error) {
+      toast.error("Failed to update password");
+      console.error(error);
     } finally {
       setIsPasswordUpdating(false);
     }
   };
-
-  // const handleDeleteAccount = async () => {
-  //   try {
-  //     const response = await deleteUserAccount();
-  //     if (response && response.status === 200) {
-  //       toast.success("Account deleted successfully");
-  //       // Redirect to login page
-  //       window.location.href = "/login";
-  //     } else {
-  //       toast.error("Failed to delete account");
-  //     }
-  //   } catch (error) {
-  //     toast.error("An error occurred while deleting account");
-  //     console.error(error);
-  //   }
-  // };
 
   return (
     <div className="flex-1 px-24">
@@ -650,44 +641,8 @@ const MenteeProfile: React.FC = () => {
             <h2 className="text-3xl font-bold mb-1">
               {user?.firstName} {user?.lastName}
             </h2>
-            {/* Short Info Editing */}
-            <div className="mt-2">
-              {/* {editingField === "shortInfo" ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={profileData.shortInfo}
-                    placeholder="Enter Short Info"
-                    onChange={(e) =>
-                      setProfileData((prev) => ({
-                        ...prev,
-                        shortInfo: e.target.value,
-                      }))
-                    }
-                    className="w-full text-sm text-gray-300"
-                  />
-                  <button
-                    onClick={() =>
-                      handleSave("shortInfo", profileData.shortInfo)
-                    }
-                    className="bg-blue-500 text-white px-2 py-1 rounded-full text-sm"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <div className="flex justify-between items-start">
-                  <p className="text-gray-300 text-sm">
-                    {profileData.shortInfo}
-                  </p>
-                  <button
-                    onClick={() => handleEdit("shortInfo")}
-                    className="ml-2 bg-green-500 p-1 rounded-full"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                </div>
-              )} */}
-            </div>
+
+            <div className="mt-2"></div>
             {/* Skills Editing */}
             <div className="mt-2">
               {editingField === "skills" ? (
@@ -770,25 +725,7 @@ const MenteeProfile: React.FC = () => {
           </div>
         </div>
       </div>
-      {/*
-      Loading Modal for Image Upload
-      <Dialog open={isUploading} onOpenChange={setIsUploading}>
-        <DialogContent className="sm:max-w-[425px]">
-          <div className="flex flex-col items-center justify-center p-6">
-            <img
-              src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif"
-              alt="Uploading Animation"
-              className="w-32 h-32 mb-4"
-            />
-            <p className="text-lg font-semibold">Uploading your image...</p>
-            <p className="text-sm text-gray-500">
-              Please wait while this cat dances for you!
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog> */}
 
-      {/* Tabs Section */}
       <div className="bg-white rounded-b-xl p-24 min-h-screen">
         <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
           <Tabs.List className="flex gap-8 border-b mb-8">
@@ -808,668 +745,779 @@ const MenteeProfile: React.FC = () => {
             >
               As Mentee
             </Tabs.Trigger>
-            <Tabs.Trigger
-              value="experience"
-              className={`pb-4 ${
-                activeTab === "experience" ? "border-b-2 border-black" : ""
-              }`}
-            >
-              More
-            </Tabs.Trigger>
           </Tabs.List>
 
-          {/* Tab 1: Overview */}
           <Tabs.Content value="overview">
             <div className="max-w-2xl">
               <div className="pb-6">
-                <label htmlFor="" className="text-sm bold py-3 font-medium">
-                  Email
-                </label>
+                <Label className="text-sm font-medium">Email</Label>
                 <div className="flex items-center">
-                  <p className="px-4  text-sm text-green-600">
+                  <p className="px-4 text-sm text-green-600">
                     {profileData.email}
                   </p>
-                  <CircleCheckBig
-                    size={22}
-                    color="#198041"
-                    strokeWidth={1.75}
-                  />
+                  <CircleCheckBig size={22} color="#198041" />
                 </div>
               </div>
-
               <EditableField
                 label="First Name"
                 field="firstName"
                 value={profileData.firstName}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("firstName")}
                 isEditing={editingField === "firstName"}
-                onSave={() => handleSave("firstName", profileData.firstName)}
-                onCancel={() => handleCancel("firstName")}
+                onEdit={() => setEditingField("firstName")}
+                onSave={async () =>
+                  await updateProfileField("firstName", profileData.firstName)
+                }
+                onCancel={() => setEditingField(null)}
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, firstName: value }))
                 }
+                error={formErrors.firstName}
               />
               <EditableField
                 label="Last Name"
                 field="lastName"
                 value={profileData.lastName}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("lastName")}
                 isEditing={editingField === "lastName"}
-                onSave={() => handleSave("lastName", profileData.lastName)}
-                onCancel={() => handleCancel("lastName")}
+                onEdit={() => setEditingField("lastName")}
+                onSave={async () =>
+                  await updateProfileField("lastName", profileData.lastName)
+                }
+                onCancel={() => setEditingField(null)}
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, lastName: value }))
                 }
+                error={formErrors.lastName}
               />
               <EditableField
                 label="Phone"
                 field="phone"
                 value={profileData.phone}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("phone")}
                 isEditing={editingField === "phone"}
-                onSave={() => handleSave("phone", profileData.phone)}
-                onCancel={() => handleCancel("phone")}
-                type="tel"
+                onEdit={() => setEditingField("phone")}
+                onSave={async () =>
+                  await updateProfileField("phone", profileData.phone)
+                }
+                onCancel={() => setEditingField(null)}
                 onChange={(value) =>
                   setProfileData((prev) => ({ ...prev, phone: value }))
                 }
+                type="tel"
+                error={formErrors.phone}
               />
               {editingField === "password" ? (
                 <div className="mb-6">
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-medium">Password</label>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="relative">
-                        <Input
-                          type={showCurrentPassword ? "text" : "password"}
-                          placeholder="Current Password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          className="w-full"
-                        />
-                        {errors.currentPassword && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.currentPassword}
-                          </p>
+                  <Label className="text-sm font-medium">Password</Label>
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Input
+                        type={showCurrentPassword ? "text" : "password"}
+                        placeholder="Current Password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
+                        className="absolute right-2 top-2.5"
+                      >
+                        {showCurrentPassword ? (
+                          <EyeOffIcon size={16} />
+                        ) : (
+                          <EyeIcon size={16} />
                         )}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowCurrentPassword(!showCurrentPassword)
-                          }
-                          className="absolute right-2 top-2.5"
-                        >
-                          {showCurrentPassword ? (
-                            <EyeOffIcon className="h-4 w-4" />
-                          ) : (
-                            <EyeIcon className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          type={showNewPassword ? "text" : "password"}
-                          placeholder="New Password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-2 top-2.5"
-                        >
-                          {showNewPassword ? (
-                            <EyeOffIcon className="h-4 w-4" />
-                          ) : (
-                            <EyeIcon className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm Password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowConfirmPassword(!showConfirmPassword)
-                          }
-                          className="absolute right-2 top-2.5"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOffIcon className="h-4 w-4" />
-                          ) : (
-                            <EyeIcon className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                      {/* Inline error message */}
-                      {errors.confirmPassword && (
-                        <p className="text-xs text-red-500 mt-1">
-                          {errors.confirmPassword}
+                      </Button>
+                      {formErrors.currentPassword && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {formErrors.currentPassword}
                         </p>
                       )}
-
-                      <div className="flex gap-4">
-                        <Button
-                          onClick={handlePasswordUpdate}
-                          disabled={
-                            !currentPassword ||
-                            !newPassword ||
-                            !confirmPassword ||
-                            newPassword !== confirmPassword ||
-                            isPasswordUpdating ||
-                            !isFormValid
-                          }
-                          className="text-sm flex-1 text-green-600 hover:underline"
-                        >
-                          {isPasswordUpdating ? "Updating..." : "Save Password"}
-                        </Button>
-                        <button
-                          className="text-sm  flex-1 text-red-600 hover:underline"
-                          onClick={() => handleCancel("password")}
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type={showNewPassword ? "text" : "password"}
+                        placeholder="New Password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-2 top-2.5"
+                      >
+                        {showNewPassword ? (
+                          <EyeOffIcon size={16} />
+                        ) : (
+                          <EyeIcon size={16} />
+                        )}
+                      </Button>
+                      {formErrors.newPassword && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {formErrors.newPassword}
+                        </p>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm Password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-2 top-2.5"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOffIcon size={16} />
+                        ) : (
+                          <EyeIcon size={16} />
+                        )}
+                      </Button>
+                      {formErrors.confirmPassword && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {formErrors.confirmPassword}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handlePasswordUpdate}
+                        disabled={isPasswordUpdating}
+                      >
+                        {isPasswordUpdating ? "Updating..." : "Save Password"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setEditingField(null)}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 </div>
               ) : (
                 <div className="mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-sm font-medium">Password</label>
-                    <button
-                      onClick={() => handleEdit("password")}
-                      className="text-sm text-black hover:underline"
+                  <div className="flex justify-between items-center">
+                    <Label className="text-sm font-medium">Password</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingField("password")}
+                      className="text-black hover:underline"
                     >
                       Edit
-                    </button>
+                    </Button>
                   </div>
                   <p className="text-sm text-gray-500">
-                    {/* User Since 7:05PM, 7th March 2025 */}
-                    Change password atleast every month for security.
+                    Change password regularly for security.
                   </p>
                 </div>
               )}
-              {/* <Button
-                variant="outline"
-                className="text-red-500 border-red-500 hover:bg-red-50"
-                onClick={() => setIsDeleteModalOpen(true)}
+              <EditableField
+                label="Bio"
+                field="bio"
+                value={profileData.bio}
+                isEditing={editingField === "bio"}
+                onEdit={() => setEditingField("bio")}
+                onSave={async () =>
+                  await updateProfileField("bio", profileData.bio)
+                }
+                onCancel={() => setEditingField(null)}
+                onChange={(value) =>
+                  setProfileData((prev) => ({ ...prev, bio: value }))
+                }
+                error={formErrors.bio}
               >
-                Delete Account
-              </Button> */}
-            </div>
-          </Tabs.Content>
-
-          {/* Tab 2: As Mentee */}
-          <Tabs.Content value="as-mentee">
-            <div className="max-w-2xl">
-              {user?.schoolDetails?.userType === "school" && (
-                <>
-                  <EditableField
-                    label="School Name"
-                    field="schoolName"
-                    value={user?.schoolDetails?.schoolName}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("schoolName")}
-                    isEditing={editingField === "schoolName"}
-                    onSave={() =>
-                      handleSave("schoolName", profileData.schoolName)
-                    }
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, schoolName: value }))
-                    }
-                  />
-                  <EditableField
-                    label="Class"
-                    field="class"
-                    value={user?.schoolDetails?.class}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("class")}
-                    isEditing={editingField === "class"}
-                    onSave={() => handleSave("class", profileData.class)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, class: value }))
-                    }
-                  />
-                  <EditableField
-                    label="City"
-                    field="city"
-                    value={user?.schoolDetails?.city}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("city")}
-                    isEditing={editingField === "city"}
-                    onSave={() => handleSave("city", profileData.city)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, city: value }))
-                    }
-                  />
-                </>
-              )}
-              {user?.professionalDetails?.userType === "professional" && (
-                <>
-                  <EditableField
-                    label="Job Role"
-                    field="jobRole"
-                    value={user?.professionalDetails?.jobRole}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("jobRole")}
-                    isEditing={editingField === "jobRole"}
-                    onSave={() => handleSave("jobRole", profileData.jobRole)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, jobRole: value }))
-                    }
-                  />
-                  <EditableField
-                    label="Company"
-                    field="company"
-                    value={user?.professionalDetails?.company}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("company")}
-                    isEditing={editingField === "company"}
-                    onSave={() => handleSave("company", profileData.company)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, company: value }))
-                    }
-                  />
-                  <EditableField
-                    label="Total Experience"
-                    field="totalExperience"
-                    value={user?.professionalDetails?.experience}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("totalExperience")}
-                    isEditing={editingField === "totalExperience"}
-                    onSave={() =>
-                      handleSave("totalExperience", profileData.totalExperience)
-                    }
-                    onChange={(value) =>
-                      setProfileData((prev) => ({
-                        ...prev,
-                        totalExperience: value,
-                      }))
-                    }
-                  />
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-medium">Start Year</label>
-                      {editingField === "startDate" ? (
-                        <button
-                          onClick={() =>
-                            handleSave(
-                              "startDate",
-                              user?.professionalDetails?.startDate
-                            )
-                          }
-                          className="text-sm text-green-600 hover:underline"
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit("startDate")}
-                          className="text-sm text-black hover:underline"
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    <select
-                      value={user?.professionalDetails?.startDate}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          startYear: e.target.value,
-                        }))
-                      }
-                      disabled={editingField !== "startYear"}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value="">Select Year</option>
-                      {yearOptions.map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-medium">End Year</label>
-                      {editingField === "endDate" ? (
-                        <button
-                          onClick={() =>
-                            handleSave(
-                              "endYear",
-                              user?.professionalDetails?.endDate
-                            )
-                          }
-                          className="text-sm text-green-600 hover:underline"
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit("endDate")}
-                          className="text-sm text-black hover:underline"
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    <select
-                      value={user?.professionalDetails?.endDate}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          endYear: e.target.value,
-                        }))
-                      }
-                      disabled={editingField !== "endDate"}
-                      className="w-full p-2 border rounded-md"
-                    >
-                      <option value="">Select Year</option>
-                      {yearOptions.map((year) => (
-                        <option key={year} value={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              )}
-              {(user?.collegeDetails?.userType === "college" ||
-                user?.collegeDetails?.userType === "fresher") && (
-                <>
-                  <EditableField
-                    label="Work As"
-                    field="workAs"
-                    value={profileData.workAs}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("workAs")}
-                    isEditing={editingField === "workAs"}
-                    onSave={() => handleSave("workAs", profileData.workAs)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, workAs: value }))
-                    }
-                  />
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-medium">Course</label>
-                      {editingField === "course" ? (
-                        <button
-                          onClick={() =>
-                            handleSave("course", profileData.course)
-                          }
-                          className="text-sm text-green-600 hover:underline"
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit("course")}
-                          className="text-sm text-black hover:underline"
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    <select
-                      value={profileData.course}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({
-                          ...prev,
-                          course: e.target.value,
-                        }))
-                      }
-                      disabled={editingField !== "course"}
-                      className="text-sm w-full p-2 border rounded-md"
-                    >
-                      <option value="btech">B-Tech (Computer Science)</option>
-                      <option value="mtech">M-Tech</option>
-                      {/* Add more options as needed */}
-                    </select>
-                  </div>
-                  <EditableField
-                    label="College"
-                    field="college"
-                    value={profileData.college}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("college")}
-                    isEditing={editingField === "college"}
-                    onSave={() => handleSave("college", profileData.college)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, college: value }))
-                    }
-                  />
-                  {/* <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-medium">
-                        Course Duration
-                      </label>
-                      {editingField === "courseDuration" ? (
-                        <button
-                          onClick={() =>
-                            handleSave({
-                              courseStart: profileData.courseStart,
-                              courseEnd: profileData.courseEnd,
-                            })
-                          }
-                          className="text-sm text-green-600 hover:underline"
-                        >
-                          Save
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleEdit("courseDuration")}
-                          className="text-sm text-black hover:underline"
-                        >
-                          Edit
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex gap-4">
-                      <select
-                        value={
-                          profileData.courseStart
-                            ? profileData.courseStart.split("-")[0]
-                            : ""
-                        }
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            courseStart: `${e.target.value}-01-01`,
-                          }))
-                        }
-                        disabled={editingField !== "courseDuration"}
-                        className="w-1/2 p-2 border rounded-md"
-                      >
-                        <option value="">Select Start Year</option>
-                        {yearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        value={
-                          profileData.courseEnd
-                            ? profileData.courseEnd.split("-")[0]
-                            : ""
-                        }
-                        onChange={(e) =>
-                          setProfileData((prev) => ({
-                            ...prev,
-                            courseEnd: `${e.target.value}-12-31`,
-                          }))
-                        }
-                        disabled={editingField !== "courseDuration"}
-                        className="w-1/2 p-2 border rounded-md"
-                      >
-                        <option value="">Select End Year</option>
-                        {yearOptions.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div> */}
-                  <EditableField
-                    label="City"
-                    field="city"
-                    value={profileData.city}
-                    workAs={profileData.workAs}
-                    onEdit={() => handleEdit("city")}
-                    isEditing={editingField === "city"}
-                    onSave={() => handleSave("city", profileData.city)}
-                    onChange={(value) =>
-                      setProfileData((prev) => ({ ...prev, city: value }))
-                    }
-                  />
-                </>
-              )}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium">Bio</label>
-                  {editingField === "bio" ? (
-                    <button
-                      onClick={() => handleSave("bio", profileData.bio)}
-                      className="text-sm text-green-600 hover:underline"
-                    >
-                      Save
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleEdit("bio")}
-                      className="text-sm text-black hover:underline"
-                    >
-                      Edit
-                    </button>
-                  )}
-                </div>
                 <textarea
-                  className="w-full p-2 border rounded-md h-32"
+                  className="w-full p-2 border rounded-md h-24"
                   placeholder="Enter about yourself"
                   value={profileData.bio}
                   onChange={(e) =>
-                    setProfileData((prev) => ({
-                      ...prev,
-                      bio: e.target.value,
-                    }))
+                    setProfileData((prev) => ({ ...prev, bio: e.target.value }))
                   }
                   readOnly={editingField !== "bio"}
                 />
-              </div>
+              </EditableField>
             </div>
           </Tabs.Content>
-
-          {/* Tab 3: More */}
-          <Tabs.Content value="experience">
+          <Tabs.Content value="as-mentee">
             <div className="max-w-2xl">
-              <EditableField
-                label="Achievements"
-                field="achievements"
-                value={profileData.achievements}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("achievements")}
-                isEditing={editingField === "achievements"}
-                onSave={() =>
-                  handleSave("achievements", profileData.achievements)
-                }
-                onChange={(value) =>
-                  setProfileData((prev) => ({ ...prev, achievements: value }))
-                }
-              />
-              {/* <EditableField
-                label="LinkedIn URL"
-                field="linkedinUrl"
-                value={profileData.linkedinUrl}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("linkedinUrl")}
-                isEditing={editingField === "linkedinUrl"}
-                onSave={() =>
-                  handleSave("linkedinUrl", profileData.linkedinUrl)
-                }
-                onChange={(value) =>
-                  setProfileData((prev) => ({ ...prev, linkedinUrl: value }))
-                }
-              /> */}
-              <EditableField
-                label="Portfolio URL"
-                field="portfolioUrl"
-                value={profileData.portfolioUrl}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("portfolioUrl")}
-                isEditing={editingField === "portfolioUrl"}
-                onSave={() =>
-                  handleSave("portfolioUrl", profileData.portfolioUrl)
-                }
-                onChange={(value) =>
-                  setProfileData((prev) => ({ ...prev, portfolioUrl: value }))
-                }
-              />
-              <EditableField
-                label="Interested New Career"
-                field="interestedNewCareer"
-                value={profileData.interestedNewCareer}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("interestedNewCareer")}
-                isEditing={editingField === "interestedNewCareer"}
-                onSave={() =>
-                  handleSave(
-                    "interestedNewCareer",
-                    profileData.interestedNewCareer
-                  )
-                }
-                onChange={(value) =>
-                  setProfileData((prev) => ({
-                    ...prev,
-                    interestedNewCareer: value,
-                  }))
-                }
-              />
-              <EditableField
-                label="Featured Article"
-                field="featuredArticle"
-                value={profileData.featuredArticle}
-                workAs={profileData.workAs}
-                onEdit={() => handleEdit("featuredArticle")}
-                isEditing={editingField === "featuredArticle"}
-                onSave={() =>
-                  handleSave("featuredArticle", profileData.featuredArticle)
-                }
-                onChange={(value) =>
-                  setProfileData((prev) => ({
-                    ...prev,
-                    featuredArticle: value,
-                  }))
-                }
-              />
+              {/* School Details */}
+              {user?.schoolDetails?.userType === "school" && (
+                <>
+                  <h3 className="text-lg font-medium mb-4">
+                    As a School Student
+                  </h3>
+                  <EditableField
+                    label="School Name*"
+                    field="schoolDetails.schoolName"
+                    value={menteeData.schoolDetails.schoolName}
+                    isEditing={
+                      editingMenteeField === "schoolDetails.schoolName"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("schoolDetails.schoolName")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("schoolDetails", "schoolName")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("schoolDetails", "schoolName")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("schoolDetails", "schoolName", value)
+                    }
+                    error={formErrors["schoolDetails.schoolName"]}
+                  />
+                  <EditableField
+                    label="Class*"
+                    field="schoolDetails.class"
+                    value={menteeData.schoolDetails.class}
+                    isEditing={editingMenteeField === "schoolDetails.class"}
+                    onEdit={() => setEditingMenteeField("schoolDetails.class")}
+                    onSave={async () =>
+                      await handleMenteeSave("schoolDetails", "class")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("schoolDetails", "class")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("schoolDetails", "class", value)
+                    }
+                    error={formErrors["schoolDetails.class"]}
+                  >
+                    <Select
+                      value={menteeData.schoolDetails.class?.toString() || ""}
+                      onValueChange={(value) =>
+                        handleMenteeChange("schoolDetails", "class", value)
+                      }
+                      disabled={editingMenteeField !== "schoolDetails.class"}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Class" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                          (num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="City*"
+                    field="schoolDetails.city"
+                    value={menteeData.schoolDetails.city}
+                    isEditing={editingMenteeField === "schoolDetails.city"}
+                    onEdit={() => setEditingMenteeField("schoolDetails.city")}
+                    onSave={async () =>
+                      await handleMenteeSave("schoolDetails", "city")
+                    }
+                    onCancel={() => handleMenteeCancel("schoolDetails", "city")}
+                    onChange={(value) =>
+                      handleMenteeChange("schoolDetails", "city", value)
+                    }
+                    error={formErrors["schoolDetails.city"]}
+                  />
+                </>
+              )}
+              {/* College Details */}
+              {(user?.collegeDetails?.userType === "college" ||
+                user?.collegeDetails?.userType === "fresher") && (
+                <>
+                  <h3 className="text-lg font-medium mb-4">
+                    {user?.collegeDetails?.userType === "college"
+                      ? "As a College Student"
+                      : "As a Fresher"}
+                  </h3>
+                  <EditableField
+                    label="College Name*"
+                    field="collegeDetails.collegeName"
+                    value={menteeData.collegeDetails.collegeName}
+                    isEditing={
+                      editingMenteeField === "collegeDetails.collegeName"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("collegeDetails.collegeName")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("collegeDetails", "collegeName")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("collegeDetails", "collegeName")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("collegeDetails", "collegeName", value)
+                    }
+                    error={formErrors["collegeDetails.collegeName"]}
+                  />
+                  <EditableField
+                    label="Course*"
+                    field="collegeDetails.course"
+                    value={menteeData.collegeDetails.course}
+                    isEditing={editingMenteeField === "collegeDetails.course"}
+                    onEdit={() =>
+                      setEditingMenteeField("collegeDetails.course")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("collegeDetails", "course")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("collegeDetails", "course")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("collegeDetails", "course", value)
+                    }
+                    error={formErrors["collegeDetails.course"]}
+                  >
+                    <Select
+                      value={menteeData.collegeDetails.course}
+                      onValueChange={(value) =>
+                        handleMenteeChange("collegeDetails", "course", value)
+                      }
+                      disabled={editingMenteeField !== "collegeDetails.course"}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Course" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="btech">B.Tech</SelectItem>
+                        <SelectItem value="bsc">B.Sc</SelectItem>
+                        <SelectItem value="bca">BCA</SelectItem>
+                        <SelectItem value="mca">MCA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="Specialized In"
+                    field="collegeDetails.specializedIn"
+                    value={menteeData.collegeDetails.specializedIn}
+                    isEditing={
+                      editingMenteeField === "collegeDetails.specializedIn"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("collegeDetails.specializedIn")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("collegeDetails", "specializedIn")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("collegeDetails", "specializedIn")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange(
+                        "collegeDetails",
+                        "specializedIn",
+                        value
+                      )
+                    }
+                    error={formErrors["collegeDetails.specializedIn"]}
+                  >
+                    <Select
+                      value={menteeData.collegeDetails.specializedIn}
+                      onValueChange={(value) =>
+                        handleMenteeChange(
+                          "collegeDetails",
+                          "specializedIn",
+                          value
+                        )
+                      }
+                      disabled={
+                        editingMenteeField !== "collegeDetails.specializedIn"
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Specialization" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="cs">Computer Science</SelectItem>
+                        <SelectItem value="it">
+                          Information Technology
+                        </SelectItem>
+                        <SelectItem value="ec">Electronics</SelectItem>
+                        <SelectItem value="me">Mechanical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="City*"
+                    field="collegeDetails.city"
+                    value={menteeData.collegeDetails.city}
+                    isEditing={editingMenteeField === "collegeDetails.city"}
+                    onEdit={() => setEditingMenteeField("collegeDetails.city")}
+                    onSave={async () =>
+                      await handleMenteeSave("collegeDetails", "city")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("collegeDetails", "city")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("collegeDetails", "city", value)
+                    }
+                    error={formErrors["collegeDetails.city"]}
+                  />
+                  <EditableField
+                    label="Start Year*"
+                    field="collegeDetails.startDate"
+                    value={menteeData.collegeDetails.startDate}
+                    isEditing={
+                      editingMenteeField === "collegeDetails.startDate"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("collegeDetails.startDate")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("collegeDetails", "startDate")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("collegeDetails", "startDate")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("collegeDetails", "startDate", value)
+                    }
+                    error={formErrors["collegeDetails.startDate"]}
+                  >
+                    <Select
+                      value={menteeData.collegeDetails.startDate}
+                      onValueChange={(value) =>
+                        handleMenteeChange("collegeDetails", "startDate", value)
+                      }
+                      disabled={
+                        editingMenteeField !== "collegeDetails.startDate"
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Year" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white max-h-56 overflow-y-auto">
+                        {yearOptions.map((year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="End Year*"
+                    field="collegeDetails.endDate"
+                    value={menteeData.collegeDetails.endDate}
+                    isEditing={editingMenteeField === "collegeDetails.endDate"}
+                    onEdit={() =>
+                      setEditingMenteeField("collegeDetails.endDate")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("collegeDetails", "endDate")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("collegeDetails", "endDate")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("collegeDetails", "endDate", value)
+                    }
+                    error={formErrors["collegeDetails.endDate"]}
+                  >
+                    <Select
+                      value={menteeData.collegeDetails.endDate}
+                      onValueChange={(value) =>
+                        handleMenteeChange("collegeDetails", "endDate", value)
+                      }
+                      disabled={editingMenteeField !== "collegeDetails.endDate"}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Year" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white max-h-56 overflow-y-auto">
+                        {yearOptions.map((year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                </>
+              )}
+              {/* Professional Details */}
+              {user?.professionalDetails?.userType === "professional" && (
+                <>
+                  <h3 className="text-lg font-medium mb-4">
+                    As a Professional
+                  </h3>
+                  <EditableField
+                    label="Job Role*"
+                    field="professionalDetails.jobRole"
+                    value={menteeData.professionalDetails.jobRole}
+                    isEditing={
+                      editingMenteeField === "professionalDetails.jobRole"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("professionalDetails.jobRole")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("professionalDetails", "jobRole")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("professionalDetails", "jobRole")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange(
+                        "professionalDetails",
+                        "jobRole",
+                        value
+                      )
+                    }
+                    error={formErrors["professionalDetails.jobRole"]}
+                  >
+                    <Select
+                      value={menteeData.professionalDetails.jobRole}
+                      onValueChange={(value) =>
+                        handleMenteeChange(
+                          "professionalDetails",
+                          "jobRole",
+                          value
+                        )
+                      }
+                      disabled={
+                        editingMenteeField !== "professionalDetails.jobRole"
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Job Role" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="sde">Software Developer</SelectItem>
+                        <SelectItem value="designer">UI/UX Designer</SelectItem>
+                        <SelectItem value="pm">Product Manager</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="Company*"
+                    field="professionalDetails.company"
+                    value={menteeData.professionalDetails.company}
+                    isEditing={
+                      editingMenteeField === "professionalDetails.company"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("professionalDetails.company")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("professionalDetails", "company")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("professionalDetails", "company")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange(
+                        "professionalDetails",
+                        "company",
+                        value
+                      )
+                    }
+                    error={formErrors["professionalDetails.company"]}
+                  />
+                  <EditableField
+                    label="Total Experience*"
+                    field="professionalDetails.experience"
+                    value={menteeData.professionalDetails.experience}
+                    isEditing={
+                      editingMenteeField === "professionalDetails.experience"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("professionalDetails.experience")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave(
+                        "professionalDetails",
+                        "experience"
+                      )
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("professionalDetails", "experience")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange(
+                        "professionalDetails",
+                        "experience",
+                        value
+                      )
+                    }
+                    error={formErrors["professionalDetails.experience"]}
+                  >
+                    <Select
+                      value={menteeData.professionalDetails.experience}
+                      onValueChange={(value) =>
+                        handleMenteeChange(
+                          "professionalDetails",
+                          "experience",
+                          value
+                        )
+                      }
+                      disabled={
+                        editingMenteeField !== "professionalDetails.experience"
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Experience" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        <SelectItem value="0-1">0-1 years</SelectItem>
+                        <SelectItem value="1-3">1-3 years</SelectItem>
+                        <SelectItem value="3-5">3-5 years</SelectItem>
+                        <SelectItem value="5+">5+ years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="City*"
+                    field="professionalDetails.city"
+                    value={menteeData.professionalDetails.city}
+                    isEditing={
+                      editingMenteeField === "professionalDetails.city"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("professionalDetails.city")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("professionalDetails", "city")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("professionalDetails", "city")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange("professionalDetails", "city", value)
+                    }
+                    error={formErrors["professionalDetails.city"]}
+                  />
+                  <EditableField
+                    label="Start Year*"
+                    field="professionalDetails.startDate"
+                    value={menteeData.professionalDetails.startDate}
+                    isEditing={
+                      editingMenteeField === "professionalDetails.startDate"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField("professionalDetails.startDate")
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave("professionalDetails", "startDate")
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel("professionalDetails", "startDate")
+                    }
+                    onChange={(value) =>
+                      handleMenteeChange(
+                        "professionalDetails",
+                        "startDate",
+                        value
+                      )
+                    }
+                    error={formErrors["professionalDetails.startDate"]}
+                  >
+                    <Select
+                      value={menteeData.professionalDetails.startDate}
+                      onValueChange={(value) =>
+                        handleMenteeChange(
+                          "professionalDetails",
+                          "startDate",
+                          value
+                        )
+                      }
+                      disabled={
+                        editingMenteeField !== "professionalDetails.startDate"
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Select Year" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white max-h-56 overflow-y-auto">
+                        {yearOptions.map((year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </EditableField>
+                  <EditableField
+                    label="Currently Working"
+                    field="professionalDetails.currentlyWorking"
+                    value={undefined}
+                    isEditing={
+                      editingMenteeField ===
+                      "professionalDetails.currentlyWorking"
+                    }
+                    onEdit={() =>
+                      setEditingMenteeField(
+                        "professionalDetails.currentlyWorking"
+                      )
+                    }
+                    onSave={async () =>
+                      await handleMenteeSave(
+                        "professionalDetails",
+                        "currentlyWorking"
+                      )
+                    }
+                    onCancel={() =>
+                      handleMenteeCancel(
+                        "professionalDetails",
+                        "currentlyWorking"
+                      )
+                    }
+                    onChange={() => {}}
+                    error={formErrors["professionalDetails.currentlyWorking"]}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="currentlyWorking"
+                        checked={
+                          menteeData.professionalDetails.currentlyWorking
+                        }
+                        onCheckedChange={(checked) =>
+                          handleMenteeChange(
+                            "professionalDetails",
+                            "currentlyWorking",
+                            !!checked
+                          )
+                        }
+                        disabled={
+                          editingMenteeField !==
+                          "professionalDetails.currentlyWorking"
+                        }
+                      />
+                      <Label htmlFor="currentlyWorking">
+                        Currently Working
+                      </Label>
+                    </div>
+                  </EditableField>
+                </>
+              )}
             </div>
           </Tabs.Content>
         </Tabs.Root>
       </div>
 
-      {/* Delete Account Confirmation Modal */}
-      {/* <ConfirmationModal
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
-        onConfirm={handleDeleteAccount}
-        title="Delete Account"
-        description="Are you sure you want to delete your account? This action cannot be undone."
-      /> */}
+      <Dialog open={isUploading} onOpenChange={setIsUploading}>
+        <DialogContent>
+          <div className="flex flex-col items-center p-6">
+            <Loader2 className="h-12 w-12 animate-spin" />
+            <p className="text-lg font-semibold">Uploading your image...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

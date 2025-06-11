@@ -21,4 +21,20 @@ export interface ICareerRepository {
     formData: Partial<EWorkExperience> & { userType: string },
     id: string
   ): Promise<(EWorkExperience & { userType: string }) | null>;
+  updateSchoolExperience(
+    id: string,
+    formData: Partial<ESchoolExperience>
+  ): Promise<ESchoolExperience | null>;
+  collegeStudentFormDataCreate(
+    formData: ECollegeExperience,
+    id: string
+  ): Promise<ECollegeExperience | null>;
+  updateProfessionalExperience(
+    id: string,
+    formData: Partial<EWorkExperience & { userType: string }>
+  ): Promise<(EWorkExperience & { userType: string }) | null>;
+  updateCollegeExperience(
+    id: string,
+    formData: Partial<ECollegeExperience>
+  ): Promise<ECollegeExperience | null>;
 }

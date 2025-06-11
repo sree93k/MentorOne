@@ -35,7 +35,12 @@ export default class BaseRepository<T> implements IBaseRepository<T> {
   }
 
   async update(id: string, item: Partial<T>): Promise<T | null> {
-    return await this.model.findByIdAndUpdate(id, item, { new: true }).exec();
+    return await this.model
+      .findByIdAndUpdate(id, item, { new: true })
+      .populate("schoolDetails")
+      .populate("collegeDetails")
+      .populate("professionalDetails")
+      .exec();
   }
 
   async updateField(

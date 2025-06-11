@@ -508,7 +508,6 @@ const MentorDashboard: React.FC = () => {
     <main className="ml-24 p-8 bg-white">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Mentor Dashboard</h1>
-        <Input type="search" placeholder="Search" className="w-64" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -530,7 +529,7 @@ const MentorDashboard: React.FC = () => {
             <h2 className="text-xl font-semibold mb-6">
               Monthly Bookings vs Payments ({new Date().getFullYear()})
             </h2>
-            <div className="h-[600px]">
+            <div className="h-[600px] ">
               {monthlyBookingsPayments.bookings.some((v) => v > 0) ||
               monthlyBookingsPayments.payments.some((v) => v > 0) ? (
                 <Bar
