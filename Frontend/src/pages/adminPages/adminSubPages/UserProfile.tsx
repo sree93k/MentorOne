@@ -30,6 +30,143 @@ import ConfirmationModal from "@/components/modal/ConfirmationModal";
 import { Tabs, TabsContent, TabsTrigger, TabsList } from "@/components/ui/tabs";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+// interface UserProfileData {
+//   user: {
+//     _id: string;
+//     firstName: string;
+//     lastName: string;
+//     email: string;
+//     phone?: string;
+//     role: string[];
+//     isBlocked: boolean;
+//     createdAt: string;
+//     bio?: string;
+//     skills?: string[];
+//     userType?: "school" | "college" | "fresher" | "professional";
+//     profilePicture?: string;
+//     schoolDetails?: {
+//       schoolName: string;
+//       class: string;
+//       city: string;
+//       startDate: string;
+//       endDate: string;
+//     };
+//     collegeDetails?: {
+//       collegeName: string;
+//       course: string;
+//       specializedIn?: string;
+//       city: string;
+//       startDate: string;
+//       endDate: string;
+//     };
+//     workHistory?: {
+//       jobRole: string;
+//       company: string;
+//       experience: string;
+//       city: string;
+//       startDate: string;
+//       endDate?: string;
+//       currentlyWorking?: boolean;
+//     }[];
+//     achievements?: string;
+//     linkedinUrl?: string;
+//     youtubeUrl?: string;
+//     portfolio?: string;
+//     interestedInNewCareer?: string[];
+//     featuredArticle?: string;
+//     mentorMotivation?: string;
+//   };
+//   menteeData?: {
+//     joinPurpose: string[];
+//     careerGoals: string;
+//     interestedNewcareer: string[];
+//   } | null;
+//   mentorData?: {
+//     _id: string;
+//     bio: string;
+//     skills: string[];
+//     selfIntro?: string;
+//     isApproved?: string;
+//     achievements?: string;
+//     linkedinUrl?: string;
+//     youtubeUrl?: string;
+//     portfolio?: string;
+//     interestedNewCareer?: string[];
+//     featuredArticle?: string;
+//     mentorMotivation?: string;
+//   } | null;
+//   serviceData?:
+//     | {
+//         _id: string;
+//         mentorId: string;
+//         type: string;
+//         title: string;
+//         technology?: string;
+//         amount: number;
+//         shortDescription: string;
+//         duration?: number;
+//         longDescription?: string;
+//         oneToOneType?: string;
+//         digitalProductType?: string;
+//         fileUrl?: string;
+//         exclusiveContent?: {
+//           season: string;
+//           episodes: {
+//             episode: string;
+//             title: string;
+//             description: string;
+//             videoUrl: string;
+//           }[];
+//         }[];
+//         stats: {
+//           views: number;
+//           bookings: number;
+//           earnings: number;
+//           conversions: string;
+//         };
+//         createdAt: string;
+//       }[]
+//     | null;
+//   bookingData?:
+//     | {
+//         _id: string;
+//         serviceId: {
+//           _id: string;
+//           title: string;
+//           technology: string;
+//           amount: number;
+//           type: string;
+//           digitalProductType?: string;
+//           oneToOneType?: string;
+//         };
+//         mentorId: {
+//           _id: string;
+//           firstName: string;
+//           lastName: string;
+//           profilePicture?: string;
+//         };
+//         menteeId: {
+//           _id: string;
+//           firstName: string;
+//           lastName: string;
+//         };
+//         day: string;
+//         slotIndex: number;
+//         startTime: string;
+//         bookingDate: string;
+//         status: string;
+//         paymentDetails: {
+//           sessionId: string;
+//           amount: number;
+//           currency: string;
+//           status: string;
+//           createdAt: string;
+//         };
+//         createdAt: string;
+//       }[]
+//     | null;
+// }
+
 interface UserProfileData {
   user: {
     _id: string;
@@ -44,22 +181,38 @@ interface UserProfileData {
     skills?: string[];
     userType?: "school" | "college" | "fresher" | "professional";
     profilePicture?: string;
-    schoolName?: string;
-    class?: string;
-    city?: string;
-    collegeName?: string;
-    course?: string;
-    specializedIn?: string;
-    startYear?: string;
-    endYear?: string;
-    jobRole?: string;
-    company?: string;
-    totalExperience?: string;
+    schoolDetails?: {
+      schoolName: string;
+      class: string;
+      city: string;
+      startDate: string;
+      endDate: string;
+      userType: string;
+    };
+    collegeDetails?: {
+      collegeName: string;
+      course: string;
+      specializedIn?: string;
+      city: string;
+      startDate: string;
+      endDate: string;
+      userType: "college" | "fresher";
+    };
+    professionalDetails?: {
+      jobRole: string;
+      company: string;
+      experience: string;
+      city: string;
+      startDate: string;
+      endDate?: string;
+      currentlyWorking?: boolean;
+      userType: string;
+    }[];
     achievements?: string;
     linkedinUrl?: string;
     youtubeUrl?: string;
-    portfolioUrl?: string;
-    interestedNewCareer?: string[];
+    portfolio?: string;
+    interestedInNewCareer?: string[];
     featuredArticle?: string;
     mentorMotivation?: string;
   };
@@ -77,7 +230,7 @@ interface UserProfileData {
     achievements?: string;
     linkedinUrl?: string;
     youtubeUrl?: string;
-    portfolioUrl?: string;
+    portfolio?: string;
     interestedNewCareer?: string[];
     featuredArticle?: string;
     mentorMotivation?: string;
@@ -153,7 +306,6 @@ interface UserProfileData {
       }[]
     | null;
 }
-
 const UserProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
@@ -182,11 +334,14 @@ const UserProfile: React.FC = () => {
       setError(null);
       try {
         const response = await getUserRoleData(id!);
+        console.log("**************getUserRoleData reposne ", response);
+
         if (response && response.status === 200) {
           const data = response.data.data;
           console.log("dattas are", data);
 
           setUserProfile(data);
+          console.log("**************setUserProfile  ", userProfile);
           setStatus(data.user.isBlocked ? "Blocked" : "Active");
           setMentorStatus(data.mentorData?.isApproved || "N/A");
         } else {
@@ -260,6 +415,7 @@ const UserProfile: React.FC = () => {
 
   const { user, menteeData, mentorData, serviceData, bookingData } =
     userProfile;
+
   return (
     <div className="flex min-h-screen flex-col pl-24">
       <main className="flex-1">
@@ -311,26 +467,30 @@ const UserProfile: React.FC = () => {
                 >
                   Account
                 </TabsTrigger>
-                <TabsTrigger
-                  value="experience"
-                  className={`pb-2 ${
-                    activeTab === "experience"
-                      ? "border-b-2 border-black bg-green-800 text-white"
-                      : ""
-                  }`}
-                >
-                  Experience
-                </TabsTrigger>
-                <TabsTrigger
-                  value="services"
-                  className={`pb-2 ${
-                    activeTab === "services"
-                      ? "border-b-2 border-black bg-green-800 text-white"
-                      : ""
-                  }`}
-                >
-                  Services
-                </TabsTrigger>
+                {user.role.includes("mentor") && (
+                  <TabsTrigger
+                    value="experience"
+                    className={`pb-2 ${
+                      activeTab === "experience"
+                        ? "border-b-2 border-black bg-green-800 text-white"
+                        : ""
+                    }`}
+                  >
+                    Experience
+                  </TabsTrigger>
+                )}
+                {user.role.includes("mentor") && (
+                  <TabsTrigger
+                    value="services"
+                    className={`pb-2 ${
+                      activeTab === "services"
+                        ? "border-b-2 border-black bg-green-800 text-white"
+                        : ""
+                    }`}
+                  >
+                    Services
+                  </TabsTrigger>
+                )}
                 <TabsTrigger
                   value="bookings"
                   className={`pb-2 ${
@@ -523,7 +683,7 @@ const UserProfile: React.FC = () => {
                     <h3 className="mb-2 text-sm font-medium text-gray-500">
                       Bio
                     </h3>
-                    <div className="w-full min-h-[100px] border border-gray-300 p-4 rounded-md">
+                    <div className="w-full min-h-[50px] border border-gray-300 p-4 rounded-md">
                       <p className="text-sm">
                         {mentorData?.bio || user.bio || "N/A"}
                       </p>
@@ -552,108 +712,185 @@ const UserProfile: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  {user.userType === "school" && (
+                  {userProfile.user.schoolDetails?.userType === "school" && (
                     <>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           School Name
                         </span>
                         <div className="text-sm">
-                          {user.schoolName || "N/A"}
+                          {user.schoolDetails.schoolName || "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Class
                         </span>
-                        <div className="text-sm">{user.class || "N/A"}</div>
+                        <div className="text-sm">
+                          {user.schoolDetails.class || "N/A"}
+                        </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           City
                         </span>
-                        <div className="text-sm">{user.city || "N/A"}</div>
-                      </div>
-                    </>
-                  )}
-                  {(user.userType === "college" ||
-                    user.userType === "fresher") && (
-                    <>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          College Name
-                        </span>
                         <div className="text-sm">
-                          {user.collegeName || "N/A"}
-                        </div>
-                      </div>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          Course
-                        </span>
-                        <div className="text-sm">{user.course || "N/A"}</div>
-                      </div>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          Specialized In
-                        </span>
-                        <div className="text-sm">
-                          {user.specializedIn || "N/A"}
+                          {user.schoolDetails.city || "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
                           Start Year
                         </span>
-                        <div className="text-sm">{user.startYear || "N/A"}</div>
-                      </div>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          End Year
-                        </span>
-                        <div className="text-sm">{user.endYear || "N/A"}</div>
-                      </div>
-                    </>
-                  )}
-                  {user.userType === "professional" && (
-                    <>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          Job Role
-                        </span>
-                        <div className="text-sm">{user.jobRole || "N/A"}</div>
-                      </div>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          Company
-                        </span>
-                        <div className="text-sm">{user.company || "N/A"}</div>
-                      </div>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
-                          Total Experience
-                        </span>
                         <div className="text-sm">
-                          {user.totalExperience || "N/A"}
+                          {user.schoolDetails.startDate
+                            ? new Date(
+                                user.schoolDetails.startDate
+                              ).getFullYear()
+                            : "N/A"}
                         </div>
                       </div>
                       <div className="flex py-2">
                         <span className="w-1/3 text-sm font-medium text-gray-500">
-                          Start Year
-                        </span>
-                        <div className="text-sm">{user.startYear || "N/A"}</div>
-                      </div>
-                      <div className="flex py-2">
-                        <span className="w-1/3 text-sm font-medium text-gray-500">
                           End Year
                         </span>
-                        <div className="text-sm">{user.endYear || "N/A"}</div>
+                        <div className="text-sm">
+                          {user.schoolDetails.endDate
+                            ? new Date(user.schoolDetails.endDate).getFullYear()
+                            : "N/A"}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {(userProfile.user.collegeDetails?.userType === "college" ||
+                    userProfile.user.collegeDetails?.userType === "fresher") &&
+                    user.collegeDetails && (
+                      <>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            College Name
+                          </span>
+                          <div className="text-sm">
+                            {user.collegeDetails.collegeName || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Course
+                          </span>
+                          <div className="text-sm">
+                            {user.collegeDetails.course || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Specialized In
+                          </span>
+                          <div className="text-sm">
+                            {user.collegeDetails.specializedIn || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            City
+                          </span>
+                          <div className="text-sm">
+                            {user.collegeDetails.city || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Start Year
+                          </span>
+                          <div className="text-sm">
+                            {user.collegeDetails.startDate
+                              ? new Date(
+                                  user.collegeDetails.startDate
+                                ).getFullYear()
+                              : "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            End Year
+                          </span>
+                          <div className="text-sm">
+                            {user.collegeDetails.endDate
+                              ? new Date(
+                                  user.collegeDetails.endDate
+                                ).getFullYear()
+                              : "N/A"}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  {userProfile?.user?.professionalDetails?.userType ===
+                    "professional" && (
+                    <>
+                      <div className="space-y-2 border-t pt-4">
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Job Role
+                          </span>
+                          <div className="text-sm">
+                            {user.professionalDetails.jobRole || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Company
+                          </span>
+                          <div className="text-sm">
+                            {user.professionalDetails.company || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Total Experience
+                          </span>
+                          <div className="text-sm">
+                            {user.professionalDetails.experience || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            City
+                          </span>
+                          <div className="text-sm">
+                            {user.professionalDetails.city || "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            Start Year
+                          </span>
+                          <div className="text-sm">
+                            {user.professionalDetails.startDate
+                              ? new Date(
+                                  user.professionalDetails.startDate
+                                ).getFullYear()
+                              : "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex py-2">
+                          <span className="w-1/3 text-sm font-medium text-gray-500">
+                            End Year
+                          </span>
+                          <div className="text-sm">
+                            {user.professionalDetails.currentlyWorking
+                              ? "Present"
+                              : user.professionalDetails.endDate
+                              ? new Date(
+                                  user.professionalDetails.endDate
+                                ).getFullYear()
+                              : "N/A"}
+                          </div>
+                        </div>
                       </div>
                     </>
                   )}
                 </div>
               </TabsContent>
-
               <TabsContent value="experience">
                 <div className="space-y-4">
                   <div className="flex py-2">
@@ -669,7 +906,7 @@ const UserProfile: React.FC = () => {
                       Portfolio URL
                     </span>
                     <span className="text-sm">
-                      {mentorData?.portfolioUrl || user.portfolioUrl || "N/A"}
+                      {mentorData?.portfolio || user.portfolio || "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -774,9 +1011,6 @@ const UserProfile: React.FC = () => {
                             </th>
                             <th className="pb-2 text-sm font-medium">Time</th>
                             <th className="pb-2 text-sm font-medium">Status</th>
-                            <th className="pb-2 text-sm font-medium">
-                              Payment Details
-                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -798,11 +1032,6 @@ const UserProfile: React.FC = () => {
                                 {booking.startTime}
                               </td>
                               <td className="py-3 text-sm">{booking.status}</td>
-                              <td className="py-3 text-sm">
-                                {booking.paymentDetails
-                                  ? `$${booking.paymentDetails.amount} (${booking.paymentDetails.status})`
-                                  : "N/A"}
-                              </td>
                             </tr>
                           ))}
                         </tbody>
