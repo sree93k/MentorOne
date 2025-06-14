@@ -11,12 +11,20 @@ import {
   Star,
   FileText,
 } from "lucide-react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
 import DummyImage from "@/assets/DummyProfile.jpg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,13 +61,15 @@ interface Mentor {
   bio?: string;
   skills?: string[];
   linkedinURL?: string;
+  youtubeURL?: string;
   portfolio?: string;
   featuredArticle?: string;
   services: {
     _id: string;
     type: string;
     title: string;
-    description: string;
+    shortDescription: string;
+    longDescription: string;
     duration: string;
     amount: number;
   }[];
@@ -85,8 +95,7 @@ export default function MentorProfile() {
   );
 
   useEffect(() => {
-    if (loading) return; // Wait for auth check
-
+    if (loading) return;
     if (!user) {
       toast.error("Please log in to view mentor profiles.");
       navigate("/login");
@@ -147,51 +156,82 @@ export default function MentorProfile() {
                 {mentor.role} @ {mentor.work}
               </p>
               <div className="flex gap-2 mt-4">
-                {/* <div className="bg-white rounded-full p-1">
-                  <Linkedin className="h-5 w-5 text-black" />
-                </div>
-                <div className="bg-white rounded-full p-1">
-                  <Youtube className="h-5 w-5 text-black" />
-                </div>
-                <div className="bg-white rounded-full p-1">
-                  <Twitter className="h-5 w-5 text-black" />
-                </div>
-                 */}
-                <div className="flex gap-2">
-                  {mentor.linkedinURL && (
-                    <a
-                      href={mentor.linkedinURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white rounded-full p-1"
-                      aria-label="Visit LinkedIn profile"
-                    >
-                      <Linkedin className="h-5 w-5 text-black" />
-                    </a>
-                  )}
-                  {mentor.portfolio && (
-                    <a
-                      href={mentor.portfolio}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white rounded-full p-1"
-                      aria-label="Visit portfolio"
-                    >
-                      <Globe className="h-5 w-5 text-black" />
-                    </a>
-                  )}
-                  {mentor.featuredArticle && (
-                    <a
-                      href={mentor.featuredArticle}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white rounded-full p-1"
-                      aria-label="View featured article"
-                    >
-                      <FileText className="h-5 w-5 text-black" />
-                    </a>
-                  )}
-                </div>
+                <TooltipProvider>
+                  <div className="flex gap-2">
+                    {mentor.youtubeURL && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={mentor.youtubeURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white rounded-full p-1 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            aria-label="Visit YouTube Channel"
+                          >
+                            <Youtube className="h-5 w-5 text-black" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 text-white border-none">
+                          <p>Visit YouTube Channel</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {mentor.linkedinURL && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={mentor.linkedinURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white rounded-full p-1 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            aria-label="Visit LinkedIn Profile"
+                          >
+                            <Linkedin className="h-5 w-5 text-black" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 text-white border-none">
+                          <p>Visit LinkedIn Profile</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {mentor.portfolio && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={mentor.portfolio}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white rounded-full p-1 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            aria-label="Visit Portfolio"
+                          >
+                            <Globe className="h-5 w-5 text-black" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 text-white border-none">
+                          <p>Visit Portfolio</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                    {mentor.featuredArticle && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={mentor.featuredArticle}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-white rounded-full p-1 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            aria-label="View Featured Article"
+                          >
+                            <FileText className="h-5 w-5 text-black" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-gray-800 text-white border-none">
+                          <p>View Featured Article</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                </TooltipProvider>
               </div>
             </div>
 
@@ -284,10 +324,12 @@ export default function MentorProfile() {
           <div className="md:col-span-2">
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
               <h3 className="font-medium mb-4">Services Available</h3>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {mentor.services?.length ? (
-                  Array.from(new Set(mentor.services.map((s) => s.type))).map(
-                    (type, index) => (
+              {mentor.services?.length ? (
+                <>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {Array.from(
+                      new Set(mentor.services.map((s) => s.type))
+                    ).map((type, index) => (
                       <Badge
                         key={index}
                         variant="outline"
@@ -295,52 +337,88 @@ export default function MentorProfile() {
                       >
                         {type}
                       </Badge>
-                    )
-                  )
-                ) : (
-                  <Badge variant="outline" className="rounded-full bg-gray-200">
-                    No services
-                  </Badge>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {mentor.services?.length ? (
-                  mentor.services.map((service, index) => (
-                    <ServiceCard
-                      key={index}
-                      type={service.type}
-                      title={service.title}
-                      description={service.description}
-                      duration={service.duration}
-                      price={`₹${service.amount}`}
-                      onClick={() =>
-                        navigate("/seeker/mentorservice", {
-                          state: { service, mentor },
-                        })
-                      }
-                    />
-                  ))
-                ) : (
-                  <p className="text-gray-500">No services available.</p>
-                )}
-              </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {mentor.services.map((service, index) => (
+                      <ServiceCard
+                        key={index}
+                        type={service.type}
+                        title={service.title}
+                        shortDescription={service.shortDescription}
+                        longDescription={service.longDescription}
+                        duration={service.duration}
+                        price={`₹${service.amount}`}
+                        onClick={() =>
+                          navigate("/seeker/mentorservice", {
+                            state: { service, mentor },
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm">
+                  <div className="relative mb-4">
+                    <Clock className="w-16 h-16 text-gray-400 animate-pulse" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                    No Services Listed
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                    This mentor hasn't added any services yet. Explore other
+                    mentors or check back soon for updates!
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                    onClick={() => navigate("/seeker/mentors")}
+                  >
+                    Explore Other Mentors
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
               <h3 className="font-medium mb-4">Top Testimonials</h3>
-              <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
-                {mentor.topTestimonials?.length ? (
-                  mentor.topTestimonials.map((testimonial) => (
+              {mentor.topTestimonials?.length ? (
+                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
+                  {mentor.topTestimonials.map((testimonial) => (
                     <TestimonialCard
                       key={testimonial._id}
                       testimonial={testimonial}
                     />
-                  ))
-                ) : (
-                  <p className="text-gray-500">No Testimonials</p>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm">
+                  <div className="relative mb-4">
+                    <Star className="w-16 h-16 text-gray-400 animate-pulse" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                    No Testimonials Yet
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                    This mentor hasn't received testimonials yet. Be the first
+                    to book a session and share your feedback!
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                    onClick={() => navigate("/seeker/mentors")}
+                  >
+                    Find Other Mentors
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -352,7 +430,7 @@ export default function MentorProfile() {
 interface ServiceCardProps {
   type: string;
   title: string;
-  description: string;
+  shortDescription: string;
   duration?: string;
   price: string;
   onClick: () => void;
@@ -361,11 +439,20 @@ interface ServiceCardProps {
 function ServiceCard({
   type,
   title,
-  description,
+  shortDescription,
   duration,
   price,
   onClick,
 }: ServiceCardProps) {
+  console.log(
+    "ServiceCard >>>>>>>>>",
+    type,
+    title,
+    shortDescription,
+    duration,
+    price
+  );
+
   return (
     <div className="bg-white rounded-lg border p-4">
       <Badge
@@ -375,7 +462,7 @@ function ServiceCard({
         {type}
       </Badge>
       <h4 className="font-bold mb-1">{title}</h4>
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
+      <p className="text-sm text-gray-600 mb-4">{shortDescription}</p>
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="bg-blue-100 p-1 rounded">

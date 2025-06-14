@@ -99,8 +99,8 @@ interface Policy {
 
 interface Slot {
   index: number;
-  startTime: string; // Stored in 24-hour format for backend (e.g., "10:00")
-  endTime: string; // Stored in 24-hour format for backend (e.g., "11:00")
+  startTime: string;
+  endTime: string;
   isAvailable: boolean;
 }
 
@@ -126,7 +126,7 @@ interface BlockedDate {
 
 const to24Hour = (time: string): string => {
   if (!time || !/^\d{1,2}:\d{2}\s*(AM|PM)$/i.test(time)) {
-    return "00:00"; // Default to "00:00" for invalid time
+    return "00:00";
   }
   const [timePart, period] = time.split(" ");
   const [hourStr, minuteStr] = timePart.split(":");
@@ -134,7 +134,7 @@ const to24Hour = (time: string): string => {
   const minute = parseInt(minuteStr, 10);
 
   if (isNaN(hour) || isNaN(minute)) {
-    return "00:00"; // Default to "00:00" if parsing fails
+    return "00:00";
   }
 
   if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
@@ -144,17 +144,16 @@ const to24Hour = (time: string): string => {
     .padStart(2, "0")}`;
 };
 
-// Utility to convert 24-hour format to 12-hour format with AM/PM
 const to12Hour = (time: string): string => {
   if (!time || !/^\d{2}:\d{2}$/.test(time)) {
-    return "12:00 AM"; // Default to "12:00 AM" for invalid time
+    return "12:00 AM";
   }
   const [hourStr, minuteStr] = time.split(":");
   const hour = parseInt(hourStr, 10);
   const minute = parseInt(minuteStr, 10);
 
   if (isNaN(hour) || isNaN(minute)) {
-    return "12:00 AM"; // Default to "12:00 AM" if parsing fails
+    return "12:00 AM";
   }
 
   const period = hour >= 12 ? "PM" : "AM";
@@ -523,16 +522,15 @@ export default function CalendarPage() {
     const schedule = schedules.find((s) => s._id === scheduleId);
     if (!schedule) return;
 
-    // Use the provided time (already in 12-hour format with AM/PM)
     const startTime = time;
-    // Calculate endTime (1 hour later) in 12-hour format
-    const [hour, minute] = to24Hour(startTime).split(":").map(Number); // Convert to 24-hour temporarily for calculation
+
+    const [hour, minute] = to24Hour(startTime).split(":").map(Number);
     const endHour = (hour + 1) % 24;
     const endTime = to12Hour(
       `${endHour.toString().padStart(2, "0")}:${minute
         .toString()
         .padStart(2, "0")}`
-    ); // Convert back to 12-hour with AM/PM
+    );
 
     const updatedWeeklySchedule = schedule.weeklySchedule.map((d, i) =>
       i === dayIndex
@@ -1082,7 +1080,7 @@ export default function CalendarPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2">
-                <Accordion
+                {/* <Accordion
                   type="single"
                   collapsible
                   className="w-full  bg-gray-100 p-2 "
@@ -1275,17 +1273,9 @@ export default function CalendarPage() {
                                               }
                                             >
                                               {day.slots[timeIndex].startTime}{" "}
-                                              {/* Display startTime directly */}
                                             </button>
                                             {timePickerOpenId ===
                                               `${schedule._id}-${index}-${timeIndex}` && (
-                                              // <div
-                                              //   className={`absolute z-100 left-0 top-[100%] mt-1 ${
-                                              //     timeIndex > 0
-                                              //       ? "right-0 left-auto"
-                                              //       : ""
-                                              //   }`}
-                                              // >
                                               <div
                                                 className={`absolute z-50 left-0 top-[100%] mt-1 ${
                                                   timeIndex > 0
@@ -1331,7 +1321,6 @@ export default function CalendarPage() {
                                           {day.slots[timeIndex]
                                             ? day.slots[timeIndex].startTime
                                             : "--:--"}{" "}
-                                          {/* Display startTime directly */}
                                         </div>
                                       )}
                                     </td>
@@ -1341,11 +1330,291 @@ export default function CalendarPage() {
                             })}
                           </tbody>
                         </table>
-
-                        {/* ... Rest of the file remains unchanged ... */}
                       </AccordionContent>
                     </AccordionItem>
                   ))}
+                </Accordion> */}
+                <Accordion
+                  type="single"
+                  collapsible
+                  className="w-full bg-gray-100 p-2"
+                >
+                  {schedules.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in">
+                      <div className="relative mb-4">
+                        <CalendarDays className="w-16 h-16 text-gray-400 animate-pulse" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse"></div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                        No Schedules Created
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-2 max-w-xs text-center">
+                        You haven't created any schedules yet. Click "New
+                        Schedule" to set up your availability.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="mt-4 bg-black text-white hover:bg-black/90"
+                        onClick={() => setIsCreateScheduleModalOpen(true)}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        New Schedule
+                      </Button>
+                    </div>
+                  ) : (
+                    schedules.map((schedule) => (
+                      <AccordionItem key={schedule._id} value={schedule._id}>
+                        <AccordionTrigger className="text-left w-full text-lg font-medium flex items-center justify-between px-4 py-3 hover:bg-muted rounded-md">
+                          {schedule.scheduleName ||
+                            `Schedule ${schedule._id.slice(-6)}`}
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-24">
+                          <div className="flex justify-end mb-4 gap-2">
+                            {editingSchedule === schedule._id ? (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-black text-white"
+                                  onClick={() => handleSave(schedule._id)}
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="bg-white"
+                                  onClick={() => setEditingSchedule(null)}
+                                >
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    setEditingSchedule(schedule._id)
+                                  }
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleRemoveSchedule(schedule._id)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Remove
+                                </Button>
+                              </>
+                            )}
+                          </div>
+
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="py-2">Day</th>
+                                <th className="py-2">Available</th>
+                                <th className="py-2" colSpan={4}>
+                                  Times
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[
+                                "Sunday",
+                                "Monday",
+                                "Tuesday",
+                                "Wednesday",
+                                "Thursday",
+                                "Friday",
+                                "Saturday",
+                              ].map((dayName) => {
+                                const normalizedDay = dayName.toLowerCase();
+                                const index = schedule.weeklySchedule.findIndex(
+                                  (d) => d.day === normalizedDay
+                                );
+                                const day = schedule.weeklySchedule[index] || {
+                                  day: normalizedDay,
+                                  slots: [],
+                                };
+                                const isAvailable = day.slots.length
+                                  ? day.slots.every((slot) => slot.isAvailable)
+                                  : false;
+                                const isDayBlocked = blockedDates.some(
+                                  (bd) => bd.day.toLowerCase() === normalizedDay
+                                );
+
+                                return (
+                                  <tr key={dayName} className="border-b">
+                                    <td className="py-2">
+                                      <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`${schedule._id}-${day.day}`}
+                                          checked={isAvailable}
+                                          disabled={
+                                            editingSchedule !== schedule._id ||
+                                            isDayBlocked
+                                          }
+                                          onCheckedChange={() =>
+                                            toggleDayAvailability(
+                                              schedule._id,
+                                              index
+                                            )
+                                          }
+                                          className={`peer shrink-0 rounded-sm border bg-white ${
+                                            editingSchedule === schedule._id &&
+                                            !isDayBlocked
+                                              ? "cursor-pointer"
+                                              : "cursor-not-allowed"
+                                          } data-[state=checked]:bg-blue-600 data-[state=checked]:text-white data-[state=checked]:border-blue-600 text-white`}
+                                        />
+                                        <Label
+                                          htmlFor={`${schedule._id}-${day.day}`}
+                                          className={
+                                            isDayBlocked ? "text-red-600" : ""
+                                          }
+                                        >
+                                          {dayName}
+                                          {isDayBlocked && (
+                                            <Ban
+                                              size={16}
+                                              color="#cc141d"
+                                              strokeWidth={1.75}
+                                              className="inline ml-2"
+                                            />
+                                          )}
+                                        </Label>
+                                      </div>
+                                    </td>
+                                    <td className="py-2">
+                                      {isDayBlocked ? (
+                                        <Ban
+                                          size={24}
+                                          color="#cc141d"
+                                          strokeWidth={1.75}
+                                        />
+                                      ) : isAvailable ? (
+                                        <CircleCheckBig
+                                          size={24}
+                                          color="#198041"
+                                          strokeWidth={1.75}
+                                        />
+                                      ) : (
+                                        <Ban
+                                          size={24}
+                                          color="#cc141d"
+                                          strokeWidth={1.75}
+                                        />
+                                      )}
+                                    </td>
+                                    <td className="py-2">
+                                      {editingSchedule === schedule._id &&
+                                        !isDayBlocked && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="bg-white"
+                                            onClick={() =>
+                                              addDayTime(schedule._id, index)
+                                            }
+                                            disabled={day.slots.length >= 3}
+                                          >
+                                            <Plus className="h-4 w-4 mr-1" />
+                                            Add Time
+                                          </Button>
+                                        )}
+                                    </td>
+                                    {[0, 1, 2].map((timeIndex) => (
+                                      <td
+                                        key={`${schedule._id}-${index}-${timeIndex}`}
+                                        className="py-2"
+                                      >
+                                        {editingSchedule === schedule._id &&
+                                        day.slots[timeIndex] &&
+                                        !isDayBlocked ? (
+                                          <div className="flex items-center relative">
+                                            <div className="relative">
+                                              <button
+                                                className="w-24 px-2 py-1 bg-gray-100 text-left border rounded cursor-pointer bg-white"
+                                                onClick={() =>
+                                                  setTimePickerOpenId(
+                                                    timePickerOpenId ===
+                                                      `${schedule._id}-${index}-${timeIndex}`
+                                                      ? null
+                                                      : `${schedule._id}-${index}-${timeIndex}`
+                                                  )
+                                                }
+                                              >
+                                                {day.slots[timeIndex].startTime}{" "}
+                                              </button>
+                                              {timePickerOpenId ===
+                                                `${schedule._id}-${index}-${timeIndex}` && (
+                                                <div
+                                                  className={`absolute z-50 left-0 top-[100%] mt-1 ${
+                                                    timeIndex > 0
+                                                      ? "right-0 left-auto"
+                                                      : ""
+                                                  }`}
+                                                >
+                                                  <CustomTimePicker
+                                                    initialTime={
+                                                      day.slots[timeIndex]
+                                                        .startTime
+                                                    }
+                                                    onConfirm={(newTime) => {
+                                                      updateDayTime(
+                                                        schedule._id,
+                                                        index,
+                                                        timeIndex,
+                                                        newTime
+                                                      );
+                                                      setTimePickerOpenId(null);
+                                                    }}
+                                                  />
+                                                </div>
+                                              )}
+                                            </div>
+                                            <Button
+                                              variant="ghost"
+                                              className="py-0 px-1 ml-0"
+                                              size="sm"
+                                              onClick={() =>
+                                                removeDayTime(
+                                                  schedule._id,
+                                                  index,
+                                                  timeIndex
+                                                )
+                                              }
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <div className="text-sm font-medium">
+                                            {day.slots[timeIndex]
+                                              ? day.slots[timeIndex].startTime
+                                              : "--:--"}
+                                          </div>
+                                        )}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))
+                  )}
                 </Accordion>
               </div>
 

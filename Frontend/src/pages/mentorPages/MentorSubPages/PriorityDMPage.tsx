@@ -396,9 +396,32 @@ export default function PriorityDMPage() {
           </div>
           <div className="space-y-4">
             {isLoading ? (
-              <p>Loading...</p>
+              <div className="flex justify-center items-center h-64">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-4">
+                    <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-500 rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-gray-500 text-lg">
+                    Loading Priority DMs...
+                  </p>
+                </div>
+              </div>
             ) : priorityDMs.length === 0 ? (
-              <p>No pending Priority DMs.</p>
+              <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg p-6 animate-fade-in">
+                <div className="relative mb-4">
+                  <FileText className="w-16 h-16 text-gray-400 animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  No Pending Priority DMs
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-xs text-center">
+                  No pending messages to display. Check back later or engage
+                  with your mentees to receive new Priority DMs.
+                </p>
+              </div>
             ) : (
               priorityDMs.map((dm, index) =>
                 expandedCardId === dm._id
@@ -426,9 +449,32 @@ export default function PriorityDMPage() {
           </div>
           <div className="space-y-4">
             {isLoading ? (
-              <p>Loading...</p>
+              <div className="flex justify-center items-center h-64">
+                <div className="flex flex-col items-center text-center">
+                  <div className="relative mb-4">
+                    <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-500 rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-gray-500 text-lg">
+                    Loading Priority DMs...
+                  </p>
+                </div>
+              </div>
             ) : priorityDMs.length === 0 ? (
-              <p>No answered Priority DMs.</p>
+              <div className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg p-6 animate-fade-in">
+                <div className="relative mb-4">
+                  <FileText className="w-16 h-16 text-gray-400 animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  No Answered Priority DMs
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-xs text-center">
+                  No answered messages to display. Respond to pending Priority
+                  DMs to see them here.
+                </p>
+              </div>
             ) : (
               priorityDMs.map((dm, index) =>
                 expandedCardId === dm._id
