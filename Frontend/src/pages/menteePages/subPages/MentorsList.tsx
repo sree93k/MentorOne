@@ -282,38 +282,40 @@ const MentorsList = () => {
               </TabsContent>
             ))}
             {/* Pagination */}
-            <div className="flex justify-center gap-2 mt-6">
-              <Button
-                disabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-                className="bg-black text-white hover:bg-gray-800"
-              >
-                Previous
-              </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    onClick={() => handlePageChange(page)}
-                    className={
-                      currentPage === page
-                        ? "bg-black text-white"
-                        : "border-gray-300 hover:bg-gray-50"
-                    }
-                  >
-                    {page}
-                  </Button>
-                )
-              )}
-              <Button
-                disabled={currentPage === totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
-                className="bg-black text-white hover:bg-gray-800"
-              >
-                Next
-              </Button>
-            </div>
+            {filteredMentors.length !== 0 && (
+              <div className="flex justify-center gap-2 mt-6">
+                <Button
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="bg-black text-white hover:bg-gray-800"
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      onClick={() => handlePageChange(page)}
+                      className={
+                        currentPage === page
+                          ? "bg-black text-white"
+                          : "border-gray-300 hover:bg-gray-50"
+                      }
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+                <Button
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className="bg-black text-white hover:bg-gray-800"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </Tabs>
         </div>
       </div>

@@ -92,8 +92,8 @@ interface UserProfileData {
     selfIntro?: string;
     isApproved?: string;
     achievements?: string;
-    linkedinUrl?: string;
-    youtubeUrl?: string;
+    linkedinURL?: string;
+    youtubeURL?: string;
     portfolio?: string;
     interestedNewCareer?: string[];
     featuredArticle?: string;
@@ -767,10 +767,80 @@ const UserProfile: React.FC = () => {
                   </div>
                   <div className="flex py-2">
                     <span className="w-1/3 text-sm font-medium text-gray-500">
-                      Portfolio URL
+                      Portfolio Link
                     </span>
                     <span className="text-sm">
-                      {mentorData?.portfolio || user.portfolio || "N/A"}
+                      {mentorData?.portfolio || user.portfolio ? (
+                        <a
+                          href={mentorData?.portfolio || user.portfolio}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {mentorData?.portfolio || user.portfolio}
+                        </a>
+                      ) : (
+                        "N/A"
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex py-2">
+                    <span className="w-1/3 text-sm font-medium text-gray-500">
+                      LinkedIn Link
+                    </span>
+                    <span className="text-sm">
+                      {mentorData?.linkedinURL ? (
+                        <a
+                          href={mentorData.linkedinURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {mentorData.linkedinURL}
+                        </a>
+                      ) : (
+                        "N/A"
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex py-2">
+                    <span className="w-1/3 text-sm font-medium text-gray-500">
+                      Youtube Link
+                    </span>
+                    <span className="text-sm">
+                      {mentorData?.youtubeURL ? (
+                        <a
+                          href={mentorData.youtubeURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {mentorData.youtubeURL}
+                        </a>
+                      ) : (
+                        "N/A"
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex py-2">
+                    <span className="w-1/3 text-sm font-medium text-gray-500">
+                      Featured Article
+                    </span>
+                    <span className="text-sm">
+                      {mentorData?.featuredArticle || user.featuredArticle ? (
+                        <a
+                          href={
+                            mentorData?.featuredArticle || user.featuredArticle
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {mentorData?.featuredArticle || user.featuredArticle}
+                        </a>
+                      ) : (
+                        "N/A"
+                      )}
                     </span>
                   </div>
                   <div className="flex py-2">
@@ -783,16 +853,6 @@ const UserProfile: React.FC = () => {
                         : user.interestedNewCareer?.length
                         ? user.interestedNewCareer.join(", ")
                         : "N/A"}
-                    </span>
-                  </div>
-                  <div className="flex py-2">
-                    <span className="w-1/3 text-sm font-medium text-gray-500">
-                      Featured Article
-                    </span>
-                    <span className="text-sm">
-                      {mentorData?.featuredArticle ||
-                        user.featuredArticle ||
-                        "N/A"}
                     </span>
                   </div>
                   <div className="flex py-2">
