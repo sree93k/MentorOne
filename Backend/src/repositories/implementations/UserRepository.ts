@@ -469,7 +469,7 @@ export default class UserRepository implements IUserRepository {
         .populate({
           path: "mentorId",
           select:
-            "bio skills isApproved topTestimonials portfolio linkedinURL featuredArticle",
+            "bio skills isApproved topTestimonials portfolio linkedinURL featuredArticle youtubeURL",
           populate: {
             path: "topTestimonials",
             model: "Testimonial",
@@ -589,6 +589,7 @@ export default class UserRepository implements IUserRepository {
         linkedinURL: mentor?.mentorId?.linkedinURL,
         portfolio: mentor?.mentorId?.portfolio,
         featuredArticle: mentor?.mentorId?.featuredArticle,
+        youtubeURL: mentor?.mentorId?.youtubeURL,
       };
     } catch (error: any) {
       console.error("getMentorById repo step 5: Error", {

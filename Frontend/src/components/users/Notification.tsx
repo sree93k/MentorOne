@@ -18,7 +18,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-
+import { Bell } from "lucide-react";
 interface NotificationData {
   _id: string;
   recipient: string;
@@ -128,6 +128,84 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
   };
 
   return (
+    // <Sheet open={open} onOpenChange={onOpenChange}>
+    //   <SheetContent
+    //     side="right"
+    //     className="pr-0 gap-0 bg-white dark:bg-gray-800"
+    //     style={{ width: "30vw", maxWidth: "800px", minWidth: "300px" }}
+    //   >
+    //     <SheetHeader className="px-4 pt-4">
+    //       <SheetTitle className="flex flex-row gap-2">
+    //         {" "}
+    //         <Bell />
+    //         Notifications
+    //       </SheetTitle>
+    //       <SheetDescription>
+    //         {notifications.length === 0 && !loading && !error
+    //           ? "No new notifications"
+    //           : "Your latest notifications"}
+    //       </SheetDescription>
+    //     </SheetHeader>
+    //     <div className="px-4 py-4 max-h-[calc(100vh-150px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 scroll-smooth">
+    //       {loading ? (
+    //         <p className="text-green-500 ">Loading notifications...</p>
+    //       ) : error ? (
+    //         <p className="text-red-500">{error}</p>
+    //       ) : (
+    //         <div className="space-y-2">
+    //           {notifications.map((notification) => (
+    //             <div
+    //               key={notification._id}
+    //               className={`p-3 rounded-lg cursor-pointer transition-colors ${
+    //                 notification.isRead
+    //                   ? "bg-gray-100 dark:bg-gray-700"
+    //                   : "bg-blue-50 dark:bg-blue-900"
+    //               }`}
+    //               onClick={() => handleNotificationClick(notification)}
+    //             >
+    //               <p className="text-sm text-gray-800 dark:text-gray-200">
+    //                 {notification.sender
+    //                   ? `${notification.sender.firstName} ${notification.sender.lastName}: `
+    //                   : ""}
+    //                 {notification.content || "No content available"}
+    //               </p>
+    //               <p className="text-xs text-gray-500 mt-1">
+    //                 {new Date(notification.createdAt).toLocaleString("en-US", {
+    //                   year: "numeric",
+    //                   month: "2-digit",
+    //                   day: "2-digit",
+    //                   hour: "2-digit",
+    //                   minute: "2-digit",
+    //                   hour12: true,
+    //                 })}
+    //               </p>
+    //               {!notification.isRead && (
+    //                 <Button
+    //                   variant="link"
+    //                   size="sm"
+    //                   onClick={(e) => {
+    //                     e.stopPropagation();
+    //                     handleMarkAsRead(notification._id);
+    //                   }}
+    //                   className="text-blue-500 text-sm mt-1 p-0 hover:underline"
+    //                 >
+    //                   Mark as Read
+    //                 </Button>
+    //               )}
+    //             </div>
+    //           ))}
+    //         </div>
+    //       )}
+    //     </div>
+    //     <div className="px-4 pb-4">
+    //       <SheetClose asChild>
+    //         <Button variant="outline" className="w-full">
+    //           Close
+    //         </Button>
+    //       </SheetClose>
+    //     </div>
+    //   </SheetContent>
+    // </Sheet>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
@@ -135,20 +213,35 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
         style={{ width: "30vw", maxWidth: "800px", minWidth: "300px" }}
       >
         <SheetHeader className="px-4 pt-4">
-          <SheetTitle>Notifications</SheetTitle>
-          <SheetDescription>
-            {notifications.length === 0 && !loading && !error
-              ? "No new notifications"
-              : "Your latest notifications"}
+          <SheetTitle className="flex flex-row gap-2">
+            <Bell />
+            Notifications
+          </SheetTitle>
+          <SheetDescription className="text-gray-500">
+            Stay updated with your latest activity
           </SheetDescription>
         </SheetHeader>
         <div className="px-4 py-4 max-h-[calc(100vh-150px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 scroll-smooth">
           {loading ? (
-            <p className="text-gray-500">Loading notifications...</p>
+            <p className="text-green-500">Loading notifications...</p>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : notifications.length === 0 ? (
-            <p className="text-gray-500">No notifications</p>
+            <div className="flex flex-col items-center justify-center h-[calc(100vh-250px)] text-center animate-fade-in">
+              <div className="relative mb-4">
+                <Bell className="w-16 h-16 text-gray-400 animate-bell-ring" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                No Notifications Yet
+              </h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs">
+                You're all caught up! Check back later for updates or start
+                engaging with your mentors and mentees.
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               {notifications.map((notification) => (

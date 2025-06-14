@@ -153,7 +153,7 @@ export default function MentorServicePage() {
             service={service}
             mentor={mentor}
           />
-          <div className="bg-gray-50 p-4 rounded-lg mt-6">
+          {/* <div className="bg-gray-50 p-4 rounded-lg mt-6">
             <h3 className="font-medium mb-4">Testimonials</h3>
             {isLoadingTestimonials ? (
               <p>Loading testimonials...</p>
@@ -168,6 +168,43 @@ export default function MentorServicePage() {
               </div>
             ) : (
               <p className="text-gray-500">No testimonials available.</p>
+            )}
+          </div> */}
+          <div className="bg-gray-50 p-4 rounded-lg mt-6">
+            <h3 className="font-medium mb-4">Testimonials</h3>
+            {isLoadingTestimonials ? (
+              <p>Loading testimonials...</p>
+            ) : testimonials.length ? (
+              <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
+                {testimonials.map((testimonial) => (
+                  <TestimonialCard
+                    key={testimonial._id}
+                    testimonial={testimonial}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm">
+                <div className="relative mb-4">
+                  <Star className="w-16 h-16 text-gray-400 animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  No Testimonials Yet
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                  Be the first to book this service and share your experience!
+                </p>
+                <Button
+                  variant="outline"
+                  className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                  onClick={() => navigate("/seeker/mentors")}
+                >
+                  Explore Other Mentors
+                </Button>
+              </div>
             )}
           </div>
         </div>

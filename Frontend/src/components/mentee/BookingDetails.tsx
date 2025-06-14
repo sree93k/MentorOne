@@ -6,7 +6,8 @@ interface Service {
   _id: string; // Added _id
   type: string;
   title: string;
-  description: string;
+  shortDescription: string;
+  longDescription: string;
   duration: string;
   price: number;
 }
@@ -59,7 +60,7 @@ export default function BookingDetails({
         <div className="text-sm">{service.duration} Meeting</div>
         <Button
           variant="outline"
-          className="rounded-full border-gray-400 flex items-center gap-2"
+          className="rounded-full border-green-400 flex items-center gap-2"
           onClick={onConfirmClick}
         >
           ₹{service.amount}
@@ -84,26 +85,14 @@ export default function BookingDetails({
       <div className="bg-black text-white p-8">
         <div className="mb-8">
           <h3 className="text-xl font-semibold mb-4">About Service</h3>
-          <p className="text-gray-300">{service.description}</p>
+          <p className="text-gray-300">{service.shortDescription}</p>
         </div>
-
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Skills</h3>
-          <div className="flex flex-wrap gap-2 text-sm text-gray-300">
-            {mentor.skills?.length ? (
-              mentor.skills.map((skill, index) => (
-                <span key={index}>
-                  {skill}
-                  {index < mentor.skills.length - 1 && (
-                    <span className="mx-2">|</span>
-                  )}
-                </span>
-              ))
-            ) : (
-              <span>No skills listed</span>
-            )}
+        {service.longDescription && (
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold mb-4">Description</h3>
+            <p className="text-gray-300">{service.longDescription}</p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
