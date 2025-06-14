@@ -342,32 +342,6 @@ export default class MentorProfileService implements IMentorProfileService {
       throw error;
     }
   }
-  // async getAllServices(userId: string): Promise<EService[]> {
-  //   try {
-  //     console.log("getAllServices service step 1: Processing userId", userId);
-
-  //     // Fetch services using ServiceRepository
-  //     console.log(
-  //       "getAllServices service step 2: Fetching services for mentorId",
-  //       userId
-  //     );
-  //     const services = await this.ServiceRepository.getAllServices(userId);
-  //     if (!services) {
-  //       console.log("getAllServices service step 3: No services found");
-  //       return [];
-  //     }
-  //     console.log("getAllServices service step 4: Services fetched");
-
-  //     return services;
-  //   } catch (error: any) {
-  //     console.error("getAllServices service error:", {
-  //       message: error.message,
-  //       stack: error.stack,
-  //       userId,
-  //     });
-  //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
-  //   }
-  // }
 
   async getAllServices(
     userId: string,
@@ -857,22 +831,6 @@ export default class MentorProfileService implements IMentorProfileService {
     }
   }
 
-  // async getAllPriorityDMsByMentor(mentorId: string): Promise<EPriorityDM[]> {
-  //   try {
-  //     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-  //       throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
-  //     }
-
-  //     const priorityDMs = await this.PriorityDMRepository.findByMentor(
-  //       mentorId
-  //     );
-  //     return priorityDMs;
-  //   } catch (error) {
-  //     console.error("Error fetching all PriorityDMs by mentor:", error);
-  //     throw error;
-  //   }
-  // }
-  // src/services/MentorProfileService.ts
   async getAllPriorityDMsByMentor(
     mentorId: string,
     page: number = 1,

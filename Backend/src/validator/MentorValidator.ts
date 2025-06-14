@@ -213,6 +213,7 @@ const MentorFormSchema = Joi.object({
   imageUrl: Joi.string().trim().uri().optional().allow("").messages({
     "string.uri": "Image URL must be a valid URI",
   }),
+  imageFile: Joi.object().allow(""),
 }).unknown(false); // Keep this to enforce strict validation
 
 export function welcomeFormValidator(

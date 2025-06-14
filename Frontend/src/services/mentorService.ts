@@ -114,7 +114,7 @@ export const uploadMentorWelcomeForm = async (
     console.log("mentor welcome service 3", accessToken);
     const payload1 = { ...formData, id };
     console.log("mentor welcome service 4", payload1);
-    const { imageFile, ...payload } = payload1;
+    const payload = payload1;
     console.log("Payload to API: sending...........", payload);
 
     const response = await api.put("/expert/welcomeform", payload, {
@@ -355,31 +355,6 @@ export const CreateService = async (formData: FormData) => {
   }
 };
 
-// export const getAllServices = async (): Promise<Service[]> => {
-//   try {
-//     console.log("MentorServiceAPI.getAllServices step 1: Making API call");
-
-//     const accessToken = localStorage.getItem("accessToken");
-//     if (!accessToken) {
-//       throw new Error("No access token found. Please log in again.");
-//     }
-
-//     const response = await api.get("/expert/allServices", {
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-//     console.log(
-//       "MentorServiceAPI.getAllServices step 2: API response",
-//       response
-//     );
-//     return response.data.data;
-//   } catch (error: any) {
-//     console.error("MentorServiceAPI.getAllServices error:", error);
-//     throw new Error("Failed to fetch services");
-//   }
-// };
 interface GetAllServicesParams {
   page?: number;
   limit?: number;

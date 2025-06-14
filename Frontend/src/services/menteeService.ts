@@ -478,7 +478,7 @@ export const getMentorPolicy = async (mentorId: string) => {
     });
 
     return response.data.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching getMMentorPolicy:", error);
     throw new Error(error?.message || "Failed to fetch getMMentorPolicy");
   }

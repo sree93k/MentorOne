@@ -108,35 +108,6 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
     }
   }
 
-  // async findByMentor(mentorId: string): Promise<EPriorityDM[]> {
-  //   try {
-  //     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-  //       throw new ApiError(400, "Invalid mentorId format");
-  //     }
-  //     console.log(
-  //       "prioritydm repositoey , findby mentor  resposne step 1",
-  //       mentorId
-  //     );
-
-  //     const priorityDMs = await PriorityDMModel.find({
-  //       mentorId: new mongoose.Types.ObjectId(mentorId),
-  //     })
-  //       .populate("mentorId", "firstName lastName profilePicture")
-  //       .populate("menteeId", "firstName lastName profilePicture")
-  //       .populate("serviceId")
-  //       .populate("bookingId");
-  //     console.log(
-  //       "prioritydm repositoey , findby mentor  resposne step 2 ",
-  //       priorityDMs
-  //     );
-
-  //     return priorityDMs;
-  //   } catch (error: any) {
-  //     console.error("Error in PriorityDMRepository.findByMentor:", error);
-  //     throw new ApiError(500, `Failed to fetch PriorityDMs: ${error.message}`);
-  //   }
-  // }
-  // src/repositories/PriorityDMRepository.ts
   async findByMentor(
     mentorId: string,
     page: number = 1,

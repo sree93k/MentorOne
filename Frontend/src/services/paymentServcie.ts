@@ -110,31 +110,7 @@ interface Payment {
   mentorName: string;
   paymentMode: string;
 }
-//mentee payments
-// export const getAllMenteePayments = async () => {
-//   try {
-//     console.log("payment service getAllMenteePayments step 1");
-//     const accessToken = localStorage.getItem("accessToken");
-//     const response = await api.get("/seeker/payment/mentee-payments", {
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//       },
-//     });
-//     console.log("payment service getAllMenteePayments step 2", response.data);
 
-//     // Ensure response has expected structure
-//     if (!response.data.success || !response.data.message) {
-//       throw new Error(response.data.message || "Invalid response from server");
-//     }
-
-//     return response.data.message;
-//   } catch (error: any) {
-//     console.error("Error in getAllMenteePayments:", error);
-//     throw new Error(
-//       error.response?.data?.message || "Failed to fetch payments"
-//     );
-//   }
-// };
 export const getAllMenteePayments = async (page: number, limit: number) => {
   try {
     console.log("payment service getAllMenteePayments step 1");

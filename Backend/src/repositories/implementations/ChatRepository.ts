@@ -44,26 +44,6 @@ export default class ChatRepository {
     }
   }
 
-  // async findByUserAndRole(
-  //   userId: string,
-  //   role: "mentee" | "mentor"
-  // ): Promise<EChat[]> {
-  //   try {
-  //     console.log("CHAT REPOSITORY findByUserAndRole step 1");
-  //     const chats = await Chat.find({
-  //       "roles.userId": userId,
-  //       "roles.role": role,
-  //     })
-  //       .populate("users", "firstName lastName profilePicture")
-  //       .populate("latestMessage")
-  //       .sort({ updatedAt: -1 });
-  //     console.log("CHAT REPOSITORY findByUserAndRole step 2");
-
-  //     return chats as unknown as EChat[];
-  //   } catch (error: any) {
-  //     throw new ApiError(500, "Failed to find chats", error.message);
-  //   }
-  // }
   async findByUserAndRole(
     userId: string,
     role: "mentee" | "mentor"

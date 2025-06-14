@@ -29,7 +29,7 @@ export const updateUserPassword = async (
     );
     console.log("updateUserPassword step 2 response.....,response", response);
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update password error:", error?.response?.data);
     return error?.response?.data;
   }

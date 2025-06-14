@@ -217,7 +217,11 @@ export const updateStatus = async (bookingId: string, payload: any) => {
     return response;
   } catch (error) {
     console.error("bookingservice  updateStatus error:", error);
-    throw new Error(`Failed to fetch  updateStatus: ${error.message}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch  updateStatus: ${error.message}`);
+    } else {
+      throw new Error("Failed to fetch  updateStatus: Unknown error");
+    }
   }
 };
 interface RescheduleRequestParams {
