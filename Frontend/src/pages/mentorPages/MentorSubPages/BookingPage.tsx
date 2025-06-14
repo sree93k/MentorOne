@@ -72,60 +72,6 @@ export default function BookingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // const {
-  //   data: { bookings = [], total = 0 } = {},
-  //   isLoading,
-  //   error,
-  // } = useQuery({
-  //   queryKey: ["mentorBookings", mentorId, page],
-  //   queryFn: async () => {
-  //     if (!mentorId) throw new Error("Mentor ID is required");
-  //     const response = await getBookingsByMentor(mentorId, page, limit);
-  //     console.log("+++++++++++getBookingsByMentor", response);
-
-  //     return {
-  //       bookings: response.data.map((booking: any) => ({
-  //         _id: booking._id,
-  //         date: new Date(booking.bookingDate).toLocaleDateString("en-US", {
-  //           day: "2-digit",
-  //           month: "2-digit",
-  //           year: "numeric",
-  //         }),
-  //         bookingDate: booking.bookingDate,
-  //         product: booking.serviceId?.title || "Unknown Product",
-  //         service:
-  //           booking.serviceId?.type === "1-1Call"
-  //             ? "1:1 Call"
-  //             : booking.serviceId?.type === "priorityDM"
-  //             ? "Priority DM"
-  //             : "Digital product",
-  //         userName:
-  //           `${capitalize(booking.menteeId?.firstName)} ${capitalize(
-  //             booking.menteeId?.lastName
-  //           )}` || "Unknown User",
-  //         userId: booking.menteeId?._id || "N/A",
-  //         timeSlot: booking.startTime || "N/A",
-  //         startTime: booking.startTime,
-  //         slotIndex: booking.slotIndex,
-  //         amount: booking.serviceId?.amount || 0,
-  //         paymentStatus: capitalize(booking.paymentDetails?.status) || "N/A",
-  //         status: capitalize(booking.status) || "N/A",
-  //         serviceId: booking?.serviceId?._id || "N/A",
-  //         rescheduleRequest: {
-  //           requestedDate: booking.rescheduleRequest?.requestedDate,
-  //           requestedTime: booking.rescheduleRequest?.requestedTime,
-  //           requestedSlotIndex: booking.rescheduleRequest?.requestedSlotIndex,
-  //           mentorDecides: booking.rescheduleRequest?.mentorDecides,
-  //           rescheduleStatus:
-  //             booking.rescheduleRequest?.rescheduleStatus || "noreschedule",
-  //           reason: booking.rescheduleRequest?.reason,
-  //         },
-  //       })),
-  //       total: response.total,
-  //     };
-  //   },
-  //   enabled: !!mentorId,
-  // });
   const {
     data: { bookings = [], total = 0 } = {},
     isLoading,
@@ -241,22 +187,6 @@ export default function BookingsPage() {
     setSelectedBookingId(null);
   };
 
-  // const handleApproveReschedule = (booking: Booking) => {
-  //   setSelectedBooking(booking);
-  //   setSelectedBookingId(booking._id);
-  //   setIsConfirmationModalOpen(true);
-  //   console.log("======setSelectedBooking   ======1", selectedBooking);
-  // };
-
-  // const handleRejectReschedule = (booking: Booking) => {
-  //   console.log("======booking   ======2", booking);
-  //   setSelectedBooking(booking);
-  //   setSelectedBookingId(booking._id);
-
-  //   setIsRescheduleModalOpen(true);
-  //   console.log("======setSelectedBooking   ======2", selectedBooking);
-  // };
-
   const handleApproveReschedule = (booking: Booking) => {
     setSelectedBooking(booking);
     setSelectedBookingId(booking._id);
@@ -271,27 +201,7 @@ export default function BookingsPage() {
     setActionType("reject");
     setIsConfirmationModalOpen(true);
   };
-  // const confirmApproval = () => {
-  //   if (!selectedBooking || !selectedBooking.rescheduleRequest) return;
 
-  //   updateBookingStatusMutation.mutate({
-  //     bookingId: selectedBooking._id,
-  //     status: "confirmed",
-  //     updates: {
-  //       bookingDate: selectedBooking.rescheduleRequest.requestedDate,
-  //       startTime: selectedBooking.rescheduleRequest.requestedTime,
-  //       slotIndex: selectedBooking.rescheduleRequest.requestedSlotIndex,
-  //       rescheduleRequest: {
-  //         rescheduleStatus: "accepted",
-  //       },
-  //     },
-  //   });
-
-  //   setIsConfirmationModalOpen(false);
-  //   setSelectedBooking(null);
-  //   setSelectedBookingId(null);
-  //   console.log("======setSelectedBooking   ======3", selectedBooking);
-  // };
   const confirmApproval = () => {
     if (!selectedBooking || !selectedBooking.rescheduleRequest) return;
 

@@ -16,22 +16,6 @@ interface GetAllServicesResponse {
 }
 
 export default class ServiceRepository implements IServiceRepository {
-  // async getAllServices(mentorId: string): Promise<EService[]> {
-  //   try {
-  //     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-  //       throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
-  //     }
-
-  //     const allServices = await Service.find({
-  //       mentorId: new mongoose.Types.ObjectId(mentorId),
-  //     }).populate({ path: "slot" });
-  //     return allServices as EService[];
-  //   } catch (error: any) {
-  //     console.error("Error in ServiceRepository.getAllServices:", error);
-  //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
-  //   }
-  // }
-
   async getAllServices(
     mentorId: string,
     params: GetAllServicesParams

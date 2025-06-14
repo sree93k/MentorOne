@@ -17,7 +17,7 @@ import {
   getAllusers,
   getAllPayments,
 } from "@/services/adminService";
-
+import { ChevronDown, CalendarX, Check } from "lucide-react";
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -275,6 +275,64 @@ const AdminDashboard: React.FC = () => {
     },
   };
 
+  const renderSkeletonLoader = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
+      {[...Array(2)].map((_, i) => (
+        <div
+          key={i}
+          className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+        >
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
+          <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderErrorState = () => (
+    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <svg
+        className="h-16 w-16 text-red-400 mb-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+        Something went wrong
+      </h2>
+      <p className="text-red-500 dark:text-red-400 mt-2">{error}</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+      >
+        Try Again
+      </button>
+    </div>
+  );
+
+  const renderNoCharts = () => (
+    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <CalendarX className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
+      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+        No Payments or Bookings Yet
+      </h2>
+      <p className="text-gray-500 dark:text-gray-400 mt-2 text-center max-w-md">
+        It looks like there are no payments or bookings to display. Start by
+        creating a new booking to see your data here!
+      </p>
+      <a className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+        No New Charts
+      </a>
+    </div>
+  );
+
   return (
     <div className="flex-1 ml-24 p-8 bg-white">
       {/* Header */}
@@ -306,12 +364,12 @@ const AdminDashboard: React.FC = () => {
 
       {/* Charts */}
       {loading ? (
-        <p>Loading charts...</p>
+        renderSkeletonLoader()
       ) : error ? (
-        <p className="text-red-500">{error}</p>
+        renderErrorState()
       ) : Object.keys(monthlyByService).length === 0 &&
         yearlyBookings.length === 0 ? (
-        <p>No booking data available</p>
+        renderNoCharts()
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Monthly Bookings Chart */}

@@ -179,25 +179,6 @@ export default class MenteeProfileService implements IMenteeProfileService {
       const user = await this.BaseRepository.findById(id);
       //   if (!user) return false;
 
-      //   // Delete referenced documents
-      //   if (user.collegeDetails) {
-      //     await CollegeExperience.findByIdAndDelete(user.collegeDetails);
-      //   }
-      //   if (user.schoolDetails) {
-      //     await SchoolExperience.findByIdAndDelete(user.schoolDetails);
-      //   }
-      //   if (user.professionalDetails) {
-      //     await ProfessionalExperience.findByIdAndDelete(
-      //       user.professionalDetails
-      //     );
-      //   }
-      //   if (user.mentorId) {
-      //     await Mentor.findByIdAndDelete(user.mentorId);
-      //   }
-      //   if (user.menteeId) {
-      //     await Mentee.findByIdAndDelete(user.menteeId);
-      //   }
-
       // Delete user
       return await this.BaseRepository.delete(id);
     } catch (error) {
@@ -273,70 +254,6 @@ export default class MenteeProfileService implements IMenteeProfileService {
     }
   }
 
-  // async createPriorityDM(data: {
-  //   serviceId: string;
-  //   bookingId?: string;
-  //   menteeId: string;
-  //   content: string;
-  //   pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
-  // }): Promise<EPriorityDM> {
-  //   try {
-  //     const { serviceId, bookingId, menteeId, content, pdfFiles } = data;
-
-  //     const service = await this.ServiceRepository.getServiceById(serviceId);
-  //     if (!service) {
-  //       throw new ApiError(404, "Service not found");
-  //     }
-
-  //     if (service.type !== "priorityDM") {
-  //       throw new ApiError(400, "Service is not a Priority DM");
-  //     }
-
-  //     const priorityDMData: Partial<EPriorityDM> = {
-  //       serviceId: new mongoose.Types.ObjectId(serviceId),
-  //       mentorId: new mongoose.Types.ObjectId(service.mentorId),
-  //       menteeId: new mongoose.Types.ObjectId(menteeId),
-  //       bookingId: bookingId
-  //         ? new mongoose.Types.ObjectId(bookingId)
-  //         : undefined,
-  //       content,
-  //       pdfFiles,
-  //       status: "pending",
-  //     };
-
-  //     const priorityDM = await this.PriorityDMRepository.create(priorityDMData);
-  //     if (!priorityDM) {
-  //       throw new ApiError(500, "Failed to create Priority DM");
-  //     }
-
-  //     return priorityDM;
-  //   } catch (error) {
-  //     console.error("Error creating PriorityDM:", error);
-  //     throw error;
-  //   }
-  // }
-
-  // async getPriorityDMs(
-  //   serviceId: string,
-  //   menteeId: string
-  // ): Promise<EPriorityDM[]> {
-  //   try {
-  //     if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-  //       throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
-  //     }
-
-  //     const priorityDMs =
-  //       await this.PriorityDMRepository.findByServiceAndMentee(
-  //         serviceId,
-  //         menteeId
-  //       );
-
-  //     return priorityDMs;
-  //   } catch (error) {
-  //     console.error("Error fetching PriorityDMs:", error);
-  //     throw error;
-  //   }
-  // }
   async createPriorityDM(data: {
     serviceId: string;
     bookingId: string; // Not optional since it's required

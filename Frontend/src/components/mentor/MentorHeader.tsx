@@ -27,21 +27,7 @@ const MentorHeader: React.FC = () => {
           />
         </div>
         <div className="flex items gap-8">
-          {/* <span className="text-2xl font-semibold text-gray-600 dark:text-white">
-            Hi,{" "}
-            {`${
-              user?.firstName
-                ? user.firstName.charAt(0).toUpperCase() +
-                  user.firstName.slice(1)
-                : "Mentor"
-            }`}
-          </span> */}
           <div className="flex px-6 items-center gap-4">
-            {/* <Input
-              type="search"
-              placeholder="Search"
-              className="w-64 rounded-full"
-            /> */}
             <button onClick={openChat}>
               <Send size={24} />
             </button>

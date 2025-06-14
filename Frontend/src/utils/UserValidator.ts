@@ -1,6 +1,7 @@
 import Joi from "joi";
 
 const userEmailSchema = Joi.string()
+  .trim()
   .email({ tlds: { allow: false } })
   .required()
   .messages({
@@ -23,6 +24,7 @@ const userPasswordSchema = Joi.string()
   });
 
 const fullName = Joi.string()
+  .trim()
   .pattern(/^[A-Za-z]+(?:\s[A-Za-z]+)+$/) // Ensures at least two words
   .min(3)
   .max(100)
@@ -38,6 +40,7 @@ const fullName = Joi.string()
   });
 
 const phone = Joi.string()
+  .trim()
   .pattern(/^\d{10}$/)
   .messages({
     "string.pattern.base": "Phone must be a 10-digit number.",

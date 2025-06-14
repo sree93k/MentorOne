@@ -413,39 +413,6 @@ class menteeController {
     }
   };
 
-  // public getAllMenteePayments = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) => {
-  //   try {
-  //     console.log("paymentcontroller getAllMenteePayments step 1");
-  //     const menteeId = req.user?.id;
-  //     if (!menteeId) {
-  //       throw new ApiError(
-  //         401,
-  //         "Unauthorized: No mentee ID",
-  //         "Authentication required"
-  //       );
-  //     }
-
-  //     const paymentData = await this.PaymentService.getAllMenteePayments(
-  //       menteeId.toString()
-  //     );
-  //     console.log("paymentcontroller getAllMenteePayments step 2", paymentData);
-
-  //     res.json(
-  //       new ApiResponse(
-  //         200,
-  //         "Mentee payments fetched successfully",
-  //         paymentData
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.error("Error in getAllMenteePayments controller:", error);
-  //     next(error);
-  //   }
-  // };
   public getAllMenteePayments = async (
     req: Request,
     res: Response,

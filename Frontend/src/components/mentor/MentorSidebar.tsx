@@ -335,6 +335,7 @@ const MentorSidebar: React.FC = () => {
         ...formData,
         imageUrl,
       };
+      console.log("++++++++     UPDATED PAYLOAD DATA   ", payload);
 
       if (!user || !user._id) {
         throw new Error("User ID not found. Please log in again.");
