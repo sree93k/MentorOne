@@ -5,6 +5,7 @@ import { lazy, Suspense } from "react";
 import PrivateRoute from "@/components/auth/UserPrivateRoute";
 import PublicRoute from "@/components/auth/UserPublicRoute";
 import LoadingPageWithReactLoading from "@/components/loadingPage/Loading";
+import LoadingModal from "@/components/modal/LoadingModal";
 import LoadingOverlay from "@/common/LoadingOverlay";
 const LandingPage = lazy(() => import("../pages/landingPage/LandingPage"));
 const SigninPage = lazy(() => import("../pages/userAuth/Signin"));
@@ -15,8 +16,8 @@ const UserRouter = lazy(() => import("./UserRouter"));
 //==>>>>>>>>>>
 const AuthRouter: React.FC = () => {
   return (
-    <Suspense fallback={<h1>loaidng</h1>}>
-      <LoadingOverlay />
+    <Suspense fallback={<LoadingModal />}>
+      {/* <LoadingOverlay /> */}
 
       <Routes>
         <Route path="/" element={<PublicRoute element={LandingPage} />} />

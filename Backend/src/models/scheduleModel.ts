@@ -53,6 +53,11 @@ const ScheduleSchema = new Schema<ESchedule>(
     },
     weeklySchedule: [DaySchema],
     scheduleName: { type: String, default: "Default Schedule" },
+    status: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

@@ -13,7 +13,7 @@ interface Admin {
 interface InitialState {
   user: Admin | null;
   loading: boolean;
-  error: object;
+  error: string | null;
   isAuthenticated: boolean;
   accessToken: string;
   formData: object;
@@ -24,7 +24,7 @@ interface InitialState {
 const initialState: InitialState = {
   user: null,
   loading: false,
-  error: {},
+  error: null,
   isAuthenticated: false,
   accessToken: "",
   formData: {},

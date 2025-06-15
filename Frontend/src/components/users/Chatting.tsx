@@ -316,228 +316,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       setError(`Failed to connect to chat server: ${error.message}`);
     });
 
-    // socketInstance.on("receiveMessage", async (message) => {
-    //   console.log("Received message:", { message });
-
-    //   setChatHistories((prev) => {
-    //     const chatId = message.chat.toString();
-    //     const formattedMessage: ChatMessage = {
-    //       _id: message._id,
-    //       content: message.content,
-    //       timestamp: new Date(message.createdAt).toLocaleTimeString([], {
-    //         hour: "2-digit",
-    //         minute: "2-digit",
-    //       }),
-    //       sender: message.sender._id === userId ? "user" : "other",
-    //       senderId: message.sender._id,
-    //       type: message.type,
-    //       status: message.sender._id === userId ? "sent" : "delivered",
-    //     };
-    //     const updated = [...(prev[chatId] || []), formattedMessage];
-    //     return { ...prev, [chatId]: updated };
-    //   });
-
-    //   setChatUsers((prev) => {
-    //     const updatedUsers = prev.map((user) =>
-    //       user.id === message.chat.toString()
-    //         ? {
-    //             ...user,
-    //             lastMessage:
-    //               message.type === "text"
-    //                 ? message.content
-    //                 : message.type === "image"
-    //                 ? "Image"
-    //                 : "Audio",
-    //             timestamp: message.createdAt,
-    //             unread:
-    //               message.sender._id === userId
-    //                 ? user.unread
-    //                 : (user.unread || 0) + 1,
-    //           }
-    //         : user
-    //     );
-    //     // Sort by timestamp (newest first)
-    //     return updatedUsers.sort((a, b) =>
-    //       b.timestamp && a.timestamp
-    //         ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    //         : b.timestamp
-    //         ? -1
-    //         : a.timestamp
-    //         ? 1
-    //         : 0
-    //     );
-    //   });
-
-    //   setFilteredChatUsers((prev) => {
-    //     const updatedUsers = prev.map((user) =>
-    //       user.id === message.chat.toString()
-    //         ? {
-    //             ...user,
-    //             lastMessage:
-    //               message.type === "text"
-    //                 ? message.content
-    //                 : message.type === "image"
-    //                 ? "Image"
-    //                 : "Audio",
-    //             timestamp: message.createdAt,
-    //             unread:
-    //               message.sender._id === userId
-    //                 ? user.unread
-    //                 : (user.unread || 0) + 1,
-    //           }
-    //         : user
-    //     );
-
-    //     return updatedUsers.sort((a, b) =>
-    //       b.timestamp && a.timestamp
-    //         ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    //         : b.timestamp
-    //         ? -1
-    //         : a.timestamp
-    //         ? 1
-    //         : 0
-    //     );
-    //   });
-
-    //   if (message.type === "image" || message.type === "audio") {
-    //     try {
-    //       const s3Key = getS3Key(message.content);
-    //       console.log(
-    //         `Fetching presigned URL for received message ${message._id}:`,
-    //         s3Key
-    //       );
-    //       const presignedUrl = await getMediaUrl(s3Key);
-    //       setMediaUrls((prev) => ({
-    //         ...prev,
-    //         [message._id]: presignedUrl,
-    //       }));
-    //     } catch (err: any) {
-    //       console.error(
-    //         `Failed to get presigned URL for received message ${message._id}:`,
-    //         err
-    //       );
-    //       setError(`Failed to load media for message ${message._id}`);
-    //     }
-    //   }
-
-    //   if (shouldScrollToBottom) {
-    //     scrollToBottom(
-    //       0,
-    //       5,
-    //       (chatHistories[message.chat.toString()] || []).length + 1
-    //     );
-    //   }
-    // });
-    // socketInstance.on("receiveMessage", async (message) => {
-    //   console.log("Received message:", { message });
-
-    //   setChatHistories((prev) => {
-    //     const chatId = message.chat.toString();
-    //     const formattedMessage: ChatMessage = {
-    //       _id: message._id,
-    //       content: message.content,
-    //       timestamp: new Date(message.createdAt).toLocaleTimeString([], {
-    //         hour: "2-digit",
-    //         minute: "2-digit",
-    //       }),
-    //       sender: message.sender._id === userId ? "user" : "other",
-    //       senderId: message.sender._id,
-    //       type: message.type,
-    //       status: message.sender._id === userId ? "sent" : "delivered",
-    //     };
-    //     const updated = [...(prev[chatId] || []), formattedMessage];
-    //     return { ...prev, [chatId]: updated };
-    //   });
-
-    //   setChatUsers((prev) => {
-    //     const updatedUsers = prev.map((user) =>
-    //       user.id === message.chat.toString()
-    //         ? {
-    //             ...user,
-    //             lastMessage:
-    //               message.type === "text"
-    //                 ? message.content
-    //                 : message.type === "image"
-    //                 ? "Image"
-    //                 : "Audio",
-    //             timestamp: message.createdAt,
-    //             unread:
-    //               message.sender._id === userId || user.id === activeChatId
-    //                 ? user.unread
-    //                 : (user.unread || 0) + 1, // Don't increment if active chat
-    //           }
-    //         : user
-    //     );
-    //     return updatedUsers.sort((a, b) =>
-    //       b.timestamp && a.timestamp
-    //         ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    //         : b.timestamp
-    //         ? -1
-    //         : a.timestamp
-    //         ? 1
-    //         : 0
-    //     );
-    //   });
-
-    //   setFilteredChatUsers((prev) => {
-    //     const updatedUsers = prev.map((user) =>
-    //       user.id === message.chat.toString()
-    //         ? {
-    //             ...user,
-    //             lastMessage:
-    //               message.type === "text"
-    //                 ? message.content
-    //                 : message.type === "image"
-    //                 ? "Image"
-    //                 : "Audio",
-    //             timestamp: message.createdAt,
-    //             unread:
-    //               message.sender._id === userId || user.id === activeChatId
-    //                 ? user.unread
-    //                 : (user.unread || 0) + 1, // Don't increment if active chat
-    //           }
-    //         : user
-    //     );
-    //     return updatedUsers.sort((a, b) =>
-    //       b.timestamp && a.timestamp
-    //         ? new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    //         : b.timestamp
-    //         ? -1
-    //         : a.timestamp
-    //         ? 1
-    //         : 0
-    //     );
-    //   });
-
-    //   if (message.type === "image" || message.type === "audio") {
-    //     try {
-    //       const s3Key = getS3Key(message.content);
-    //       console.log(
-    //         `Fetching presigned URL for received message ${message._id}:`,
-    //         s3Key
-    //       );
-    //       const presignedUrl = await getMediaUrl(s3Key);
-    //       setMediaUrls((prev) => ({
-    //         ...prev,
-    //         [message._id]: presignedUrl,
-    //       }));
-    //     } catch (err: any) {
-    //       console.error(
-    //         `Failed to get presigned URL for received message ${message._id}:`,
-    //         err
-    //       );
-    //       setError(`Failed to load media for message ${message._id}`);
-    //     }
-    //   }
-
-    //   if (shouldScrollToBottom) {
-    //     scrollToBottom(
-    //       0,
-    //       5,
-    //       (chatHistories[message.chat.toString()] || []).length + 1
-    //     );
-    //   }
-    // });
     socketInstance.on("receiveMessage", async (message) => {
       console.log("Received message:", { message });
 
@@ -674,40 +452,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
       );
     });
-    // socketInstance.on("messageRead", ({ messageId, chatId }) => {
-    //   setChatHistories((prev) => {
-    //     const updatedMessages = (prev[chatId] || []).map((msg) =>
-    //       msg._id === messageId ? { ...msg, status: "read" } : msg
-    //     );
-    //     return { ...prev, [chatId]: updatedMessages };
-    //   });
-
-    //   setChatUsers((prev) =>
-    //     prev.map((user) =>
-    //       user.id === chatId
-    //         ? {
-    //             ...user,
-    //             unread: (chatHistories[chatId] || []).filter(
-    //               (msg) => msg.sender !== "user" && msg.status !== "read"
-    //             ).length,
-    //           }
-    //         : user
-    //     )
-    //   );
-
-    //   setFilteredChatUsers((prev) =>
-    //     prev.map((user) =>
-    //       user.id === chatId
-    //         ? {
-    //             ...user,
-    //             unread: (chatHistories[chatId] || []).filter(
-    //               (msg) => msg.sender !== "user" && msg.status !== "read"
-    //             ).length,
-    //           }
-    //         : user
-    //     )
-    //   );
-    // });
 
     socketInstance.on("messageRead", ({ messageId, chatId }) => {
       setChatHistories((prev) => {
@@ -813,8 +557,20 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
           isOnline: false,
           isActive: user.isActive ?? true,
         }));
-        setChatUsers(updatedChatUsers);
-        setFilteredChatUsers(updatedChatUsers);
+        console.log("UPDATED CHAT USERS", updatedChatUsers);
+        const isOnline = updatedChatUsers[0]?.otherUserId
+          ? await checkUserOnlineStatus(updatedChatUsers[0].otherUserId)
+          : false;
+        console.log(
+          "******222222. **checkUserOnlineStatus isonline step 2",
+          isOnline
+        );
+
+        const updatedChatUsersWithOnline = updatedChatUsers.map((u, index) =>
+          index === 0 ? { ...u, isOnline } : u
+        );
+        setChatUsers(updatedChatUsersWithOnline);
+        setFilteredChatUsers(updatedChatUsersWithOnline);
         if (updatedChatUsers.length > 0) {
           setSelectedUser(updatedChatUsers[0]);
           setActiveChatId(updatedChatUsers[0].id);
@@ -1037,36 +793,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     }
   };
 
-  // const handleSendMessage = () => {
-  //   if (!socket || !activeChatId || newMessage.trim() === "") {
-  //     setError("Cannot send message: please select a chat and enter a message");
-  //     return;
-  //   }
-
-  //   if (!socket.connected) {
-  //     setError("Chat server disconnected, please try again later");
-  //     return;
-  //   }
-
-  //   if (isOnline.role === "mentee" && selectedUser && !selectedUser.isActive) {
-  //     setError("Cannot send message: Booking is not confirmed");
-  //     return;
-  //   }
-
-  //   socket.emit(
-  //     "sendMessage",
-  //     { chatId: activeChatId, content: newMessage, type: "text" },
-  //     (response: any) => {
-  //       if (response.success) {
-  //         setNewMessage("");
-  //         setShouldScrollToBottom(true);
-  //         scrollToBottom(0, 5, (chatHistories[activeChatId] || []).length + 1);
-  //       } else {
-  //         setError(response.error || "Failed to send message");
-  //       }
-  //     }
-  //   );
-  // };
   const handleSendMessage = () => {
     if (!socket || !activeChatId || newMessage.trim() === "") {
       setError("Cannot send message: please select a chat and enter a message");
@@ -1442,79 +1168,31 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                 />
               </div>
             </div>
-            {/* <ScrollArea className="h-[calc(100vh-150px)]">
-              <div className="space-y-1 px-2">
-                {filteredChatUsers.length > 0 ? (
-                  filteredChatUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      onClick={() => handleUserClick(user)}
-                      className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50
-                        ${
-                          selectedUser?.id === user.id
-                            ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
-                            : ""
-                        }`}
-                    >
-                      <div className="relative">
-                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-400 text-white">
-                            {user.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        {user.isOnline && (
-                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white"></span>
-                        )}
-                      </div>
-                      <div className="flex-1 ml-3 text-left">
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-800">
-                            {user.name}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatTimestamp(user.timestamp)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mt-1">
-                          <p className="text-sm text-gray-500 truncate max-w-[150px]">
-                            {user.lastMessage || "Start chatting now!"}
-                          </p>
-                          {typeof user.unread === "number" &&
-                            user.unread > 0 && (
-                              <span className="bg-indigo-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs font-bold">
-                                {user.unread}
-                              </span>
-                            )}
-                        </div>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 text-sm">
-                      No conversations found
-                    </p>
-                    <p className="text-gray-400 text-xs mt-1">
-                      Try adjusting your search
-                    </p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea> */}
+
             <ScrollArea className="h-[calc(100vh-150px)]">
               <div className="space-y-1 px-2">
                 {filteredChatUsers.length > 0 ? (
                   filteredChatUsers.map((user) => (
+                    //       <button
+                    //         key={user.id}
+                    //         onClick={() => handleUserClick(user)}
+                    //         className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50
+                    // ${
+                    //   selectedUser?.id === user.id
+                    //     ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
+                    //     : ""
+                    // }`}
+                    //       >
                     <button
                       key={user.id}
                       onClick={() => handleUserClick(user)}
                       className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 hover:bg-gray-50
-              ${
-                selectedUser?.id === user.id
-                  ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
-                  : ""
-              }`}
+          ${
+            selectedUser?.id === user.id
+              ? "bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500"
+              : ""
+          }`}
+                      disabled={selectedUser?.id === user.id}
                     >
                       <div className="relative">
                         <Avatar className="h-12 w-12 border-2 border-white shadow-sm">

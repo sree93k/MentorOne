@@ -1,19 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  X,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  ListOrdered,
-  Link,
-  Image,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  AlignJustify,
-  Code,
-} from "lucide-react";
+import { X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
