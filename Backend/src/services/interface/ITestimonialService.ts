@@ -26,4 +26,5 @@ export interface ITestimonialService {
     page: number,
     limit: number
   ): Promise<{ testimonials: ETestimonial[]; total: number }>;
+  getTopTestimonials(limit: number): Promise<ETestimonial[]>;
 }

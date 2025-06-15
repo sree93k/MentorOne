@@ -16,6 +16,7 @@ import VideoCallHome from "@/pages/usersPage/VideoCallHome";
 import VideoCallMeeting from "@/pages/usersPage/VideoCallMeeting";
 import VideoCallEndPage from "@/pages/usersPage/VideoCallEndPage";
 import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
+import ServicesListing from "./subPages/ServicesListedPage";
 import NotFoundPage from "../usersPage/NotFoundPage";
 // Import the new ChatbotWidget
 import ChatbotWidget from "@/components/users/ChatBotWidget"; // Adjust path if different
@@ -57,6 +58,7 @@ const MenteePage = () => {
             <Route path="/checkout" element={<StripeCheckoutPage />} />
             <Route path="/meetinghome" element={<VideoCallHome />} />
             <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
+            <Route path="/allservices" element={<ServicesListing />} />
             <Route
               path="/meeting-end/:meetingId"
               element={<VideoCallEndPage />}

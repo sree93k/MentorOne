@@ -270,4 +270,76 @@ export default class TestimonialRepository implements ITestimonialRepository {
       throw new ApiError(500, "Failed to count testimonials", error.message);
     }
   }
+
+  async getTopTestimonials(limit: number): Promise<ETestimonial[]> {
+    try {
+      console.log("BookingRepository getTopTestimonials step 1", { limit });
+      const testimonials = await Testimonial.find()
+        .populate({
+          path: "menteeId",
+          select: "firstName lastName profilePicture",
+        })
+        .populate({
+          path: "mentorId",
+          select: "firstName lastName",
+        })
+        .populate({
+          path: "serviceId",
+          select: "title",
+        })
+        .sort({ rating: -1, createdAt: -1 })
+        .limit(limit)
+        .lean();
+      console.log(
+        "BookingRepository getTopTestimonials step 2",
+        testimonials.length
+      );
+      return testimonials;
+    } catch (error: any) {
+      console.error("BookingRepository getTopTestimonials error", error);
+      throw new ApiError(
+        500,
+        "Failed to fetch top testimonials",
+        error.message
+      );
+    }
+  }
+
+  async getAverageRatingByService(serviceId: string): Promise<number> {
+    try {
+      console.log(
+        "TestimonialRepository getAverageRatingByService step 1",
+        serviceId
+      );
+      if (!mongoose.Types.ObjectId.isValid(serviceId)) {
+        throw new ApiError(400, "Invalid Service ID");
+      }
+      const ratingStats = await Testimonial.aggregate([
+        { $match: { serviceId: new mongoose.Types.ObjectId(serviceId) } },
+        {
+          $group: {
+            _id: null,
+            averageRating: { $avg: "$rating" },
+          },
+        },
+      ]);
+      const averageRating =
+        ratingStats.length > 0 ? ratingStats[0].averageRating || 0 : 0;
+      console.log(
+        "TestimonialRepository getAverageRatingByService step 2",
+        averageRating
+      );
+      return parseFloat(averageRating.toFixed(1));
+    } catch (error: any) {
+      console.error(
+        "TestimonialRepository getAverageRatingByService error",
+        error
+      );
+      throw new ApiError(
+        500,
+        "Failed to compute average rating",
+        error.message
+      );
+    }
+  }
 }

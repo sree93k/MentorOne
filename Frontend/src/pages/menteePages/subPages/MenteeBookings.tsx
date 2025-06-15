@@ -6,7 +6,7 @@ import FeedbackModal from "@/components/mentee/FeedbackModal";
 import { getBookings } from "@/services/bookingService"; // Remove getBookingsWithTestimonials
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
+import { CalendarDays } from "lucide-react";
 interface Booking {
   id: string;
   serviceId: string;
@@ -46,87 +46,6 @@ export default function BookingsPage() {
   const bookingsPerPage = 40;
   const navigate = useNavigate();
 
-  // const fetchBookings = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await getBookings(currentPage, bookingsPerPage, "");
-  //     console.log(" MMMMMMMM Mentee bookings fetchBookings step 1", response);
-
-  //     const fetchedBookings = response.data.map((booking: any) => ({
-  //       id: booking._id,
-  //       serviceId: booking.serviceId._id,
-  //       mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
-  //       mentorImage: booking.mentorId.profilePicture,
-  //       mentorId: booking.mentorId._id,
-  //       title: booking.serviceId.title,
-  //       technology: booking.serviceId.technology,
-  //       date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
-  //         day: "2-digit",
-  //         month: "2-digit",
-  //         year: "numeric",
-  //       }),
-  //       time: booking.startTime,
-  //       price: booking.serviceId.amount,
-  //       status: booking.status,
-  //       serviceType: booking.serviceId.type,
-  //       rating: booking.rating || undefined,
-  //       feedback: booking.feedback || undefined,
-  //       oneToOneType: booking.serviceId.oneToOneType || null,
-  //       digitalProductType: booking.serviceId.digitalProductType || null,
-  //       slot: booking.serviceId.slot || "",
-  //     }));
-  //     setBookings(fetchedBookings);
-  //     setTotalBookings(response.total);
-  //   } catch (error) {
-  //     console.error("Failed to fetch bookings:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-  // const fetchBookings = async () => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await getBookings(currentPage, bookingsPerPage, "");
-  //     console.log(" MMMMMMMM Mentee bookings fetchBookings step 1", response);
-
-  //     const fetchedBookings = response.data.map((booking: any) => ({
-  //       id: booking._id,
-  //       serviceId: booking.serviceId._id,
-  //       mentorName: `${booking.mentorId.firstName} ${booking.mentorId.lastName}`,
-  //       mentorImage: booking.mentorId.profilePicture,
-  //       mentorId: booking.mentorId._id,
-  //       title: booking.serviceId.title,
-  //       technology: booking.serviceId.technology,
-  //       date: new Date(booking.bookingDate).toLocaleDateString("en-GB", {
-  //         day: "2-digit",
-  //         month: "2-digit",
-  //         year: "numeric",
-  //       }),
-  //       time: booking.startTime,
-  //       price: booking.serviceId.amount,
-  //       status: booking.status,
-  //       serviceType: booking.serviceId.type,
-  //       rating: booking.testimonials?.rating || undefined,
-  //       feedback: booking.testimonials?.comment || undefined,
-  //       testimonial: booking.testimonials
-  //         ? {
-  //             _id: booking.testimonials._id,
-  //             comment: booking.testimonials.comment,
-  //             rating: booking.testimonials.rating,
-  //           }
-  //         : undefined,
-  //       oneToOneType: booking.serviceId.oneToOneType || null,
-  //       digitalProductType: booking.serviceId.digitalProductType || null,
-  //       slot: booking.serviceId.slot || "",
-  //     }));
-  //     setBookings(fetchedBookings);
-  //     setTotalBookings(response.total);
-  //   } catch (error) {
-  //     console.error("Failed to fetch bookings:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
@@ -179,25 +98,6 @@ export default function BookingsPage() {
     fetchBookings();
   }, [currentPage, searchQuery]);
 
-  // const handleFeedbackSubmit = (
-  //   bookingId: string,
-  //   rating: number,
-  //   feedback: string
-  // ) => {
-  //   console.log("Feedback submitted:", { bookingId, rating, feedback });
-  //   setIsFeedbackModalOpen(false);
-  //   setSelectedBooking(null);
-  // };
-  // const handleFeedbackSubmit = async (
-  //   bookingId: string,
-  //   rating: number,
-  //   feedback: string
-  // ) => {
-  //   console.log("Feedback submitted:", { bookingId, rating, feedback });
-  //   await fetchBookings(); // Refresh bookings to show updated testimonial
-  //   setIsFeedbackModalOpen(false);
-  //   setSelectedBooking(null);
-  // };
   const handleFeedbackSubmit = async (
     bookingId: string,
     rating: number,
@@ -346,8 +246,7 @@ export default function BookingsPage() {
                       </TabsTrigger>
                     ))}
                   </TabsList>
-
-                  <TabsContent value="confirmed">
+                  {/* <TabsContent value="confirmed">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
                       {filteredBookings.length > 0 ? (
                         filteredBookings.map((booking) => (
@@ -468,6 +367,220 @@ export default function BookingsPage() {
                         </div>
                       )}
                     </div>
+                  </TabsContent> */}
+
+                  <TabsContent value="confirmed">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot}
+                            type="upcoming"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm col-span-full">
+                          <div className="relative mb-4">
+                            <CalendarDays className="w-16 h-16 text-gray-400 animate-pulse" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                            No Confirmed Bookings
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                            You haven't confirmed any bookings yet. Explore
+                            mentors to schedule a session!
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                            onClick={() => navigate("/seeker/mentors")}
+                          >
+                            Explore Mentors
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="rescheduled">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot}
+                            type="upcoming"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm col-span-full">
+                          <div className="relative mb-4">
+                            <CalendarDays className="w-16 h-16 text-gray-400 animate-pulse" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                            No Rescheduled Bookings
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                            You have no rescheduled bookings. Book a session
+                            with a mentor today!
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                            onClick={() => navigate("/seeker/mentors")}
+                          >
+                            Explore Mentors
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="pending">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot}
+                            type="upcoming"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm col-span-full">
+                          <div className="relative mb-4">
+                            <CalendarDays className="w-16 h-16 text-gray-400 animate-pulse" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                            No Pending Bookings
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                            You have no pending bookings. Schedule a session
+                            with a mentor now!
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                            onClick={() => navigate("/seeker/mentors")}
+                          >
+                            Explore Mentors
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="completed">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot}
+                            type="completed"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            onFeedbackClick={() => {
+                              setSelectedBooking(booking);
+                              setIsFeedbackModalOpen(true);
+                            }}
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm col-span-full">
+                          <div className="relative mb-4">
+                            <CalendarDays className="w-16 h-16 text-gray-400 animate-pulse" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                            No Completed Bookings
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                            You haven't completed any bookings yet. Book a
+                            session to get started!
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                            onClick={() => navigate("/seeker/mentors")}
+                          >
+                            Explore Mentors
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="cancelled">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                      {filteredBookings.length > 0 ? (
+                        filteredBookings.map((booking) => (
+                          <BookingCard
+                            key={booking.id}
+                            booking={booking}
+                            serviceSlot={booking.slot}
+                            type="completed"
+                            navigateToProfile={() =>
+                              handleNavigateToProfile(booking.mentorId)
+                            }
+                            onFeedbackClick={() => {
+                              setSelectedBooking(booking);
+                              setIsFeedbackModalOpen(true);
+                            }}
+                            refreshBookings={fetchBookings}
+                          />
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm col-span-full">
+                          <div className="relative mb-4">
+                            <CalendarDays className="w-16 h-16 text-gray-400 animate-pulse" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                            No Cancelled Bookings
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                            You have no cancelled bookings. Explore mentors to
+                            book a session!
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                            onClick={() => navigate("/seeker/mentors")}
+                          >
+                            Explore Mentors
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </TabsContent>
                 </Tabs>
               </TabsContent>
@@ -510,18 +623,6 @@ export default function BookingsPage() {
         </Tabs>
       )}
 
-      {/* <FeedbackModal
-        isOpen={isFeedbackModalOpen}
-        onClose={() => {
-          setIsFeedbackModalOpen(false);
-          setSelectedBooking(null);
-        }}
-        onSubmit={(rating, feedback) => {
-          if (selectedBooking) {
-            handleFeedbackSubmit(selectedBooking.id, rating, feedback);
-          }
-        }}
-      /> */}
       <FeedbackModal
         isOpen={isFeedbackModalOpen}
         onClose={() => {

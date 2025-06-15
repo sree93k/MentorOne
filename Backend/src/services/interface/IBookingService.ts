@@ -113,4 +113,12 @@ export interface IBookingService {
     dashboard: "mentor" | "mentee",
     bookingId: string
   ): Promise<EBooking[]>;
+  getAllServices(
+    page: number,
+    limit: number,
+    type?: string,
+    searchQuery?: string,
+    oneToOneType?: string,
+    digitalProductType?: string
+  ): Promise<{ services: any[]; total: number }>;
 }

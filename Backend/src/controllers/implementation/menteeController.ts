@@ -632,6 +632,57 @@ class menteeController {
       next(error);
     }
   };
+  public getDashboardData = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const dashboardData = await this.MenteeProfileService.getDashboardData();
+      res.json(
+        new ApiResponse(
+          200,
+          dashboardData,
+          "Dashboard data fetched successfully"
+        )
+      );
+    } catch (error: any) {
+      next(error);
+    }
+  };
+
+  // New method to fetch all services
+  public getAllServices = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const {
+        type,
+        searchQuery,
+        page = "1",
+        limit = "12",
+        oneToOneType,
+        digitalProductType,
+      } = req.query;
+      const pageNum = parseInt(page as string, 10);
+      const limitNum = parseInt(limit as string, 10);
+      const servicesData = await this.bookingService.getAllServices(
+        pageNum,
+        limitNum,
+        type as string,
+        searchQuery as string,
+        oneToOneType as string,
+        digitalProductType as string
+      );
+      res.json(
+        new ApiResponse(200, servicesData, "Services fetched successfully")
+      );
+    } catch (error: any) {
+      next(error);
+    }
+  };
 }
 
 export default new menteeController();

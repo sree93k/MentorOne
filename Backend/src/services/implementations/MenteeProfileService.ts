@@ -22,12 +22,23 @@ import { IServiceRepository } from "../../repositories/interface/IServiceReposit
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import mongoose from "mongoose";
+import { ITestimonialService } from "../interface/ITestimonialService";
+import { IBookingService } from "../interface/IBookingService";
+import BookingService from "./Bookingservice";
+import TestimonialService from "./TestimonialService";
+import { EService } from "../../entities/serviceEntity";
+import { ETestimonial } from "../../entities/testimonialEntity";
 interface WelcomeFormData {
   careerGoal: string;
   interestedCareer: string;
   selectedOptions: string[];
   userType: string;
   [key: string]: any;
+}
+interface DashboardData {
+  topServices: EService[];
+  topMentors: EUsers[];
+  topTestimonials: ETestimonial[];
 }
 
 export default class MenteeProfileService implements IMenteeProfileService {
@@ -38,6 +49,8 @@ export default class MenteeProfileService implements IMenteeProfileService {
   private PriorityDMRepository: IPriorityDMRepository;
   private ServiceRepository: IServiceRepository;
   private BookingRepository: IBookingRepository;
+  private BookingService: IBookingService;
+  private Testimonial: ITestimonialService;
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
@@ -46,6 +59,8 @@ export default class MenteeProfileService implements IMenteeProfileService {
     this.PriorityDMRepository = new PriorityDMRepository();
     this.ServiceRepository = new ServiceRepository();
     this.BookingRepository = new BookingRepository();
+    this.BookingService = new BookingService();
+    this.Testimonial = new TestimonialService();
   }
   //welcomeData
   async welcomeData(
@@ -345,6 +360,55 @@ export default class MenteeProfileService implements IMenteeProfileService {
     } catch (error) {
       console.error("Error fetching PriorityDMs:", error);
       throw error;
+    }
+  }
+
+  async getTopServices(limit: number = 8): Promise<EService[]> {
+    try {
+      console.log("getTopServices service step 1", { limit });
+      const services = await this.ServiceRepository.getTopServices(limit);
+      console.log("getTopServices service step 2", services.length);
+      return services;
+    } catch (error: any) {
+      console.error("getTopServices service error", error);
+      throw new ApiError(500, `Failed to fetch top services: ${error.message}`);
+    }
+  }
+
+  // async getTopMentors(limit: number = 8): Promise<EUsers[]> {
+  //   try {
+  //     console.log("getTopMentors service step 1", { limit });
+  //     const mentors = await this.UserRepository.getTopMentors(limit);
+  //     console.log("getTopMentors service step 2", mentors.length);
+  //     return mentors.filter(
+  //       (mentor) => !mentor.isBlocked && mentor.isApproved === "Approved"
+  //     );
+  //   } catch (error: any) {
+  //     console.error("getTopMentors service error", error);
+  //     throw new ApiError(500, `Failed to fetch top mentors: ${error.message}`);
+  //   }
+  // }
+
+  async getDashboardData(): Promise<DashboardData> {
+    try {
+      console.log("getDashboardData service step 1");
+      const [topServices, topMentors, topTestimonials] = await Promise.all([
+        this.getTopServices(8),
+        this.UserRepository.getTopMentors(8),
+        this.Testimonial.getTopTestimonials(30),
+      ]);
+      console.log("getDashboardData service step 2", {
+        services: topServices.length,
+        mentors: topMentors.length,
+        testimonials: topTestimonials.length,
+      });
+      return { topServices, topMentors, topTestimonials };
+    } catch (error: any) {
+      console.error("getDashboardData service error", error);
+      throw new ApiError(
+        500,
+        `Failed to fetch dashboard data: ${error.message}`
+      );
     }
   }
 }

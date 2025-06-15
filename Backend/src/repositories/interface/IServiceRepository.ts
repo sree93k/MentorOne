@@ -31,4 +31,13 @@ export interface IServiceRepository {
   getTutorialById(tutorialId: string): Promise<any>;
   findServicesByTitle(searchQuery: string): Promise<any[]>;
   findServicesById(id: string): Promise<any>;
+  getTopServices(limit: number): Promise<EService[]>;
+  getAllServicesForMentee(params: {
+    page: number;
+    limit: number;
+    search: string;
+    type?: string;
+    oneToOneType?: string;
+    digitalProductType?: string;
+  }): Promise<{ services: EService[]; totalCount: number }>;
 }

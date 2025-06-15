@@ -84,4 +84,5 @@ export interface IUserRepository {
     isOnline: boolean
   ): Promise<void>;
   findUsersByNameOrEmail(searchQuery: string): Promise<any[]>;
+  getTopMentors(limit: number): Promise<EUsers[]>;
 }

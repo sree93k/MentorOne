@@ -197,4 +197,254 @@ export default class ServiceRepository implements IServiceRepository {
   async findServicesById(id: string): Promise<any> {
     return await Service.findOne({ _id: id }).exec();
   }
+
+  async getTopServices(limit: number): Promise<EService[]> {
+    try {
+      console.log("ServiceRepository getTopServices step 1", { limit });
+      const services = await Service.aggregate([
+        {
+          $lookup: {
+            from: "bookings",
+            localField: "_id",
+            foreignField: "serviceId",
+            as: "bookings",
+          },
+        },
+        {
+          $lookup: {
+            from: "testimonials",
+            localField: "_id",
+            foreignField: "serviceId",
+            as: "testimonials",
+          },
+        },
+        {
+          $addFields: {
+            bookingCount: { $size: "$bookings" },
+            averageRating: { $avg: "$testimonials.rating" },
+          },
+        },
+        {
+          $match: {
+            bookingCount: { $gt: 0 },
+          },
+        },
+        {
+          $sort: {
+            bookingCount: -1,
+            averageRating: -1,
+          },
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "mentorId",
+            foreignField: "_id",
+            as: "mentor",
+          },
+        },
+        {
+          $unwind: "$mentor",
+        },
+        {
+          $project: {
+            _id: 1,
+            title: 1,
+            shortDescription: 1,
+            amount: 1,
+            duration: 1,
+            type: 1,
+            technology: 1,
+            digitalProductType: 1,
+            oneToOneType: 1,
+            fileUrl: 1,
+            exclusiveContent: 1,
+            stats: 1,
+            mentorId: 1,
+            mentorName: {
+              $concat: ["$mentor.firstName", " ", "$mentor.lastName"],
+            },
+            mentorProfileImage: "$mentor.profilePicture",
+            bookingCount: 1,
+            averageRating: 1,
+          },
+        },
+      ]).exec();
+      console.log("ServiceRepository getTopServices step 2", services.length);
+      return services;
+    } catch (error: any) {
+      console.error("ServiceRepository getTopServices error", error);
+      throw new ApiError(500, "Failed to fetch top services", error.message);
+    }
+  }
+
+  // async getAllServicesForMentee(params: {
+  //   page: number;
+  //   limit: number;
+  //   search: string;
+  //   type?: string;
+  //   oneToOneType?: string;
+  //   digitalProductType?: string;
+  // }): Promise<{ services: EService[]; totalCount: number }> {
+  //   try {
+  //     const { page, limit, search, type, oneToOneType, digitalProductType } =
+  //       params;
+  //     const query: any = {};
+
+  //     if (type && type !== "All") {
+  //       query.type = type;
+  //     }
+
+  //     if (oneToOneType) {
+  //       query.oneToOneType = oneToOneType;
+  //     }
+
+  //     if (digitalProductType) {
+  //       query.digitalProductType = digitalProductType;
+  //     }
+
+  //     if (search) {
+  //       query.$or = [
+  //         { title: { $regex: search, $options: "i" } },
+  //         { shortDescription: { $regex: search, $options: "i" } },
+  //       ];
+  //     }
+
+  //     const skip = (page - 1) * limit;
+
+  //     const [services, totalCount] = await Promise.all([
+  //       Service.find(query)
+  //         .populate({
+  //           path: "mentorId",
+  //           select: "firstName lastName profilePicture",
+  //         })
+  //         .skip(skip)
+  //         .limit(limit)
+  //         .lean(),
+  //       Service.countDocuments(query),
+  //     ]);
+
+  //     // Calculate booking count and average rating
+  //     const servicesWithStats = await Promise.all(
+  //       services.map(async (service: any) => {
+  //         const bookings = await mongoose
+  //           .model("Booking")
+  //           .countDocuments({ serviceId: service._id });
+  //         const testimonials = await mongoose
+  //           .model("Testimonial")
+  //           .find({ serviceId: service._id });
+  //         const averageRating =
+  //           testimonials.length > 0
+  //             ? testimonials.reduce(
+  //                 (sum: number, t: any) => sum + t.rating,
+  //                 0
+  //               ) / testimonials.length
+  //             : 0;
+  //         return {
+  //           ...service,
+  //           bookingCount: bookings,
+  //           averageRating,
+  //         };
+  //       })
+  //     );
+
+  //     return { services: servicesWithStats as EService[], totalCount };
+  //   } catch (error: any) {
+  //     console.error(
+  //       "Error in ServiceRepository.getAllServicesForMentee:",
+  //       error
+  //     );
+  //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+  //   }
+  // }
+  async getAllServicesForMentee(params: {
+    page: number;
+    limit: number;
+    search: string;
+    type?: string;
+    oneToOneType?: string;
+    digitalProductType?: string;
+  }): Promise<{ services: EService[]; totalCount: number }> {
+    try {
+      const { page, limit, search, type, oneToOneType, digitalProductType } =
+        params;
+      const query: any = {};
+
+      if (type && type !== "All") {
+        query.type = type;
+      }
+
+      if (oneToOneType) {
+        query.oneToOneType = oneToOneType;
+      }
+
+      if (digitalProductType) {
+        query.digitalProductType = digitalProductType;
+      }
+
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { shortDescription: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      const skip = (page - 1) * limit;
+
+      // Fetch services with mentor details
+      const services = await Service.find(query)
+        .populate({
+          path: "mentorId",
+          select: "firstName lastName profilePicture",
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      // Calculate booking count and average rating using aggregation
+      const servicesWithStats = await Promise.all(
+        services.map(async (service: any) => {
+          // Get booking count (using testimonials as proxy)
+          const bookingCount = await mongoose
+            .model("Booking")
+            .countDocuments({ serviceId: service._id });
+
+          // Use MongoDB aggregation to compute average rating
+          const ratingStats = await mongoose.model("Testimonial").aggregate([
+            { $match: { serviceId: new mongoose.Types.ObjectId(service._id) } },
+            {
+              $group: {
+                _id: null,
+                averageRating: { $avg: "$rating" },
+                count: { $sum: 1 },
+              },
+            },
+          ]);
+
+          const averageRating =
+            ratingStats.length > 0 ? ratingStats[0].averageRating || 0 : 0;
+
+          return {
+            ...service,
+            bookingCount,
+            averageRating: parseFloat(averageRating.toFixed(1)), // Round to 1 decimal place
+          };
+        })
+      );
+
+      // Count total services for pagination
+      const totalCount = await Service.countDocuments(query);
+
+      return { services: servicesWithStats as EService[], totalCount };
+    } catch (error: any) {
+      console.error(
+        "Error in ServiceRepository.getAllServicesForMentee:",
+        error
+      );
+      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+    }
+  }
 }

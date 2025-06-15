@@ -923,9 +923,9 @@ export default class BookingService implements IBookingService {
         bookingId
       );
       console.log("BookingService getBookingData success", {
-        count: bookings.length,
+        count: Array.isArray(bookings) ? bookings.length : 1,
       });
-      return bookings as EBooking[];
+      return Array.isArray(bookings) ? bookings : [bookings];
     } catch (error: any) {
       console.error("BookingService getBookingData error", error);
       throw new ApiError(
@@ -934,6 +934,38 @@ export default class BookingService implements IBookingService {
           ? error.message
           : "Failed to fetch booking data"
       );
+    }
+  }
+
+  async getAllServices(
+    page: number,
+    limit: number,
+    type?: string,
+    searchQuery?: string,
+    oneToOneType?: string,
+    digitalProductType?: string
+  ): Promise<{ services: any[]; total: number }> {
+    try {
+      console.log("MenteeProfileService getAllServices", {
+        page,
+        limit,
+        type,
+        searchQuery,
+        oneToOneType,
+        digitalProductType,
+      });
+      const { services, total } =
+        await this.serviceRepository.getAllServicesForMentee({
+          page,
+          limit,
+          search: searchQuery || "",
+          type,
+          oneToOneType,
+          digitalProductType,
+        });
+      return { services, total };
+    } catch (error: any) {
+      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
     }
   }
 }
