@@ -296,4 +296,20 @@ export default class TestimonialService {
       );
     }
   }
+  async getTopTestimonials(limit: number = 20): Promise<ETestimonial[]> {
+    try {
+      console.log("getTopTestimonials service step 1", { limit });
+      const testimonials = await this.testimonialRepository.getTopTestimonials(
+        limit
+      );
+      console.log("getTopTestimonials service step 2", testimonials.length);
+      return testimonials;
+    } catch (error: any) {
+      console.error("getTopTestimonials service error", error);
+      throw new ApiError(
+        500,
+        `Failed to fetch top testimonials: ${error.message}`
+      );
+    }
+  }
 }

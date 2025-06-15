@@ -1,5 +1,14 @@
 import { EUsers } from "../../entities/userEntity";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
+import { EService } from "../../entities/serviceEntity";
+import { ETestimonial } from "../../entities/testimonialEntity";
+
+interface DashboardData {
+  topServices: EService[];
+  topMentors: EUsers[];
+  topTestimonials: ETestimonial[];
+}
+
 export interface IMenteeProfileService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   deleteAccount(id: string): Promise<boolean>;
@@ -21,4 +30,5 @@ export interface IMenteeProfileService {
     pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
   }): Promise<EPriorityDM>;
   getPriorityDMs(bookingId: string, menteeId: string): Promise<EPriorityDM[]>;
+  getDashboardData(): Promise<DashboardData>;
 }

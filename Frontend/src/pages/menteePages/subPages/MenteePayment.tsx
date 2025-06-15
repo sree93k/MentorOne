@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { getAllMenteePayments } from "@/services/paymentServcie";
-
+import { CreditCard } from "lucide-react";
 interface Payment {
   _id: string;
   bookingId: string;
@@ -129,7 +129,7 @@ export default function MenteeBillingPage() {
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          {/* <TableBody>
             {payments.length > 0 ? (
               payments.map((item) => (
                 <TableRow key={item._id}>
@@ -173,6 +173,75 @@ export default function MenteeBillingPage() {
               <TableRow>
                 <TableCell colSpan={6} className="text-center">
                   No payments found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody> */}
+          <TableBody>
+            {payments.length > 0 ? (
+              payments.map((item) => (
+                <TableRow key={item._id}>
+                  <TableCell>
+                    {new Date(item.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                  </TableCell>
+                  <TableCell>{item.serviceName}</TableCell>
+                  <TableCell>{item.mentorName}</TableCell>
+                  <TableCell>
+                    ₹{item.amount.toLocaleString("en-IN")}/-
+                  </TableCell>
+                  <TableCell>{item.paymentMode}</TableCell>
+                  <TableCell>
+                    <div
+                      className={`h-6 w-6 rounded-full flex items-center justify-center ${
+                        item.status === "completed"
+                          ? "bg-green-500"
+                          : item.status === "failed"
+                          ? "bg-red-500"
+                          : item.status === "refunded"
+                          ? "bg-yellow-500"
+                          : "bg-gray-500"
+                      }`}
+                    >
+                      <Check
+                        className={`h-4 w-4 ${
+                          item.status === "completed"
+                            ? "text-white"
+                            : "text-black"
+                        }`}
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <div className="flex flex-col items-center justify-center h-64 bg-white rounded-lg p-6 animate-fade-in shadow-sm">
+                    <div className="relative mb-4">
+                      <CreditCard className="w-16 h-16 text-gray-400 animate-pulse" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-20 h-20 border-2 border-gray-200 rounded-full animate-pulse opacity-50"></div>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                      No Payments Found
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-2 max-w-sm text-center">
+                      You haven't made any payments yet. Book a session with a
+                      mentor to get started!
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4 bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+                      onClick={() => navigate("/seeker/mentors")}
+                    >
+                      Explore Mentors
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

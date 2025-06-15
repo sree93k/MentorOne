@@ -626,4 +626,86 @@ export default class UserRepository implements IUserRepository {
       .select("_id")
       .exec();
   }
+
+  async getTopMentors(limit: number): Promise<EUsers[]> {
+    try {
+      console.log("UserRepository getTopMentors step 1", { limit });
+      const mentors = await Users.aggregate([
+        {
+          $match: {
+            role: "mentor",
+            isBlocked: false,
+            isApproved: "Approved",
+          },
+        },
+        {
+          $lookup: {
+            from: "bookings",
+            localField: "_id",
+            foreignField: "mentorId",
+            as: "bookings",
+          },
+        },
+        {
+          $lookup: {
+            from: "testimonials",
+            localField: "_id",
+            foreignField: "mentorId",
+            as: "testimonials",
+          },
+        },
+        {
+          $lookup: {
+            from: "mentors",
+            localField: "mentorId",
+            foreignField: "_id",
+            as: "mentorDetails",
+          },
+        },
+        {
+          $unwind: "$mentorDetails",
+        },
+        {
+          $addFields: {
+            bookingCount: { $size: "$bookings" },
+            averageRating: { $avg: "$testimonials.rating" },
+          },
+        },
+        {
+          $match: {
+            bookingCount: { $gt: 0 },
+          },
+        },
+        {
+          $sort: {
+            bookingCount: -1,
+            averageRating: -1,
+          },
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $project: {
+            _id: 1,
+            firstName: 1,
+            lastName: 1,
+            profilePicture: 1,
+            mentorId: 1,
+            bio: "$mentorDetails.bio",
+            skills: "$mentorDetails.skills",
+            bookingCount: 1,
+            averageRating: 1,
+            isBlocked: 1,
+            isApproved: 1,
+          },
+        },
+      ]).exec();
+      console.log("UserRepository getTopMentors step 2", mentors.length);
+      return mentors;
+    } catch (error: any) {
+      console.error("UserRepository getTopMentors error", error);
+      throw new ApiError(500, "Failed to fetch top mentors", error.message);
+    }
+  }
 }

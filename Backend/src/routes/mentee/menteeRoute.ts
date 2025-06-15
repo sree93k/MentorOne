@@ -153,4 +153,12 @@ menteeRoutes.put(
   authenticate,
   bookingController.updateBookingServiceStatus.bind(bookingController)
 );
+
+menteeRoutes.get(
+  "/dashboard-data",
+  authenticate,
+  menteeController.getDashboardData.bind(menteeController)
+);
+
+menteeRoutes.get("/allServices", authenticate, menteeController.getAllServices);
 export default menteeRoutes;

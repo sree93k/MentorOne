@@ -483,3 +483,139 @@ export const getMentorPolicy = async (mentorId: string) => {
     throw new Error(error?.message || "Failed to fetch getMMentorPolicy");
   }
 };
+interface Service {
+  _id: string;
+  title: string;
+  shortDescription: string;
+  amount: number;
+  duration: number;
+  type: string;
+  technology?: string;
+  digitalProductType?: string;
+  oneToOneType?: string;
+  fileUrl?: string;
+  exclusiveContent?: any[];
+  stats?: {
+    views: number;
+    bookings: number;
+    earnings: number;
+    conversions: string;
+  };
+  mentorId: string;
+  mentorName: string;
+  mentorProfileImage: string;
+  bookingCount: number;
+  averageRating: number;
+}
+
+interface Mentor {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  profilePicture: string;
+  mentorId: {
+    _id: string;
+    bio: string;
+    skills: string[];
+  };
+  isBlocked: boolean;
+  isApproved: string;
+  bookingCount: number;
+  averageRating: number;
+}
+
+interface Testimonial {
+  _id: string;
+  menteeId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    profilePicture: string;
+  };
+  mentorId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  serviceId: {
+    _id: string;
+    title: string;
+  };
+  bookingId: string;
+  comment: string;
+  rating: number;
+  createdAt: Date;
+}
+interface DashboardData {
+  topServices: Service[];
+  topMentors: Mentor[];
+  topTestimonials: Testimonial[];
+}
+export const getDashboardData = async (): Promise<DashboardData> => {
+  try {
+    console.log("menteeService getDashboardData step 1");
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const response = await api.get<ApiResponse>("/seeker/dashboard-data", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+    console.log("menteeService getDashboardData step 2", response.data.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("menteeService getDashboardData error", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch dashboard data"
+    );
+  }
+};
+
+// services/menteeService.ts
+export const getAllServices = async (
+  page: number = 1,
+  limit: number = 12,
+  type?: string,
+  searchQuery?: string,
+  oneToOneType?: string,
+  digitalProductType?: string
+): Promise<{ services: Service[]; total: number }> => {
+  try {
+    console.log("getAllServices: Fetching services", {
+      page,
+      limit,
+      type,
+      searchQuery,
+      oneToOneType,
+      digitalProductType,
+    });
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("No access token found. Please log in again.");
+    }
+    const params: any = { page, limit };
+    if (type && type !== "All") params.type = type;
+    if (searchQuery) params.searchQuery = searchQuery;
+    if (oneToOneType) params.oneToOneType = oneToOneType;
+    if (digitalProductType) params.digitalProductType = digitalProductType;
+
+    const response = await api.get("/seeker/allServices", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params,
+    });
+    console.log("getAllServices: Response received", response.data.data);
+    return {
+      services: response.data.data.services as Service[],
+      total: response.data.data.total || 0,
+    };
+  } catch (error: any) {
+    console.error("getAllServices error:", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    throw new Error(`Failed to fetch services: ${error.message}`);
+  }
+};

@@ -23,4 +23,6 @@ export interface ITestimonialRepository {
     limit: number
   ): Promise<ETestimonial[]>;
   countByMentorAndService(mentorId: string, serviceId: string): Promise<number>;
+  getTopTestimonials(limit: number): Promise<ETestimonial[]>;
+  getAverageRatingByService(serviceId: string): Promise<number>;
 }

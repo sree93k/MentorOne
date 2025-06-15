@@ -57,6 +57,14 @@ const MenteeHeader: React.FC = () => {
             >
               Courses
             </Link>
+            <Link
+              to="/seeker/allservices"
+              className={`${isActive(
+                "/seeker/allservices"
+              )} text-gray-700 dark:text-gray-300`}
+            >
+              Services
+            </Link>
           </nav>
           <div className="flex items-center gap-4">
             {/* <Input
