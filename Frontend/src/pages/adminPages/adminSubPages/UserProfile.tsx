@@ -11,6 +11,9 @@ import {
   CircleDashed,
   AlertTriangle,
 } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import { setError, setLoading } from "@/redux/slices/adminSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -178,8 +181,6 @@ const UserProfile: React.FC = () => {
   const [reason, setReason] = useState<string>("");
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingMentorStatus, setIsEditingMentorStatus] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("profile");
   const navigate = useNavigate();
   // Modal states
@@ -192,10 +193,41 @@ const UserProfile: React.FC = () => {
     "Are you sure you want to proceed?"
   );
 
+  const dispatch = useDispatch();
+  const { error, loading } = useSelector((state: RootState) => state.admin);
+
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     dispatch(setLoading(true));
+  //     dispatch(setError(null));
+  //     try {
+  //       const response = await getUserRoleData(id!);
+  //       console.log("**************getUserRoleData reposne ", response);
+
+  //       if (response && response.status === 200) {
+  //         const data = response.data.data;
+  //         console.log("dattas are", data);
+
+  //         setUserProfile(data);
+  //         console.log("**************setUserProfile  ", userProfile);
+  //         setStatus(data.user.isBlocked ? "Blocked" : "Active");
+  //         setMentorStatus(data.mentorData?.isApproved || "N/A");
+  //       } else {
+  //         dispatch(setError("Failed to fetch user data"));
+  //       }
+  //     } catch (err) {
+  //       dispatch(setError("An error occurred while fetching user data"));
+  //       console.error("Fetch error:", err);
+  //     } finally {
+  //       dispatch(setLoading(false));
+  //     }
+  //   };
+  //   fetchUserData();
+  // }, [id]);
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true);
-      setError(null);
+      dispatch(setLoading(true));
+      dispatch(setError(null));
       try {
         const response = await getUserRoleData(id!);
         console.log("**************getUserRoleData reposne ", response);
@@ -205,27 +237,47 @@ const UserProfile: React.FC = () => {
           console.log("dattas are", data);
 
           setUserProfile(data);
-          console.log("**************setUserProfile  ", userProfile);
           setStatus(data.user.isBlocked ? "Blocked" : "Active");
           setMentorStatus(data.mentorData?.isApproved || "N/A");
         } else {
-          setError("Failed to fetch user data");
+          dispatch(setError("Failed to fetch user data"));
         }
       } catch (err) {
-        setError("An error occurred while fetching user data");
+        dispatch(setError("An error occurred while fetching user data"));
         console.error("Fetch error:", err);
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     };
     fetchUserData();
-  }, [id]);
+  }, [id, dispatch]);
 
+  // const handleStatusUpdate = async () => {
+  //   if (!userProfile) return;
+  //   const newIsBlocked = status === "Blocked";
+  //   if (newIsBlocked !== userProfile.user.isBlocked) {
+  //     dispatch(setLoading(true));
+  //     try {
+  //       await updateUserStatus(userProfile.user._id, newIsBlocked);
+  //       setUserProfile({
+  //         ...userProfile,
+  //         user: { ...userProfile.user, isBlocked: newIsBlocked },
+  //       });
+  //       setIsEditingStatus(false);
+  //     } catch (err) {
+  //       dispatch(setError("Failed to update user status"));
+  //     } finally {
+  //       dispatch(setLoading(false));
+  //     }
+  //   } else {
+  //     setIsEditingStatus(false);
+  //   }
+  // };
   const handleStatusUpdate = async () => {
     if (!userProfile) return;
     const newIsBlocked = status === "Blocked";
     if (newIsBlocked !== userProfile.user.isBlocked) {
-      setLoading(true);
+      dispatch(setLoading(true));
       try {
         await updateUserStatus(userProfile.user._id, newIsBlocked);
         setUserProfile({
@@ -234,20 +286,51 @@ const UserProfile: React.FC = () => {
         });
         setIsEditingStatus(false);
       } catch (err) {
-        setError("Failed to update user status");
+        dispatch(setError("Failed to update user status"));
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     } else {
       setIsEditingStatus(false);
     }
   };
 
+  // const handleMentorStatusUpdate = async (reason: string) => {
+  //   if (!userProfile || !userProfile.mentorData) return;
+  //   const newMentorStatus = mentorStatus;
+  //   if (newMentorStatus !== userProfile.mentorData.isApproved) {
+  //     dispatch(setLoading(true));
+  //     try {
+  //       const response = await updateMentorStatus(
+  //         userProfile.mentorData._id,
+  //         newMentorStatus,
+  //         reason
+  //       );
+  //       setUserProfile({
+  //         ...userProfile,
+  //         mentorData: {
+  //           ...userProfile.mentorData,
+  //           isApproved: newMentorStatus,
+  //         },
+  //       });
+  //       setIsEditingMentorStatus(false);
+  //       setReason("");
+  //     } catch (err) {
+  //       dispatch(setError("Failed to update mentor status"));
+  //     } finally {
+  //       dispatch(setLoading(false));
+  //     }
+  //   } else {
+  //     setIsEditingMentorStatus(false);
+  //     setReason("");
+  //   }
+  // };
+
   const handleMentorStatusUpdate = async (reason: string) => {
     if (!userProfile || !userProfile.mentorData) return;
     const newMentorStatus = mentorStatus;
     if (newMentorStatus !== userProfile.mentorData.isApproved) {
-      setLoading(true);
+      dispatch(setLoading(true));
       try {
         const response = await updateMentorStatus(
           userProfile.mentorData._id,
@@ -264,9 +347,9 @@ const UserProfile: React.FC = () => {
         setIsEditingMentorStatus(false);
         setReason("");
       } catch (err) {
-        setError("Failed to update mentor status");
+        dispatch(setError("Failed to update mentor status"));
       } finally {
-        setLoading(false);
+        dispatch(setLoading(false));
       }
     } else {
       setIsEditingMentorStatus(false);
@@ -274,7 +357,6 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
   if (!userProfile) return <div className="p-6">User not found</div>;
 
   const { user, menteeData, mentorData, serviceData, bookingData } =

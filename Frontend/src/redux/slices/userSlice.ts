@@ -17,7 +17,7 @@ interface InitialState {
   _id: string;
   user: User | null;
   loading: boolean;
-  error: object;
+  error: string | null;
   isAuthenticated: boolean;
   activated: boolean;
   mentorActivated?: boolean;
@@ -36,7 +36,7 @@ const initialState: InitialState = {
   _id: "",
   user: null,
   loading: false,
-  error: {},
+  error: null,
   isAuthenticated: false,
   activated: false,
   mentorActivated: false,

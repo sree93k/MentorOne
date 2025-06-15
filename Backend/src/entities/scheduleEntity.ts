@@ -24,6 +24,7 @@ export interface ESchedule extends Document {
   mentorId: ObjectId;
   weeklySchedule: DaySchedule[];
   scheduleName: string;
+  status: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

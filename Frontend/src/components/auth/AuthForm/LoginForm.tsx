@@ -11,7 +11,7 @@ import Logo from "../../../assets/logo.png";
 import LogoName from "../../../assets/brandlogo.png";
 import { Link } from "react-router-dom";
 import GoogleAuthButton from "../GoogleAuthButton";
-import { Mail, Lock } from "lucide-react";
+
 import { TUserLogin, TUserLoginError } from "@/types/user";
 import { validateEmail, validatePassword } from "@/utils/UserValidator";
 import { login } from "../../../services/userAuthService";
@@ -19,6 +19,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import { EyeIcon, EyeOffIcon, Mail, Lock } from "lucide-react";
 import {
   setUser,
   setIsAuthenticated,
@@ -43,6 +44,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<TUserLoginError>({});
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -212,7 +214,7 @@ export function LoginForm({
                   />
                 </div>
               </div>
-              <div className="grid gap-1">
+              {/* <div className="grid gap-1">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                   <button
@@ -235,6 +237,49 @@ export function LoginForm({
                     className="pl-10"
                     placeholder="Enter your password"
                   />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-500">
+                    Invalid EmailID or Password
+                  </p>
+                )}
+              </div> */}
+              <div className="grid gap-1">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <button
+                    type="button"
+                    onClick={() => setForgotPasswordOpen(true)}
+                    className="ml-auto text-sm underline-offset-2 hover:underline"
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={handleChange("password")}
+                    className="pl-10 pr-10"
+                    placeholder="Enter your password"
+                  />
+                  <Button
+                    type="button" // Explicitly set type to "button" to prevent form submission
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon size={16} />
+                    ) : (
+                      <EyeIcon size={16} />
+                    )}
+                  </Button>
                 </div>
                 {errors.password && (
                   <p className="text-sm text-red-500">

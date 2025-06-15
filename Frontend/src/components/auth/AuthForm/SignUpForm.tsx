@@ -19,11 +19,11 @@ import {
 } from "@/utils/UserValidator";
 import { TUserSignUpError } from "@/types/user";
 import toast, { Toaster } from "react-hot-toast";
-import { Mail, Lock, User, Phone } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import { EyeIcon, EyeOffIcon, Mail, Lock, User, Phone } from "lucide-react";
 import {
   setUser,
   setIsAuthenticated,
@@ -47,6 +47,8 @@ export function SignupForm({
   const [phone, setPhoneNumber] = useState("");
   const [errors, setErrors] = useState<TUserSignUpError>({}); // Add errors state
   // Add loading state
+  const [showPassword, setShowPassword] = useState(false); // Add state for password visibility
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -268,7 +270,7 @@ export function SignupForm({
                     <p className="text-sm text-red-500">{errors.phone}</p>
                   )}
                 </div>
-                <div className="grid gap-1">
+                {/* <div className="grid gap-1">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -286,8 +288,40 @@ export function SignupForm({
                   {errors.password && (
                     <p className="text-sm text-red-500">{errors.password}</p>
                   )}
-                </div>
+                </div> */}
                 <div className="grid gap-1">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"} // Toggle type based on showPassword
+                      required
+                      value={password}
+                      onChange={handleChange("password")}
+                      className="pl-10 pr-10" // Add pr-10 to accommodate eye button
+                      placeholder="Enter your password"
+                    />
+                    <Button
+                      type="button" // Prevent form submission
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon size={16} />
+                      ) : (
+                        <EyeIcon size={16} />
+                      )}
+                    </Button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-red-500">{errors.password}</p>
+                  )}
+                </div>
+                {/* <div className="grid gap-1">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -301,6 +335,42 @@ export function SignupForm({
                       className="pl-10"
                       placeholder="Confirm your password"
                     />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-red-500">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div> */}
+                <div className="grid gap-1">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                      id="confirm-password"
+                      name="confirm-password"
+                      type={showConfirmPassword ? "text" : "password"} // Toggle type based on showConfirmPassword
+                      required
+                      value={confirmPassword}
+                      onChange={handleChange("confirmPassword")}
+                      className="pl-10 pr-10" // Add pr-10 to accommodate eye button
+                      placeholder="Confirm your password"
+                    />
+                    <Button
+                      type="button" // Prevent form submission
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOffIcon size={16} />
+                      ) : (
+                        <EyeIcon size={16} />
+                      )}
+                    </Button>
                   </div>
                   {errors.confirmPassword && (
                     <p className="text-sm text-red-500">
