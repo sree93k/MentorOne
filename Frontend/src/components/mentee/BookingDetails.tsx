@@ -16,6 +16,7 @@ interface Mentor {
   _id: string; // Added _id
   name: string;
   profileImage?: string;
+  profilePicture?: string;
   skills?: string[];
 }
 
@@ -34,8 +35,8 @@ export default function BookingDetails({
     return <div>Service or mentor data is missing.</div>;
   }
   useEffect(() => {
-    console.log("Booking details step 1 service", service);
-    console.log("Booking details step 1 mentor", mentor);
+    console.log("......        Booking details step 1 service", service);
+    console.log(".......        Booking details step 1 mentor", mentor);
   });
   return (
     <div className="rounded-3xl overflow-hidden bg-gray-100">
@@ -43,7 +44,7 @@ export default function BookingDetails({
         <div className="flex flex-col items-start">
           <div className="w-32 h-32 rounded-full overflow-hidden mb-2">
             <img
-              src={mentor.profileImage || DummyImage}
+              src={mentor.profileImage || mentor.profilePicture || DummyImage}
               alt={mentor.name}
               className="w-full h-full object-cover"
             />

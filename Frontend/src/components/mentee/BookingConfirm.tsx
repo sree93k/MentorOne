@@ -132,7 +132,8 @@ export default function BookingConfirm({
     const fetchPolicyAndSchedule = async () => {
       try {
         const mentorPolicy = await getMentorPolicy(mentor.userData);
-        console.log("STEP 1 mentorpolicy >>>>", mentorPolicy);
+        // console.log("STEP 1 mentorpolicy >>>>", mentorPolicy);
+        console.log("BookingConfirm STEP 2 menotrpolicy", mentorPolicy);
         setMentorPolicy(mentorPolicy);
 
         if (!mentor?.userData || !service) {
@@ -152,7 +153,9 @@ export default function BookingConfirm({
           setLoading(false);
           return;
         }
-        console.log("STEP 2 mentorpolicy >>>>!!", service.slot);
+        console.log("BookingConfirm STEP 2.5: service", service);
+
+        console.log("BookingConfirm STEP 3: service", service.slot);
 
         const [schedules, fetchedBlockedDates] = await Promise.all([
           getMentorSchedule(service?.slot),
@@ -173,7 +176,8 @@ export default function BookingConfirm({
               (bd: BlockedDate) => new Date(bd.date).toISOString().split("T")[0]
             )
         );
-        console.log("BookingConfirm STEP 5: ", blockedDateSet);
+        console.log("BookingConfirm STEP 5: blockedDateSet", blockedDateSet);
+
         const today = new Date();
 
         today.setHours(0, 0, 0, 0);

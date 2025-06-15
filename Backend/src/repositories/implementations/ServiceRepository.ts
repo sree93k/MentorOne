@@ -517,14 +517,10 @@ export default class ServiceRepository implements IServiceRepository {
           path: "mentorId",
           select: "firstName lastName profilePicture",
         })
-        .populate({
-          path: "slot",
-          match: { $expr: { $eq: ["$type", "1-1Call"] } }, // Only populate slot for 1-1Call
-          select: "startTime endTime date isBooked", // Adjust fields based on Schedule schema
-        })
         .skip(skip)
         .limit(limit)
         .lean();
+      console.log("SERVICE REPOSIOTRY>.......services resposne", services);
 
       // Calculate booking count and average rating using aggregation
       const servicesWithStats = await Promise.all(

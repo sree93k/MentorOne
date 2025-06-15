@@ -963,6 +963,8 @@ export default class BookingService implements IBookingService {
           oneToOneType,
           digitalProductType,
         });
+      console.log("BOOKING SERVICE ......getAllServices step 1", services);
+
       return { services, total };
     } catch (error: any) {
       throw new ApiError(500, `Failed to fetch services: ${error.message}`);
