@@ -431,6 +431,7 @@ interface ServiceCardProps {
   type: string;
   title: string;
   shortDescription: string;
+  longDescription: string;
   duration?: string;
   price: string;
   onClick: () => void;
@@ -440,6 +441,7 @@ function ServiceCard({
   type,
   title,
   shortDescription,
+  longDescription,
   duration,
   price,
   onClick,
@@ -449,6 +451,7 @@ function ServiceCard({
     type,
     title,
     shortDescription,
+    longDescription,
     duration,
     price
   );
