@@ -315,41 +315,147 @@ export default class ServiceRepository implements IServiceRepository {
 
   //     const skip = (page - 1) * limit;
 
-  //     const [services, totalCount] = await Promise.all([
-  //       Service.find(query)
-  //         .populate({
-  //           path: "mentorId",
-  //           select: "firstName lastName profilePicture",
-  //         })
-  //         .skip(skip)
-  //         .limit(limit)
-  //         .lean(),
-  //       Service.countDocuments(query),
-  //     ]);
+  //     // Fetch services with mentor details
+  //     const services = await Service.find(query)
+  //       .populate({
+  //         path: "mentorId",
+  //         select: "firstName lastName profilePicture",
+  //       })
+  //       .skip(skip)
+  //       .limit(limit)
+  //       .lean();
 
-  //     // Calculate booking count and average rating
+  //     // Calculate booking count and average rating using aggregation
   //     const servicesWithStats = await Promise.all(
   //       services.map(async (service: any) => {
-  //         const bookings = await mongoose
+  //         // Get booking count (using testimonials as proxy)
+  //         const bookingCount = await mongoose
   //           .model("Booking")
   //           .countDocuments({ serviceId: service._id });
-  //         const testimonials = await mongoose
-  //           .model("Testimonial")
-  //           .find({ serviceId: service._id });
+
+  //         // Use MongoDB aggregation to compute average rating
+  //         const ratingStats = await mongoose.model("Testimonial").aggregate([
+  //           { $match: { serviceId: new mongoose.Types.ObjectId(service._id) } },
+  //           {
+  //             $group: {
+  //               _id: null,
+  //               averageRating: { $avg: "$rating" },
+  //               count: { $sum: 1 },
+  //             },
+  //           },
+  //         ]);
+
   //         const averageRating =
-  //           testimonials.length > 0
-  //             ? testimonials.reduce(
-  //                 (sum: number, t: any) => sum + t.rating,
-  //                 0
-  //               ) / testimonials.length
-  //             : 0;
+  //           ratingStats.length > 0 ? ratingStats[0].averageRating || 0 : 0;
+
   //         return {
   //           ...service,
-  //           bookingCount: bookings,
-  //           averageRating,
+  //           bookingCount,
+  //           averageRating: parseFloat(averageRating.toFixed(1)), // Round to 1 decimal place
   //         };
   //       })
   //     );
+
+  //     // Count total services for pagination
+  //     const totalCount = await Service.countDocuments(query);
+
+  //     return { services: servicesWithStats as EService[], totalCount };
+  //   } catch (error: any) {
+  //     console.error(
+  //       "Error in ServiceRepository.getAllServicesForMentee:",
+  //       error
+  //     );
+  //     throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+  //   }
+  // }
+
+  // async getAllServicesForMentee(params: {
+  //   page: number;
+  //   limit: number;
+  //   search: string;
+  //   type?: string;
+  //   oneToOneType?: string;
+  //   digitalProductType?: string;
+  // }): Promise<{ services: EService[]; totalCount: number }> {
+  //   try {
+  //     const { page, limit, search, type, oneToOneType, digitalProductType } =
+  //       params;
+  //     const query: any = {};
+
+  //     if (type && type !== "All") {
+  //       query.type = type;
+  //     }
+
+  //     if (oneToOneType) {
+  //       query.oneToOneType = oneToOneType;
+  //     }
+
+  //     if (digitalProductType) {
+  //       query.digitalProductType = digitalProductType;
+  //     }
+
+  //     if (search) {
+  //       query.$or = [
+  //         { title: { $regex: search, $options: "i" } },
+  //         { shortDescription: { $regex: search, $options: "i" } },
+  //       ];
+  //     }
+
+  //     const skip = (page - 1) * limit;
+
+  //     // Fetch services with mentor details and conditionally populate slot for 1-1Call
+  //     const services = await Service.find(query)
+  //       .populate({
+  //         path: "mentorId",
+  //         select: "firstName lastName profilePicture",
+  //       })
+  //       .populate({
+  //         path: "slot",
+  //         match: { $expr: { $eq: ["$type", "1-1Call"] } }, // Only populate slot for 1-1Call
+  //         select: "startTime endTime date isBooked", // Adjust fields based on Schedule schema
+  //       })
+  //       .skip(skip)
+  //       .limit(limit)
+  //       .lean();
+
+  //     // Calculate booking count and average rating using aggregation
+  //     const servicesWithStats = await Promise.all(
+  //       services.map(async (service: any) => {
+  //         // Get booking count
+  //         const bookingCount = await mongoose
+  //           .model("Booking")
+  //           .countDocuments({ serviceId: service._id });
+
+  //         // Use MongoDB aggregation to compute average rating
+  //         const ratingStats = await mongoose.model("Testimonial").aggregate([
+  //           { $match: { serviceId: new mongoose.Types.ObjectId(service._id) } },
+  //           {
+  //             $group: {
+  //               _id: null,
+  //               averageRating: { $avg: "$rating" },
+  //               count: { $sum: 1 },
+  //             },
+  //           },
+  //         ]);
+
+  //         const averageRating =
+  //           ratingStats.length > 0 ? ratingStats[0].averageRating || 0 : 0;
+
+  //         // Remove slot field for non-1-1Call services explicitly
+  //         if (service.type !== "1-1Call") {
+  //           delete service.slot;
+  //         }
+
+  //         return {
+  //           ...service,
+  //           bookingCount,
+  //           averageRating: parseFloat(averageRating.toFixed(1)), // Round to 1 decimal place
+  //         };
+  //       })
+  //     );
+
+  //     // Count total services for pagination
+  //     const totalCount = await Service.countDocuments(query);
 
   //     return { services: servicesWithStats as EService[], totalCount };
   //   } catch (error: any) {
@@ -373,6 +479,7 @@ export default class ServiceRepository implements IServiceRepository {
         params;
       const query: any = {};
 
+      // Base query conditions
       if (type && type !== "All") {
         query.type = type;
       }
@@ -392,13 +499,28 @@ export default class ServiceRepository implements IServiceRepository {
         ];
       }
 
+      // Ensure 1-1Call services have a non-null slot, while other types are unaffected
+      if (type === "1-1Call") {
+        query.slot = { $exists: true, $ne: null };
+      } else if (!type || type === "All") {
+        query.$or = [
+          { type: { $in: ["priorityDM", "DigitalProducts"] } },
+          { type: "1-1Call", slot: { $exists: true, $ne: null } },
+        ];
+      }
+
       const skip = (page - 1) * limit;
 
-      // Fetch services with mentor details
+      // Fetch services with mentor details and populate slot for 1-1Call
       const services = await Service.find(query)
         .populate({
           path: "mentorId",
           select: "firstName lastName profilePicture",
+        })
+        .populate({
+          path: "slot",
+          match: { $expr: { $eq: ["$type", "1-1Call"] } }, // Only populate slot for 1-1Call
+          select: "startTime endTime date isBooked", // Adjust fields based on Schedule schema
         })
         .skip(skip)
         .limit(limit)
@@ -407,7 +529,7 @@ export default class ServiceRepository implements IServiceRepository {
       // Calculate booking count and average rating using aggregation
       const servicesWithStats = await Promise.all(
         services.map(async (service: any) => {
-          // Get booking count (using testimonials as proxy)
+          // Get booking count
           const bookingCount = await mongoose
             .model("Booking")
             .countDocuments({ serviceId: service._id });
