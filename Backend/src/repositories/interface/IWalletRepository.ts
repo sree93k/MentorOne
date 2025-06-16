@@ -1,7 +1,7 @@
 import { IWallet } from "../../entities/WalletEntity";
 
 export interface IWalletRepository {
-  create(userId: string): Promise<IWallet>;
+  createWallet(userId: string): Promise<IWallet>;
   findByUserId(userId: string): Promise<IWallet | null>;
   updateBalance(
     userId: string,

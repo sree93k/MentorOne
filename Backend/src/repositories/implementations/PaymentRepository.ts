@@ -3,6 +3,7 @@ import { ApiError } from "../../middlewares/errorHandler";
 import mongoose from "mongoose";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
 import { EPayment } from "../../entities/paymentEntity";
+import Wallet from "../../models/WalletSchema";
 export default class PaymentRepository implements IPaymentRepository {
   async create(data: any) {
     try {
@@ -380,6 +381,7 @@ export default class PaymentRepository implements IPaymentRepository {
             menteeId: "$mentee",
             amount: 1,
             status: 1,
+            total: 1,
             transactionId: 1,
             createdAt: 1,
             serviceDetails: "$service",
@@ -451,6 +453,23 @@ export default class PaymentRepository implements IPaymentRepository {
   async update(id: string, data: any): Promise<any> {
     try {
       return await Payment.findByIdAndUpdate(id, data, { new: true });
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to update payment", error.message);
+    }
+  }
+
+  async updateByBookingId(bookingId: string, data: any): Promise<any> {
+    try {
+      console.log("Payment repository updateByBookingId step 1");
+
+      const response = await Payment.findOneAndUpdate(
+        { bookingId }, // Query filter object
+        data, // Update data (remove the wrapping object)
+        { new: true } // Options
+      );
+
+      console.log("Payment repository updateByBookingId step 2", response);
+      return response;
     } catch (error: any) {
       throw new ApiError(500, "Failed to update payment", error.message);
     }

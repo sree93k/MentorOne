@@ -1,5 +1,6 @@
 import mongoose, { Schema, model, Document } from "mongoose";
 import { EUsers } from "../entities/userEntity";
+import { required } from "joi";
 
 // Define the schema
 const UsersSchema: Schema<EUsers> = new Schema(
@@ -188,6 +189,11 @@ const UsersSchema: Schema<EUsers> = new Schema(
     },
     contacts: {
       type: [Schema.Types.ObjectId],
+      required: false,
+    },
+    wallet: {
+      type: Number,
+      default: 0,
       required: false,
     },
   },

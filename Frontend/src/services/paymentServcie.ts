@@ -167,3 +167,32 @@ export const getAllMentorPayments = async (page: number, limit: number) => {
     );
   }
 };
+
+export const getMenteeWallet = async (page: number, limit: number) => {
+  try {
+    console.log("payment service getMenteeWallet step 1");
+    const accessToken = localStorage.getItem("accessToken");
+    const response = await api.get("/seeker/wallet", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        page,
+        limit,
+      },
+    });
+    console.log("payment service getMenteeWallet step 2", response.data);
+
+    // Ensure response has expected structure
+    if (!response.data.success || !response.data.message) {
+      throw new Error(response.data.message || "Invalid response from server");
+    }
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Error in getAllMentorPayments:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch payments"
+    );
+  }
+};

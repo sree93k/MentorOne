@@ -103,47 +103,6 @@ const BookingCard = ({
 
     // Check if rescheduling is allowed based on reschedulePeriod
     const checkRescheduleEligibility = async () => {
-      // try {
-      //   const policy = await getMentorPolicy(booking.mentorId);
-      //   setMentorPolicy(policy);
-      //   console.log(
-      //     "bookif date and time ",
-      //     booking.date,
-      //     " and ",
-      //     booking.time
-      //   );
-
-      //   const bookedDateTime = new Date(`${booking.date} ${booking.time}`);
-      //   const currentTime = new Date(); // Current time: June 07, 2025, 09:55 PM IST
-      //   console.log("bookedDateTime >>>>>STEP 1", bookedDateTime);
-
-      //   let rescheduleDeadline = new Date(bookedDateTime);
-      //   console.log("bookedDateTime >>>>>STEP 2", rescheduleDeadline);
-      //   const { unit, value } = policy.reschedulePeriod || {
-      //     unit: "hours",
-      //     value: 0,
-      //   };
-      //   if (unit === "days") {
-      //     rescheduleDeadline.setDate(rescheduleDeadline.getDate() - value);
-      //   } else if (unit === "hours") {
-      //     rescheduleDeadline.setHours(rescheduleDeadline.getHours() - value);
-      //   } else if (unit === "minutes") {
-      //     rescheduleDeadline.setMinutes(
-      //       rescheduleDeadline.getMinutes() - value
-      //     );
-      //   }
-      //   console.log(
-      //     "setCanReschedule >>>>>>>>>>>",
-      //     currentTime,
-      //     "  and ",
-      //     rescheduleDeadline
-      //   );
-
-      //   setCanReschedule(currentTime <= rescheduleDeadline);
-      // } catch (error) {
-      //   console.error("Error checking reschedule eligibility:", error);
-      //   setCanReschedule(false);
-      // }
       try {
         const policy = await getMentorPolicy(booking.mentorId);
         setMentorPolicy(policy);

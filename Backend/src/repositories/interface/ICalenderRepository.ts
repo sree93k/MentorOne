@@ -58,4 +58,9 @@ export interface ICalendarRepository {
     date: string,
     slotTime: string
   ): Promise<void>;
+  deleteBlockedDate(
+    mentorId: string,
+    date: string,
+    slotTime: string
+  ): Promise<void>;
 }

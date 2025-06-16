@@ -7,6 +7,7 @@ import {
   Wallet,
   Users2,
   LogOut,
+  BadgeIndianRupee,
 } from "lucide-react";
 // import {
 //   DropdownMenu,
@@ -144,10 +145,19 @@ const AdminSidebar: React.FC = () => {
             onClick={() => handleItemClick("Bookings", "/admin/bookings")}
           />
           <SidebarItem
-            icon={Wallet}
+            icon={BadgeIndianRupee}
             text="Transactions"
             isExpanded={isExpanded}
             active={activeItem === "Transactions"}
+            onClick={() =>
+              handleItemClick("Transactions", "/admin/transactions")
+            }
+          />
+          <SidebarItem
+            icon={Wallet}
+            text="Wallets"
+            isExpanded={isExpanded}
+            active={activeItem === "Wallets"}
             onClick={() =>
               handleItemClick("Transactions", "/admin/transactions")
             }

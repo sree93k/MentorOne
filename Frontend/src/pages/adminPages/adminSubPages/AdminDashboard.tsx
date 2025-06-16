@@ -12,6 +12,9 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import { setError, setLoading } from "@/redux/slices/adminSlice";
 import {
   getAllBookings,
   getAllusers,
@@ -67,10 +70,13 @@ const AdminDashboard: React.FC = () => {
   const [monthlyEarnings, setMonthlyEarnings] = useState<number>(0);
   const [totalBookings, setTotalBookings] = useState<number>(0);
   const [totalServices, setTotalServices] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const dispatch = useDispatch();
+  const { error, loading } = useSelector((state: RootState) => state.admin);
 
   useEffect(() => {
+    dispatch(setError(null));
+    dispatch(setLoading(false));
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -365,8 +371,6 @@ const AdminDashboard: React.FC = () => {
       {/* Charts */}
       {loading ? (
         renderSkeletonLoader()
-      ) : error ? (
-        renderErrorState()
       ) : Object.keys(monthlyByService).length === 0 &&
         yearlyBookings.length === 0 ? (
         renderNoCharts()

@@ -4,6 +4,7 @@ import multer from "multer";
 import { authenticate } from "../../middlewares/authenticateuser";
 import uploadController from "../../controllers/implementation/uploadController";
 import bookingController from "../../controllers/implementation/bookingController";
+import paymentController from "../../controllers/implementation/paymentController";
 const menteeRoutes = Router();
 const upload = multer({ dest: "uploads/" });
 
@@ -30,7 +31,7 @@ menteeRoutes.get("/bookings", authenticate, bookingController.getBookings);
 menteeRoutes.delete(
   "/bookings/:bookingId",
   authenticate,
-  bookingController.deleteBooking
+  bookingController.cancelBooking
 );
 
 menteeRoutes.get(
@@ -161,4 +162,5 @@ menteeRoutes.get(
 );
 
 menteeRoutes.get("/allServices", authenticate, menteeController.getAllServices);
+menteeRoutes.get("/wallet", authenticate, paymentController.getMenteeWallet);
 export default menteeRoutes;
