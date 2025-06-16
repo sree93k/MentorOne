@@ -3,7 +3,13 @@ import { IWallet } from "../../entities/WalletEntity";
 import Wallet from "../../models/WalletSchema";
 
 export default class WalletRepository {
-  async create(userId: string): Promise<IWallet> {
+  async createWallet(userId: string): Promise<IWallet> {
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+
     const wallet = new Wallet({ userId });
     return wallet.save();
   }
@@ -19,6 +25,12 @@ export default class WalletRepository {
     paymentId: string,
     description: string
   ): Promise<IWallet> {
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       throw new Error("Wallet not found");
@@ -50,21 +62,38 @@ export default class WalletRepository {
     amount: number,
     paymentId: string
   ): Promise<IWallet> {
+    console.log("WALLET REPOSITRORY addPendingBalance step1");
+    console.log("WALLET REPOSITRORY", userId);
+    console.log("WALLET REPOSITRORY", amount);
+    console.log("WALLET REPOSITRORY", paymentId);
+    console.log("WALLET REPOSITRORY");
+    console.log("WALLET REPOSITRORY");
+
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       throw new Error("Wallet not found");
     }
 
+    console.log("WALLET REPOSITRORY addPendingBalance step2");
+
     wallet.pendingBalance += amount;
+
+    console.log("WALLET REPOSITRORY addPendingBalance step3");
+
     wallet.transactions.push({
       paymentId: new mongoose.Types.ObjectId(paymentId),
       amount,
       type: "credit",
-      description: "Pending transfer from payment",
+      description: "Transfer from cancelled booking",
       createdAt: new Date(),
     });
 
+    console.log("WALLET REPOSITRORY addPendingBalance step4");
+
     wallet.updatedAt = new Date();
+
+    console.log("WALLET REPOSITRORY addPendingBalance step5", wallet);
+
     return wallet.save();
   }
 

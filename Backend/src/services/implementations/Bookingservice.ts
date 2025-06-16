@@ -202,15 +202,15 @@ export default class BookingService implements IBookingService {
       });
 
       // Add to mentor's pending balance
-      let wallet = await this.walletRepository.findByUserId(mentorId);
-      if (!wallet) {
-        wallet = await this.walletRepository.create(mentorId);
-      }
-      await this.walletRepository.addPendingBalance(
-        mentorId,
-        amount,
-        payment._id.toString()
-      );
+      // let wallet = await this.walletRepository.findByUserId(mentorId);
+      // if (!wallet) {
+      //   wallet = await this.walletRepository.createWallet(mentorId);
+      // }
+      // await this.walletRepository.addPendingBalance(
+      //   mentorId,
+      //   amount,
+      //   payment._id.toString()
+      // );
 
       let chat;
       if (service.oneToOneType === "chat") {
@@ -319,12 +319,49 @@ export default class BookingService implements IBookingService {
   }
 
   async cancelBooking(bookingId: string): Promise<void> {
+    console.log("cancel Booking Booking servcie step 1", bookingId);
+
     const booking = await this.bookingRepository.findById(bookingId);
+    console.log("cancel Booking Booking servcie step 2", booking);
     if (!booking) {
+      console.log("cancel Booking Booking servcie step 2.5 ERROR");
       throw new ApiError(404, "Booking not found", "Invalid booking ID");
     }
+    console.log("cancel Booking Booking servcie step 3");
+    const updatedBooking = await this.bookingRepository.update(bookingId, {
+      status: "cancelled",
+    });
+    await this.calendarRepository.deleteBlockedDate(
+      booking.mentorId,
+      booking.bookingDate,
+      booking.startTime
+    );
+    console.log("cancel Booking Booking servcie step 4", updatedBooking);
+    const updatePayment = await this.paymentRepository.updateByBookingId(
+      bookingId,
+      {
+        status: "refunded",
+      }
+    );
+    console.log(
+      "cancel Booking Booking servcie step 4.5 updatePayment",
+      updatePayment
+    );
 
-    await this.bookingRepository.update(bookingId, { status: "cancelled" });
+    let wallet = await this.walletRepository.findByUserId(booking.menteeId);
+    console.log("cancel Booking Booking servcie step 4..6", updatePayment);
+    if (!wallet) {
+      console.log("cancel Booking Booking servcie step 4.7");
+      wallet = await this.walletRepository.createWallet(booking.menteeId);
+    }
+    console.log("cancel Booking Booking servcie step 4.8");
+    const updatedWallet = await this.walletRepository.addPendingBalance(
+      updatePayment.menteeId.toString(),
+      updatePayment.total,
+      updatePayment._id.toString()
+    );
+    console.log("cancel Booking Booking servcie step 4.9", updatedWallet);
+    console.log("cancel Booking Booking servcie step 5");
   }
 
   async verifyBookingBySessionId(sessionId: string): Promise<any> {

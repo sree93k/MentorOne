@@ -145,14 +145,17 @@ class BookingController {
     }
   };
 
-  public deleteBooking = async (
+  public cancelBooking = async (
     req: Request,
     res: Response,
     next: NextFunction
   ) => {
     const { bookingId } = req.params;
     try {
+      console.log("Cancel booking controller step 1");
+
       await this.bookingService.cancelBooking(bookingId);
+      console.log("Cancel booking controller step 2");
       res.json({ message: "Booking cancelled" });
     } catch (error: any) {
       console.error("Error cancelling booking:", error);

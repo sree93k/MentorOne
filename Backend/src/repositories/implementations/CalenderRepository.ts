@@ -137,4 +137,20 @@ export default class CalendarRepository implements ICalendarRepository {
       throw new ApiError(500, "Failed to remove blocked date", error.message);
     }
   }
+  async deleteBlockedDate(
+    mentorId: string,
+    date: string,
+    slotTime: string
+  ): Promise<void> {
+    try {
+      const deleteDate = await BlockedDate.deleteOne({
+        mentorId,
+        slotTime,
+        date,
+      });
+      console.log("deleteDate >>>>> ", deleteDate);
+    } catch (error: any) {
+      throw new ApiError(500, "Failed to remove blocked date", error.message);
+    }
+  }
 }

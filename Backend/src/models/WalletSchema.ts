@@ -1,6 +1,5 @@
 import mongoose, { Schema } from "mongoose";
 import { IWallet } from "../entities/WalletEntity";
-import { required } from "joi";
 
 const WalletSchema = new Schema<IWallet>({
   userId: {

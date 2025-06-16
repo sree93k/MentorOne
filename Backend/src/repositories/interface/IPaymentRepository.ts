@@ -26,4 +26,5 @@ export interface IPaymentRepository {
   findAllPayments(skip: number, limit: number, query: any): Promise<any[]>;
   countAllPayments(query: any): Promise<number>;
   update(id: string, data: any): Promise<any>;
+  updateByBookingId(bookingId: string, data: any): Promise<any>;
 }

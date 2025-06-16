@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, response } from "express";
 import PaymentService from "../../services/implementations/PaymentService";
 import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
@@ -242,6 +242,26 @@ class PaymentController {
       );
     } catch (error) {
       console.error("Error in getAllMentorPayments controller:", error);
+      next(error);
+    }
+  };
+
+  public getMenteeWallet = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      console.log("payment controller getMenteeWallet step 1");
+      const userId = req?.user?.id;
+      const walletData = this.paymentService.getMenteeWallet(userId);
+      console.log("payment controller getMenteeWallet step 2");
+
+      res.json(
+        new ApiResponse(200, "Mentee payments fetched successfully", walletData)
+      );
+    } catch (error) {
+      console.error("Error in getMenteeWallet controller:", error);
       next(error);
     }
   };

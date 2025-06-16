@@ -11,7 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { getAllMenteePayments } from "@/services/paymentServcie";
+import {
+  getAllMenteePayments,
+  getMenteeWallet,
+} from "@/services/paymentServcie";
 import { CreditCard } from "lucide-react";
 interface Payment {
   _id: string;
@@ -34,6 +37,7 @@ export default function MenteeBillingPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [wallet, setWallet] = useState(0);
   const paymentsPerPage = 10;
 
   useEffect(() => {
@@ -50,6 +54,11 @@ export default function MenteeBillingPage() {
           currentPage,
           paymentsPerPage
         );
+
+        const walletData = await getMenteeWallet(currentPage, paymentsPerPage);
+
+        console.log("WALLET DATA.  >>> ", walletData);
+
         console.log("Payment data at page:", paymentData);
 
         if (!paymentData || typeof paymentData !== "object") {
@@ -95,9 +104,11 @@ export default function MenteeBillingPage() {
           <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-lg font-medium">Total Bill</span>
-                <span className="text-2xl font-bold ml-4">
-                  - ₹{(totalAmount || 0).toLocaleString("en-IN")}/-
+                <span className="flex flex-col text-lg font-medium">
+                  Total Bill
+                </span>
+                <span className="text-2xl font-bold ml-0">
+                  ₹{(totalAmount || 0).toLocaleString("en-IN")}/-
                 </span>
               </div>
             </div>
@@ -107,10 +118,24 @@ export default function MenteeBillingPage() {
           <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-lg font-medium">Purchased</span>
-                <span className="text-2xl font-bold ml-4">
-                  - {totalCount || 0} Nos
+                <span className="flex flex-col text-lg font-medium">
+                  Purchased
                 </span>
+                <span className="text-2xl font-bold ml-0">
+                  {totalCount || 0} Nos
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="w-full">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="flex flex-col text-lg font-medium">
+                  Wallet
+                </span>
+                <span className="text-2xl font-bold ml-0">₹{0}</span>
               </div>
             </div>
           </CardContent>
@@ -126,57 +151,11 @@ export default function MenteeBillingPage() {
               <TableHead>Mentor</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Payment Mode</TableHead>
+              <TableHead>Payment Status</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
-          {/* <TableBody>
-            {payments.length > 0 ? (
-              payments.map((item) => (
-                <TableRow key={item._id}>
-                  <TableCell>
-                    {new Date(item.createdAt).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </TableCell>
-                  <TableCell>{item.serviceName}</TableCell>
-                  <TableCell>{item.mentorName}</TableCell>
-                  <TableCell>
-                    ₹{item.amount.toLocaleString("en-IN")}/-
-                  </TableCell>
-                  <TableCell>{item.paymentMode}</TableCell>
-                  <TableCell>
-                    <div
-                      className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                        item.status === "completed"
-                          ? "bg-green-500"
-                          : item.status === "failed"
-                          ? "bg-red-500"
-                          : item.status === "refunded"
-                          ? "bg-yellow-500"
-                          : "bg-gray-500"
-                      }`}
-                    >
-                      <Check
-                        className={`h-4 w-4 ${
-                          item.status === "completed"
-                            ? "text-white"
-                            : "text-black"
-                        }`}
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center">
-                  No payments found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody> */}
+
           <TableBody>
             {payments.length > 0 ? (
               payments.map((item) => (
@@ -194,6 +173,13 @@ export default function MenteeBillingPage() {
                     ₹{item.amount.toLocaleString("en-IN")}/-
                   </TableCell>
                   <TableCell>{item.paymentMode}</TableCell>
+                  <TableCell>
+                    {item.status === "completed"
+                      ? "Success"
+                      : item.status === "refunded"
+                      ? "Refunded"
+                      : item.status}
+                  </TableCell>
                   <TableCell>
                     <div
                       className={`h-6 w-6 rounded-full flex items-center justify-center ${

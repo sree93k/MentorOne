@@ -28,6 +28,8 @@ import BookingService from "./Bookingservice";
 import TestimonialService from "./TestimonialService";
 import { EService } from "../../entities/serviceEntity";
 import { ETestimonial } from "../../entities/testimonialEntity";
+import WalletRepository from "../../repositories/implementations/WalletRepository";
+import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 interface WelcomeFormData {
   careerGoal: string;
   interestedCareer: string;
@@ -51,6 +53,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
   private BookingRepository: IBookingRepository;
   private BookingService: IBookingService;
   private Testimonial: ITestimonialService;
+  private WalletRepository: IWalletRepository;
   constructor() {
     this.UserRepository = new UserRepository();
     this.CareerRepository = new CareerRepositiory();
@@ -61,6 +64,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
     this.BookingRepository = new BookingRepository();
     this.BookingService = new BookingService();
     this.Testimonial = new TestimonialService();
+    this.WalletRepository = new WalletRepository();
   }
   //welcomeData
   async welcomeData(
@@ -160,6 +164,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
           menteeId: createMentee?._id?.toString(),
           role: updatedRoles, // Convert ObjectId to string
         });
+        await this.WalletRepository.createWallet(id);
         console.log(
           "welcomedata service step 10.final sevice rturn",
           userUpdate

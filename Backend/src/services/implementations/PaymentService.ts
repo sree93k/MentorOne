@@ -70,10 +70,7 @@ export default class PaymentService implements IPaymentService {
         throw new ApiError(400, "Missing required fields", "Invalid input");
       }
       console.log("payment service createCheckoutSession params: step 2");
-      // if (amount <= 0) {
-      //   console.error("Invalid amount:", amount);
-      //   throw new ApiError(400, "Amount must be positive", "Invalid amount");
-      // }
+
       if (amount <= 0 || platformCharge < 0 || total <= 0) {
         console.error("Invalid amounts:", { amount, platformCharge, total });
         throw new ApiError(400, "Amounts must be valid", "Invalid amounts");
@@ -81,41 +78,7 @@ export default class PaymentService implements IPaymentService {
 
       console.log("payment service createCheckoutSession params: step 3");
       console.log("Calling stripe.checkout.sessions.create");
-      // const session = await stripe.checkout.sessions.create({
-      //   payment_method_types: ["card"],
-      //   line_items: [
-      //     {
-      //       price_data: {
-      //         currency: "inr",
-      //         product_data: {
-      //           name: "Mentorship Session",
-      //           metadata: { serviceId, mentorId, menteeId },
-      //         },
-      //         unit_amount: Math.round(amount * 100),
-      //       },
-      //       quantity: 1,
-      //     },
-      //   ],
-      //   mode: "payment",
-      //   success_url: `${
-      //     process.env.STRIPE_SUCCESS_URL ||
-      //     "http://localhost:5173/seeker/bookings"
-      //   }?session_id={CHECKOUT_SESSION_ID}`,
-      //   cancel_url:
-      //     process.env.STRIPE_CANCEL_URL ||
-      //     "http://localhost:5173/seeker/mentorservice",
-      //   metadata: {
-      //     serviceId,
-      //     mentorId,
-      //     menteeId,
-      //     bookingDate,
-      //     startTime,
-      //     endTime,
-      //     day,
-      //     slotIndex: slotIndex.toString(),
-      //     amount: amount.toString(),
-      //   },
-      // });
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
@@ -157,7 +120,7 @@ export default class PaymentService implements IPaymentService {
       // Initialize mentor's wallet if it doesn't exist
       let wallet = await this.walletRepository.findByUserId(mentorId);
       if (!wallet) {
-        wallet = await this.walletRepository.create(mentorId);
+        wallet = await this.walletRepository.createWallet(mentorId);
       }
       console.log("Created checkout session:", session.id);
       return session;
@@ -254,24 +217,6 @@ export default class PaymentService implements IPaymentService {
     }
   }
 
-  // async getAllMenteePayments(menteeId: string): Promise<{
-  //   payments: Payment[];
-  //   totalAmount: number;
-  //   totalCount: number;
-  // }> {
-  //   try {
-  //     console.log("payment service getAllMenteePayments step 1", menteeId);
-
-  //     const result = await this.paymentRepository.findAllByMenteeId(menteeId);
-
-  //     console.log("payment service getAllMenteePayments step 2", result);
-
-  //     return result;
-  //   } catch (error: any) {
-  //     console.error("Error in getAllMenteePayments service:", error);
-  //     throw new ApiError(500, "Failed to fetch mentee payments", error.message);
-  //   }
-  // }
   async getAllMenteePayments(
     menteeId: string,
     page: number,
@@ -381,63 +326,6 @@ export default class PaymentService implements IPaymentService {
     }
   }
 
-  // async transferToMentor(
-  //   paymentId: string,
-  //   mentorId: string,
-  //   amount: number
-  // ): Promise<any> {
-  //   try {
-  //     console.log("payment service transferToMentor step 1", {
-  //       paymentId,
-  //       mentorId,
-  //       amount,
-  //     });
-
-  //     // Verify payment exists and is in pending status
-  //     const payment = await this.paymentRepository.findById(paymentId);
-  //     if (!payment) {
-  //       throw new ApiError(404, "Payment not found");
-  //     }
-  //     if (payment.status !== "pending") {
-  //       throw new ApiError(400, "Payment is not in pending status");
-  //     }
-
-  //     // Verify mentor exists
-  //     const mentor = await this.userRepository.findById(mentorId);
-  //     if (!mentor) {
-  //       throw new ApiError(404, "Mentor not found");
-  //     }
-
-  //     const transfer = {
-  //       id: `mock_transfer_${paymentId}`,
-  //       amount: Math.round(amount * 100),
-  //       currency: "inr",
-  //       destination: mentorId,
-  //       status: "succeeded",
-  //     };
-
-  //     // Update payment status to "transferred"
-  //     const updatedPayment = await this.paymentRepository.update(paymentId, {
-  //       status: "transferred",
-  //       updatedAt: new Date(),
-  //     });
-
-  //     console.log("payment service transferToMentor step 2", {
-  //       transfer,
-  //       updatedPayment,
-  //     });
-  //     return { transfer, payment: updatedPayment };
-  //   } catch (error: any) {
-  //     console.error("Error in transferToMentor service:", error);
-  //     throw error instanceof ApiError
-  //       ? error
-  //       : new ApiError(
-  //           500,
-  //           "Failed to transfer payment to mentor",
-  //           error.message
-  //         );
-  //   }
-  // }
   async transferToMentor(
     paymentId: string,
     mentorId: string,
@@ -466,23 +354,19 @@ export default class PaymentService implements IPaymentService {
         throw new ApiError(404, "Mentor not found");
       }
 
-      // Calculate amount to transfer (after platform charge)
       const transferAmount = payment.amount; // Excludes platformCharge
 
-      // Update wallet
       const wallet = await this.walletRepository.releasePendingBalance(
         mentorId,
         transferAmount,
         paymentId
       );
 
-      // Update payment status
       const updatedPayment = await this.paymentRepository.update(paymentId, {
         status: "transferred",
         updatedAt: new Date(),
       });
 
-      // Optionally, create a Stripe transfer to mentor's connected account
       const transfer = await stripe.transfers.create({
         amount: Math.round(transferAmount * 100),
         currency: "inr",
@@ -505,6 +389,19 @@ export default class PaymentService implements IPaymentService {
             "Failed to transfer payment to mentor",
             error.message
           );
+    }
+  }
+
+  async getMenteeWallet(userId: string): Promise<any> {
+    try {
+      console.log("paymentservice getMenteeWallet step 1", userId);
+
+      const walletData = await this.walletRepository.findByUserId(userId);
+
+      console.log("paymentservice getMenteeWallet step 2", walletData);
+      return walletData;
+    } catch (error) {
+      throw error;
     }
   }
 }
