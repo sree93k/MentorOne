@@ -6,6 +6,7 @@ import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
 import { PassThrough } from "stream";
 import { IMessageService } from "../interface/IMessageService";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class MessageService implements IMessageService {
   private messageRepository: MessageRepository;
@@ -37,7 +38,10 @@ export default class MessageService implements IMessageService {
       )
     ) {
       console.error("Unauthorized or chat not found:", { chatId, senderId });
-      throw new ApiError(403, "Unauthorized or chat not found");
+      throw new ApiError(
+        HttpStatus.FORBIDDEN,
+        "Unauthorized or chat not found"
+      );
     }
 
     let finalContent = content;

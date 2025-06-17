@@ -3,6 +3,7 @@ import BookingRepository from "../../repositories/implementations/BookingReposit
 import { ApiError } from "../../middlewares/errorHandler";
 import { IChatService } from "../interface/IChatService";
 import { createClient } from "@redis/client";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class ChatService implements IChatService {
   private chatRepository: ChatRepository;
@@ -30,7 +31,7 @@ export default class ChatService implements IChatService {
       console.error("ChatService: createChat - Booking not found", {
         bookingId,
       });
-      throw new ApiError(404, "Booking not found");
+      throw new ApiError(HttpStatus.NOT_FOUND, "Booking not found");
     }
     console.log("ChatService: createChat - Booking found", { booking });
 
@@ -118,7 +119,11 @@ export default class ChatService implements IChatService {
         userId,
         error: error.message,
       });
-      throw new ApiError(500, "Failed to check online status", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to check online status",
+        error.message
+      );
     }
   }
 }

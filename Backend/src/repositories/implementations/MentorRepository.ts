@@ -9,6 +9,8 @@ import DigitalProduct from "../../models/digitalProductsModel";
 import VideoTutorial from "../../models/videoTutorialModel";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
+import { HttpStatus } from "../../constants/HttpStatus";
+
 export default class MentorRepository implements IMentorRepository {
   async createMentor(mentorData: EMentor): Promise<EMentor | null> {
     console.log("mentor repo statt 1", mentorData);
@@ -62,7 +64,10 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createService repo step 4");
       console.error("Error creating service:", error);
-      throw new ApiError(500, "Failed to create service");
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create service"
+      );
     }
   }
 
@@ -79,7 +84,10 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createOnlineService repo step 4");
       console.error("Error creating online service:", error);
-      throw new ApiError(500, "Failed to create online service");
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create online service"
+      );
     }
   }
 
@@ -96,7 +104,10 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createDigitalProduct repo step 4");
       console.error("Error creating digital product:", error);
-      throw new ApiError(500, "Failed to create digital product");
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create digital product"
+      );
     }
   }
 
@@ -113,7 +124,10 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createVideoTutorial repo step 4");
       console.error("Error creating video tutorial:", error);
-      throw new ApiError(500, "Failed to create video tutorial");
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create video tutorial"
+      );
     }
   }
 
@@ -121,7 +135,11 @@ export default class MentorRepository implements IMentorRepository {
     try {
       return await Mentor.findById(id);
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find mentor", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find mentor",
+        error.message
+      );
     }
   }
 
@@ -132,11 +150,15 @@ export default class MentorRepository implements IMentorRepository {
       const mentor = await Mentor.findByIdAndUpdate(id, data, { new: true });
       console.log("UPdate mentor rpsository step 2", mentor);
       if (!mentor) {
-        throw new ApiError(404, "Mentor not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Mentor not found");
       }
       return mentor;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update mentor", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update mentor",
+        error.message
+      );
     }
   }
 }

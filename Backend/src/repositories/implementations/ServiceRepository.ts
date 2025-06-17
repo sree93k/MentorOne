@@ -3,6 +3,7 @@ import { IServiceRepository } from "../interface/IServiceRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
+import { HttpStatus } from "../../constants/HttpStatus";
 interface GetAllServicesParams {
   page: number;
   limit: number;
@@ -22,7 +23,10 @@ export default class ServiceRepository implements IServiceRepository {
   ): Promise<GetAllServicesResponse> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid mentorId format: ${mentorId}`
+        );
       }
 
       const { page, limit, search, type } = params;
@@ -52,14 +56,20 @@ export default class ServiceRepository implements IServiceRepository {
       return { services: services as EService[], totalCount };
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllServices:", error);
-      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch services: ${error.message}`
+      );
     }
   }
 
   async getServiceById(serviceId: string): Promise<EService | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid serviceId format: ${serviceId}`
+        );
       }
 
       const service = await Service.findById(serviceId).populate({
@@ -68,7 +78,10 @@ export default class ServiceRepository implements IServiceRepository {
       return service as EService | null;
     } catch (error: any) {
       console.error("Error in ServiceRepository.getServiceById:", error);
-      throw new ApiError(500, `Failed to fetch service: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch service: ${error.message}`
+      );
     }
   }
 
@@ -78,7 +91,10 @@ export default class ServiceRepository implements IServiceRepository {
   ): Promise<EService | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid serviceId format: ${serviceId}`
+        );
       }
 
       const updatedService = await Service.findByIdAndUpdate(
@@ -89,7 +105,10 @@ export default class ServiceRepository implements IServiceRepository {
       return updatedService as EService | null;
     } catch (error: any) {
       console.error("Error in ServiceRepository.updateService:", error);
-      throw new ApiError(500, `Failed to update service: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to update service: ${error.message}`
+      );
     }
   }
 
@@ -158,7 +177,10 @@ export default class ServiceRepository implements IServiceRepository {
       return { tutorials, total };
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllVideoTutorials:", error);
-      throw new ApiError(500, `Failed to fetch tutorials: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch tutorials: ${error.message}`
+      );
     }
   }
 
@@ -166,7 +188,10 @@ export default class ServiceRepository implements IServiceRepository {
     try {
       console.log("service repo getTutorialById step 1", tutorialId);
       if (!mongoose.Types.ObjectId.isValid(tutorialId)) {
-        throw new ApiError(400, `Invalid tutorialId format: ${tutorialId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid tutorialId format: ${tutorialId}`
+        );
       }
       const tutorial = await Service.findById(tutorialId).populate({
         path: "mentorId",
@@ -181,7 +206,7 @@ export default class ServiceRepository implements IServiceRepository {
     } catch (error: any) {
       console.error("Error in ServiceRepository.getTutorialById:", error);
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         `Failed to fetch tutorial details: ${error.message}`
       );
     }
@@ -277,7 +302,11 @@ export default class ServiceRepository implements IServiceRepository {
       return services;
     } catch (error: any) {
       console.error("ServiceRepository getTopServices error", error);
-      throw new ApiError(500, "Failed to fetch top services", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to fetch top services",
+        error.message
+      );
     }
   }
 
@@ -377,7 +406,10 @@ export default class ServiceRepository implements IServiceRepository {
         "Error in ServiceRepository.getAllServicesForMentee:",
         error
       );
-      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch services: ${error.message}`
+      );
     }
   }
 }

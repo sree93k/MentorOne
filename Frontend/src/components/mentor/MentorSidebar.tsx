@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
+
 import {
   Home,
   FileText,
@@ -27,6 +28,8 @@ import Notification from "../users/Notification";
 import WelcomeModalForm1 from "./MentorWelcomeModal";
 import SuccessStep from "@/components/mentor/WelcomeComponents/SuccessStep";
 import {
+  setError,
+  setLoading,
   setUser,
   resetUser,
   setMentorActivated,
@@ -166,7 +169,7 @@ const MentorSidebar: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { user, isAuthenticated, accessToken, isApproved } = useSelector(
+  const { user, isAuthenticated, error, loading, isApproved } = useSelector(
     (state: RootState) => state.user
   );
   const isActivated = useSelector(
@@ -249,6 +252,7 @@ const MentorSidebar: React.FC = () => {
         }
       } catch (error) {
         console.error("Error checking approval status:", error);
+        dispatch(setError(error));
         setIsSuccessModalOpen(false);
         setIsWelcomeModalOpen(false);
         dispatch(setIsApproved(""));
@@ -312,6 +316,7 @@ const MentorSidebar: React.FC = () => {
           }
         })
         .catch((error) => {
+          dispatch(setError(error));
           toast.error("Failed to update online status");
         });
     }
@@ -353,6 +358,7 @@ const MentorSidebar: React.FC = () => {
       }
       return false;
     } catch (error) {
+      dispatch(setError(error));
       console.error("Failed to update user data", error);
       toast.error("Failed to submit form. Please try again.");
       return false;
@@ -406,6 +412,7 @@ const MentorSidebar: React.FC = () => {
         setDropdownOpen(false);
       })
       .catch((error) => {
+        dispatch(setError(error));
         toast.error("Failed to update online status");
       });
   };
@@ -423,6 +430,7 @@ const MentorSidebar: React.FC = () => {
       dispatch(setIsApproved(""));
       navigate("/");
     } catch (error) {
+      dispatch(setError(error));
       toast.error("Failed to logout. Please try again.");
     } finally {
       setLoggingOut(false);
@@ -567,7 +575,7 @@ const MentorSidebar: React.FC = () => {
                   onError={(e) => {
                     console.error("Profile picture failed to load:", {
                       url: user?.profilePicture,
-                      error: e.currentTarget.error,
+                      // error: e.currentTarget.error,
                     });
                   }}
                   onLoad={() =>

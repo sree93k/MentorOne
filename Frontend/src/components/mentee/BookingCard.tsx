@@ -106,6 +106,7 @@ const BookingCard = ({
       try {
         const policy = await getMentorPolicy(booking.mentorId);
         setMentorPolicy(policy);
+        console.log("getMentorPolicy <<<<<<<", policy);
 
         // Convert booking.date from DD/MM/YYYY to YYYY-MM-DD
         const [day, month, year] = booking.date.split("/");
@@ -304,7 +305,7 @@ const BookingCard = ({
   const getServiceTypeIcon = () => {
     const serviceType = booking.serviceType.toLowerCase().replace(/-/g, "");
     if (
-      serviceType === "11call" ||
+      serviceType === "1-1Call" ||
       serviceType === "1-1call" ||
       serviceType === "1:1call"
     ) {
@@ -436,12 +437,12 @@ const BookingCard = ({
               <Clock className="w-4 h-4 mr-2 text-gray-500" />
               <span>{booking.time}</span>
             </div>
-            {serviceSlot && (
+            {/* {serviceSlot && (
               <div className="flex items-center text-sm">
                 <Clock className="w-4 h-4 mr-2 text-gray-500" />
                 <span>Slot: {serviceSlot}</span>
               </div>
-            )}
+            )} */}
             <div className="font-bold mt-2">₹{booking.price}/-</div>
           </div>
         </div>

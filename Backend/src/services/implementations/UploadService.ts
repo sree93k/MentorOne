@@ -13,6 +13,8 @@ import { s3 } from "../../config/awsS3";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
 import { PassThrough } from "stream";
+import { ApiError } from "../../middlewares/errorHandler";
+
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 
 export default class UploadService implements IUploadService {

@@ -1203,9 +1203,7 @@ const BookingsPage = () => {
             }`.trim() || "Unknown",
           type: booking.serviceId?.type || "Unknown",
           service: booking.serviceId?.title || "Unknown",
-          timeSlot: `${booking.startTime} - ${
-            booking.endTime || booking.startTime
-          }`,
+          timeSlot: `${booking.startTime}`,
           paymentStatus: booking.paymentDetails?.status || "Unknown",
           bookingStatus: booking.status || "Unknown",
         }));

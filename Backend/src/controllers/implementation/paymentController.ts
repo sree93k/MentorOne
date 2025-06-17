@@ -246,19 +246,50 @@ class PaymentController {
     }
   };
 
+  // public getMenteeWallet = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   try {
+  //     const userId = req?.user?.id;
+  //     console.log("payment controller getMenteeWallet step 1", userId);
+  //     const walletData = this.paymentService.getMenteeWallet(userId);
+  //     console.log("payment controller getMenteeWallet step 2", walletData);
+
+  //     res.json(
+  //       new ApiResponse(200, "Mentee payments fetched successfully", walletData)
+  //     );
+  //   } catch (error) {
+  //     console.error("Error in getMenteeWallet controller:", error);
+  //     next(error);
+  //   }
+  // };
   public getMenteeWallet = async (
     req: Request,
     res: Response,
     next: NextFunction
   ) => {
     try {
-      console.log("payment controller getMenteeWallet step 1");
       const userId = req?.user?.id;
-      const walletData = this.paymentService.getMenteeWallet(userId);
-      console.log("payment controller getMenteeWallet step 2");
+      const { page = 1, limit = 10 } = req.query;
+
+      console.log("payment controller getMenteeWallet step 1", {
+        userId,
+        page,
+        limit,
+      });
+
+      const walletData = await this.paymentService.getMenteeWallet(
+        userId as string,
+        parseInt(page as string),
+        parseInt(limit as string)
+      );
+
+      console.log("payment controller getMenteeWallet step 2", walletData);
 
       res.json(
-        new ApiResponse(200, "Mentee payments fetched successfully", walletData)
+        new ApiResponse(200, "Mentee wallet fetched successfully", walletData)
       );
     } catch (error) {
       console.error("Error in getMenteeWallet controller:", error);

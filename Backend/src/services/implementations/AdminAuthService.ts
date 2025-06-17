@@ -8,6 +8,8 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
+import { ApiError } from "../../middlewares/errorHandler";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class AdminAuthService implements IAdminAuthService {
   private AdminRepository: IAdminRepository;
@@ -25,7 +27,7 @@ export default class AdminAuthService implements IAdminAuthService {
     console.log("Service - Login attempt for email:", user.adminEmail);
     if (!user.adminEmail) {
       console.log("Service - Error: adminEmail is required");
-      throw new Error("adminEmail is required");
+      throw new ApiError(HttpStatus.BAD_REQUEST, "adminEmail is required");
     }
     const adminFound = await this.AdminRepository.findByEmail(user.adminEmail);
     console.log("Service - Admin found:", adminFound ? "Yes" : "No");
