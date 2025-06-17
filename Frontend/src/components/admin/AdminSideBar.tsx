@@ -153,7 +153,7 @@ const AdminSidebar: React.FC = () => {
               handleItemClick("Transactions", "/admin/transactions")
             }
           />
-          <SidebarItem
+          {/* <SidebarItem
             icon={Wallet}
             text="Wallets"
             isExpanded={isExpanded}
@@ -161,7 +161,7 @@ const AdminSidebar: React.FC = () => {
             onClick={() =>
               handleItemClick("Transactions", "/admin/transactions")
             }
-          />
+          /> */}
           {/* <SidebarItem
             icon={Users2}
             text="Subscribers"

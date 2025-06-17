@@ -14,6 +14,7 @@ import {
   verifyAccessToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
+import { HttpStatus } from "../../constants/HttpStatus";
 import ApiResponse from "../../utils/apiResponse";
 
 export default class UserAuthService implements IUserAuthService {
@@ -81,7 +82,7 @@ export default class UserAuthService implements IUserAuthService {
       // Check if email is provided
       if (!user.email) {
         console.log("Service - Error: email is required");
-        throw new ApiResponse(400, "Email is required");
+        throw new ApiResponse(HttpStatus.BAD_REQUEST, "Email is required");
       }
 
       // Find user by email
@@ -91,14 +92,17 @@ export default class UserAuthService implements IUserAuthService {
       // Check if user is blocked
       if (userFound?.isBlocked) {
         console.log("is blocked user", userFound.isBlocked);
-        throw new ApiResponse(403, "Account is Blocked");
+        throw new ApiResponse(HttpStatus.FORBIDDEN, "Account is Blocked");
       }
       if (userFound && !userFound?.password) {
         console.log(
           "is have no passoword..please signin withh google",
           userFound?.password
         );
-        throw new ApiResponse(403, "Signin With Google Account");
+        throw new ApiResponse(
+          HttpStatus.FORBIDDEN,
+          "Signin With Google Account"
+        );
       }
 
       // Validate credentials
@@ -110,7 +114,10 @@ export default class UserAuthService implements IUserAuthService {
       ) {
         const id = userFound._id?.toString();
         if (!id) {
-          throw new ApiResponse(500, "User ID is undefined");
+          throw new ApiResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "User ID is undefined"
+          );
         }
         const accessToken = generateAccessToken({
           id,
@@ -138,7 +145,10 @@ export default class UserAuthService implements IUserAuthService {
       if (error instanceof ApiResponse) {
         throw error;
       }
-      throw new ApiResponse(500, "Internal Server Error");
+      throw new ApiResponse(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Internal Server Error"
+      );
     }
   }
 

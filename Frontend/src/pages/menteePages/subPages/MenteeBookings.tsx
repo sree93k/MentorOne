@@ -54,8 +54,8 @@ export default function BookingsPage() {
         bookingsPerPage,
         searchQuery
       );
-      console.log("MMMMMMM Mentee bookings fetchBookings step 1", response);
 
+      console.log("MMMMMMM Mentee bookings fetchBookings step 1", response);
       const fetchedBookings = response.data.map((booking: any) => ({
         id: booking._id,
         serviceId: booking.serviceId._id,

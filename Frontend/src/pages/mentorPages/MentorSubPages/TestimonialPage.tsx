@@ -320,7 +320,7 @@ export default function TestimonialPage() {
           )}
           {isEditing && (
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-blue-500 text-white">
+              <Button onClick={handleSave} className="bg-black text-white">
                 Save
               </Button>
               <Button onClick={handleCancel} variant="outline">
@@ -338,7 +338,7 @@ export default function TestimonialPage() {
               onClick={() => handleCategoryChange(category)}
               className={`px-4 py-2 rounded-full text-sm ${
                 selectedCategory === category
-                  ? "bg-blue-500 text-white"
+                  ? "bg-black text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >

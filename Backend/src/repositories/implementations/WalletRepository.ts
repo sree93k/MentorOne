@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { IWallet } from "../../entities/WalletEntity";
 import Wallet from "../../models/WalletSchema";
-
+import { ApiError } from "../../middlewares/errorHandler";
+import { HttpStatus } from "../../constants/HttpStatus";
 export default class WalletRepository {
   async createWallet(userId: string): Promise<IWallet> {
     console.log("WALLET REPOSITRORY");
@@ -33,14 +34,14 @@ export default class WalletRepository {
     console.log("WALLET REPOSITRORY");
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
-      throw new Error("Wallet not found");
+      throw new ApiError(HttpStatus.NOT_FOUND, "Wallet not found");
     }
 
     if (type === "credit") {
       wallet.balance += amount;
     } else {
       if (wallet.balance < amount) {
-        throw new Error("Insufficient balance");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Insufficient balance");
       }
       wallet.balance -= amount;
     }
@@ -71,7 +72,7 @@ export default class WalletRepository {
 
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
-      throw new Error("Wallet not found");
+      throw new ApiError(HttpStatus.NOT_FOUND, "Wallet not found");
     }
 
     console.log("WALLET REPOSITRORY addPendingBalance step2");
@@ -104,11 +105,11 @@ export default class WalletRepository {
   ): Promise<IWallet> {
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
-      throw new Error("Wallet not found");
+      throw new ApiError(HttpStatus.NOT_FOUND, "Wallet not found");
     }
 
     if (wallet.pendingBalance < amount) {
-      throw new Error("Insufficient pending balance");
+      throw new ApiError(HttpStatus.NOT_FOUND, "Insufficient pending balance");
     }
 
     wallet.pendingBalance -= amount;

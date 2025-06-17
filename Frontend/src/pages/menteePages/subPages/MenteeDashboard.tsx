@@ -702,7 +702,9 @@ import JasnaImg from "@/assets/Jasna.jpeg";
 import JithinImg from "@/assets/Jithin.jpeg";
 import AnotaImg from "@/assets/Anita.jpeg";
 import GradientBackgroundText from "@/components/mentee/AnimatedGradientText";
-
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
+import { setError, setLoading } from "@/redux/slices/userSlice";
 // Mock data for mentors
 const mockMentors = [
   {
@@ -1304,8 +1306,10 @@ const MenteeDashboard: React.FC = () => {
     topTestimonials: any[];
   }>({ topServices: [], topMentors: [], topTestimonials: [] });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  // const [error, setError] = useState<string | null>(null);
+  const { user, error, loading } = useSelector(
+    (state: RootState) => state.user
+  );
   const placeholders = [
     "Search for mentors...",
     "Find top services...",
@@ -1337,10 +1341,6 @@ const MenteeDashboard: React.FC = () => {
     e.preventDefault();
     console.log("submitted");
   };
-
-  if (error) {
-    return <div className="text-red-500 text-center p-4">{error}</div>;
-  }
 
   // Determine which data to display
   const displayMentors =

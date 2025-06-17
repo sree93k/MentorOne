@@ -33,6 +33,7 @@ interface PaymentItem {
     lastName: string;
   };
   amount: number;
+  total: number;
   status: string;
   transactionId: string;
   createdAt: string;
@@ -339,7 +340,7 @@ export default function MentorPaymentsPage() {
                         {item.serviceName}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {item.amountFormatted}
+                        ₹ {item.total}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
                         {item.status}
@@ -414,7 +415,7 @@ export default function MentorPaymentsPage() {
                         {item.paymentMode}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {item.amountFormatted}
+                        ₹ {item.total}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
                         {item.status}

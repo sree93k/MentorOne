@@ -4,12 +4,12 @@ import { ETestimonial } from "../entities/testimonialEntity";
 const TestimonialSchema = new Schema<ETestimonial>({
   menteeId: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Users",
     required: true,
   },
   mentorId: {
     type: Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Users",
     required: true,
   },
   serviceId: {

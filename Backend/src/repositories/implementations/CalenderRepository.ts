@@ -3,6 +3,7 @@ import Policy from "../../models/policyModel";
 import Schedule from "../../models/scheduleModel";
 import BlockedDate from "../../models/blockedModel";
 import ApiError from "../../utils/apiResponse";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 import {
   ICalendarRepository,
@@ -64,7 +65,10 @@ export default class CalendarRepository implements ICalendarRepository {
         slots: providedDays[day]?.slots || [],
       }));
     } else {
-      throw new Error("weeklySchedule must be provided");
+      throw new ApiError(
+        HttpStatus.BAD_REQUEST,
+        "weeklySchedule must be provided"
+      );
     }
 
     const schedule = await Schedule.create({
@@ -134,7 +138,11 @@ export default class CalendarRepository implements ICalendarRepository {
         { $pull: { blockedDates: { date, slotTime, type: "booking" } } }
       );
     } catch (error: any) {
-      throw new ApiError(500, "Failed to remove blocked date", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to remove blocked date",
+        error.message
+      );
     }
   }
   async deleteBlockedDate(
@@ -150,7 +158,11 @@ export default class CalendarRepository implements ICalendarRepository {
       });
       console.log("deleteDate >>>>> ", deleteDate);
     } catch (error: any) {
-      throw new ApiError(500, "Failed to remove blocked date", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to remove blocked date",
+        error.message
+      );
     }
   }
 }

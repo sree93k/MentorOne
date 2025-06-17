@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Chat from "../../models/chatModel";
 import { ApiError } from "../../middlewares/errorHandler";
 import { EChat } from "../../entities/chatEntity";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class ChatRepository {
   async create(data: Partial<EChat>): Promise<EChat> {
@@ -11,7 +12,11 @@ export default class ChatRepository {
       const chat = new Chat(data);
       return (await chat.save()) as EChat;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to create chat", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create chat",
+        error.message
+      );
     }
   }
 
@@ -24,7 +29,11 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findById step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find chat", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find chat",
+        error.message
+      );
     }
   }
 
@@ -40,7 +49,11 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findByIdAndUpdate step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update chat", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update chat",
+        error.message
+      );
     }
   }
 
@@ -102,7 +115,11 @@ export default class ChatRepository {
         role,
         error: error.message,
       });
-      throw new ApiError(500, "Failed to find chats", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find chats",
+        error.message
+      );
     }
   }
   async findByBookingId(bookingId: string): Promise<EChat | null> {
@@ -114,7 +131,11 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findByBookingId step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find chat", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find chat",
+        error.message
+      );
     }
   }
   async updateByBookingId(
@@ -140,7 +161,7 @@ export default class ChatRepository {
       return chat as EChat;
     } catch (error: any) {
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         "Failed to update chat",
         process.env.NODE_ENV === "development" ? error.message : undefined
       );
@@ -169,7 +190,7 @@ export default class ChatRepository {
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         "Failed to find chat by users and roles",
         error.message
       );
@@ -203,13 +224,17 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY updateByUsersAndRoles step 2", chat);
       if (!chat) {
         throw new ApiError(
-          404,
+          HttpStatus.NOT_FOUND,
           "Chat not found for the provided users and roles"
         );
       }
       return chat as unknown as EChat;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update chat", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update chat",
+        error.message
+      );
     }
   }
 }

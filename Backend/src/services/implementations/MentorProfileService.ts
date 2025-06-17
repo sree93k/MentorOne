@@ -30,6 +30,7 @@ import { IBookingRepository } from "../../repositories/interface/IBookingReposit
 import { EMentor } from "../../entities/mentorEntity";
 import mongoose from "mongoose";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
+import { HttpStatus } from "../../constants/HttpStatus";
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -122,7 +123,7 @@ export default class MentorProfileService implements IMentorProfileService {
       const user = await this.BaseRepository.findById(id);
       console.log(" mentor service, welcomeData step 5", user);
 
-      if (!user) throw new Error("User not found");
+      if (!user) throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
       console.log(" mentor service, welcomeData step 6");
       const populateFields: string[] = [];
       if (user.collegeDetails) {
@@ -260,7 +261,7 @@ export default class MentorProfileService implements IMentorProfileService {
       // Validate required fields
       if (!mentorId || !type || !title || !shortDescription || !amount) {
         console.log("createService service step 2");
-        throw new ApiError(400, "Missing required fields");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Missing required fields");
       }
 
       const service: Partial<EService> = {
@@ -277,18 +278,27 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log("createService service step 4");
         if (!longDescription) {
           console.log("createService service step 5");
-          throw new ApiError(400, "Long description is required");
+          throw new ApiError(
+            HttpStatus.BAD_REQUEST,
+            "Long description is required"
+          );
         }
         service.longDescription = longDescription;
 
         if (type === "1-1Call") {
           if (!duration) {
             console.log("createService service step 6");
-            throw new ApiError(400, "Duration is required for 1-1 Call");
+            throw new ApiError(
+              HttpStatus.BAD_REQUEST,
+              "Duration is required for 1-1 Call"
+            );
           }
           if (!oneToOneType) {
             console.log("createService service step 7");
-            throw new ApiError(400, "One-to-one type is required");
+            throw new ApiError(
+              HttpStatus.BAD_REQUEST,
+              "One-to-one type is required"
+            );
           }
           service.duration = parseInt(duration);
           service.oneToOneType = oneToOneType;
@@ -297,14 +307,20 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log("createService service step 8");
         if (!digitalProductType) {
           console.log("createService service step 9");
-          throw new ApiError(400, "Digital product type is required");
+          throw new ApiError(
+            HttpStatus.BAD_REQUEST,
+            "Digital product type is required"
+          );
         }
         service.digitalProductType = digitalProductType;
         if (digitalProductType === "documents") {
           console.log("createService service step 10");
           if (!fileUrl) {
             console.log("createService service step 11");
-            throw new ApiError(400, "File URL is required for documents");
+            throw new ApiError(
+              HttpStatus.BAD_REQUEST,
+              "File URL is required for documents"
+            );
           }
           service.fileUrl = fileUrl;
         } else if (digitalProductType === "videoTutorials") {
@@ -315,7 +331,7 @@ export default class MentorProfileService implements IMentorProfileService {
           if (!parsedExclusiveContent.length) {
             console.log("createService service step 13");
             throw new ApiError(
-              400,
+              HttpStatus.BAD_REQUEST,
               "Exclusive content is required for video tutorials"
             );
           }
@@ -323,7 +339,7 @@ export default class MentorProfileService implements IMentorProfileService {
         }
       } else {
         console.log("createService service step 14");
-        throw new ApiError(400, "Invalid service type");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid service type");
       }
 
       console.log("createService service step 15", service);
@@ -331,7 +347,7 @@ export default class MentorProfileService implements IMentorProfileService {
       console.log("createService service step 16");
       if (!newService) {
         console.log("createService service step 17");
-        throw new ApiError(500, "Failed to create service");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Failed to create service");
       }
 
       console.log("createService service step 18");
@@ -339,7 +355,7 @@ export default class MentorProfileService implements IMentorProfileService {
     } catch (error) {
       console.log("createService service step 19");
       console.error("Error in createService:", error);
-      throw error;
+      throw new ApiError(HttpStatus.BAD_REQUEST, "Failed to cerate service");
     }
   }
 
@@ -372,7 +388,10 @@ export default class MentorProfileService implements IMentorProfileService {
         stack: error.stack,
         userId,
       });
-      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch services: ${error.message}`
+      );
     }
   }
 
@@ -384,7 +403,10 @@ export default class MentorProfileService implements IMentorProfileService {
       return service;
     } catch (error: any) {
       console.error("getServiceById service error:", error);
-      throw new ApiError(500, `Failed to fetch service: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch service: ${error.message}`
+      );
     }
   }
 
@@ -426,7 +448,7 @@ export default class MentorProfileService implements IMentorProfileService {
       if (!mentorId || !title || !shortDescription || !amount) {
         console.log("updateService service step 3: Missing required fields");
         throw new ApiError(
-          400,
+          HttpStatus.BAD_REQUEST,
           "Missing required fields: mentorId, title, shortDescription, or amount"
         );
       }
@@ -445,7 +467,7 @@ export default class MentorProfileService implements IMentorProfileService {
       );
       if (!existingService) {
         console.log("updateService service step 5");
-        throw new ApiError(404, "Service not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
 
       if (
@@ -466,7 +488,10 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log("updateService service step 7");
         if (!digitalProductType) {
           console.log("updateService service step 8");
-          throw new ApiError(400, "Digital product type is required");
+          throw new ApiError(
+            HttpStatus.BAD_REQUEST,
+            "Digital product type is required"
+          );
         }
         service.digitalProductType = digitalProductType;
         if (digitalProductType === "documents") {
@@ -528,7 +553,7 @@ export default class MentorProfileService implements IMentorProfileService {
           if (videoCountNum > 0 && exclusiveContent.length === 0) {
             console.log("updateService service step 12");
             throw new ApiError(
-              400,
+              HttpStatus.BAD_REQUEST,
               "Exclusive content is required for video tutorials"
             );
           }
@@ -538,7 +563,7 @@ export default class MentorProfileService implements IMentorProfileService {
         }
       } else {
         console.log("updateService service step 13");
-        throw new ApiError(400, "Invalid service type");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid service type");
       }
 
       console.log("updateService service step 14");
@@ -549,7 +574,10 @@ export default class MentorProfileService implements IMentorProfileService {
       console.log("updateService service step 15");
       if (!updatedService) {
         console.log("updateService service step 16");
-        throw new ApiError(500, "Failed to update service");
+        throw new ApiError(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to update service"
+        );
       }
 
       console.log("updateService service step 17");
@@ -557,7 +585,10 @@ export default class MentorProfileService implements IMentorProfileService {
     } catch (error) {
       console.log("updateService service step 18");
       console.error("Error in updateService:", error);
-      throw error;
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update service"
+      );
     }
   }
 
@@ -585,7 +616,10 @@ export default class MentorProfileService implements IMentorProfileService {
         message: error.message,
         stack: error.stack,
       });
-      throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        `Failed to fetch mentors: ${error.message}`
+      );
     }
   }
 
@@ -596,7 +630,7 @@ export default class MentorProfileService implements IMentorProfileService {
       console.log("getMentorById service step 2: Mentor fetched", mentor);
 
       if (mentor.isBlocked) {
-        throw new ApiError(403, "Mentor is blocked");
+        throw new ApiError(HttpStatus.FORBIDDEN, "Mentor is blocked");
       }
 
       return mentor;
@@ -607,7 +641,10 @@ export default class MentorProfileService implements IMentorProfileService {
       });
       throw error instanceof ApiError
         ? error
-        : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
+        : new ApiError(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            `Failed to fetch mentor: ${error.message}`
+          );
     }
   }
 
@@ -627,7 +664,7 @@ export default class MentorProfileService implements IMentorProfileService {
       throw error instanceof ApiError
         ? error
         : new ApiError(
-            500,
+            HttpStatus.INTERNAL_SERVER_ERROR,
             `Failed to fetch approval status: ${
               error instanceof Error ? error.message : "Unknown error"
             }`
@@ -646,7 +683,7 @@ export default class MentorProfileService implements IMentorProfileService {
     } catch (error: any) {
       console.error("Error fetching mentor schedule:", error);
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         `Failed to fetch mentor schedule: ${error.message}`
       );
     }
@@ -661,7 +698,7 @@ export default class MentorProfileService implements IMentorProfileService {
     } catch (error: any) {
       console.error("Error fetching mentor blocked dates:", error);
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         `Failed to fetch mentor blocked dates: ${error.message}`
       );
     }
@@ -681,7 +718,10 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log(
           "assignScheduleToService service step 2: Invalid serviceId"
         );
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid serviceId format: ${serviceId}`
+        );
       }
 
       if (!mongoose.Types.ObjectId.isValid(scheduleId)) {
@@ -700,7 +740,7 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log(
           "assignScheduleToService service step 4: Schedule not found"
         );
-        throw new ApiError(404, "Schedule not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Schedule not found");
       }
 
       // Update the service with the scheduleId
@@ -722,7 +762,7 @@ export default class MentorProfileService implements IMentorProfileService {
         console.log(
           "assignScheduleToService service step 6: Service not found"
         );
-        throw new ApiError(404, "Service not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
 
       console.log(
@@ -734,7 +774,10 @@ export default class MentorProfileService implements IMentorProfileService {
       console.error("assignScheduleToService service error:", error);
       throw error instanceof ApiError
         ? error
-        : new ApiError(500, `Failed to assign schedule: ${error.message}`);
+        : new ApiError(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            `Failed to assign schedule: ${error.message}`
+          );
     }
   }
 
@@ -751,12 +794,15 @@ export default class MentorProfileService implements IMentorProfileService {
     try {
       if (!mongoose.Types.ObjectId.isValid(priorityDMId)) {
         console.log("@@@@@Mentor servcie replyToPriorityDM step 2");
-        throw new ApiError(400, `Invalid priorityDMId format: ${priorityDMId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid priorityDMId format: ${priorityDMId}`
+        );
       }
 
       const priorityDM = await this.PriorityDMRepository.findById(priorityDMId);
       if (!priorityDM) {
-        throw new ApiError(404, "Priority DM not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Priority DM not found");
       }
       console.log("@@@@@Mentor servcie replyToPriorityDM step 3", priorityDM);
       if (priorityDM.mentorId._id.toString() !== mentorId) {
@@ -765,13 +811,16 @@ export default class MentorProfileService implements IMentorProfileService {
           "@@@@@Mentor servcie replyToPriorityDM step 4.5",
           priorityDM.mentorId._id
         );
-        throw new ApiError(403, "Unauthorized to reply to this Priority DM");
+        throw new ApiError(
+          HttpStatus.FORBIDDEN,
+          "Unauthorized to reply to this Priority DM"
+        );
       }
 
       if (priorityDM.status !== "pending") {
         console.log("@@@@@Mentor servcie replyToPriorityDM step 5");
         throw new ApiError(
-          400,
+          HttpStatus.BAD_REQUEST,
           "Priority DM has already been replied to or closed"
         );
       }
@@ -805,7 +854,10 @@ export default class MentorProfileService implements IMentorProfileService {
       return updatedDM;
     } catch (error) {
       console.error("Error replying to PriorityDM:", error);
-      throw error;
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to reply priorityDM"
+      );
     }
   }
 
@@ -815,7 +867,10 @@ export default class MentorProfileService implements IMentorProfileService {
   ): Promise<EPriorityDM[]> {
     try {
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid serviceId format: ${serviceId}`
+        );
       }
 
       const priorityDMs =
@@ -827,7 +882,7 @@ export default class MentorProfileService implements IMentorProfileService {
       return priorityDMs;
     } catch (error) {
       console.error("Error fetching PriorityDMs:", error);
-      throw error;
+      throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid request");
     }
   }
 
@@ -841,7 +896,10 @@ export default class MentorProfileService implements IMentorProfileService {
   ): Promise<{ priorityDMs: EPriorityDM[]; total: number }> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          `Invalid mentorId format: ${mentorId}`
+        );
       }
 
       const { priorityDMs, total } =
@@ -857,7 +915,10 @@ export default class MentorProfileService implements IMentorProfileService {
       return { priorityDMs, total };
     } catch (error) {
       console.error("Error fetching all PriorityDMs by mentor:", error);
-      throw error;
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to get all PriorityDM"
+      );
     }
   }
   async updateTopTestimonials(
@@ -866,7 +927,10 @@ export default class MentorProfileService implements IMentorProfileService {
   ): Promise<EMentor> {
     try {
       if (testimonialIds.length > 5) {
-        throw new ApiError(400, "Cannot select more than 5 testimonials");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Cannot select more than 5 testimonials"
+        );
       }
       console.log(
         "Mentor service updateTopTestimonials step 1 mentorId",
@@ -882,7 +946,7 @@ export default class MentorProfileService implements IMentorProfileService {
         mentor
       );
       if (!mentor?.mentorId) {
-        throw new ApiError(404, "Mentor not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Mentor not found");
       }
       console.log(
         "Mentor service updateTopTestimonials step 3 mentor repsonse",
@@ -901,7 +965,7 @@ export default class MentorProfileService implements IMentorProfileService {
       return updatedMentor;
     } catch (error: any) {
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         error.message || "Failed to update top testimonials"
       );
     }

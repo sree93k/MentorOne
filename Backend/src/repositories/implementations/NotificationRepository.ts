@@ -4,6 +4,8 @@ import {
   INotificationRepository,
   ICreateNotificationDTO,
 } from "../../repositories/interface/INotifictaionRepository";
+import { HttpStatus } from "../../constants/HttpStatus";
+
 export default class NotificationRepository implements INotificationRepository {
   async create(data: ICreateNotificationDTO) {
     try {
@@ -16,14 +18,22 @@ export default class NotificationRepository implements INotificationRepository {
       });
       return savedNotification;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to create notification", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create notification",
+        error.message
+      );
     }
   }
 
   async findUnreadByRecipient(recipientId: string) {
     try {
       return await Notification.find({ recipientId })
-        .populate("senderId", "firstName lastName", "Users")
+        .populate({
+          path: "senderId",
+          select: "firstName lastName",
+          model: "User",
+        })
         .sort({ createdAt: -1 })
         .lean()
         .then((notifications) =>
@@ -35,16 +45,24 @@ export default class NotificationRepository implements INotificationRepository {
             relatedId: n.relatedId,
             isRead: n.isRead,
             createdAt: n.createdAt,
-            sender: n.senderId
-              ? {
-                  firstName: n.senderId?.firstName,
-                  lastName: n.senderId?.lastName,
-                }
-              : undefined,
+            sender:
+              n.senderId &&
+              typeof n.senderId === "object" &&
+              "firstName" in n.senderId &&
+              "lastName" in n.senderId
+                ? {
+                    firstName: (n.senderId as any).firstName,
+                    lastName: (n.senderId as any).lastName,
+                  }
+                : undefined,
           }))
         );
     } catch (error: any) {
-      throw new ApiError(500, "Failed to fetch notifications", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to fetch notifications",
+        error.message
+      );
     }
   }
 
@@ -52,7 +70,11 @@ export default class NotificationRepository implements INotificationRepository {
     try {
       return await Notification.findById(notificationId);
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find notification", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find notification",
+        error.message
+      );
     }
   }
 
@@ -65,7 +87,7 @@ export default class NotificationRepository implements INotificationRepository {
       );
     } catch (error: any) {
       throw new ApiError(
-        500,
+        HttpStatus.INTERNAL_SERVER_ERROR,
         "Failed to mark notification as read",
         error.message
       );

@@ -72,5 +72,10 @@ export interface IPaymentService {
     mentorId: string,
     amount: number
   ): Promise<any>;
-  getMenteeWallet(userId: string): Promise<any>;
+  // getMenteeWallet(userId: string): Promise<any>;
+  getMenteeWallet(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<any>;
 }

@@ -57,14 +57,14 @@ const PaymentsPage = () => {
   const [stats, setStats] = useState({
     total: 0,
     booked: 0,
-    pending: 0,
+    transferred: 0,
     refunded: 0,
   });
   const dispatch = useDispatch();
   const loading = useSelector((state: RootState) => state.admin.loading);
   const error = useSelector((state: RootState) => state.admin.error);
 
-  const statusOptions = ["completed", "pending", "refunded"];
+  const statusOptions = ["completed", "transferred", "refunded"];
 
   const fetchPayments = async () => {
     dispatch(setLoading(true));
@@ -108,11 +108,13 @@ const PaymentsPage = () => {
         setPayments(formattedPayments);
         setTotal(total);
         const booked = data.filter((p: any) => p.status === "completed").length;
-        const pending = data.filter((p: any) => p.status === "pending").length;
+        const transferred = data.filter(
+          (p: any) => p.status === "transferred"
+        ).length;
         const refunded = data.filter(
           (p: any) => p.status === "refunded"
         ).length;
-        setStats({ total, booked, pending, refunded });
+        setStats({ total, booked, transferred, refunded });
       } else {
         dispatch(
           setError({
@@ -121,7 +123,7 @@ const PaymentsPage = () => {
         );
         setPayments([]);
         setTotal(0);
-        setStats({ total: 0, booked: 0, pending: 0, refunded: 0 });
+        setStats({ total: 0, booked: 0, transferred: 0, refunded: 0 });
       }
     } catch (error: any) {
       dispatch(
@@ -134,7 +136,7 @@ const PaymentsPage = () => {
       );
       setPayments([]);
       setTotal(0);
-      setStats({ total: 0, booked: 0, pending: 0, refunded: 0 });
+      setStats({ total: 0, booked: 0, transferred: 0, refunded: 0 });
     } finally {
       dispatch(setLoading(false));
     }
@@ -181,8 +183,8 @@ const PaymentsPage = () => {
     setTab(value);
     if (value === "booked") {
       setStatusFilter("completed");
-    } else if (value === "pending") {
-      setStatusFilter("pending");
+    } else if (value === "transferred") {
+      setStatusFilter("transferred");
     } else if (value === "refunded") {
       setStatusFilter("refunded");
     }
@@ -239,7 +241,7 @@ const PaymentsPage = () => {
   const renderEmptyState = (tab: string) => (
     <TableRow>
       <TableCell
-        colSpan={tab === "pending" ? 8 : 7}
+        colSpan={tab === "transferred" ? 8 : 7}
         className="text-center py-12"
       >
         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
@@ -250,11 +252,11 @@ const PaymentsPage = () => {
           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md text-center">
             {tab === "booked"
               ? "There are no completed payments yet. Encourage bookings to start processing payments!"
-              : tab === "pending"
-              ? "There are no payments pending transfer to mentors."
+              : tab === "transferred"
+              ? "There are no payments transferred transfer to mentors."
               : "No payments have been refunded yet."}
           </p>
-          {tab === "booked" || tab === "pending" ? (
+          {tab === "booked" || tab === "transferred" ? (
             <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
               New Payment
             </Button>
@@ -267,7 +269,7 @@ const PaymentsPage = () => {
   const renderErrorState = () => (
     <TableRow>
       <TableCell
-        colSpan={tab === "pending" ? 8 : 7}
+        colSpan={tab === "transferred" ? 8 : 7}
         className="text-center py-12"
       >
         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
@@ -338,7 +340,7 @@ t-red-400 mt-2"
                 Pending
               </h3>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.pending}
+                {stats.transferred}
               </p>
             </Card>
             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
@@ -373,14 +375,14 @@ t-red-400 mt-2"
               Booked
             </TabsTrigger>
             <TabsTrigger
-              value="pending"
+              value="transferred"
               className={`pb-3 text-lg font-semibold transition-all rounded-none ${
-                tab === "pending"
+                tab === "transferred"
                   ? "border-b-2 border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100"
                   : "text-gray-500 dark:text-gray-400"
               }`}
             >
-              Pending
+              Transferred
             </TabsTrigger>
             <TabsTrigger
               value="refunded"
@@ -479,17 +481,17 @@ t-red-400 mt-2"
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableHead>
-                    {tab === "pending" && (
+                    {/* {tab === "transferred" && (
                       <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
                         Action
                       </TableHead>
-                    )}
+                    )} */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={tab === "pending" ? 8 : 7}>
+                      <TableCell colSpan={tab === "transferred" ? 8 : 7}>
                         <TableSkeleton />
                       </TableCell>
                     </TableRow>
@@ -523,13 +525,14 @@ t-red-400 mt-2"
                           className="text-gray-700 dark:text conseguiu
 -gray-200 py-3 flex items-center gap-2"
                         >
-                          {payment.status === "completed" && (
+                          {(payment.status === "completed" ||
+                            payment.status === "transferred") && (
                             <Check className="h-4 w-4 text-green-500" />
                           )}
                           {payment.status.charAt(0).toUpperCase() +
                             payment.status.slice(1)}
                         </TableCell>
-                        {tab === "pending" && (
+                        {/* {tab === "pending" && (
                           <TableCell className="text-gray-700 dark:text-gray-200 py-3">
                             <Button
                               onClick={() =>
@@ -544,7 +547,7 @@ t-red-400 mt-2"
                               Pay
                             </Button>
                           </TableCell>
-                        )}
+                        )} */}
                       </TableRow>
                     ))
                   )}

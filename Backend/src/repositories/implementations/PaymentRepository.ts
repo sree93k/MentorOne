@@ -3,14 +3,19 @@ import { ApiError } from "../../middlewares/errorHandler";
 import mongoose from "mongoose";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
 import { EPayment } from "../../entities/paymentEntity";
-import Wallet from "../../models/WalletSchema";
+import { HttpStatus } from "../../constants/HttpStatus";
+
 export default class PaymentRepository implements IPaymentRepository {
   async create(data: any) {
     try {
       const payment = new Payment(data);
       return await payment.save();
     } catch (error: any) {
-      throw new ApiError(500, "Failed to create payment", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to create payment",
+        error.message
+      );
     }
   }
 
@@ -18,7 +23,11 @@ export default class PaymentRepository implements IPaymentRepository {
     try {
       return await Payment.findById(id);
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find payment", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find payment",
+        error.message
+      );
     }
   }
 
@@ -26,7 +35,11 @@ export default class PaymentRepository implements IPaymentRepository {
     try {
       return await Payment.findOne({ bookingId });
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find payment", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to find payment",
+        error.message
+      );
     }
   }
   //mentor payments
@@ -96,6 +109,7 @@ export default class PaymentRepository implements IPaymentRepository {
               lastName: "$mentee.lastName",
             },
             amount: 1,
+            total: 1,
             status: 1,
             transactionId: 1,
             createdAt: 1,
@@ -140,7 +154,7 @@ export default class PaymentRepository implements IPaymentRepository {
       ]);
 
       const totalAmount = payments.reduce(
-        (sum: number, payment: any) => sum + (payment.amount || 0),
+        (sum: number, payment: any) => sum + (payment.total || 0),
         0
       );
       const totalCount = payments.length;
@@ -154,7 +168,11 @@ export default class PaymentRepository implements IPaymentRepository {
       return { payments, totalAmount, totalCount };
     } catch (error: any) {
       console.error("Error in findAllByMentorId repository:", error);
-      throw new ApiError(500, "Failed to fetch mentor payments", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to fetch mentor payments",
+        error.message
+      );
     }
   }
 
@@ -180,7 +198,7 @@ export default class PaymentRepository implements IPaymentRepository {
         {
           $group: {
             _id: null,
-            totalAmount: { $sum: "$amount" },
+            totalAmount: { $sum: "$total" },
             totalCount: { $count: {} },
           },
         },
@@ -244,6 +262,7 @@ export default class PaymentRepository implements IPaymentRepository {
             bookingId: 1,
             menteeId: 1,
             amount: 1,
+            total: 1,
             status: 1,
             transactionId: 1,
             createdAt: 1,
@@ -297,7 +316,11 @@ export default class PaymentRepository implements IPaymentRepository {
       return { payments, totalAmount, totalCount };
     } catch (error: any) {
       console.error("Error in findAllByMenteeId repository:", error);
-      throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to fetch mentee payments",
+        error.message
+      );
     }
   }
   //all payments admin
@@ -437,7 +460,11 @@ export default class PaymentRepository implements IPaymentRepository {
       return payments;
     } catch (error: any) {
       console.error("Error in findAllPayments repository:", error);
-      throw new ApiError(500, "Failed to fetch payments", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to fetch payments",
+        error.message
+      );
     }
   }
 
@@ -446,7 +473,11 @@ export default class PaymentRepository implements IPaymentRepository {
       return await Payment.countDocuments(query).exec();
     } catch (error: any) {
       console.error("Error in countAllPayments repository:", error);
-      throw new ApiError(500, "Failed to count payments", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to count payments",
+        error.message
+      );
     }
   }
 
@@ -454,7 +485,11 @@ export default class PaymentRepository implements IPaymentRepository {
     try {
       return await Payment.findByIdAndUpdate(id, data, { new: true });
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update payment", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update payment",
+        error.message
+      );
     }
   }
 
@@ -471,7 +506,11 @@ export default class PaymentRepository implements IPaymentRepository {
       console.log("Payment repository updateByBookingId step 2", response);
       return response;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update payment", error.message);
+      throw new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to update payment",
+        error.message
+      );
     }
   }
 }
