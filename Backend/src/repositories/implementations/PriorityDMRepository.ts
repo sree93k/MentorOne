@@ -3,7 +3,7 @@ import { IPriorityDMRepository } from "../interface/IPriorityDmRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import PriorityDMModel from "../../models/priorityDmModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
-import { HttpStatus } from "../../constants/HttpStatus";
+
 export default class PriorityDMRepository implements IPriorityDMRepository {
   async create(data: Partial<EPriorityDM>): Promise<EPriorityDM> {
     try {
@@ -11,17 +11,14 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
       return priorityDM;
     } catch (error: any) {
       console.error("Error in PriorityDMRepository.create:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to create PriorityDM: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to create PriorityDM: ${error.message}`);
     }
   }
 
   async findById(id: string): Promise<EPriorityDM | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, `Invalid ID format: ${id}`);
+        throw new ApiError(400, `Invalid ID format: ${id}`);
       }
 
       const priorityDM = await PriorityDMModel.findById(id)
@@ -33,10 +30,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
       return priorityDM;
     } catch (error: any) {
       console.error("Error in PriorityDMRepository.findById:", error);
-      throw new ApiError(
-        HttpStatus.BAD_REQUEST,
-        `Failed to fetch PriorityDM: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch PriorityDM: ${error.message}`);
     }
   }
 
@@ -49,10 +43,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
         !mongoose.Types.ObjectId.isValid(bookingId) ||
         !mongoose.Types.ObjectId.isValid(menteeId)
       ) {
-        throw new ApiError(
-          HttpStatus.BAD_REQUEST,
-          "Invalid serviceId or menteeId format"
-        );
+        throw new ApiError(400, "Invalid serviceId or menteeId format");
       }
       console.log(
         "prioritydm repository findByServiceAndMentee step 1",
@@ -72,7 +63,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
         "prioritydm repository findByServiceAndMentee step 2",
         priorityDMs
       );
-      return priorityDMs ? [priorityDMs as EPriorityDM] : [];
+      return priorityDMs;
     } catch (error: any) {
       console.log(
         "prioritydm repository findByServiceAndMentee step 3 errro",
@@ -82,10 +73,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
         "Error in PriorityDMRepository.findByServiceAndMentee:",
         error
       );
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to fetch PriorityDMs: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch PriorityDMs: ${error.message}`);
     }
   }
 
@@ -98,10 +86,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
         !mongoose.Types.ObjectId.isValid(serviceId) ||
         !mongoose.Types.ObjectId.isValid(mentorId)
       ) {
-        throw new ApiError(
-          HttpStatus.BAD_REQUEST,
-          "Invalid serviceId or mentorId format"
-        );
+        throw new ApiError(400, "Invalid serviceId or mentorId format");
       }
 
       const priorityDMs = await PriorityDMModel.find({
@@ -119,10 +104,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
         "Error in PriorityDMRepository.findByServiceAndMentor:",
         error
       );
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to fetch PriorityDMs: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch PriorityDMs: ${error.message}`);
     }
   }
 
@@ -136,7 +118,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
   ): Promise<{ priorityDMs: EPriorityDM[]; total: number }> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid mentorId format");
+        throw new ApiError(400, "Invalid mentorId format");
       }
 
       const query: any = {
@@ -196,10 +178,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
       return { priorityDMs, total };
     } catch (error: any) {
       console.error("Error in PriorityDMRepository.findByMentor:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to fetch PriorityDMs: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch PriorityDMs: ${error.message}`);
     }
   }
   async update(
@@ -208,7 +187,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
   ): Promise<EPriorityDM | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, `Invalid ID format: ${id}`);
+        throw new ApiError(400, `Invalid ID format: ${id}`);
       }
 
       const updatedDM = await PriorityDMModel.findByIdAndUpdate(
@@ -224,10 +203,7 @@ export default class PriorityDMRepository implements IPriorityDMRepository {
       return updatedDM;
     } catch (error: any) {
       console.error("Error in PriorityDMRepository.update:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to update PriorityDM: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to update PriorityDM: ${error.message}`);
     }
   }
 }

@@ -91,7 +91,7 @@ export default function MentorPaymentsPage() {
             : payment.serviceDetails.type === "DigitalProducts"
             ? "Digital Product"
             : "Other",
-        amountFormatted: `₹${payment.amount}`,
+        amountFormatted: `₹${payment.total}`,
         menteeName: `${payment.menteeId.firstName} ${payment.menteeId.lastName}`,
       })),
       total: data.total,
@@ -148,7 +148,7 @@ export default function MentorPaymentsPage() {
 
   const totalPages = Math.ceil(total / limit);
   const pendingAmount = payments
-    .filter((p: PaymentItem) => p.status === "pending")
+    .filter((p: PaymentItem) => p.status === "transferred")
     .reduce(
       (sum: number, p: PaymentItem) =>
         sum + parseFloat(p.amountFormatted!.replace("₹", "")),

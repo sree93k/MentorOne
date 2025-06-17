@@ -482,10 +482,8 @@ export default function MenteeBillingPage() {
                         })}
                       </TableCell>
                       <TableCell>{item.serviceName}</TableCell>
-                      <TableCell>{item.mentorName}</TableCell>
-                      <TableCell>
-                        ₹{item.total.toLocaleString("en-IN")}/-
-                      </TableCell>
+                      <TableCell>{item.mentorName}</TableCell>₹
+                      {item.total.toLocaleString("en-IN")}/-
                       <TableCell>{item.paymentMode}</TableCell>
                       <TableCell>
                         {item.status === "completed" ||
@@ -603,10 +601,8 @@ export default function MenteeBillingPage() {
                         })}
                       </TableCell>
                       <TableCell>{tx.transactionId}</TableCell>
-                      <TableCell>{tx.type}</TableCell>
-                      <TableCell>
-                        ₹{tx.amount.toLocaleString("en-IN")}/-
-                      </TableCell>
+                      <TableCell>{tx.type}</TableCell>₹
+                      {tx.amount.toLocaleString("en-IN")}/-
                       <TableCell>{tx.description}</TableCell>
                       {/* <TableCell>
                         {tx.type === "credit" ? "Success" : "Pending"}
