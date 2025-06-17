@@ -48,6 +48,7 @@ interface Payment {
   _id: string;
   createdAt: string;
   amount: number;
+  total: number;
   serviceDetails: { _id: string; title: string; type: string }; // Changed to serviceDetails
 }
 
@@ -173,13 +174,13 @@ const MentorDashboard: React.FC = () => {
               const serviceType = payment.serviceDetails?.type || "Unknown";
               if (date.getFullYear() === currentYear) {
                 const month = date.getMonth();
-                monthlyPayments[month] += payment.amount;
+                monthlyPayments[month] += payment.total;
                 if (month === currentMonth) {
-                  monthEarnings += payment.amount;
+                  monthEarnings += payment.total;
                 }
               }
               earningsByService[serviceType] =
-                (earningsByService[serviceType] || 0) + payment.amount;
+                (earningsByService[serviceType] || 0) + payment.total;
             });
             setCurrentMonthEarnings(monthEarnings);
             setMonthlyBookingsPayments((prev) => ({

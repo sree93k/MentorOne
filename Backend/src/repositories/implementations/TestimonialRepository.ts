@@ -4,7 +4,6 @@ import { ITestimonialRepository } from "../interface/ITestimonialRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import { ETestimonial } from "../../entities/testimonialEntity";
 import mongoose from "mongoose";
-import { HttpStatus } from "../../constants/HttpStatus";
 export default class TestimonialRepository implements ITestimonialRepository {
   async create(data: any): Promise<ETestimonial> {
     try {
@@ -12,16 +11,16 @@ export default class TestimonialRepository implements ITestimonialRepository {
 
       // Validate ObjectId fields
       if (!mongoose.Types.ObjectId.isValid(data.menteeId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Mentee ID");
+        throw new ApiError(400, "Invalid Mentee ID");
       }
       if (!mongoose.Types.ObjectId.isValid(data.mentorId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Mentor ID");
+        throw new ApiError(400, "Invalid Mentor ID");
       }
       if (!mongoose.Types.ObjectId.isValid(data.serviceId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Service ID");
+        throw new ApiError(400, "Invalid Service ID");
       }
       if (!mongoose.Types.ObjectId.isValid(data.bookingId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Booking ID");
+        throw new ApiError(400, "Invalid Booking ID");
       }
 
       const testimonial = new Testimonial(data);
@@ -31,11 +30,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
       return savedTestimonial;
     } catch (error: any) {
       console.error("TestimonialRepository create error", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to create testimonial",
-        error.message
-      );
+      throw new ApiError(500, "Failed to create testimonial", error.message);
     }
   }
 
@@ -57,11 +52,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
       console.log("TestimonialRepository findById step 2", testimonial);
       return testimonial;
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find testimonial",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find testimonial", error.message);
     }
   }
 
@@ -78,11 +69,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
       console.log("TestimonialRepository findByBookingId step 2", testimonial);
       return testimonial;
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find testimonial",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find testimonial", error.message);
     }
   }
 
@@ -94,7 +81,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
     try {
       console.log("TestimonialRepository findByMentor step 1", mentorId);
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Mentor ID");
+        throw new ApiError(400, "Invalid Mentor ID");
       }
       const response = await Testimonial.find({ mentorId })
         .populate({
@@ -114,29 +101,21 @@ export default class TestimonialRepository implements ITestimonialRepository {
       return response;
     } catch (error: any) {
       console.error("TestimonialRepository findByMentor error", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find testimonials",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find testimonials", error.message);
     }
   }
   async countByMentor(mentorId: string): Promise<number> {
     try {
       console.log("TestimonialRepository countByMentor step 1", mentorId);
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Mentor ID");
+        throw new ApiError(400, "Invalid Mentor ID");
       }
       const response = await Testimonial.countDocuments({ mentorId });
       console.log("TestimonialRepository countByMentor step 2", response);
       return response;
     } catch (error: any) {
       console.error("TestimonialRepository countByMentor error", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to count testimonials",
-        error.message
-      );
+      throw new ApiError(500, "Failed to count testimonials", error.message);
     }
   }
 
@@ -159,16 +138,12 @@ export default class TestimonialRepository implements ITestimonialRepository {
           model: "Service", // Explicitly specify model
         });
       if (!testimonial) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Testimonial not found");
+        throw new ApiError(404, "Testimonial not found");
       }
       console.log("TestimonialRepository update step 3", testimonial);
       return testimonial;
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to update testimonial",
-        error.message
-      );
+      throw new ApiError(500, "Failed to update testimonial", error.message);
     }
   }
 
@@ -181,15 +156,11 @@ export default class TestimonialRepository implements ITestimonialRepository {
         .populate("menteeId", "firstName lastName");
       console.log("TestimonialRepository findBookingById step 2", response);
       if (!response) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Booking not found");
+        throw new ApiError(404, "Booking not found");
       }
       return response;
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find booking",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find booking", error.message);
     }
   }
 
@@ -215,7 +186,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
       );
     } catch (error: any) {
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         "Failed to update booking with testimonial",
         error.message
       );
@@ -237,10 +208,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
         !mongoose.Types.ObjectId.isValid(mentorId) ||
         !mongoose.Types.ObjectId.isValid(serviceId)
       ) {
-        throw new ApiError(
-          HttpStatus.BAD_REQUEST,
-          "Invalid Mentor or Service ID"
-        );
+        throw new ApiError(400, "Invalid Mentor or Service ID");
       }
       const response = await Testimonial.find({ mentorId, serviceId })
         .populate({
@@ -266,11 +234,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
         "TestimonialRepository findByMentorAndService error",
         error
       );
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find testimonials",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find testimonials", error.message);
     }
   }
 
@@ -287,10 +251,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
         !mongoose.Types.ObjectId.isValid(mentorId) ||
         !mongoose.Types.ObjectId.isValid(serviceId)
       ) {
-        throw new ApiError(
-          HttpStatus.BAD_REQUEST,
-          "Invalid Mentor or Service ID"
-        );
+        throw new ApiError(400, "Invalid Mentor or Service ID");
       }
       const response = await Testimonial.countDocuments({
         mentorId,
@@ -306,11 +267,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
         "TestimonialRepository countByMentorAndService error",
         error
       );
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to count testimonials",
-        error.message
-      );
+      throw new ApiError(500, "Failed to count testimonials", error.message);
     }
   }
 
@@ -341,7 +298,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
     } catch (error: any) {
       console.error("BookingRepository getTopTestimonials error", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         "Failed to fetch top testimonials",
         error.message
       );
@@ -355,7 +312,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
         serviceId
       );
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid Service ID");
+        throw new ApiError(400, "Invalid Service ID");
       }
       const ratingStats = await Testimonial.aggregate([
         { $match: { serviceId: new mongoose.Types.ObjectId(serviceId) } },
@@ -379,7 +336,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
         error
       );
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         "Failed to compute average rating",
         error.message
       );

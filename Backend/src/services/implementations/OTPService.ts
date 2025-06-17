@@ -10,8 +10,6 @@ import bcrypt from "bcryptjs";
 import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepository from "../../repositories/implementations/BaseRepository";
 import Users from "../../models/userModel";
-import { HttpStatus } from "../../constants/HttpStatus";
-import { ApiError } from "../../middlewares/errorHandler";
 
 export default class OTPServices implements IOTPService {
   private OTPRepository: IOTPRepository;
@@ -25,11 +23,11 @@ export default class OTPServices implements IOTPService {
     try {
       console.log("otp sent service 1");
       if (!user?.email) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "User email is null");
+        throw new Error("User email is null");
       }
       const userData = await this.BaseRepository.findByEmail(user.email);
       if (userData?.isBlocked) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Account is Blocked");
+        throw new Error("Account is Blocked");
       }
       await this.OTPRepository.deleteOTPsByEmail(user.email);
       let newUser;
@@ -57,7 +55,7 @@ export default class OTPServices implements IOTPService {
       const savedOTP = await this.OTPRepository.saveOTP(OTP);
       console.log("otp sent service 4");
       if (!user.email) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "User email is null");
+        throw new Error("User email is null");
       }
       console.log("otp sent service 5");
       const OTPDetails = await sendMail(user.email, OTPNumber);
@@ -84,20 +82,20 @@ export default class OTPServices implements IOTPService {
 
       if (!OTPUser) {
         console.log("No OTP found for email:", email);
-        throw new ApiError(HttpStatus.NOT_FOUND, "OTP not found");
+        throw new Error("OTP not found");
       }
       console.log("OTP Service otps are, ", OTPUser.otp, "and ", otp);
 
       if (OTPUser.otp !== otp.otp) {
         console.log("OTP mismatch. Expected:", OTPUser.otp, "Got:", otp);
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid OTP");
+        throw new Error("Invalid OTP");
       }
 
       // Check if OTP has expired
       const now = new Date();
       if (OTPUser.expirationTime && now > OTPUser.expirationTime) {
         console.log("OTP has expired");
-        throw new ApiError(HttpStatus.BAD_REQUEST, "OTP has expired");
+        throw new Error("OTP has expired");
       }
 
       console.log("OTP verified successfully");

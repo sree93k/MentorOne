@@ -7,8 +7,6 @@ import { EWorkExperience } from "../../entities/professionalEnitity";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { EGoals } from "../../entities/goalsEntity";
 import Goals from "../../models/goalModel";
-import { ApiError } from "../../middlewares/errorHandler";
-import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class CareerRepository implements ICareerRepository {
   async schoolStudentFormDataCreate(
@@ -173,7 +171,7 @@ export default class CareerRepository implements ICareerRepository {
       return result;
     } catch (error) {
       console.error("Error creating goal data:", error);
-      throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid input");
+      throw error;
     }
   }
 
@@ -195,7 +193,7 @@ export default class CareerRepository implements ICareerRepository {
       return result;
     } catch (error) {
       console.error("Error creating mentee data:", error);
-      throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid input");
+      throw error;
     }
   }
 }

@@ -5,7 +5,6 @@ import BookingRepository from "../../repositories/implementations/BookingReposit
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import mongoose from "mongoose";
 import { INotificationService } from "../../services/interface/INotificationService";
-import { HttpStatus } from "../../constants/HttpStatus";
 
 interface NotificationData {
   recipientId: string;
@@ -76,11 +75,7 @@ export default class NotificationService implements INotificationService {
       await pubClient.publish(`${type}-notifications`, JSON.stringify(payload));
     } catch (error: any) {
       console.error("Error creating notification:", error.message);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to create notification",
-        error.message
-      );
+      throw new ApiError(500, "Failed to create notification", error.message);
     }
   }
 
@@ -226,7 +221,7 @@ export default class NotificationService implements INotificationService {
         error.message
       );
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         "Failed to create payment and booking notifications",
         error.message
       );
@@ -258,11 +253,7 @@ export default class NotificationService implements INotificationService {
       return mappedNotifications;
     } catch (error: any) {
       console.error("Error fetching unread notifications:", error.message);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to fetch notifications",
-        error.message
-      );
+      throw new ApiError(500, "Failed to fetch notifications", error.message);
     }
   }
 
@@ -275,11 +266,11 @@ export default class NotificationService implements INotificationService {
         notificationId
       );
       if (!notification) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Notification not found");
+        throw new ApiError(404, "Notification not found");
       }
       if (notification.recipientId !== userId) {
         throw new ApiError(
-          HttpStatus.FORBIDDEN,
+          403,
           "Unauthorized to mark this notification as read"
         );
       }
@@ -287,7 +278,7 @@ export default class NotificationService implements INotificationService {
     } catch (error: any) {
       console.error("Error marking notification as read:", error.message);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         "Failed to mark notification as read",
         error.message
       );

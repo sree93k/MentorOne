@@ -3,7 +3,7 @@ import { EOTP } from "../../entities/OTPEntity";
 import { IOTPRepository } from "../interface/IOTPRepository";
 import { ApiError } from "../../middlewares/errorHandler";
 import OTPModel from "../../models/otpModel";
-import { HttpStatus } from "../../constants/HttpStatus";
+
 export default class OTPRepository implements IOTPRepository {
   async saveOTP(otp: EOTP): Promise<EOTP | null> {
     try {
@@ -15,17 +15,9 @@ export default class OTPRepository implements IOTPRepository {
       return newOTP;
     } catch (error) {
       if (error instanceof Error) {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to save OTP",
-          error.message
-        );
+        throw new ApiError(500, "Failed to save OTP", error.message);
       } else {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to save OTP",
-          "Unknown error"
-        );
+        throw new ApiError(500, "Failed to save OTP", "Unknown error");
       }
     }
   }
@@ -34,17 +26,9 @@ export default class OTPRepository implements IOTPRepository {
       await OTPModel.deleteMany({ email });
     } catch (error) {
       if (error instanceof Error) {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to delete OTPs",
-          error.message
-        );
+        throw new ApiError(500, "Failed to delete OTPs", error.message);
       } else {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to delete OTPs",
-          "Unknown error"
-        );
+        throw new ApiError(500, "Failed to delete OTPs", "Unknown error");
       }
     }
   }
@@ -58,18 +42,10 @@ export default class OTPRepository implements IOTPRepository {
       if (error instanceof Error) {
         console.log("find otp repo err 3");
 
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to find OTP",
-          error.message
-        );
+        throw new ApiError(500, "Failed to find OTP", error.message);
       } else {
         console.log("find otp repo err 4");
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to find OTP",
-          "Unknown error"
-        );
+        throw new ApiError(500, "Failed to find OTP", "Unknown error");
       }
     }
   }
@@ -82,17 +58,9 @@ export default class OTPRepository implements IOTPRepository {
       return userDatas ? (userDatas.user as unknown as EUsers) : null;
     } catch (error) {
       if (error instanceof Error) {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to find user data",
-          error.message
-        );
+        throw new ApiError(500, "Failed to find user data", error.message);
       } else {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to find user data",
-          "Unknown error"
-        );
+        throw new ApiError(500, "Failed to find user data", "Unknown error");
       }
     }
   }

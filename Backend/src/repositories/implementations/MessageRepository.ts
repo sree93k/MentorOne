@@ -2,7 +2,6 @@ import { IMessageRepository } from "../interface/IMessageRepository";
 import Message from "../../models/messageModel";
 import { EMessage } from "../../entities/messageEntity";
 import { ApiError } from "../../middlewares/errorHandler";
-import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class MessageRepository implements IMessageRepository {
   async create(data: any): Promise<EMessage> {
@@ -10,11 +9,7 @@ export default class MessageRepository implements IMessageRepository {
       const message = new Message(data);
       return await message.save();
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to create message",
-        error.message
-      );
+      throw new ApiError(500, "Failed to create message", error.message);
     }
   }
 
@@ -25,11 +20,7 @@ export default class MessageRepository implements IMessageRepository {
         .populate("readBy", "firstName lastName")
         .sort({ createdAt: 1 });
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find messages",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find messages", error.message);
     }
   }
 
@@ -40,11 +31,7 @@ export default class MessageRepository implements IMessageRepository {
         { $addToSet: { readBy: userId } }
       );
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to mark messages as read",
-        error.message
-      );
+      throw new ApiError(500, "Failed to mark messages as read", error.message);
     }
   }
 }

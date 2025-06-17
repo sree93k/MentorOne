@@ -23,7 +23,6 @@ import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 import CalendarRepository from "../../repositories/implementations/CalenderRepository";
 import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
 import { EBooking } from "../../entities/bookingEntity";
-import { HttpStatus } from "../../constants/HttpStatus";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -163,20 +162,12 @@ export default class BookingService implements IBookingService {
 
     try {
       if (!amount || amount <= 0) {
-        throw new ApiError(
-          HttpStatus.BAD_REQUEST,
-          "Invalid amount",
-          "Amount must be positive"
-        );
+        throw new ApiError(400, "Invalid amount", "Amount must be positive");
       }
 
       const service = await this.serviceRepository.getServiceById(serviceId);
       if (!service) {
-        throw new ApiError(
-          HttpStatus.NOT_FOUND,
-          "Service not found",
-          "Invalid service ID"
-        );
+        throw new ApiError(404, "Service not found", "Invalid service ID");
       }
 
       const existingBooking = await this.bookingRepository.findBySessionId(
@@ -267,7 +258,7 @@ export default class BookingService implements IBookingService {
     } catch (error: any) {
       console.error("Detailed error in saveBookingAndPayment:", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         error.message || "Failed to save booking and payment",
         "Error during booking and payment creation"
       );
@@ -306,10 +297,7 @@ export default class BookingService implements IBookingService {
       return { bookings, total };
     } catch (error: any) {
       console.log("booking service getBookingsByMentee step error", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to fetch bookings"
-      );
+      throw new ApiError(500, "Failed to fetch bookings");
     }
   }
 
@@ -326,10 +314,7 @@ export default class BookingService implements IBookingService {
       ]);
       return { bookings, total };
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to fetch mentor bookings"
-      );
+      throw new ApiError(500, "Failed to fetch mentor bookings");
     }
   }
 
@@ -340,11 +325,7 @@ export default class BookingService implements IBookingService {
     console.log("cancel Booking Booking servcie step 2", booking);
     if (!booking) {
       console.log("cancel Booking Booking servcie step 2.5 ERROR");
-      throw new ApiError(
-        HttpStatus.NOT_FOUND,
-        "Booking not found",
-        "Invalid booking ID"
-      );
+      throw new ApiError(404, "Booking not found", "Invalid booking ID");
     }
     console.log("cancel Booking Booking servcie step 3");
     const updatedBooking = await this.bookingRepository.update(bookingId, {
@@ -386,11 +367,7 @@ export default class BookingService implements IBookingService {
   async verifyBookingBySessionId(sessionId: string): Promise<any> {
     const booking = await this.bookingRepository.findBySessionId(sessionId);
     if (!booking) {
-      throw new ApiError(
-        HttpStatus.NOT_FOUND,
-        "Booking not found",
-        "Booking not created"
-      );
+      throw new ApiError(404, "Booking not found", "Booking not created");
     }
     return booking;
   }
@@ -422,10 +399,7 @@ export default class BookingService implements IBookingService {
       return { tutorials, total };
     } catch (error: any) {
       console.error("Error fetching tutorials:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to fetch tutorials: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch tutorials: ${error.message}`);
     }
   }
 
@@ -435,7 +409,7 @@ export default class BookingService implements IBookingService {
       const tutorial = await this.serviceRepository.getTutorialById(tutorialId);
       console.log("bookingservice getTutorialById step 2", tutorial);
       if (!tutorial) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Tutorial not found");
+        throw new ApiError(404, "Tutorial not found");
       }
       return tutorial;
     } catch (error: any) {
@@ -466,7 +440,7 @@ export default class BookingService implements IBookingService {
     } catch (error: any) {
       console.error("Error checking booking status:", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         error.message || "Failed to check booking status"
       );
     }
@@ -478,7 +452,7 @@ export default class BookingService implements IBookingService {
       const { serviceId, mentorId, menteeId, sessionId } = params;
       const service = await this.serviceRepository.getServiceById(serviceId);
       if (!service) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
+        throw new ApiError(404, "Service not found");
       }
 
       // Check if booking already exists for this sessionId
@@ -532,10 +506,7 @@ export default class BookingService implements IBookingService {
       return { booking, payment };
     } catch (error: any) {
       console.error("Error booking service:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message || "Failed to book service"
-      );
+      throw new ApiError(500, error.message || "Failed to book service");
     }
   }
 
@@ -547,10 +518,7 @@ export default class BookingService implements IBookingService {
       return service;
     } catch (error: any) {
       console.error("Error fetching service by ID:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        error.message || "Failed to fetch service"
-      );
+      throw new ApiError(500, error.message || "Failed to fetch service");
     }
   }
 
@@ -631,10 +599,7 @@ export default class BookingService implements IBookingService {
       return { bookings, total };
     } catch (error: any) {
       console.error("BookingService getAllBookings > error:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to fetch all bookings"
-      );
+      throw new ApiError(500, "Failed to fetch all bookings");
     }
   }
 
@@ -662,10 +627,7 @@ export default class BookingService implements IBookingService {
       return allVideoCallBookings;
     } catch (error: any) {
       console.error("BookingService getAllVideoCalls > error:", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to fetch video call bookings"
-      );
+      throw new ApiError(500, "Failed to fetch video call bookings");
     }
   }
 
@@ -691,13 +653,10 @@ export default class BookingService implements IBookingService {
 
       const booking = await this.bookingRepository.findById(bookingId);
       if (!booking) {
-        throw new ApiError(HttpStatus.NOT_FOUND, "Booking not found");
+        throw new ApiError(404, "Booking not found");
       }
       if (booking.mentorId._id.toString() !== mentorId) {
-        throw new ApiError(
-          HttpStatus.FORBIDDEN,
-          "Not authorized to update this booking"
-        );
+        throw new ApiError(403, "Not authorized to update this booking");
       }
 
       // Update calendar if status is confirmed and date/time changes
@@ -734,10 +693,7 @@ export default class BookingService implements IBookingService {
       });
 
       if (!updatedBooking) {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to update booking status"
-        );
+        throw new ApiError(500, "Failed to update booking status");
       }
 
       // Notify mentee
@@ -766,7 +722,7 @@ export default class BookingService implements IBookingService {
     } catch (error: any) {
       console.error("BookingService updateBookingStatus error:", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         error.message || "Failed to update booking status"
       );
     }
@@ -788,7 +744,7 @@ export default class BookingService implements IBookingService {
       if (!booking) {
         console.log("ERRROr 1");
 
-        throw new ApiError(HttpStatus.NOT_FOUND, "Booking not found");
+        throw new ApiError(404, "Booking not found");
       }
 
       // if (booking.menteeId.toString() !== menteeId) {
@@ -798,10 +754,7 @@ export default class BookingService implements IBookingService {
 
       if (booking.status !== "confirmed") {
         console.log("ERRROr 3");
-        throw new ApiError(
-          HttpStatus.BAD_REQUEST,
-          "Only confirmed bookings can be rescheduled"
-        );
+        throw new ApiError(400, "Only confirmed bookings can be rescheduled");
       }
 
       const rescheduleRequest = {
@@ -820,10 +773,7 @@ export default class BookingService implements IBookingService {
       });
       console.log("BookingService requestReschedule step 1.3");
       if (!updatedBooking) {
-        throw new ApiError(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "Failed to submit reschedule request"
-        );
+        throw new ApiError(500, "Failed to submit reschedule request");
       }
 
       // Notify mentor about the reschedule request
@@ -849,7 +799,7 @@ export default class BookingService implements IBookingService {
     } catch (error: any) {
       console.error("BookingService requestReschedule error:", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         error.message || "Failed to submit reschedule request"
       );
     }
@@ -901,10 +851,7 @@ export default class BookingService implements IBookingService {
         "booking service getBookingsWithTestimonialsByMentee step error",
         error
       );
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to fetch bookings"
-      );
+      throw new ApiError(500, "Failed to fetch bookings");
     }
   }
   async findById(bookingId: string): Promise<any> {
@@ -913,25 +860,56 @@ export default class BookingService implements IBookingService {
       const booking = await this.bookingRepository.findById(bookingId);
       console.log("BookingService findById step 2 booking response", booking);
       if (!booking) {
-        throw new ApiError(HttpStatus.BAD_REQUEST, "Booking not found");
+        throw new ApiError(404, "Booking not found");
       }
       return booking;
     } catch (error: any) {
       console.error("BookingService findById error", error);
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        "Failed to find booking",
-        error.message
-      );
+      throw new ApiError(500, "Failed to find booking", error.message);
     }
   }
 
+  // async updateBookingServiceStatus(
+  //   bookingId: string,
+  //   status: "pending" | "confirmed" | "completed"
+  // ): Promise<any> {
+  //   try {
+  //     console.log("BookingService updateBookingStatus step 1", {
+  //       bookingId,
+  //       status,
+  //     });
+  //     const booking = await this.bookingRepository.updateBookingStatus(
+  //       bookingId,
+  //       status
+  //     );
+  //     const isActive = "false";
+  //     const chatUpdate = await this.chatRepository.updateByBookingId(
+  //       bookingId,
+  //       isActive
+  //     );
+  //     console.log(
+  //       "BookingService updateBookingStatus step 2 chatUpdate",
+  //       chatUpdate
+  //     );
+
+  //     console.log("BookingService updateBookingStatus step 3 booking", booking);
+  //     return booking;
+  //   } catch (error: any) {
+  //     console.error("BookingService updateBookingStatus error", error);
+  //     throw new ApiError(
+  //       500,
+  //       process.env.NODE_ENV === "development"
+  //         ? error.message
+  //         : "Failed to update booking status"
+  //     );
+  //   }
+  // }
   async updateBookingServiceStatus(
     bookingId: string,
     status: "pending" | "confirmed" | "completed"
   ): Promise<any> {
     try {
-      console.log("BookingService updateBookingServiceStatus step 1", {
+      console.log("BookingService updateBookingStatus step 1", {
         bookingId,
         status,
       });
@@ -944,19 +922,9 @@ export default class BookingService implements IBookingService {
         bookingId,
         status
       );
-
       console.log(
-        "BookingService updateBookingServiceStatus step 1.5 isActive",
+        "BookingService updateBookingStatus step 1.5 isActive",
         isActive
-      );
-      const paymentTransfer = await this.paymentRepository.updateByBookingId(
-        bookingId,
-        { status: "transferred" }
-      );
-
-      console.log(
-        "BookingService updateBookingServiceStatus step 1.6 paymentTransfer",
-        paymentTransfer
       );
       // Update chat isActive field
       const chatUpdate = await this.chatRepository.updateByBookingId(
@@ -964,19 +932,16 @@ export default class BookingService implements IBookingService {
         isActive
       );
       console.log(
-        "BookingService updateBookingServiceStatus step 2 chatUpdate",
+        "BookingService updateBookingStatus step 2 chatUpdate",
         chatUpdate
       );
 
-      console.log(
-        "BookingService updateBookingServiceStatus step 3 booking",
-        booking
-      );
+      console.log("BookingService updateBookingStatus step 3 booking", booking);
       return booking;
     } catch (error: any) {
-      console.error("BookingService updateBookingServiceStatus error", error);
+      console.error("BookingService updateBookingStatus error", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to update booking status"
@@ -1001,7 +966,7 @@ export default class BookingService implements IBookingService {
     } catch (error: any) {
       console.error("BookingService getBookingData error", error);
       throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        500,
         process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch booking data"
@@ -1039,10 +1004,7 @@ export default class BookingService implements IBookingService {
 
       return { services, total };
     } catch (error: any) {
-      throw new ApiError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        `Failed to fetch services: ${error.message}`
-      );
+      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
     }
   }
 }

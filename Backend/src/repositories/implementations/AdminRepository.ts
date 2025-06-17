@@ -2,8 +2,6 @@ import { EAdmin } from "../../entities/adminEntity";
 import Admin from "../../models/adminModel";
 import { IAdminRepository } from "../interface/IAdminRespository";
 import mongoose from "mongoose";
-import { ApiError } from "../../middlewares/errorHandler";
-import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class AdminRepository implements IAdminRepository {
   async findUserById(userId: string): Promise<EAdmin | null> {
@@ -35,7 +33,7 @@ export default class AdminRepository implements IAdminRepository {
       return admin;
     } catch (error) {
       console.error("Repository - Error finding admin by user ID:", error);
-      throw new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid request");
+      throw error;
     }
   }
 
