@@ -74,7 +74,7 @@ export const createCheckoutSession = async (payload: {
       }
     );
     console.log("Payment service createCheckoutSession step 2", response);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("Create checkout session error:", error);
     throw error?.response?.data || error;
@@ -124,13 +124,16 @@ export const getAllMenteePayments = async (page: number, limit: number) => {
         limit,
       },
     });
-    console.log("payment service getAllMenteePayments step 2", response.data);
+    console.log(
+      "MENTEEPAYMNETpayment service getAllMenteePayments step 2",
+      response.data
+    );
 
     if (!response.data.success || !response.data.message) {
       throw new Error(response.data.message || "Invalid response from server");
     }
 
-    return response.data.message;
+    return response.data.data;
   } catch (error: any) {
     console.error("Error in getAllMenteePayments:", error);
     throw new Error(
@@ -152,14 +155,17 @@ export const getAllMentorPayments = async (page: number, limit: number) => {
         limit,
       },
     });
-    console.log("payment service getAllMentorPayments step 2", response.data);
+    console.log(
+      "PPPPPPPayment service getAllMentorPayments step 2",
+      response.data
+    );
 
     // Ensure response has expected structure
     if (!response.data.success || !response.data.message) {
       throw new Error(response.data.message || "Invalid response from server");
     }
 
-    return response.data.message;
+    return response.data.data;
   } catch (error: any) {
     console.error("Error in getAllMentorPayments:", error);
     throw new Error(
@@ -187,7 +193,7 @@ export const getMenteeWallet = async (page: number, limit: number) => {
       throw new Error(response.data.message || "Invalid response from server");
     }
 
-    return response.data.message;
+    return response.data.data;
   } catch (error: any) {
     console.error("Error in getMenteeWallet:", error);
     throw new Error(

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { IServiceRepository } from "../interface/IServiceRepository";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
 interface GetAllServicesParams {
@@ -22,7 +22,7 @@ export default class ServiceRepository implements IServiceRepository {
   ): Promise<GetAllServicesResponse> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(400, `Invalid mentorId format: ${mentorId}`);
+        throw new Error(`Invalid mentorId format: ${mentorId}`);
       }
 
       const { page, limit, search, type } = params;
@@ -52,14 +52,14 @@ export default class ServiceRepository implements IServiceRepository {
       return { services: services as EService[], totalCount };
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllServices:", error);
-      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+      throw new Error(`Failed to fetch services: ${error.message}`);
     }
   }
 
   async getServiceById(serviceId: string): Promise<EService | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+        throw new Error(`Invalid serviceId format: ${serviceId}`);
       }
 
       const service = await Service.findById(serviceId).populate({
@@ -68,7 +68,7 @@ export default class ServiceRepository implements IServiceRepository {
       return service as EService | null;
     } catch (error: any) {
       console.error("Error in ServiceRepository.getServiceById:", error);
-      throw new ApiError(500, `Failed to fetch service: ${error.message}`);
+      throw new Error(`Failed to fetch service: ${error.message}`);
     }
   }
 
@@ -78,7 +78,7 @@ export default class ServiceRepository implements IServiceRepository {
   ): Promise<EService | null> {
     try {
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${serviceId}`);
+        throw new Error(`Invalid serviceId format: ${serviceId}`);
       }
 
       const updatedService = await Service.findByIdAndUpdate(
@@ -89,7 +89,7 @@ export default class ServiceRepository implements IServiceRepository {
       return updatedService as EService | null;
     } catch (error: any) {
       console.error("Error in ServiceRepository.updateService:", error);
-      throw new ApiError(500, `Failed to update service: ${error.message}`);
+      throw new Error(`Failed to update service: ${error.message}`);
     }
   }
 
@@ -158,7 +158,7 @@ export default class ServiceRepository implements IServiceRepository {
       return { tutorials, total };
     } catch (error: any) {
       console.error("Error in ServiceRepository.getAllVideoTutorials:", error);
-      throw new ApiError(500, `Failed to fetch tutorials: ${error.message}`);
+      throw new Error(`Failed to fetch tutorials: ${error.message}`);
     }
   }
 
@@ -166,7 +166,7 @@ export default class ServiceRepository implements IServiceRepository {
     try {
       console.log("service repo getTutorialById step 1", tutorialId);
       if (!mongoose.Types.ObjectId.isValid(tutorialId)) {
-        throw new ApiError(400, `Invalid tutorialId format: ${tutorialId}`);
+        throw new Error(`Invalid tutorialId format: ${tutorialId}`);
       }
       const tutorial = await Service.findById(tutorialId).populate({
         path: "mentorId",
@@ -180,10 +180,7 @@ export default class ServiceRepository implements IServiceRepository {
       return tutorial;
     } catch (error: any) {
       console.error("Error in ServiceRepository.getTutorialById:", error);
-      throw new ApiError(
-        500,
-        `Failed to fetch tutorial details: ${error.message}`
-      );
+      throw new Error(`Failed to fetch tutorial details: ${error.message}`);
     }
   }
   async findServicesByTitle(searchQuery: string): Promise<any[]> {
@@ -198,13 +195,95 @@ export default class ServiceRepository implements IServiceRepository {
     return await Service.findOne({ _id: id }).exec();
   }
 
+  // async getTopServices(limit: number): Promise<EService[]> {
+  //   try {
+  //     console.log("ServiceRepository getTopServices step 1", { limit });
+  //     const services = await Service.aggregate([
+  //       {
+  //         $lookup: {
+  //           from: "bookings",
+  //           localField: "_id",
+  //           foreignField: "serviceId",
+  //           as: "bookings",
+  //         },
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "testimonials",
+  //           localField: "_id",
+  //           foreignField: "serviceId",
+  //           as: "testimonials",
+  //         },
+  //       },
+  //       {
+  //         $addFields: {
+  //           bookingCount: { $size: "$bookings" },
+  //           averageRating: { $avg: "$testimonials.rating" },
+  //         },
+  //       },
+  //       {
+  //         $match: {
+  //           bookingCount: { $gt: 0 },
+  //         },
+  //       },
+  //       {
+  //         $sort: {
+  //           bookingCount: -1,
+  //           averageRating: -1,
+  //         },
+  //       },
+  //       {
+  //         $limit: limit,
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "users",
+  //           localField: "mentorId",
+  //           foreignField: "_id",
+  //           as: "mentor",
+  //         },
+  //       },
+  //       {
+  //         $unwind: "$mentor",
+  //       },
+  //       {
+  //         $project: {
+  //           _id: 1,
+  //           title: 1,
+  //           shortDescription: 1,
+  //           amount: 1,
+  //           duration: 1,
+  //           type: 1,
+  //           technology: 1,
+  //           digitalProductType: 1,
+  //           oneToOneType: 1,
+  //           fileUrl: 1,
+  //           exclusiveContent: 1,
+  //           stats: 1,
+  //           mentorId: 1,
+  //           mentorName: {
+  //             $concat: ["$mentor.firstName", " ", "$mentor.lastName"],
+  //           },
+  //           mentorProfileImage: "$mentor.profilePicture",
+  //           bookingCount: 1,
+  //           averageRating: 1,
+  //         },
+  //       },
+  //     ]).exec();
+  //     console.log("ServiceRepository getTopServices step 2", services.length);
+  //     return services;
+  //   } catch (error: any) {
+  //     console.error("ServiceRepository getTopServices error", error);
+  //     throw new Error("Failed to fetch top services", error.message);
+  //   }
+  // }
   async getTopServices(limit: number): Promise<EService[]> {
     try {
       console.log("ServiceRepository getTopServices step 1", { limit });
       const services = await Service.aggregate([
         {
           $lookup: {
-            from: "bookings",
+            from: "bookings", // Verify this matches the exact collection name in the database
             localField: "_id",
             foreignField: "serviceId",
             as: "bookings",
@@ -224,11 +303,7 @@ export default class ServiceRepository implements IServiceRepository {
             averageRating: { $avg: "$testimonials.rating" },
           },
         },
-        {
-          $match: {
-            bookingCount: { $gt: 0 },
-          },
-        },
+        // Removed $match to include services with zero bookings
         {
           $sort: {
             bookingCount: -1,
@@ -247,7 +322,10 @@ export default class ServiceRepository implements IServiceRepository {
           },
         },
         {
-          $unwind: "$mentor",
+          $unwind: {
+            path: "$mentor",
+            preserveNullAndEmptyArrays: true, // Handle cases where mentor is not found
+          },
         },
         {
           $project: {
@@ -265,22 +343,34 @@ export default class ServiceRepository implements IServiceRepository {
             stats: 1,
             mentorId: 1,
             mentorName: {
-              $concat: ["$mentor.firstName", " ", "$mentor.lastName"],
+              $concat: [
+                { $ifNull: ["$mentor.firstName", ""] },
+                " ",
+                { $ifNull: ["$mentor.lastName", ""] },
+              ],
             },
             mentorProfileImage: "$mentor.profilePicture",
             bookingCount: 1,
             averageRating: 1,
+            bookings: 1, // Include bookings array for debugging
           },
         },
       ]).exec();
-      console.log("ServiceRepository getTopServices step 2", services.length);
+      console.log("ServiceRepository getTopServices step 2", {
+        count: services.length,
+        services: services.map((s) => ({
+          _id: s._id,
+          title: s.title,
+          bookingCount: s.bookingCount,
+          bookings: s.bookings,
+        })),
+      });
       return services;
     } catch (error: any) {
       console.error("ServiceRepository getTopServices error", error);
-      throw new ApiError(500, "Failed to fetch top services", error.message);
+      throw new Error(`Failed to fetch top services: ${error.message}`);
     }
   }
-
   async getAllServicesForMentee(params: {
     page: number;
     limit: number;
@@ -288,40 +378,56 @@ export default class ServiceRepository implements IServiceRepository {
     type?: string;
     oneToOneType?: string;
     digitalProductType?: string;
-  }): Promise<{ services: EService[]; totalCount: number }> {
+  }): Promise<{ services: EService[]; total: number }> {
     try {
       const { page, limit, search, type, oneToOneType, digitalProductType } =
         params;
       const query: any = {};
 
-      // Base query conditions
+      // Build type-related conditions
+      const typeConditions: any[] = [];
       if (type && type !== "All") {
         query.type = type;
+      } else {
+        // When type is undefined or "All", include priorityDM, DigitalProducts, and 1-1Call with valid slots
+        typeConditions.push(
+          { type: { $in: ["priorityDM", "DigitalProducts"] } },
+          { type: "1-1Call", slot: { $exists: true, $ne: null } }
+        );
       }
 
       if (oneToOneType) {
         query.oneToOneType = oneToOneType;
+        typeConditions.push(
+          { type: { $in: ["priorityDM", "DigitalProducts"] } },
+          { type: "1-1Call", slot: { $exists: true, $ne: null } }
+        );
       }
 
       if (digitalProductType) {
         query.digitalProductType = digitalProductType;
       }
 
+      // Build search conditions
+      const searchConditions: any[] = [];
       if (search) {
-        query.$or = [
+        searchConditions.push(
           { title: { $regex: search, $options: "i" } },
-          { shortDescription: { $regex: search, $options: "i" } },
-        ];
+          { shortDescription: { $regex: search, $options: "i" } }
+        );
+        // Optionally include digitalProductType in search for "video"
+        if (search.toLowerCase().includes("video")) {
+          searchConditions.push({ digitalProductType: "videoTutorials" });
+        }
       }
 
-      // Ensure 1-1Call services have a non-null slot, while other types are unaffected
-      if (type === "1-1Call") {
-        query.slot = { $exists: true, $ne: null };
-      } else if (!type || type === "All") {
-        query.$or = [
-          { type: { $in: ["priorityDM", "DigitalProducts"] } },
-          { type: "1-1Call", slot: { $exists: true, $ne: null } },
-        ];
+      // Combine conditions with $and if both type and search conditions exist
+      if (typeConditions.length > 0 && searchConditions.length > 0) {
+        query.$and = [{ $or: typeConditions }, { $or: searchConditions }];
+      } else if (typeConditions.length > 0) {
+        query.$or = typeConditions;
+      } else if (searchConditions.length > 0) {
+        query.$or = searchConditions;
       }
 
       const skip = (page - 1) * limit;
@@ -335,17 +441,15 @@ export default class ServiceRepository implements IServiceRepository {
         .skip(skip)
         .limit(limit)
         .lean();
-      console.log("SERVICE REPOSIOTRY>.......services resposne", services);
+      console.log("SERVICE REPOSIOTRY>.......services resposne");
 
       // Calculate booking count and average rating using aggregation
       const servicesWithStats = await Promise.all(
         services.map(async (service: any) => {
-          // Get booking count
           const bookingCount = await mongoose
             .model("Booking")
             .countDocuments({ serviceId: service._id });
 
-          // Use MongoDB aggregation to compute average rating
           const ratingStats = await mongoose.model("Testimonial").aggregate([
             { $match: { serviceId: new mongoose.Types.ObjectId(service._id) } },
             {
@@ -363,21 +467,25 @@ export default class ServiceRepository implements IServiceRepository {
           return {
             ...service,
             bookingCount,
-            averageRating: parseFloat(averageRating.toFixed(1)), // Round to 1 decimal place
+            averageRating: parseFloat(averageRating.toFixed(1)),
           };
         })
       );
 
       // Count total services for pagination
-      const totalCount = await Service.countDocuments(query);
+      const total = await Service.countDocuments(query);
+      console.log(
+        "ServiceRepository.getAllServicesForMentee LAAAASTTTT",
+        total
+      );
 
-      return { services: servicesWithStats as EService[], totalCount };
+      return { services: servicesWithStats as EService[], total };
     } catch (error: any) {
       console.error(
         "Error in ServiceRepository.getAllServicesForMentee:",
         error
       );
-      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+      throw new Error(`Failed to fetch services: ${error.message}`);
     }
   }
 }

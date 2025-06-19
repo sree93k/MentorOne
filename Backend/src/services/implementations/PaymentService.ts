@@ -1,5 +1,4 @@
 import stripe from "../../config/stripe";
-import { ApiError } from "../../middlewares/errorHandler";
 import mongoose from "mongoose";
 import {
   IPaymentService,
@@ -67,13 +66,13 @@ export default class PaymentService implements IPaymentService {
         slotIndex === undefined
       ) {
         console.error("Missing required fields:", params);
-        throw new ApiError(400, "Missing required fields", "Invalid input");
+        throw new Error("Missing required fields");
       }
       console.log("payment service createCheckoutSession params: step 2");
 
       if (amount <= 0 || platformCharge < 0 || total <= 0) {
         console.error("Invalid amounts:", { amount, platformCharge, total });
-        throw new ApiError(400, "Amounts must be valid", "Invalid amounts");
+        throw new Error("Amounts must be valid");
       }
 
       console.log("payment service createCheckoutSession params: step 3");
@@ -160,7 +159,7 @@ export default class PaymentService implements IPaymentService {
         slotIndex === undefined
       ) {
         console.error("Missing required fields:", params);
-        throw new ApiError(400, "Missing required fields", "Invalid input");
+        throw new Error("Missing required fields");
       }
 
       const paymentIntent = await stripe.paymentIntents.create({
@@ -184,11 +183,7 @@ export default class PaymentService implements IPaymentService {
       return paymentIntent;
     } catch (error: any) {
       console.error("Detailed error in createPaymentIntent:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to create payment intent",
-        "Error during payment intent creation"
-      );
+      throw new Error(error.message || "Failed to create payment intent");
     }
   }
 
@@ -199,21 +194,13 @@ export default class PaymentService implements IPaymentService {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
       console.error("Missing STRIPE_WEBHOOK_SECRET");
-      throw new ApiError(
-        500,
-        "Webhook secret is not configured",
-        "Missing STRIPE_WEBHOOK_SECRET"
-      );
+      throw new Error("Webhook secret is not configured");
     }
     try {
       return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
     } catch (error: any) {
       console.error("Webhook constructEvent error:", error);
-      throw new ApiError(
-        400,
-        error.message || "Webhook signature verification failed",
-        "Error in constructEvent"
-      );
+      throw new Error(error.message || "Webhook signature verification failed");
     }
   }
 
@@ -240,7 +227,7 @@ export default class PaymentService implements IPaymentService {
       return result;
     } catch (error: any) {
       console.error("Error in getAllMenteePayments service:", error);
-      throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+      throw new Error("Failed to fetch mentee payments", error.message);
     }
   }
   async getAllMentorPayments(mentorId: string): Promise<{
@@ -258,7 +245,7 @@ export default class PaymentService implements IPaymentService {
       return result;
     } catch (error: any) {
       console.error("Error in getAllMentorPayments service:", error);
-      throw new ApiError(500, "Failed to fetch mentee payments", error.message);
+      throw new Error("Failed to fetch mentee payments", error.message);
     }
   }
   async getAllPayments(
@@ -322,7 +309,7 @@ export default class PaymentService implements IPaymentService {
       return { payments, total };
     } catch (error: any) {
       console.error("Error in getAllPayments service:", error);
-      throw new ApiError(500, "Failed to fetch payments", error.message);
+      throw new Error("Failed to fetch payments", error.message);
     }
   }
 
@@ -340,18 +327,18 @@ export default class PaymentService implements IPaymentService {
 
       const payment = await this.paymentRepository.findById(paymentId);
       if (!payment) {
-        throw new ApiError(404, "Payment not found");
+        throw new Error("Payment not found");
       }
       if (payment.status !== "completed") {
-        throw new ApiError(400, "Payment is not in completed status");
+        throw new Error("Payment is not in completed status");
       }
       if (payment.mentorId.toString() !== mentorId) {
-        throw new ApiError(400, "Mentor ID does not match payment");
+        throw new Error("Mentor ID does not match payment");
       }
 
       const mentor = await this.userRepository.findById(mentorId);
       if (!mentor) {
-        throw new ApiError(404, "Mentor not found");
+        throw new Error("Mentor not found");
       }
 
       const transferAmount = payment.amount; // Excludes platformCharge
@@ -382,13 +369,9 @@ export default class PaymentService implements IPaymentService {
       return { transfer, payment: updatedPayment, wallet };
     } catch (error: any) {
       console.error("Error in transferToMentor service:", error);
-      throw error instanceof ApiError
+      throw error instanceof Error
         ? error
-        : new ApiError(
-            500,
-            "Failed to transfer payment to mentor",
-            error.message
-          );
+        : new Error("Failed to transfer payment to mentor", error.message);
     }
   }
 

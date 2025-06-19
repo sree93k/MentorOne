@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Chat from "../../models/chatModel";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import { EChat } from "../../entities/chatEntity";
 
 export default class ChatRepository {
@@ -11,7 +11,7 @@ export default class ChatRepository {
       const chat = new Chat(data);
       return (await chat.save()) as EChat;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to create chat", error.message);
+      throw new Error("Failed to create chat", error.message);
     }
   }
 
@@ -24,7 +24,7 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findById step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find chat", error.message);
+      throw new Error("Failed to find chat", error.message);
     }
   }
 
@@ -40,7 +40,7 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findByIdAndUpdate step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update chat", error.message);
+      throw new Error("Failed to update chat", error.message);
     }
   }
 
@@ -102,7 +102,7 @@ export default class ChatRepository {
         role,
         error: error.message,
       });
-      throw new ApiError(500, "Failed to find chats", error.message);
+      throw new Error("Failed to find chats", error.message);
     }
   }
   async findByBookingId(bookingId: string): Promise<EChat | null> {
@@ -114,7 +114,7 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findByBookingId step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find chat", error.message);
+      throw new Error("Failed to find chat", error.message);
     }
   }
   async updateByBookingId(
@@ -133,14 +133,10 @@ export default class ChatRepository {
         { new: true } // Return the updated document
       ).exec();
       console.log("Chatrepository updateByBookingId step 3 chat");
-      // if (!chat) {
-      //   throw new ApiError(404, "Chat not found for the provided booking ID");
-      // }
 
       return chat as EChat;
     } catch (error: any) {
-      throw new ApiError(
-        500,
+      throw new Error(
         "Failed to update chat",
         process.env.NODE_ENV === "development" ? error.message : undefined
       );
@@ -168,11 +164,7 @@ export default class ChatRepository {
       console.log("CHAT REPOSITORY findByUsersAndRoles step 2", chat);
       return chat as unknown as EChat | null;
     } catch (error: any) {
-      throw new ApiError(
-        500,
-        "Failed to find chat by users and roles",
-        error.message
-      );
+      throw new Error("Failed to find chat by users and roles", error.message);
     }
   }
   async updateByUsersAndRoles(
@@ -202,14 +194,11 @@ export default class ChatRepository {
         .populate("latestMessage");
       console.log("CHAT REPOSITORY updateByUsersAndRoles step 2", chat);
       if (!chat) {
-        throw new ApiError(
-          404,
-          "Chat not found for the provided users and roles"
-        );
+        throw new Error("Chat not found for the provided users and roles");
       }
       return chat as unknown as EChat;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update chat", error.message);
+      throw new Error("Failed to update chat", error.message);
     }
   }
 }

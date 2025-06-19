@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import { setError, setLoading } from "@/redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
 import {
   Table,
@@ -17,7 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FeedbackModal from "@/components/mentee/FeedbackModal";
 import RescheduleModal from "@/components/modal/ResheduleModal";
 import ConfirmationModal from "@/components/modal/ConfirmationModal";
-import { getBookingsByMentor, updateStatus } from "@/services/bookingService";
+import {
+  getBookingsByMentor,
+  updateStatus,
+  updateBookingStatus,
+} from "@/services/bookingService";
 import { CalendarX, Check } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -66,8 +71,10 @@ export default function BookingsPage() {
   const [globalSearch, setGlobalSearch] = useState("");
   const [page, setPage] = useState(1);
   const limit = 40;
-
-  const { user } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+  const { user, error, loading } = useSelector(
+    (state: RootState) => state.user
+  );
   const mentorId = user?._id;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -75,14 +82,14 @@ export default function BookingsPage() {
   const {
     data: { bookings = [], total = 0 } = {},
     isLoading,
-    error,
+    isError,
   } = useQuery({
     queryKey: ["mentorBookings", mentorId, page],
     queryFn: async () => {
       if (!mentorId) throw new Error("Mentor ID is required");
       const response = await getBookingsByMentor(mentorId, page, limit);
       console.log("+++++++++++getBookingsByMentor", response);
-
+      console.log("+++++++++++getBookingsByMentor step1", response.data);
       return {
         bookings: response.data.map((booking: any) => ({
           _id: booking._id,
@@ -110,7 +117,7 @@ export default function BookingsPage() {
           amount: booking.serviceId?.amount || 0,
           paymentStatus: capitalize(booking.paymentDetails?.status) || "N/A",
           status: capitalize(booking.status) || "N/A",
-          serviceId: booking.serviceId?._id || "N/A", // Updated to use _id directly
+          serviceId: booking.serviceId?._id || "N/A",
           rescheduleRequest: {
             requestedDate: booking.rescheduleRequest?.requestedDate,
             requestedTime: booking.rescheduleRequest?.requestedTime,
@@ -128,10 +135,12 @@ export default function BookingsPage() {
   });
 
   useEffect(() => {
-    console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-    console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", selectedBooking);
-    console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-  });
+    dispatch(setError(null));
+    dispatch(setLoading(false));
+    console.log("@@@@@@@@@@@@@@@@");
+    console.log("@@@@@@@@@@@@@@@@");
+    console.log("@@@@@@@@@@@@@@@@");
+  }, []);
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({
@@ -159,8 +168,13 @@ export default function BookingsPage() {
     }) => {
       const payload = { status, ...updates };
       console.log("++++++++|||||||||updateStatus", bookingId, payload);
+      if (updates?.rescheduleRequest?.rescheduleStatus === "rejected") {
+        console.log("");
 
-      await updateStatus(bookingId, payload);
+        await updateBookingStatus(bookingId, status);
+      } else {
+        await updateStatus(bookingId, payload);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -168,8 +182,8 @@ export default function BookingsPage() {
       });
       toast.success("Reschedule request updated successfully.");
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update reschedule request.");
+    onError: (isError: any) => {
+      toast.error(isError.message || "Failed to update reschedule request.");
     },
   });
 
@@ -202,10 +216,44 @@ export default function BookingsPage() {
     setIsConfirmationModalOpen(true);
   };
 
+  // const confirmApproval = () => {
+  //   if (!selectedBooking || !selectedBooking.rescheduleRequest) return;
+
+  //   const isApprove = actionType === "approve";
+  //   updateBookingStatusMutation.mutate({
+  //     bookingId: selectedBooking._id,
+  //     status: isApprove ? "confirmed" : "confirmed",
+  //     updates: {
+  //       ...(isApprove && {
+  //         bookingDate: selectedBooking.rescheduleRequest.requestedDate,
+  //         startTime: selectedBooking.rescheduleRequest.requestedTime,
+  //         slotIndex: selectedBooking.rescheduleRequest.requestedSlotIndex,
+  //       }),
+  //       rescheduleRequest: {
+  //         rescheduleStatus: isApprove ? "accepted" : "rejected",
+  //       },
+  //     },
+  //   });
+
+  //   setIsConfirmationModalOpen(false);
+  //   setSelectedBooking(null);
+  //   setSelectedBookingId(null);
+  //   setActionType(null);
+  // };
+
   const confirmApproval = () => {
     if (!selectedBooking || !selectedBooking.rescheduleRequest) return;
 
     const isApprove = actionType === "approve";
+    // Calculate day of the week if approving
+    const dayOfWeek = isApprove
+      ? new Date(
+          selectedBooking.rescheduleRequest.requestedDate!
+        ).toLocaleDateString("en-US", {
+          weekday: "long",
+        })
+      : undefined;
+
     updateBookingStatusMutation.mutate({
       bookingId: selectedBooking._id,
       status: isApprove ? "confirmed" : "confirmed",
@@ -214,6 +262,7 @@ export default function BookingsPage() {
           bookingDate: selectedBooking.rescheduleRequest.requestedDate,
           startTime: selectedBooking.rescheduleRequest.requestedTime,
           slotIndex: selectedBooking.rescheduleRequest.requestedSlotIndex,
+          dayOfWeek, // Add day of the week to payload
         }),
         rescheduleRequest: {
           rescheduleStatus: isApprove ? "accepted" : "rejected",
@@ -325,10 +374,10 @@ export default function BookingsPage() {
         Loading bookings...
       </div>
     );
-  if (error)
+  if (isError)
     return (
       <div className="text-center py-4 text-red-500">
-        Error loading bookings: {(error as Error).message}
+        Error loading bookings: {(isError as Error).message}
       </div>
     );
 
@@ -457,128 +506,6 @@ export default function BookingsPage() {
           )}
         </TabsContent>
 
-        {/* <TabsContent value="rescheduled">
-          {rescheduledBookings.length === 0 ? (
-            renderNoBookings("rescheduled")
-          ) : (
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Date
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Product
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Service
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      User Name
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Booking Date
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Time Slot
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Requested Date
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Requested Time
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Amount
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Reschedule Status
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rescheduledBookings.map((booking) => (
-                    <TableRow
-                      key={booking._id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.date}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.product}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.service}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.userName}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {new Date(booking?.bookingDate).toLocaleDateString(
-                          "en-GB"
-                        )}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.timeSlot}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.rescheduleRequest?.requestedDate
-                          ? new Date(
-                              booking.rescheduleRequest.requestedDate
-                            ).toLocaleDateString("en-US", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            })
-                          : "Mentor Decide"}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {booking.rescheduleRequest?.requestedTime ||
-                          "Mentor Decide"}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        ₹ {booking.amount}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {capitalize(
-                          booking.rescheduleRequest?.rescheduleStatus
-                        ) || "N/A"}
-                      </TableCell>
-                      <TableCell className="text-gray-700 dark:text-gray-300 py-3 flex gap-2">
-                        {booking.rescheduleRequest?.rescheduleStatus ===
-                          "pending" && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleApproveReschedule(booking)}
-                              className="bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleRejectReschedule(booking)}
-                              className="bg-red-500 hover:bg-red-600 text-white"
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </TabsContent> */}
         <TabsContent value="rescheduled">
           {rescheduledBookings.length === 0 ? (
             renderNoBookings("rescheduled")
@@ -991,13 +918,6 @@ export default function BookingsPage() {
         onSubmit={handleFeedbackSubmit}
       />
 
-      {/* <ConfirmationModal
-        open={isConfirmationModalOpen}
-        onOpenChange={setIsConfirmationModalOpen}
-        onConfirm={confirmApproval}
-        title="Approve Reschedule Request"
-        description={`Are you sure you want to approve the reschedule request for ${selectedBooking?.userName}'s booking to ${selectedBooking?.rescheduleRequest?.requestedDate} at ${selectedBooking?.rescheduleRequest?.requestedTime}?`}
-      /> */}
       <ConfirmationModal
         open={isConfirmationModalOpen}
         onOpenChange={setIsConfirmationModalOpen}
@@ -1012,17 +932,6 @@ export default function BookingsPage() {
         } at ${selectedBooking?.rescheduleRequest?.requestedTime || "N/A"}?`}
       />
 
-      {/* <RescheduleModal
-        isOpen={isRescheduleModalOpen}
-        onClose={() => {
-          setIsRescheduleModalOpen(false);
-          setSelectedBooking(null);
-          setSelectedBookingId(null);
-        }}
-        onSubmit={handleRescheduleSubmit}
-        serviceId={selectedBooking?.serviceId?._id}
-        mentorId={mentorId}
-      /> */}
       <RescheduleModal
         isOpen={isRescheduleModalOpen}
         onClose={() => {

@@ -1,10 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import ApiResponse from "../../utils/apiResponse";
+import { ApiError } from "../../middlewares/errorHandler";
 import PaymentService from "../../services/implementations/PaymentService";
 import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import { IBookingService } from "../../services/interface/IBookingService";
-import { ApiError } from "../../middlewares/errorHandler";
-import stripe from "../../config/stripe";
+import { HttpStatus } from "../../constants/HttpStatus";
+import { Stripe } from "stripe";
 
 class WebhookController {
   private paymentService: IPaymentService;
@@ -15,8 +17,16 @@ class WebhookController {
     this.bookingService = new BookingService();
   }
 
-  public handleWebhook = async (req: Request, res: Response) => {
+  public handleWebhook = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      console.log("WebhookController handleWebhook step 1", {
+        eventType: (req.body as any).type,
+      });
+
       const event = await this.paymentService.constructEvent(
         req.body,
         req.headers["stripe-signature"] as string
@@ -24,7 +34,7 @@ class WebhookController {
 
       switch (event.type) {
         case "checkout.session.completed": {
-          const session = event.data.object as any;
+          const session = event.data.object as Stripe.Checkout.Session;
           const {
             serviceId,
             mentorId,
@@ -38,13 +48,34 @@ class WebhookController {
             platformPercentage,
             platformCharge,
             total,
-          } = session.metadata;
+          } = session.metadata || {};
+
+          if (
+            !serviceId ||
+            !mentorId ||
+            !menteeId ||
+            !bookingDate ||
+            !startTime ||
+            !endTime ||
+            !day ||
+            !slotIndex ||
+            !amount ||
+            !platformPercentage ||
+            !platformCharge ||
+            !total
+          ) {
+            throw new ApiError(
+              HttpStatus.BAD_REQUEST,
+              "Missing required metadata fields"
+            );
+          }
 
           if (session.payment_status !== "paid") {
-            console.error("Payment not successful:", session.payment_status);
+            console.error("Payment not successful", {
+              paymentStatus: session.payment_status,
+            });
             throw new ApiError(
-              400,
-              "Payment not successful",
+              HttpStatus.BAD_REQUEST,
               "Checkout session verification failed"
             );
           }
@@ -64,23 +95,35 @@ class WebhookController {
             platformCharge: parseInt(platformCharge),
             total: parseInt(total),
           });
-          console.log(
-            `Checkout session ${session.id} completed and booking saved.`
-          );
+          console.log("WebhookController handleWebhook step 2", {
+            sessionId: session.id,
+            action: "booking and payment saved",
+          });
           break;
         }
         case "payment_intent.payment_failed": {
-          console.log(`PaymentIntent ${event.data.object.id} failed.`);
+          const paymentIntent = event.data.object as Stripe.PaymentIntent;
+          console.log("WebhookController handleWebhook step 2", {
+            paymentIntentId: paymentIntent.id,
+            action: "payment failed",
+          });
           break;
         }
         default:
-          console.log(`Unhandled event type ${event.type}`);
+          console.log("WebhookController handleWebhook step 2", {
+            eventType: event.type,
+            action: "unhandled event",
+          });
       }
 
-      res.sendStatus(200);
-    } catch (error: any) {
-      console.error(`Webhook error: ${error.message}`);
-      res.status(400).send(`Webhook Error: ${error.message}`);
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, null, "Webhook processed successfully")
+        );
+    } catch (error) {
+      console.error("Error in handleWebhook:", error);
+      next(error);
     }
   };
 }

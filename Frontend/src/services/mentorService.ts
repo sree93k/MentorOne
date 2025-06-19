@@ -91,8 +91,8 @@ export const uploadImage = async (imageFile: File): Promise<string> => {
       },
     });
     console.log("image upload stepp5");
-    console.log("Image upload response:", response.data);
-    return response.data.imageUrl;
+    console.log("Image upload response:", response.data.data);
+    return response.data.data.imageUrl;
   } catch (error) {
     console.error("Error uploading image:", error);
     throw error;
@@ -139,7 +139,7 @@ export const getUserDetails = async (userId: string) => {
   const response = await api.get(`/expert/profile/${userId}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
   });
-  console.log("mentor profile service step2 response", response);
+  console.log("MMMMMMMMmentor profile service step2 response", response);
   return response.data;
 };
 
@@ -186,7 +186,8 @@ export const uploadToS3WithPresignedUrl = async (
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    const { url, key } = response.data;
+    const { url, key } = response.data.data.url;
+    console.log("Received presigned DATA:", response);
     console.log("Received presigned URL:", url, "Key:", key);
 
     const uploadResponse = await fetch(url, {
@@ -502,7 +503,7 @@ export const getMentorCalendar = async (mentorId: string) => {
       },
     });
     console.log("getMentorCalendar step 2: Calendar fetched", response.data);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("getMentorCalendar error:", error);
     throw new Error(`Failed to fetch calendar: ${error.message}`);
@@ -552,7 +553,7 @@ export const createSchedule = async (mentorId: string, scheduleData: any) => {
       }
     );
     console.log("createSchedule step 2: Schedule created", response);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("createSchedule error:", error);
     throw new Error(`Failed to create schedule: ${error.message}`);
@@ -586,7 +587,7 @@ export const updateSchedule = async (
       }
     );
     console.log("updateSchedule step 2: Schedule updated", response.data);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("updateSchedule error:", error);
     throw new Error(`Failed to update schedule: ${error.message}`);
@@ -641,7 +642,7 @@ export const addBlockedDates = async (
       }
     );
     console.log("addBlockedDates step 2: Blocked dates added", response.data);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("addBlockedDates error:", error);
     throw new Error(`Failed to add blocked dates: ${error.message}`);

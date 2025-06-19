@@ -1,7 +1,7 @@
 import { EUsers } from "../../entities/userEntity";
 import { EOTP } from "../../entities/OTPEntity";
 import { IOTPRepository } from "../interface/IOTPRepository";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import OTPModel from "../../models/otpModel";
 
 export default class OTPRepository implements IOTPRepository {
@@ -15,9 +15,9 @@ export default class OTPRepository implements IOTPRepository {
       return newOTP;
     } catch (error) {
       if (error instanceof Error) {
-        throw new ApiError(500, "Failed to save OTP", error.message);
+        throw new Error("Failed to save OTP", error);
       } else {
-        throw new ApiError(500, "Failed to save OTP", "Unknown error");
+        throw new Error("Failed to save OTP");
       }
     }
   }
@@ -26,9 +26,9 @@ export default class OTPRepository implements IOTPRepository {
       await OTPModel.deleteMany({ email });
     } catch (error) {
       if (error instanceof Error) {
-        throw new ApiError(500, "Failed to delete OTPs", error.message);
+        throw new Error("Failed to delete OTPs", error);
       } else {
-        throw new ApiError(500, "Failed to delete OTPs", "Unknown error");
+        throw new Error("Failed to delete OTPs");
       }
     }
   }
@@ -42,10 +42,10 @@ export default class OTPRepository implements IOTPRepository {
       if (error instanceof Error) {
         console.log("find otp repo err 3");
 
-        throw new ApiError(500, "Failed to find OTP", error.message);
+        throw new Error("Failed to find OTP", error);
       } else {
         console.log("find otp repo err 4");
-        throw new ApiError(500, "Failed to find OTP", "Unknown error");
+        throw new Error("Failed to find OTP");
       }
     }
   }
@@ -58,9 +58,9 @@ export default class OTPRepository implements IOTPRepository {
       return userDatas ? (userDatas.user as unknown as EUsers) : null;
     } catch (error) {
       if (error instanceof Error) {
-        throw new ApiError(500, "Failed to find user data", error.message);
+        throw new Error("Failed to find user data", error);
       } else {
-        throw new ApiError(500, "Failed to find user data", "Unknown error");
+        throw new Error("Failed to find user data");
       }
     }
   }

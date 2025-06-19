@@ -9,15 +9,7 @@ import {
   LogOut,
   BadgeIndianRupee,
 } from "lucide-react";
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
-// import { Moon, Sun } from "lucide-react";
 
-// import { Button } from "@/components/ui/button";
 import { LogoutConfirmationModal } from "@/components/modal/Logout";
 import { logout } from "@/services/adminAuth";
 import { toast, Toaster } from "react-hot-toast";
@@ -123,13 +115,7 @@ const AdminSidebar: React.FC = () => {
             active={activeItem === "Dashboard"}
             onClick={() => handleItemClick("Dashboard", "/admin/dashboard")}
           />
-          {/* <SidebarItem
-            icon={Bell}
-            text="Notifications"
-            isExpanded={isExpanded}
-            active={activeItem === "Notifications"}
-            onClick={openNotification}
-          /> */}
+
           <SidebarItem
             icon={Users}
             text="Users"
@@ -153,22 +139,6 @@ const AdminSidebar: React.FC = () => {
               handleItemClick("Transactions", "/admin/transactions")
             }
           />
-          {/* <SidebarItem
-            icon={Wallet}
-            text="Wallets"
-            isExpanded={isExpanded}
-            active={activeItem === "Wallets"}
-            onClick={() =>
-              handleItemClick("Transactions", "/admin/transactions")
-            }
-          /> */}
-          {/* <SidebarItem
-            icon={Users2}
-            text="Subscribers"
-            isExpanded={isExpanded}
-            active={activeItem === "Subscribers"}
-            onClick={() => handleItemClick("Subscribers", "/admin/dashboard")}
-          /> */}
         </nav>
         <div className="absolute bottom-4 w-full px-2">
           <SidebarItem

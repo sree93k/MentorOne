@@ -32,20 +32,6 @@ const MentorHeader: React.FC = () => {
             Hi, Admin !
           </span>
 
-          {/* <nav className="flex gap-8">
-           
-          </nav> */}
-          {/* <div className="flex items-center gap-4">
-            <Input
-              type="search"
-              placeholder="Search"
-              className="w-60 rounded-full"
-            />
-              </div> */}
-          {/* <button onClick={openChat}>
-              <Send size={24} />
-            </button> */}
-
           <ThemeToggle />
         </div>
         {/* <MentorChat open={isChatOpen} onOpenChange={setIsChatOpen} /> */}

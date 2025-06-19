@@ -156,18 +156,25 @@ export const getChatHistory = async (
     );
   }
 };
-// Upload to S3
+
 export const uploadToS3WithPresignedUrl = async (
   file: File,
   folder: "images" | "audio",
   contentType: string
 ): Promise<string> => {
   try {
+    console.log("uploadToS3WithPresignedUrl: Starting", {
+      fileName: file.name,
+      fileType: contentType,
+      folder,
+    });
+
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
 
+    // Request presigned URL
     const response = await api.get("/user/generate-presigned-url", {
       params: {
         fileName: file.name,
@@ -178,8 +185,20 @@ export const uploadToS3WithPresignedUrl = async (
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    const { url, key } = response.data;
 
+    console.log(
+      "uploadToS3WithPresignedUrl: Presigned URL response",
+      response.data
+    );
+
+    // Destructure url and key from response.data.url
+    const { url, key } = response.data.data.url || {};
+    if (!url || !key) {
+      throw new Error("Invalid presigned URL response: Missing url or key");
+    }
+
+    // Upload to S3
+    console.log("uploadToS3WithPresignedUrl: Uploading to", url);
     const uploadResponse = await fetch(url, {
       method: "PUT",
       body: file,
@@ -190,21 +209,31 @@ export const uploadToS3WithPresignedUrl = async (
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
+      console.error("uploadToS3WithPresignedUrl: S3 upload failed", {
+        status: uploadResponse.status,
+        errorText,
+      });
       throw new Error(`S3 upload failed: ${errorText}`);
     }
 
-    return `https://${import.meta.env.VITE_S3_BUCKET_NAME}.s3.${
+    const s3Url = `https://${import.meta.env.VITE_S3_BUCKET_NAME}.s3.${
       import.meta.env.VITE_AWS_REGION
     }.amazonaws.com/${key}`;
+    console.log("uploadToS3WithPresignedUrl: Success", { s3Url });
+    return s3Url;
   } catch (error: any) {
-    console.error("Error uploading with presigned URL:", error);
+    console.error("uploadToS3WithPresignedUrl: Error", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    toast.error(error.message || "Failed to upload file");
     throw new Error(`Failed to upload file to S3: ${error.message}`);
   }
 };
 
-// Get Presigned URL for Media
 export const getMediaUrl = async (s3Key: string): Promise<string> => {
   try {
+    console.log("getMediaUrl: Starting", { s3Key });
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
@@ -216,16 +245,24 @@ export const getMediaUrl = async (s3Key: string): Promise<string> => {
       },
     });
     console.log("getMediaUrl response:", response.data);
-    return response.data.url;
+    const url = response.data.data?.url;
+    if (!url) {
+      throw new Error("Invalid presigned URL response: Missing url");
+    }
+    return url;
   } catch (error: any) {
-    console.error("Error fetching presigned URL for media:", error);
+    console.error("getMediaUrl: Error", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    toast.error(error.message || "Failed to fetch media URL");
     throw new Error(`Failed to fetch presigned URL: ${error.message}`);
   }
 };
 
-// Get Presigned URL for View (kept for compatibility)
 export const getPresignedUrlForView = async (key: string): Promise<string> => {
   try {
+    console.log("getPresignedUrlForView: Starting", { key });
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
@@ -237,9 +274,17 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
       },
     });
     console.log("getPresignedUrlForView response:", response.data);
-    return response.data.url;
+    const url = response.data.data?.url;
+    if (!url) {
+      throw new Error("Invalid presigned URL response: Missing url");
+    }
+    return url;
   } catch (error: any) {
-    console.error("Error fetching presigned URL for view:", error);
+    console.error("getPresignedUrlForView: Error", {
+      message: error.message,
+      response: error.response?.data,
+    });
+    toast.error(error.message || "Failed to fetch media URL");
     throw new Error(`Failed to fetch presigned URL: ${error.message}`);
   }
 };

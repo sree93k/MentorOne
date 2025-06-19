@@ -1,6 +1,6 @@
 import MessageRepository from "../../repositories/implementations/MessageRepository";
 import ChatRepository from "../../repositories/implementations/ChatRepository";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import mongoose from "mongoose";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
@@ -37,7 +37,7 @@ export default class MessageService implements IMessageService {
       )
     ) {
       console.error("Unauthorized or chat not found:", { chatId, senderId });
-      throw new ApiError(403, "Unauthorized or chat not found");
+      throw new Error("Unauthorized or chat not found");
     }
 
     let finalContent = content;

@@ -22,11 +22,6 @@ const userAuthRoutes = Router();
 
 userAuthRoutes.post("/sendOTP", validateSignUpOTP, userAuthController.sendOTP);
 
-// userAuthRoutes.post(
-//   "/auth/verifyEmail",
-//   validateReceivedOTP,
-//   userAuthController.verifyEmail
-// );
 userAuthRoutes.post(
   "/signup",
   validateUserSignUp,

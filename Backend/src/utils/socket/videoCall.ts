@@ -172,6 +172,8 @@ export const initializeVideoSocket = async (videoNamespace: Server) => {
       const videoCallRepo = new VideoCallRepository();
       const videoCallService = new VideoCallService();
       const meeting = await videoCallRepo.findMeeting(meetingId);
+      console.log("MEETING SOCKET MEETING +++++++. ", meeting);
+
       if (!meeting || meeting.creatorId !== socket.data.user?.id) {
         console.error("Unauthorized or meeting not found");
         await pubClient.quit();

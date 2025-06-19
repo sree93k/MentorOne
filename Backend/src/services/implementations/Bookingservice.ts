@@ -7,7 +7,7 @@ import ChatService from "./ChatService";
 import { IChatService } from "../interface/IChatService";
 import NotificationService from "./NotificationService";
 import { INotificationService } from "../interface/INotificationService";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import { EService } from "../../entities/serviceEntity";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
@@ -23,6 +23,7 @@ import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 import CalendarRepository from "../../repositories/implementations/CalenderRepository";
 import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
 import { EBooking } from "../../entities/bookingEntity";
+import { toASCII } from "punycode";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -162,12 +163,12 @@ export default class BookingService implements IBookingService {
 
     try {
       if (!amount || amount <= 0) {
-        throw new ApiError(400, "Invalid amount", "Amount must be positive");
+        throw new Error("Invalid amount");
       }
 
       const service = await this.serviceRepository.getServiceById(serviceId);
       if (!service) {
-        throw new ApiError(404, "Service not found", "Invalid service ID");
+        throw new Error("Service not found");
       }
 
       const existingBooking = await this.bookingRepository.findBySessionId(
@@ -257,11 +258,7 @@ export default class BookingService implements IBookingService {
       return { booking, payment, chat };
     } catch (error: any) {
       console.error("Detailed error in saveBookingAndPayment:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to save booking and payment",
-        "Error during booking and payment creation"
-      );
+      throw new Error(error.message || "Failed to save booking and payment");
     }
   }
   async getBookingsByMentee(
@@ -297,7 +294,7 @@ export default class BookingService implements IBookingService {
       return { bookings, total };
     } catch (error: any) {
       console.log("booking service getBookingsByMentee step error", error);
-      throw new ApiError(500, "Failed to fetch bookings");
+      throw new Error("Failed to fetch bookings");
     }
   }
 
@@ -314,7 +311,7 @@ export default class BookingService implements IBookingService {
       ]);
       return { bookings, total };
     } catch (error: any) {
-      throw new ApiError(500, "Failed to fetch mentor bookings");
+      throw new Error("Failed to fetch mentor bookings");
     }
   }
 
@@ -325,7 +322,7 @@ export default class BookingService implements IBookingService {
     console.log("cancel Booking Booking servcie step 2", booking);
     if (!booking) {
       console.log("cancel Booking Booking servcie step 2.5 ERROR");
-      throw new ApiError(404, "Booking not found", "Invalid booking ID");
+      throw new Error("Booking not found");
     }
     console.log("cancel Booking Booking servcie step 3");
     const updatedBooking = await this.bookingRepository.update(bookingId, {
@@ -367,7 +364,7 @@ export default class BookingService implements IBookingService {
   async verifyBookingBySessionId(sessionId: string): Promise<any> {
     const booking = await this.bookingRepository.findBySessionId(sessionId);
     if (!booking) {
-      throw new ApiError(404, "Booking not found", "Booking not created");
+      throw new Error("Booking not found");
     }
     return booking;
   }
@@ -399,7 +396,7 @@ export default class BookingService implements IBookingService {
       return { tutorials, total };
     } catch (error: any) {
       console.error("Error fetching tutorials:", error);
-      throw new ApiError(500, `Failed to fetch tutorials: ${error.message}`);
+      throw new Error(`Failed to fetch tutorials: ${error.message}`);
     }
   }
 
@@ -409,15 +406,12 @@ export default class BookingService implements IBookingService {
       const tutorial = await this.serviceRepository.getTutorialById(tutorialId);
       console.log("bookingservice getTutorialById step 2", tutorial);
       if (!tutorial) {
-        throw new ApiError(404, "Tutorial not found");
+        throw new Error("Tutorial not found");
       }
       return tutorial;
     } catch (error: any) {
       console.error("Error fetching tutorial by ID:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to fetch tutorial details"
-      );
+      throw new Error(error.message || "Failed to fetch tutorial details");
     }
   }
 
@@ -439,10 +433,7 @@ export default class BookingService implements IBookingService {
       return !!booking && booking.status === "completed";
     } catch (error: any) {
       console.error("Error checking booking status:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to check booking status"
-      );
+      throw new Error(error.message || "Failed to check booking status");
     }
   }
 
@@ -452,7 +443,7 @@ export default class BookingService implements IBookingService {
       const { serviceId, mentorId, menteeId, sessionId } = params;
       const service = await this.serviceRepository.getServiceById(serviceId);
       if (!service) {
-        throw new ApiError(404, "Service not found");
+        throw new Error("Service not found");
       }
 
       // Check if booking already exists for this sessionId
@@ -477,7 +468,7 @@ export default class BookingService implements IBookingService {
         status: "completed",
         transactionId: sessionId,
       });
-      console.log("bookingservice bookService step 2", booking, payment);
+      console.log("bookingservice bookService step 2");
 
       try {
         const io = getIO();
@@ -506,7 +497,7 @@ export default class BookingService implements IBookingService {
       return { booking, payment };
     } catch (error: any) {
       console.error("Error booking service:", error);
-      throw new ApiError(500, error.message || "Failed to book service");
+      throw new Error(error.message || "Failed to book service");
     }
   }
 
@@ -514,11 +505,11 @@ export default class BookingService implements IBookingService {
     try {
       console.log("bookingservice getServiceById step 1", serviceId);
       const service = await this.serviceRepository.getServiceById(serviceId);
-      console.log("bookingservice getServiceById step 2", service);
+      console.log("bookingservice getServiceById step 2");
       return service;
     } catch (error: any) {
       console.error("Error fetching service by ID:", error);
-      throw new ApiError(500, error.message || "Failed to fetch service");
+      throw new Error(error.message || "Failed to fetch service");
     }
   }
 
@@ -599,7 +590,7 @@ export default class BookingService implements IBookingService {
       return { bookings, total };
     } catch (error: any) {
       console.error("BookingService getAllBookings > error:", error);
-      throw new ApiError(500, "Failed to fetch all bookings");
+      throw new Error("Failed to fetch all bookings");
     }
   }
 
@@ -627,7 +618,7 @@ export default class BookingService implements IBookingService {
       return allVideoCallBookings;
     } catch (error: any) {
       console.error("BookingService getAllVideoCalls > error:", error);
-      throw new ApiError(500, "Failed to fetch video call bookings");
+      throw new Error("Failed to fetch video call bookings");
     }
   }
 
@@ -653,10 +644,10 @@ export default class BookingService implements IBookingService {
 
       const booking = await this.bookingRepository.findById(bookingId);
       if (!booking) {
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
       if (booking.mentorId._id.toString() !== mentorId) {
-        throw new ApiError(403, "Not authorized to update this booking");
+        throw new Error("Not authorized to update this booking");
       }
 
       // Update calendar if status is confirmed and date/time changes
@@ -693,7 +684,7 @@ export default class BookingService implements IBookingService {
       });
 
       if (!updatedBooking) {
-        throw new ApiError(500, "Failed to update booking status");
+        throw new Error("Failed to update booking status");
       }
 
       // Notify mentee
@@ -721,10 +712,7 @@ export default class BookingService implements IBookingService {
       return updatedBooking;
     } catch (error: any) {
       console.error("BookingService updateBookingStatus error:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to update booking status"
-      );
+      throw new Error(error.message || "Failed to update booking status");
     }
   }
   async requestReschedule(
@@ -744,17 +732,12 @@ export default class BookingService implements IBookingService {
       if (!booking) {
         console.log("ERRROr 1");
 
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
-
-      // if (booking.menteeId.toString() !== menteeId) {
-      //   console.log("ERRROr 2");
-      //   throw new ApiError(403, "Not authorized to reschedule this booking");
-      // }
 
       if (booking.status !== "confirmed") {
         console.log("ERRROr 3");
-        throw new ApiError(400, "Only confirmed bookings can be rescheduled");
+        throw new Error("Only confirmed bookings can be rescheduled");
       }
 
       const rescheduleRequest = {
@@ -773,7 +756,7 @@ export default class BookingService implements IBookingService {
       });
       console.log("BookingService requestReschedule step 1.3");
       if (!updatedBooking) {
-        throw new ApiError(500, "Failed to submit reschedule request");
+        throw new Error("Failed to submit reschedule request");
       }
 
       // Notify mentor about the reschedule request
@@ -798,10 +781,7 @@ export default class BookingService implements IBookingService {
       return updatedBooking;
     } catch (error: any) {
       console.error("BookingService requestReschedule error:", error);
-      throw new ApiError(
-        500,
-        error.message || "Failed to submit reschedule request"
-      );
+      throw new Error(error.message || "Failed to submit reschedule request");
     }
   }
   async getBookingsWithTestimonialsByMentee(
@@ -851,59 +831,24 @@ export default class BookingService implements IBookingService {
         "booking service getBookingsWithTestimonialsByMentee step error",
         error
       );
-      throw new ApiError(500, "Failed to fetch bookings");
+      throw new Error("Failed to fetch bookings");
     }
   }
   async findById(bookingId: string): Promise<any> {
     try {
       console.log("BookingService findById step 1 bookingId", bookingId);
       const booking = await this.bookingRepository.findById(bookingId);
-      console.log("BookingService findById step 2 booking response", booking);
+      console.log("BookingService findById step 2 booking response");
       if (!booking) {
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
       return booking;
     } catch (error: any) {
       console.error("BookingService findById error", error);
-      throw new ApiError(500, "Failed to find booking", error.message);
+      throw new Error("Failed to find booking", error.message);
     }
   }
 
-  // async updateBookingServiceStatus(
-  //   bookingId: string,
-  //   status: "pending" | "confirmed" | "completed"
-  // ): Promise<any> {
-  //   try {
-  //     console.log("BookingService updateBookingStatus step 1", {
-  //       bookingId,
-  //       status,
-  //     });
-  //     const booking = await this.bookingRepository.updateBookingStatus(
-  //       bookingId,
-  //       status
-  //     );
-  //     const isActive = "false";
-  //     const chatUpdate = await this.chatRepository.updateByBookingId(
-  //       bookingId,
-  //       isActive
-  //     );
-  //     console.log(
-  //       "BookingService updateBookingStatus step 2 chatUpdate",
-  //       chatUpdate
-  //     );
-
-  //     console.log("BookingService updateBookingStatus step 3 booking", booking);
-  //     return booking;
-  //   } catch (error: any) {
-  //     console.error("BookingService updateBookingStatus error", error);
-  //     throw new ApiError(
-  //       500,
-  //       process.env.NODE_ENV === "development"
-  //         ? error.message
-  //         : "Failed to update booking status"
-  //     );
-  //   }
-  // }
   async updateBookingServiceStatus(
     bookingId: string,
     status: "pending" | "confirmed" | "completed"
@@ -926,6 +871,16 @@ export default class BookingService implements IBookingService {
         "BookingService updateBookingStatus step 1.5 isActive",
         isActive
       );
+
+      const paymentTransfer = await this.paymentRepository.updateByBookingId(
+        bookingId,
+        { status: "transferred" }
+      );
+
+      console.log(
+        "BookingService updateBookingServiceStatus step 1.6 paymentTransfer",
+        paymentTransfer
+      );
       // Update chat isActive field
       const chatUpdate = await this.chatRepository.updateByBookingId(
         bookingId,
@@ -940,11 +895,172 @@ export default class BookingService implements IBookingService {
       return booking;
     } catch (error: any) {
       console.error("BookingService updateBookingStatus error", error);
-      throw new ApiError(
-        500,
+      throw new Error(
         process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to update booking status"
+      );
+    }
+  }
+
+  // async updateResheduleBooking(
+  //   bookingId: string,
+  //   paylaod: object
+  // ): Promise<any> {
+  //   try {
+  //     console.log("BookingService updateBookingStatus step 1", {
+  //       bookingId,
+  //       paylaod,
+  //     });
+
+  //     // Update booking status
+  //     const booking = await this.bookingRepository.update(bookingId, paylaod);
+
+  //     console.log("BookingService updateBookingStatus step 3 booking", booking);
+  //     return booking;
+  //   } catch (error: any) {
+  //     console.error("BookingService updateBookingStatus error", error);
+  //     throw new Error(
+  //       process.env.NODE_ENV === "development"
+  //         ? error.message
+  //         : "Failed to update booking status"
+  //     );
+  //   }
+  // }
+  async updateResheduleBooking(
+    userId: string,
+    bookingId: string,
+    payload: {
+      status: string;
+      dayOfWeek: string;
+      bookingDate?: string;
+      startTime?: string;
+      slotIndex?: number;
+      rescheduleRequest: {
+        rescheduleStatus: "noreschedule" | "pending" | "accepted" | "rejected";
+        requestedDate?: string;
+        requestedTime?: string;
+        requestedSlotIndex?: number;
+      };
+    }
+  ): Promise<any> {
+    try {
+      console.log("BookingService updateResheduleBooking step 1", {
+        bookingId,
+        payload,
+        userId,
+      });
+
+      if (!bookingId || !payload) {
+        throw new Error("Booking ID and payload are required");
+      }
+
+      if (!["pending", "confirmed", "rescheduled"].includes(payload.status)) {
+        throw new Error("Invalid booking status");
+      }
+
+      if (
+        !["noreschedule", "pending", "accepted", "rejected"].includes(
+          payload.rescheduleRequest.rescheduleStatus
+        )
+      ) {
+        throw new Error("Invalid reschedule status");
+      }
+
+      // Prepare update data
+      const updateData: any = {
+        status: payload.status,
+        rescheduleRequest: {
+          rescheduleStatus: payload.rescheduleRequest.rescheduleStatus,
+          requestedDate: payload.rescheduleRequest.requestedDate,
+          requestedTime: payload.rescheduleRequest.requestedTime,
+          requestedSlotIndex: payload.rescheduleRequest.requestedSlotIndex,
+        },
+      };
+
+      // If reschedule is approved, update booking date, time, and slot
+      if (payload.rescheduleRequest.rescheduleStatus === "accepted") {
+        if (
+          !payload.bookingDate ||
+          !payload.startTime ||
+          payload.slotIndex === undefined
+        ) {
+          throw new Error(
+            "bookingDate, startTime, and slotIndex are required for approved reschedule"
+          );
+        }
+
+        updateData.bookingDate = new Date(payload.bookingDate);
+        updateData.startTime = payload.startTime;
+        updateData.slotIndex = payload.slotIndex;
+
+        // Validate date and time formats
+        if (isNaN(updateData.bookingDate.getTime())) {
+          throw new Error("Invalid bookingDate format");
+        }
+        if (
+          !/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i.test(payload.startTime)
+        ) {
+          throw new Error("Invalid startTime format");
+        }
+        if (
+          !Number.isInteger(payload.slotIndex) ||
+          payload.slotIndex < 0 ||
+          payload.slotIndex > 2
+        ) {
+          throw new Error("Invalid slotIndex");
+        }
+      }
+      const bookings = await this.bookingRepository.findById(bookingId);
+      console.log("BookingService updateResheduleBooking step 1.1", bookings);
+
+      const deletedBlockedDate =
+        await this.calendarRepository.deleteBlockedDate(
+          userId,
+          bookings.bookingDate,
+          bookings.startTime
+        );
+      console.log(
+        "BookingService updateResheduleBooking step 1.4",
+        deletedBlockedDate
+      );
+      // Update booking
+      const booking = await this.bookingRepository.update(
+        bookingId,
+        updateData
+      );
+      console.log("BookingService updateResheduleBooking step 1.2");
+      const dates = [
+        {
+          date: payload.bookingDate,
+          day: payload?.dayOfWeek,
+          slotTime: payload.startTime,
+          type: "booking",
+        },
+      ];
+      console.log("BookingService updateResheduleBooking step 1.3", booking);
+
+      const blockedDate = await this.calendarRepository.addBlockedDates(
+        userId,
+        dates
+      );
+      console.log(
+        "BookingService updateResheduleBooking step 1.5",
+        blockedDate
+      );
+
+      if (!booking) {
+        throw new Error("Booking not found");
+      }
+
+      console.log("BookingService updateResheduleBooking step 3 booking");
+      return booking;
+    } catch (error: any) {
+      console.error("BookingService updateResheduleBooking error", error);
+      throw new Error(
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Failed to update reschedule booking"
       );
     }
   }
@@ -965,8 +1081,7 @@ export default class BookingService implements IBookingService {
       return Array.isArray(bookings) ? bookings : [bookings];
     } catch (error: any) {
       console.error("BookingService getBookingData error", error);
-      throw new ApiError(
-        500,
+      throw new Error(
         process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch booking data"
@@ -1000,11 +1115,15 @@ export default class BookingService implements IBookingService {
           oneToOneType,
           digitalProductType,
         });
-      console.log("BOOKING SERVICE ......getAllServices step 1", services);
+      console.log(
+        "BOOKING SERVICE ......getAllServices step 1",
+        services.length,
+        total
+      );
 
       return { services, total };
     } catch (error: any) {
-      throw new ApiError(500, `Failed to fetch services: ${error.message}`);
+      throw new Error(`Failed to fetch services: ${error.message}`);
     }
   }
 }

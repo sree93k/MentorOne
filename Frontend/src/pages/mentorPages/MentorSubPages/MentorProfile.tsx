@@ -352,7 +352,7 @@ const MentorProfile: React.FC = () => {
           const userDetails = await getUserDetails(user._id);
           console.log("FETCHED ||||||||||| ....>?,", userDetails);
 
-          const data = userDetails.data.response;
+          const data = userDetails.data;
           setProfileData({
             firstName: data.firstName || "",
             lastName: data.lastName || "",
@@ -447,6 +447,9 @@ const MentorProfile: React.FC = () => {
   useEffect(() => {
     const validate = async () => {
       try {
+        console.log("currentPassword ....", currentPassword);
+        console.log("newPassword ....", newPassword);
+        console.log("confirmPassword ....", confirmPassword);
         await passwordSchema.validate(
           { currentPassword, newPassword, confirmPassword },
           { abortEarly: false }
@@ -678,6 +681,9 @@ const MentorProfile: React.FC = () => {
 
   const handlePasswordUpdate = async () => {
     try {
+      console.log("currentPassword ....", currentPassword);
+      console.log("newPassword ....", newPassword);
+      console.log("confirmPassword ....", confirmPassword);
       await passwordSchema.validate(
         { currentPassword, newPassword, confirmPassword },
         { abortEarly: false }
@@ -950,7 +956,7 @@ const MentorProfile: React.FC = () => {
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
-                        className="absolute right-2 top-2.5"
+                        className="absolute right-2 top-1"
                       >
                         {showCurrentPassword ? (
                           <EyeOffIcon size={16} />
@@ -959,7 +965,7 @@ const MentorProfile: React.FC = () => {
                         )}
                       </Button>
                       {formErrors.currentPassword && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="text-green-500 text-sm mt-1">
                           {formErrors.currentPassword}
                         </p>
                       )}
@@ -976,7 +982,7 @@ const MentorProfile: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-2 top-2.5"
+                        className="absolute right-2 top-1"
                       >
                         {showNewPassword ? (
                           <EyeOffIcon size={16} />
@@ -985,7 +991,7 @@ const MentorProfile: React.FC = () => {
                         )}
                       </Button>
                       {formErrors.newPassword && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="text-green-500 text-sm mt-1">
                           {formErrors.newPassword}
                         </p>
                       )}
@@ -1004,7 +1010,7 @@ const MentorProfile: React.FC = () => {
                         onClick={() =>
                           setShowConfirmPassword(!showConfirmPassword)
                         }
-                        className="absolute right-2 top-2.5"
+                        className="absolute right-2 top-1"
                       >
                         {showConfirmPassword ? (
                           <EyeOffIcon size={16} />
@@ -1013,7 +1019,7 @@ const MentorProfile: React.FC = () => {
                         )}
                       </Button>
                       {formErrors.confirmPassword && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="text-green-500 text-sm mt-1">
                           {formErrors.confirmPassword}
                         </p>
                       )}

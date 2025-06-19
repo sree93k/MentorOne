@@ -1,5 +1,5 @@
 import NotificationRepository from "../../repositories/implementations/NotificationRepository";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import { pubClient } from "../../server";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
@@ -75,7 +75,7 @@ export default class NotificationService implements INotificationService {
       await pubClient.publish(`${type}-notifications`, JSON.stringify(payload));
     } catch (error: any) {
       console.error("Error creating notification:", error.message);
-      throw new ApiError(500, "Failed to create notification", error.message);
+      throw new Error("Failed to create notification", error.message);
     }
   }
 
@@ -220,10 +220,9 @@ export default class NotificationService implements INotificationService {
         "Error creating payment and booking notifications:",
         error.message
       );
-      throw new ApiError(
-        500,
+      throw new Error(
         "Failed to create payment and booking notifications",
-        error.message
+        error
       );
     }
   }
@@ -253,7 +252,7 @@ export default class NotificationService implements INotificationService {
       return mappedNotifications;
     } catch (error: any) {
       console.error("Error fetching unread notifications:", error.message);
-      throw new ApiError(500, "Failed to fetch notifications", error.message);
+      throw new Error("Failed to fetch notifications", error.message);
     }
   }
 
@@ -266,22 +265,15 @@ export default class NotificationService implements INotificationService {
         notificationId
       );
       if (!notification) {
-        throw new ApiError(404, "Notification not found");
+        throw new Error("Notification not found");
       }
       if (notification.recipientId !== userId) {
-        throw new ApiError(
-          403,
-          "Unauthorized to mark this notification as read"
-        );
+        throw new Error("Unauthorized to mark this notification as read");
       }
       await this.notificationRepository.markAsRead(notificationId);
     } catch (error: any) {
       console.error("Error marking notification as read:", error.message);
-      throw new ApiError(
-        500,
-        "Failed to mark notification as read",
-        error.message
-      );
+      throw new Error("Failed to mark notification as read", error.message);
     }
   }
 }

@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
+import { ApiError } from "../../middlewares/errorHandler";
 import NotificationService from "../../services/implementations/NotificationService";
 import ApiResponse from "../../utils/apiResponse";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 interface AuthUser {
   id: string;
@@ -21,25 +23,29 @@ class NotificationController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
-        return;
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
-      console.log(
-        "NotificationController.getUnreadNotifications step 1",
-        userId
-      );
+      console.log("NotificationController getUnreadNotifications step 1", {
+        userId,
+      });
+
       const notifications =
         await this.notificationService.getUnreadNotifications(userId);
+      console.log("NotificationController getUnreadNotifications step 2", {
+        notifications,
+      });
+
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
-          new ApiResponse(200, notifications, "Unread notifications fetched")
+          new ApiResponse(
+            HttpStatus.OK,
+            notifications,
+            "Unread notifications fetched successfully"
+          )
         );
-    } catch (error: any) {
-      console.error(
-        "NotificationController.getUnreadNotifications error:",
-        error.message
-      );
+    } catch (error) {
+      console.error("Error in getUnreadNotifications:", error);
       next(error);
     }
   };
@@ -53,25 +59,36 @@ class NotificationController {
       const userId = req.user?.id;
       const { notificationId } = req.params;
       if (!userId) {
-        res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
-        return;
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
-      console.log("NotificationController.markNotificationAsRead step 1", {
+      if (!notificationId) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Notification ID is required"
+        );
+      }
+      console.log("NotificationController markNotificationAsRead step 1", {
         notificationId,
         userId,
       });
+
       await this.notificationService.markNotificationAsRead(
         notificationId,
         userId
       );
+      console.log("NotificationController markNotificationAsRead step 2");
+
       res
-        .status(200)
-        .json(new ApiResponse(200, null, "Notification marked as read"));
-    } catch (error: any) {
-      console.error(
-        "NotificationController.markNotificationAsRead error:",
-        error.message
-      );
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            null,
+            "Notification marked as read successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in markNotificationAsRead:", error);
       next(error);
     }
   };

@@ -10,9 +10,10 @@ import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
 import UploadService from "../../services/implementations/UploadService";
-
+import { HttpStatus } from "../../constants/HttpStatus";
 import axios from "axios";
 import sharp from "sharp";
+import cookieConfig from "../../config/cookieConifg";
 
 class UserAuthController {
   private userAuthService: IUserAuthService;
@@ -45,47 +46,39 @@ class UserAuthController {
 
       const user = req.body;
       console.log("Controller - sendOTP request received:", user);
+      if (!user) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "User is required");
+      }
 
       const otpExists = await this.OTPServices.checkOTPExists(user);
       console.log("otp exists >>>", otpExists);
 
       if (otpExists) {
-        console.log("otpExists....user auth contorlerr");
-        res
-          .status(400)
-          .json(
-            new ApiError(
-              400,
-              "OTP already exists",
-              "Please Wait 60 Seconds. Then try Again!"
-            )
-          );
-        return;
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Please wait 60 seconds before requesting another OTP"
+        );
       }
 
       const isUserExists = await this.userService.findUserWithEmail(user);
       if (isUserExists) {
-        console.log("isUserExists errro....user auth contorlerr");
-
-        res
-          .status(400)
-          .json(
-            new ApiError(
-              400,
-              "User Already Exists",
-              "A user with this email already exists"
-            )
-          );
-        return;
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "A user with this email already exists"
+        );
       }
 
       const createOTP = await this.OTPServices.sendOTP(user);
       console.log("Controller - OTP sent successfully:", createOTP);
 
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
-          new ApiResponse(200, { email: user.email }, "OTP sent successfully")
+          new ApiResponse(
+            HttpStatus.OK,
+            { email: user.email },
+            "OTP sent successfully"
+          )
         );
     } catch (error) {
       console.error("Controller - sendOTP error:", error);
@@ -102,7 +95,12 @@ class UserAuthController {
     try {
       const { email, otp } = req.body;
       console.log("OTP verification start at controller for email:", email);
-
+      if (!email || !otp) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Email and OTP are required"
+        );
+      }
       const otpData: Partial<EOTP> = {
         email: email,
         otp: otp,
@@ -117,17 +115,10 @@ class UserAuthController {
       );
 
       if (!OTPVerification) {
-        console.error("OTP Verification failed at controller");
-        res
-          .status(400)
-          .json(
-            new ApiError(
-              400,
-              "Invalid OTP",
-              "The OTP you entered is invalid or has expired"
-            )
-          );
-        return;
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "The OTP you entered is invalid or has expired"
+        );
       }
 
       console.log("Controller - signup request received:", req.body);
@@ -135,49 +126,46 @@ class UserAuthController {
       console.log("Controller - signup service response:", signUpData);
 
       if (!signUpData) {
-        console.log("Controller - signup failed: Invalid credentials");
-        res
-          .status(401)
-          .json(new ApiError(401, "Authentication Failed", "Invalid Input"));
-        return;
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Failed to create user");
       }
 
       console.log("Controller - Signup successful");
-      res.status(200).json(new ApiResponse(200, signUpData));
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            signUpData,
+            "User created successfully"
+          )
+        );
     } catch (error) {
       console.error("Controller - Error during signup:", error);
-      if (error instanceof Error) {
-        res.status(400).json(new ApiError(400, "Signup Failed", error.message));
-      } else {
-        next(error);
-      }
+      next(error);
     }
   };
 
-  public login = async (req: Request, res: Response): Promise<void> => {
+  public login = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       console.log("Controller - Login request received:", req.body);
       const loginData = await this.userAuthService.login(req.body);
       console.log("Controller - Login service response:", loginData);
-
       if (!loginData) {
-        console.log("Controller - Login failed: Invalid credentials");
-        res.status(400).json(new ApiError(400, "Invalid email or password"));
-        return;
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid email or password");
       }
-
       console.log("Controller - Login successful");
+
       res
-        .status(200)
-        .cookie("refreshToken", loginData.refreshToken, this.options)
-        .json(new ApiResponse(200, loginData));
+        .status(HttpStatus.OK)
+        .cookie("refreshToken", loginData.refreshToken, cookieConfig)
+        .json(new ApiResponse(HttpStatus.OK, loginData, "Login successful"));
     } catch (error) {
-      console.error("Controller - Login error:1", error);
-      // if (error instanceof ApiError) {
-      res.status(error?.statusCode).json(error);
-      // } else {
-      //   res.status(500).json(new ApiError(500, "Internal Server Error"));
-      // }
+      console.error("Error in login:", error);
+      next(error);
     }
   };
 
@@ -190,29 +178,36 @@ class UserAuthController {
       console.log("auth step 1");
       const { firstName, lastName, email, profilePicture } = req.body;
 
-      // Fetch the image from the profilePicture URL and get the buffer
-      const response = await axios.get(profilePicture, {
-        responseType: "arraybuffer",
-      });
+      if (!email || !firstName || !lastName || !profilePicture) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Missing required fields: firstName, lastName, email, profilePicture"
+        );
+      }
+
       console.log("auth step 2");
       const userExists = await this.userAuthService.googleSignIn({ email });
       console.log("auth step 3", userExists);
       if (userExists) {
-        // const loginData = await this.userAuthService.googleLogin(email);
-        // console.log("auth step 4", loginData);
-        // if (loginData) {
-        console.log("auth step 4 user exists");
+        console.log("UserAuthController googleAuthentication step 2", {
+          userExists,
+        });
 
         res
-          .status(200)
-          .cookie("refreshToken", userExists.refreshToken, this.options)
+          .status(HttpStatus.OK)
+          .cookie("refreshToken", userExists.refreshToken, cookieConfig)
           .json(
-            new ApiResponse(200, userExists, "Google authentication success")
+            new ApiResponse(
+              HttpStatus.OK,
+              userExists,
+              "Google authentication successful"
+            )
           );
         return;
-        //}
       }
-
+      const response = await axios.get(profilePicture, {
+        responseType: "arraybuffer",
+      });
       console.log("auth step 5");
       const imageBuffer = Buffer.from(response.data, "binary");
       console.log("auth step 6");
@@ -231,7 +226,7 @@ class UserAuthController {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        profilePicture: fromGoogleImage.url, // Assuming 'url' is the property from Cloudinary
+        profilePicture: fromGoogleImage.url,
       });
       console.log("auth step 9");
       console.log("========");
@@ -240,20 +235,25 @@ class UserAuthController {
 
       // Check if userAfterAuth is null
       if (!userAfterAuth) {
-        res
-          .status(400)
-          .json(
-            new ApiError(400, "Authentication Failed", "User data is null")
-          );
-        return;
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Failed to create user with Google authentication"
+        );
       }
 
-      // Send success response with refresh token
+      console.log("UserAuthController googleAuthentication step 4", {
+        userAfterAuth,
+      });
+
       res
-        .status(200)
-        .cookie("refreshToken", userAfterAuth.refreshToken, this.options)
+        .status(HttpStatus.OK)
+        .cookie("refreshToken", userAfterAuth.refreshToken, cookieConfig)
         .json(
-          new ApiResponse(200, userAfterAuth, "Google authentication success")
+          new ApiResponse(
+            HttpStatus.OK,
+            userAfterAuth,
+            "Google authentication successful"
+          )
         );
     } catch (error) {
       next(error);
@@ -269,40 +269,39 @@ class UserAuthController {
     // Explicitly declare return type as Promise<void>
     try {
       console.log("forgot password otp auth controller 1");
-
-      const isUserExists = await this.userService.findUserWithEmail(req.body);
-      console.log("forgot password otp auth controller 2", isUserExists);
-      if (!isUserExists || isUserExists?.isBlocked) {
-        console.log("hello mister perrera>>>>>>>");
-
-        res
-          .status(400)
-          .json(
-            new ApiResponse(
-              400,
-              isUserExists?.isBlocked
-                ? "Account is blocked"
-                : "Account not exist"
-            )
-          );
-        console.log("forgot password otp auth controller 3");
-        return; // Early return to stop execution, but no value returned
+      if (!req.body) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Data is required");
       }
+      const isUserExists = await this.userService.findUserWithEmail(req.body);
+
+      console.log("forgot password otp auth controller 2", isUserExists);
+      if (!isUserExists || isUserExists.isBlocked) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          isUserExists?.isBlocked
+            ? "Account is blocked"
+            : "Account does not exist"
+        );
+      }
+
       console.log("forgot password otp auth controller 4");
       const otpExists = await this.OTPServices.checkOTPExists(req.body);
       console.log("forgot password otp auth controller 5");
       if (otpExists) {
-        res
-          .status(500)
-          .json(new ApiError(500, "Please Wait 1 Minute. Before Trying again"));
-        return; // Early return, no value
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Please wait 60 seconds before requesting another OTP"
+        );
       }
 
       await this.OTPServices.sendOTP(req.body);
       console.log("forgot password otp auth controller 2");
-      res.status(200).json(new ApiResponse(200, null, "OTP sent successfully")); // Send response without returning it
+      res
+        .status(HttpStatus.OK)
+        .json(new ApiResponse(HttpStatus.OK, null, "OTP sent successfully"));
     } catch (error) {
-      // Pass error to error-handling middleware
+      console.error("Error in forgotPasswordOTP:", error);
+      next(error);
     }
   };
 
@@ -315,6 +314,12 @@ class UserAuthController {
       console.log("verify otp usercontroller step 1 ", req.body);
 
       const { otp, email } = req.body;
+      if (!email || !otp) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Email and OTP are required"
+        );
+      }
       const otpData: Partial<EOTP> = {
         email: email,
         otp: otp,
@@ -329,15 +334,21 @@ class UserAuthController {
       );
       console.log("verify otp usercontroller step 2:", verifyEmailData);
       if (!verifyEmailData) {
-        console.log("Controller - verifyEmail failed: Invalid credentials");
-        res
-          .status(401)
-          .json(new ApiError(401, "Authentication Failed", "Invalid Input"));
-        return;
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "The OTP you entered is invalid or has expired"
+        );
       }
-
       console.log("Controller - verifyEmail successful");
-      res.status(200).json(new ApiResponse(200, verifyEmailData));
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            verifyEmailData,
+            "OTP verified successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -352,12 +363,12 @@ class UserAuthController {
       console.log("auth controller reset password 1");
 
       const { password, email } = req.body;
-      console.log("auth controller reset password 2 email is ", email);
-      console.log("auth controller reset password 2 password is ", password);
-
-      console.log("auth controller reset password 3");
-
-      console.log("auth controller reset password 7");
+      if (!email || !password) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Email and password are required"
+        );
+      }
 
       console.log(
         "auth controller reset password 10 email and password",
@@ -372,71 +383,53 @@ class UserAuthController {
         "auth controller reset password 11,passwordSeset",
         passwordUpdated
       );
-      if (passwordUpdated) {
-        console.log("auth controller reset password 12 successs ");
-        res.status(200).json(new ApiResponse(200, null, "reset success"));
-        return;
+      if (!passwordUpdated) {
+        throw new ApiError(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to reset password"
+        );
       }
+
       console.log("auth controller reset password 12 not updates password ");
       res
-        .status(500)
-        .json(new ApiError(500, "something went wrong", "reset Failed"));
-      return;
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, null, "Password reset successful")
+        );
     } catch (error) {
       console.log("auth controller reset password catch error  ");
       next(error);
     }
   };
 
-  public logout = async (req: Request, res: Response): Promise<void> => {
-    console.log("user logout step 1 - req.user:", req.user);
+  public logout = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("user logout step 1 - req.user:", req.user);
 
-    if (!req.user || !req.user.rawToken || !req.user.id) {
-      console.log("user logout step 1 - Missing user data");
-      res
-        .status(401)
-        .json(new ApiResponse(401, null, "Unauthorized: No user data found"));
-      return;
-    }
+      if (!req.user?.id || !req.user?.rawToken) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User not authenticated");
+      }
 
-    const { rawToken, id } = req.user;
-    console.log("user logout step 2 - rawToken:", rawToken, "id:", id);
+      const { rawToken, id } = req.user;
+      console.log("user logout step 2 - rawToken:", rawToken, "id:", id);
 
-    const logoutData = await this.userAuthService.logout(rawToken, id);
-    console.log("user logout step 3 - logoutData:", logoutData);
-    await this.userService.updateOnlineStatus(id, false, null);
-    if (logoutData) {
-      console.log("user logout step 4 - Success");
+      const logoutData = await this.userAuthService.logout(rawToken, id);
+      console.log("user logout step 3 - logoutData:", logoutData);
+      await this.userService.updateOnlineStatus(id, false, null);
+      console.log("UserAuthController logout step 2", { logoutData });
+
       res
-        .status(200)
-        .clearCookie("refreshToken", {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-        })
-        .json(
-          new ApiResponse(
-            200,
-            { message: "Successfully cleared the token" },
-            "Logout success"
-          )
-        );
-      console.log("admin logout step 3 success");
-      return;
-    } else {
-      console.log("user logout step 4 - Failed");
-      res
-        .status(500)
-        .json(
-          new ApiResponse(
-            500,
-            null,
-            "Something Went Wrong Clear your Browser Cookies"
-          )
-        );
-      console.log("admin logout step 4 error 500");
-      return;
+        .status(HttpStatus.OK)
+        .clearCookie("refreshToken", cookieConfig)
+        .json(new ApiResponse(HttpStatus.OK, null, "Logout successful"));
+    } catch (error) {
+      console.error("Error in logout:", error);
+      next(error);
     }
   };
 }
-
 export default new UserAuthController();

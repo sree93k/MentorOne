@@ -109,6 +109,24 @@ export interface IBookingService {
     bookingId: string,
     status: "pending" | "confirmed" | "completed"
   ): Promise<any>;
+  // updateResheduleBooking(bookingId: string, paylaod: object): Promise<any>;
+  updateResheduleBooking(
+    userId: string,
+    bookingId: string,
+    payload: {
+      status: string;
+      bookingDate?: string;
+      dayOfWeek: string;
+      startTime?: string;
+      slotIndex?: number;
+      rescheduleRequest: {
+        rescheduleStatus: "noreschedule" | "pending" | "accepted" | "rejected";
+        requestedDate?: string;
+        requestedTime?: string;
+        requestedSlotIndex?: number;
+      };
+    }
+  ): Promise<any>;
   getBookingData(
     dashboard: "mentor" | "mentee",
     bookingId: string

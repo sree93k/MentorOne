@@ -18,8 +18,8 @@ export const getTestimonialsByMentor = async (
       params: { page, limit },
     });
     return {
-      testimonials: response.data.testimonials,
-      total: response.data.total,
+      testimonials: response.data.data.testimonials,
+      total: response.data.data.total,
     };
   } catch (error: any) {
     console.error("Error fetching testimonials:", error);
@@ -95,7 +95,7 @@ export const getMentorServiceTestimonials = async (
       }
     );
     console.log("getMentorServiceTestimonials response", response.data);
-    return response.data;
+    return response.data.data;
   } catch (error: any) {
     console.error("getMentorServiceTestimonials error", error);
     throw error.response?.data?.error || "Failed to fetch testimonials";

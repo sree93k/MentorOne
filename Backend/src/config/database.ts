@@ -10,7 +10,6 @@ export const connectDatabase = async () => {
     await mongoose.connect(mongoUri);
     console.log("Database connected successfully");
 
-    // Test the connection by listing collections
     if (mongoose.connection.db) {
       const collections = await mongoose.connection.db
         .listCollections()

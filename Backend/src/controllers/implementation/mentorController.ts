@@ -14,6 +14,7 @@ import { IMentorProfileService } from "../../services/interface/IMentorProfileSe
 import MentorProfileService from "../../services/implementations/MentorProfileService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
 import CalendarService from "../../services/implementations/CalenderService";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 class mentorController {
   private userAuthService: IUserAuthService;
@@ -51,14 +52,23 @@ class mentorController {
 
       const userId = req.body?.id; // Assuming `req.user` contains the authenticated user's details
       if (!userId) {
-        throw new ApiError(400, "User ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
       }
+
       const response = await this.MentorProfileService.welcomeData(
         req.body,
         userId
       );
-      res.status(200).json(new ApiResponse(200, response));
-      return;
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Welcome form uploaded successfully"
+          )
+        );
     } catch (error) {
       console.log("auth controller reset password catch error  ");
       next(error);
@@ -73,11 +83,22 @@ class mentorController {
     try {
       console.log("getprofile controller ", req.params);
       const userId = req.params.id;
+      if (!userId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
+      }
       const response = await this.MentorProfileService.profileDatas(userId);
+      if (!response) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Profile not found");
+      }
       res
-        .status(200)
-        .json(new ApiResponse(200, { response }, "Mentor Profile"));
-      return;
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Mentor profile fetched successfully"
+          )
+        );
     } catch (error) {
       console.log("mentor controller getprofile error  ", error);
       next(error);
@@ -90,19 +111,26 @@ class mentorController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("createService controller step 1");
-      const formData = req.body;
-      console.log("Received createService data:", formData);
-      console.log("createService controller step 2");
-
+      console.log("MentorController createService step 1", { body: req.body });
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
+      }
+      const formData = { ...req.body, mentorId: userId };
       const newService = await this.MentorProfileService.createService(
         formData
       );
-      console.log("createService controller step 3");
+      console.log("MentorController createService step 2", { newService });
 
-      res.json(
-        new ApiResponse(201, newService, "Service created successfully")
-      );
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            newService,
+            "Service created successfully"
+          )
+        );
     } catch (error) {
       console.log("createService controller step 4");
       next(error);
@@ -124,20 +152,29 @@ class mentorController {
       };
       console.log("generatePresignedUrl controller step 2");
       if (!fileName || !fileType || !folder) {
-        console.log("generatePresignedUrl controller step 3");
         throw new ApiError(
-          400,
+          HttpStatus.BAD_REQUEST,
           "Missing fileName, fileType, or folder parameter"
         );
       }
+
       console.log("generatePresignedUrl controller step 4");
       const url = await this.uploadService.S3generatePresignedUrl(
         fileName,
         fileType,
         folder
       );
-      console.log("generatePresignedUrl controller step 5");
-      res.json(url);
+      console.log("MentorController generatePresignedUrl step 2", { url });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { url },
+            "Presigned URL generated successfully"
+          )
+        );
     } catch (error) {
       console.log("generatePresignedUrl controller step 6");
       next(error);
@@ -155,13 +192,20 @@ class mentorController {
       const { key } = req.query as { key: string };
       console.log("getPresignedUrl ocntroller step 2");
       if (!key) {
-        console.log("getPresignedUrl ocntroller step 3");
-        throw new ApiError(400, "Missing key parameter");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Missing key parameter");
       }
-      console.log("getPresignedUrl ocntroller step 4");
       const url = await this.uploadService.S3generatePresignedUrlForGet(key);
-      console.log("getPresignedUrl ocntroller step 5");
-      res.json({ url });
+      console.log("MentorController getPresignedUrl step 2", { url });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { url },
+            "Presigned URL fetched successfully"
+          )
+        );
     } catch (error) {
       console.log("getPresignedUrl ocntroller step 6");
       next(error);
@@ -174,29 +218,35 @@ class mentorController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("getAllServices controller step 1");
-      const userId = req?.user?.id;
+      console.log("MentorController getAllServices step 1", {
+        query: req.query,
+      });
+      const userId = req.user?.id;
       if (!userId) {
-        console.log("getAllServices controller step 2: No user ID");
-        throw new ApiError(401, "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
-      console.log("getAllServices controller step 2: User ID", userId);
 
-      const { page = 1, limit = 8, search = "", type } = req.query;
+      const { page = "1", limit = "8", search = "", type } = req.query;
       const servicesData = await this.MentorProfileService.getAllServices(
         userId,
         {
-          page: parseInt(page as string),
-          limit: parseInt(limit as string),
+          page: parseInt(page as string, 10),
+          limit: parseInt(limit as string, 10),
           search: search as string,
           type: type as string,
         }
       );
-      console.log("getAllServices controller step 3: Services fetched");
+      console.log("MentorController getAllServices step 2", { servicesData });
 
-      res.json(
-        new ApiResponse(200, servicesData, "Services fetched successfully")
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            servicesData,
+            "Services fetched successfully"
+          )
+        );
     } catch (error) {
       console.log("getAllServices controller step 4");
       next(error);
@@ -209,22 +259,29 @@ class mentorController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("getServiceById controller step 1");
+      console.log("MentorController getServiceById step 1", {
+        params: req.params,
+      });
       const serviceId = req.params.id;
       if (!serviceId) {
-        console.log("getServiceById controller step 2: No service ID");
-        throw new ApiError(400, "Service ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
       }
-      console.log("getServiceById controller step 2: Service ID", serviceId);
 
       const service = await this.MentorProfileService.getServiceById(serviceId);
-      console.log("getServiceById controller step 3: Service fetched", service);
-
       if (!service) {
-        throw new ApiError(404, "Service not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
+      console.log("MentorController getServiceById step 2", { service });
 
-      res.json(new ApiResponse(200, service, "Service fetched successfully"));
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            service,
+            "Service fetched successfully"
+          )
+        );
     } catch (error) {
       console.log("getServiceById controller step 4");
       next(error);
@@ -237,247 +294,397 @@ class mentorController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("updateService controller step 1");
+      console.log("MentorController updateService step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const serviceId = req.params.id;
-      // Merge req.body and req.files into formData
+      if (!serviceId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
+      }
+
       const formData: { [key: string]: any } = { ...req.body };
       if (req.files && Array.isArray(req.files)) {
         req.files.forEach((file: Express.MulterS3.File) => {
-          formData[file.fieldname] = file; // Store file object
+          formData[file.fieldname] = file;
           if (file.location) {
-            formData[`${file.fieldname}_url`] = file.location; // Store S3 URL
+            formData[`${file.fieldname}_url`] = file.location;
           }
         });
-      }
-
-      // Log FormData contents
-      const formDataEntries: { [key: string]: any } = {};
-      for (const [key, value] of Object.entries(formData)) {
-        formDataEntries[key] =
-          value && value.location
-            ? `File: ${value.originalname} (S3 URL: ${value.location})`
-            : value;
-      }
-      console.log("Received updateService data:", serviceId, formDataEntries);
-      console.log("updateService controller step 2");
-
-      if (!serviceId) {
-        throw new ApiError(400, "Service ID is required");
       }
 
       const updatedService = await this.MentorProfileService.updateService(
         serviceId,
         formData
       );
-      console.log("updateService controller step 3");
+      console.log("MentorController updateService step 2", { updatedService });
 
-      res.json(
-        new ApiResponse(200, updatedService, "Service updated successfully")
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            updatedService,
+            "Service updated successfully"
+          )
+        );
     } catch (error) {
       console.log("updateService controller step 4");
       next(error);
     }
   };
-
-  async getMentorCalendar(req: Request, res: Response) {
+  public getMentorCalendar = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      console.log("MentorController getMentorCalendar step 1", {
+        params: req.params,
+      });
       const mentorId = req.params.mentorId;
+      if (!mentorId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
+      }
+
       const calendar = await this.calendarService.getMentorCalendar(mentorId);
-      res.status(200).json(calendar);
+      if (!calendar) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Calendar not found");
+      }
+      console.log("MentorController getMentorCalendar step 2", { calendar });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            calendar,
+            "Mentor calendar fetched successfully"
+          )
+        );
     } catch (error) {
-      res.status(500).json({ message: "Error fetching calendar", error });
+      console.error("Error in getMentorCalendar:", error);
+      next(error);
     }
-  }
+  };
 
-  async updatePolicy(req: Request, res: Response) {
+  public updatePolicy = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      console.log("mentorcontorller updatePolicy step 1");
-
+      console.log("MentorController updatePolicy step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const mentorId = req.params.mentorId;
+      if (!mentorId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
+      }
+
       const policyData = req.body;
-      console.log("mentorcontorller updatePolicy step 2", mentorId, policyData);
       const updatedPolicy = await this.calendarService.updatePolicy(
         mentorId,
         policyData
       );
-      console.log("mentorcontorller updatePolicy step 3", updatedPolicy);
-      res.status(200).json(updatedPolicy);
+      console.log("MentorController updatePolicy step 2", { updatedPolicy });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            updatedPolicy,
+            "Policy updated successfully"
+          )
+        );
     } catch (error) {
-      console.log("mentorcontorller updatePolicy step 4 error", error);
-      res.status(500).json({ message: "Error updating policy", error });
+      console.error("Error in updatePolicy:", error);
+      next(error);
     }
-  }
+  };
 
-  async createSchedule(req: Request, res: Response) {
+  public createSchedule = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      console.log("mentorcontroller createSchedule step1");
-
+      console.log("MentorController createSchedule step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const mentorId = req.params.mentorId;
+      if (!mentorId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
+      }
+
       const scheduleData = req.body;
-      console.log(
-        "mentorcontroller createSchedule step2",
-        mentorId,
-        scheduleData
-      );
       const newSchedule = await this.calendarService.createSchedule(
         mentorId,
         scheduleData
       );
-      console.log("mentorcontroller createSchedule step3", newSchedule);
-      res.status(201).json(newSchedule);
+      console.log("MentorController createSchedule step 2", { newSchedule });
+
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            newSchedule,
+            "Schedule created successfully"
+          )
+        );
     } catch (error) {
-      console.log("mentorcontroller createSchedule step4", error);
-
-      res.status(500).json({ message: "Error creating schedule", error });
+      console.error("Error in createSchedule:", error);
+      next(error);
     }
-  }
+  };
 
-  async updateSchedule(req: Request, res: Response) {
+  public updateSchedule = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      console.log("MentorController updateSchedule step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const scheduleId = req.params.scheduleId;
+      if (!scheduleId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Schedule ID is required");
+      }
+
       const scheduleData = req.body;
       const updatedSchedule = await this.calendarService.updateSchedule(
         scheduleId,
         scheduleData
       );
-      res.status(200).json(updatedSchedule);
-    } catch (error) {
-      res.status(500).json({ message: "Error updating schedule", error });
-    }
-  }
+      console.log("MentorController updateSchedule step 2", {
+        updatedSchedule,
+      });
 
-  async deleteSchedule(req: Request, res: Response) {
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            updatedSchedule,
+            "Schedule updated successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in updateSchedule:", error);
+      next(error);
+    }
+  };
+
+  public deleteSchedule = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      console.log("MentorController deleteSchedule step 1", {
+        params: req.params,
+      });
       const scheduleId = req.params.scheduleId;
-      await this.calendarService.deleteSchedule(scheduleId);
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Error deleting schedule", error });
-    }
-  }
+      if (!scheduleId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Schedule ID is required");
+      }
 
-  async addBlockedDates(req: Request, res: Response) {
+      await this.calendarService.deleteSchedule(scheduleId);
+      console.log("MentorController deleteSchedule step 2");
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, null, "Schedule deleted successfully")
+        );
+    } catch (error) {
+      console.error("Error in deleteSchedule:", error);
+      next(error);
+    }
+  };
+
+  public addBlockedDates = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      console.log("MentorController addBlockedDates step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const mentorId = req.params.mentorId;
       const { dates } = req.body;
-      console.log("mentor controller addBlockedDates step 1", mentorId, dates);
+      if (!mentorId || !dates) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Mentor ID and dates are required"
+        );
+      }
 
       const blockedDates = await this.calendarService.addBlockedDates(
         mentorId,
         dates
       );
-      console.log("mentor controller addBlockedDates step 2", blockedDates);
-      res.status(201).json(blockedDates);
-    } catch (error) {
-      res.status(500).json({ message: "Error adding blocked dates", error });
-    }
-  }
+      console.log("MentorController addBlockedDates step 2", { blockedDates });
 
-  async removeBlockedDate(req: Request, res: Response) {
-    try {
-      const blockedDateId = req.params.blockedDateId;
-      await this.calendarService.removeBlockedDate(blockedDateId);
-      res.status(204).send();
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            blockedDates,
+            "Blocked dates added successfully"
+          )
+        );
     } catch (error) {
-      res.status(500).json({ message: "Error removing blocked date", error });
+      console.error("Error in addBlockedDates:", error);
+      next(error);
     }
-  }
-  async isApprovalChecking(
+  };
+
+  public removeBlockedDate = async (
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      console.log("mentor controller isApprovalChecking step 1");
-      const mentorId = req.params.mentorId;
-
-      if (!mentorId) {
-        res.status(400).json({ message: "Mentor ID is required" });
-        return;
+      console.log("MentorController removeBlockedDate step 1", {
+        params: req.params,
+      });
+      const blockedDateId = req.params.blockedDateId;
+      if (!blockedDateId) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Blocked date ID is required"
+        );
       }
-      console.log("mentor controller isApprovalChecking step 2", mentorId);
+
+      await this.calendarService.removeBlockedDate(blockedDateId);
+      console.log("MentorController removeBlockedDate step 2");
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            null,
+            "Blocked date removed successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in removeBlockedDate:", error);
+      next(error);
+    }
+  };
+  public isApprovalChecking = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("MentorController isApprovalChecking step 1", {
+        params: req.params,
+      });
+      const mentorId = req.params.mentorId;
+      if (!mentorId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
+      }
+
       const response = await this.MentorProfileService.isApprovalChecking(
         mentorId
       );
-      console.log("mentor controller isApprovalChecking step 3");
+      console.log("MentorController isApprovalChecking step 2", { response });
+
       res
-        .status(200)
-        .json(new ApiResponse(200, response, "Approval status fetched"));
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Approval status fetched successfully"
+          )
+        );
     } catch (error) {
-      console.log("mentor controller isApprovalChecking step 4: Error");
+      console.error("Error in isApprovalChecking:", error);
       next(error);
     }
-  }
+  };
 
-  // mentorController.ts
   public assignScheduleToService = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("assignScheduleToService controller step 1");
+      console.log("MentorController assignScheduleToService step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const serviceId = req.params.serviceId;
       const { scheduleId } = req.body;
-
       if (!serviceId || !scheduleId) {
-        console.log(
-          "assignScheduleToService controller step 2: Missing fields"
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Service ID and Schedule ID are required"
         );
-        throw new ApiError(400, "Service ID and Schedule ID are required");
       }
 
-      console.log("assignScheduleToService controller step 3", {
-        serviceId,
-        scheduleId,
-      });
       const updatedService =
         await this.MentorProfileService.assignScheduleToService(
           serviceId,
           scheduleId
         );
-
       if (!updatedService) {
-        console.log(
-          "assignScheduleToService controller step 4: Service not found"
-        );
-        throw new ApiError(404, "Service not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
+      console.log("MentorController assignScheduleToService step 2", {
+        updatedService,
+      });
 
-      console.log(
-        "assignScheduleToService controller step 5: Service updated",
-        updatedService
-      );
-      res.json(
-        new ApiResponse(
-          200,
-          updatedService,
-          "Schedule assigned to service successfully"
-        )
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            updatedService,
+            "Schedule assigned to service successfully"
+          )
+        );
     } catch (error) {
-      console.log("assignScheduleToService controller step 6: Error", error);
+      console.error("Error in assignScheduleToService:", error);
       next(error);
     }
   };
 
-  // controllers/implementation/mentorController.ts
   public replyToPriorityDM = async (
     req: Request & { user?: { id: string } },
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("MentorController replyToPriorityDM step 1", {
+        params: req.params,
+        body: req.body,
+      });
       const mentorId = req.user?.id;
       if (!mentorId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const { priorityDMId } = req.params;
       const { content, pdfFiles } = req.body;
       if (!priorityDMId || !content) {
-        throw new ApiError(400, "Priority DM ID and content are required");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Priority DM ID and content are required"
+        );
       }
 
       const updatedDM = await this.MentorProfileService.replyToPriorityDM(
@@ -485,9 +692,15 @@ class mentorController {
         mentorId,
         { content, pdfFiles }
       );
+      console.log("MentorController replyToPriorityDM step 2", { updatedDM });
 
-      res.json(new ApiResponse(200, updatedDM, "Reply sent successfully"));
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, updatedDM, "Reply sent successfully")
+        );
     } catch (error) {
+      console.error("Error in replyToPriorityDM:", error);
       next(error);
     }
   };
@@ -498,25 +711,36 @@ class mentorController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("MentorController getPriorityDMs step 1", {
+        params: req.params,
+      });
       const mentorId = req.user?.id;
       if (!mentorId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const { serviceId } = req.params;
       if (!serviceId) {
-        throw new ApiError(400, "Service ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
       }
 
       const priorityDMs = await this.MentorProfileService.getPriorityDMs(
         serviceId,
         mentorId
       );
+      console.log("MentorController getPriorityDMs step 2", { priorityDMs });
 
-      res.json(
-        new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            priorityDMs,
+            "Priority DMs fetched successfully"
+          )
+        );
     } catch (error) {
+      console.error("Error in getPriorityDMs:", error);
       next(error);
     }
   };
@@ -529,7 +753,7 @@ class mentorController {
     try {
       const mentorId = req.user?.id;
       if (!mentorId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       // Extract query parameters
@@ -549,17 +773,20 @@ class mentorController {
           sort
         );
 
-      res.json(
-        new ApiResponse(
-          200,
-          { priorityDMs, total, page, limit },
-          "All Priority DMs fetched successfully"
-        )
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { priorityDMs, total, page, limit },
+            "All Priority DMs fetched successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
   };
+
   public updateTopTestimonials = async (
     req: Request,
     res: Response,
@@ -577,9 +804,8 @@ class mentorController {
     );
     try {
       if (!mentorId) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
-
       const updatedMentor =
         await this.MentorProfileService.updateTopTestimonials(
           mentorId,
@@ -589,10 +815,15 @@ class mentorController {
         "Mentor controller updateTopTestimonials step 2 updatedMentor",
         updatedMentor
       );
-      res.json({
-        message: "Top testimonials updated successfully",
-        topTestimonials: updatedMentor.topTestimonials,
-      });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { topTestimonials: updatedMentor.topTestimonials },
+            "Top testimonials updated successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error updating top testimonials:", error);
       next(error);

@@ -21,6 +21,7 @@ import CalendarService from "../../services/implementations/CalenderService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
 import sharp from "sharp";
 import stripe from "../../config/stripe";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 class menteeController {
   private userAuthService: IUserAuthService;
@@ -59,11 +60,20 @@ class menteeController {
     try {
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const bookings = await this.bookingService.getBookingsByMentee(menteeId);
-      res.json(new ApiResponse(200, bookings, "Bookings fetched successfully"));
+      console.log("MenteeController getBookings step 2", { bookings });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            bookings,
+            "Bookings fetched successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -77,13 +87,22 @@ class menteeController {
     try {
       const userId = req.body?.id;
       if (!userId) {
-        throw new ApiError(400, "User ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
       }
       const response = await this.MenteeProfileService.welcomeData(
         req.body,
         userId
       );
-      res.status(200).json(new ApiResponse(200, response));
+      console.log("MenteeController uploadWelcomeForm step 2", { response });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Welcome form uploaded successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -97,14 +116,12 @@ class menteeController {
     try {
       const id = req.user?.id;
       if (!id) {
-        res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
-        return;
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const imageFile = req.file;
       if (!imageFile) {
-        res.status(400).json(new ApiResponse(400, null, "No file uploaded"));
-        return;
+        throw new ApiError(HttpStatus.BAD_REQUEST, "No file uploaded");
       }
 
       const resizedImageBuffer = await sharp(imageFile.path)
@@ -116,15 +133,20 @@ class menteeController {
         id
       );
 
-      if (!res.headersSent) {
-        res
-          .status(200)
-          .json(new ApiResponse(200, { profilePicture: result.url }));
-      }
+      console.log("MenteeController uploadProfileImage step 2", { result });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { profilePicture: result.url },
+            "Profile image uploaded successfully"
+          )
+        );
     } catch (error) {
-      if (!res.headersSent) {
-        next(error);
-      }
+      console.error("Error in uploadProfileImage:", error);
+      next(error);
     }
   };
 
@@ -136,20 +158,21 @@ class menteeController {
     try {
       const id = req.user?.id;
       if (!id) {
-        res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
-        return;
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const deleted = await this.MenteeProfileService.deleteAccount(id);
       if (!deleted) {
-        res.status(404).json(new ApiResponse(404, null, "User not found"));
-        return;
+        throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
       }
 
       res
-        .status(200)
-        .json(new ApiResponse(200, null, "Account deleted successfully"));
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, null, "Account deleted successfully")
+        );
     } catch (error) {
+      console.error("Error in deleteAccount:", error);
       next(error);
     }
   };
@@ -162,18 +185,27 @@ class menteeController {
     try {
       const id = req?.user?.id;
       if (!id) {
-        res.status(400).json(new ApiResponse(400, null, "User ID is required"));
-        return;
+        throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
       }
+      console.log("MenteeController profileData step 1", { id });
+
       const response = await this.MenteeProfileService.userProfielData(id);
       if (!response) {
-        res.status(404).json(new ApiResponse(404, null, "User not found"));
-        return;
+        throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
       }
+      console.log("MenteeController profileData step 2", { response });
+
       res
-        .status(200)
-        .json(new ApiResponse(200, response, "Profile updated successfully"));
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Profile data fetched successfully"
+          )
+        );
     } catch (error) {
+      console.error("Error in profileData:", error);
       next(error);
     }
   };
@@ -187,16 +219,32 @@ class menteeController {
       const { role, page = "1", limit = "12", searchQuery } = req.query;
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
+      console.log("MenteeController getAllMentors step 1", {
+        role,
+        pageNum,
+        limitNum,
+        searchQuery,
+      });
+
       const mentorsData = await this.MenteeProfileService.getAllMentors(
         pageNum,
         limitNum,
         role as string,
         searchQuery as string
       );
-      res.json(
-        new ApiResponse(200, mentorsData, "Mentors fetched successfully")
-      );
+      console.log("MenteeController getAllMentors step 2", { mentorsData });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            mentorsData,
+            "Mentors fetched successfully"
+          )
+        );
     } catch (error: any) {
+      console.error("Error in getAllMentors:", error);
       next(error);
     }
   };
@@ -208,9 +256,24 @@ class menteeController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
+      if (!id) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
+      }
+      console.log("MenteeController getMentorById step 1", { id });
+
       const mentor = await this.MenteeProfileService.getMentorById(id);
-      res.json(new ApiResponse(200, mentor, "Mentor fetched successfully"));
+      if (!mentor) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Mentor not found");
+      }
+      console.log("MenteeController getMentorById step 2", { mentor });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, mentor, "Mentor fetched successfully")
+        );
     } catch (error: any) {
+      console.error("Error in getMentorById:", error);
       next(error);
     }
   };
@@ -224,12 +287,13 @@ class menteeController {
       const { type, searchQuery, page = "1", limit = "12" } = req.query;
       const pageNum = parseInt(page as string, 10);
       const limitNum = parseInt(limit as string, 10);
-      console.log("mentee controller getAllTutorials step 1", {
+      console.log("MenteeController getAllTutorials step 1", {
         type,
         searchQuery,
         pageNum,
         limitNum,
       });
+
       const { tutorials, total } =
         await this.bookingService.getAllVideoTutorials(
           type as string,
@@ -237,16 +301,22 @@ class menteeController {
           pageNum,
           limitNum
         );
-      console.log("mentee controller getAllTutorials step 2", tutorials.length);
-      res.json(
-        new ApiResponse(
-          200,
-          { tutorials, total },
-          "Video tutorials fetched successfully"
-        )
-      );
+      console.log("MenteeController getAllTutorials step 2", {
+        tutorials,
+        total,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { tutorials, total },
+            "Video tutorials fetched successfully"
+          )
+        );
     } catch (error: any) {
-      console.log("mentee controller getAllTutorials step 3 error ", error);
+      console.log("Error in getAllTutorials error ", error);
       next(error);
     }
   };
@@ -258,12 +328,28 @@ class menteeController {
   ): Promise<void> => {
     try {
       const { id } = req.params;
+      if (!id) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Tutorial ID is required");
+      }
+      console.log("MenteeController getTutorialById step 1", { id });
+
       const tutorial = await this.bookingService.getTutorialById(id);
       if (!tutorial) {
-        throw new ApiError(404, "Tutorial not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Tutorial not found");
       }
-      res.json(new ApiResponse(200, tutorial, "Tutorial fetched successfully"));
+      console.log("MenteeController getTutorialById step 2", { tutorial });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            tutorial,
+            "Tutorial fetched successfully"
+          )
+        );
     } catch (error: any) {
+      console.error("Error in getAllTutorials:", error);
       next(error);
     }
   };
@@ -277,23 +363,33 @@ class menteeController {
       const { serviceId } = req.params;
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
       if (!serviceId) {
-        throw new ApiError(400, "Service ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
       }
+      console.log("MenteeController checkBookingStatus step 1", {
+        menteeId,
+        serviceId,
+      });
+
       const isBooked = await this.bookingService.checkBookingStatus(
         menteeId,
         serviceId
       );
-      res.json(
-        new ApiResponse(
-          200,
-          { isBooked },
-          "Booking status checked successfully"
-        )
-      );
+      console.log("MenteeController checkBookingStatus step 2", { isBooked });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { isBooked },
+            "Booking status checked successfully"
+          )
+        );
     } catch (error: any) {
+      console.error("Error in checkBookingStatus:", error);
       next(error);
     }
   };
@@ -307,14 +403,17 @@ class menteeController {
       const { serviceId, amount } = req.body;
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
       if (!serviceId || !amount) {
-        throw new ApiError(400, "Service ID and amount are required");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Service ID and amount are required"
+        );
       }
       const tutorial = await this.bookingService.getTutorialById(serviceId);
       if (!tutorial) {
-        throw new ApiError(404, "Tutorial not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Tutorial not found");
       }
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -335,14 +434,17 @@ class menteeController {
         cancel_url: `${process.env.CLIENT_URL}/digitalcontent/${serviceId}?payment=cancel`,
         metadata: { menteeId, serviceId },
       });
-      res.json(
-        new ApiResponse(
-          200,
-          { sessionId: session.id, url: session.url },
-          "Payment session created"
-        )
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { sessionId: session.id, url: session.url },
+            "Payment session created successfully"
+          )
+        );
     } catch (error: any) {
+      console.error("Error in initiatePayment:", error);
       next(error);
     }
   };
@@ -356,11 +458,11 @@ class menteeController {
       const { serviceId, mentorId, sessionId } = req.body;
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
       if (!serviceId || !mentorId || !sessionId) {
         throw new ApiError(
-          400,
+          HttpStatus.BAD_REQUEST,
           "Service ID, mentor ID, and session ID are required"
         );
       }
@@ -370,8 +472,19 @@ class menteeController {
         menteeId,
         sessionId,
       });
-      res.json(new ApiResponse(200, booking, "Service booked successfully"));
+      console.log("MenteeController bookService step 2", { booking });
+
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            booking,
+            "Service booked successfully"
+          )
+        );
     } catch (error: any) {
+      console.error("Error in bookService:", error);
       next(error);
     }
   };
@@ -384,7 +497,7 @@ class menteeController {
     try {
       let { key } = req.params;
       if (!key) {
-        throw new ApiError(400, "Video key is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Video key is required");
       }
 
       // Decode and validate key
@@ -397,16 +510,23 @@ class menteeController {
       }
       if (key.includes("http://") || key.includes("https://")) {
         throw new ApiError(
-          400,
+          HttpStatus.BAD_REQUEST,
           "Invalid key: Provide S3 object key, not full URL"
         );
       }
 
       const url = await this.uploadService.S3generatePresignedUrlForGet(key);
-      console.log("Generated presigned URL:", url);
-      res.json(
-        new ApiResponse(200, { url }, "Video URL generated successfully")
-      );
+      console.log("MenteeController getVideoUrl step 2", { url });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { url },
+            "Video URL generated successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error in getVideoUrl:", error);
       next(error);
@@ -421,14 +541,14 @@ class menteeController {
     try {
       console.log("paymentcontroller getAllMenteePayments step 1");
       const menteeId = req.user?.id;
-      const { page = 1, limit = 10 } = req.query;
-
+      const { page = 1, limit = 12 } = req.query;
+      console.log(
+        "paymentcontroller getAllMenteePayments step 1.5",
+        page,
+        limit
+      );
       if (!menteeId) {
-        throw new ApiError(
-          401,
-          "Unauthorized: No mentee ID",
-          "Authentication required"
-        );
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const paymentData = await this.PaymentService.getAllMenteePayments(
@@ -438,13 +558,15 @@ class menteeController {
       );
       console.log("paymentcontroller getAllMenteePayments step 2", paymentData);
 
-      res.json(
-        new ApiResponse(
-          200,
-          "Mentee payments fetched successfully",
-          paymentData
-        )
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            paymentData,
+            "Mentee payments fetched successfully"
+          )
+        );
     } catch (error) {
       console.error("Error in getAllMenteePayments controller:", error);
       next(error);
@@ -458,22 +580,25 @@ class menteeController {
     try {
       const { serviceId } = req.params;
       if (!serviceId) {
-        throw new ApiError(400, "Service ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
       }
 
       // Fetch the Service document via BookingService
       const service = await this.bookingService.getServiceById(serviceId);
       if (!service) {
-        throw new ApiError(404, "Service not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
       if (
         service.type !== "DigitalProducts" ||
         service.digitalProductType !== "documents"
       ) {
-        throw new ApiError(400, "Service is not a document");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Service is not a document");
       }
       if (!service.fileUrl) {
-        throw new ApiError(404, "PDF file URL not found for this service");
+        throw new ApiError(
+          HttpStatus.NOT_FOUND,
+          "PDF file URL not found for this service"
+        );
       }
 
       // Use fileUrl as the S3 key
@@ -489,17 +614,20 @@ class menteeController {
       // Generate presigned URL
       const presignedUrl =
         await this.uploadService.S3generatePresignedUrlForGet(pdfKey);
+      console.log("MenteeController getDocumentUrl step 2", { presignedUrl });
 
-      res.json({
-        success: true,
-        data: { url: presignedUrl },
-        message: "Presigned URL generated successfully",
-      });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { url: presignedUrl },
+            "Presigned URL generated successfully"
+          )
+        );
     } catch (error: any) {
-      console.error("Error generating presigned URL:", error);
-      next(
-        new ApiError(500, "Failed to generate presigned URL", error.message)
-      );
+      console.error("Error in getDocumentUrl:", error);
+      next(error);
     }
   };
 
@@ -512,7 +640,7 @@ class menteeController {
     try {
       const { id } = req.params;
       if (!id) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
       console.log("Mnetee contoller getMentorSchedule step 1", id);
 
@@ -520,9 +648,15 @@ class menteeController {
       if (!schedule) {
         throw new ApiError(404, "Schedule not found for this mentor");
       }
-      res.json(
-        new ApiResponse(200, schedule, "Mentor schedule fetched successfully")
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            schedule,
+            "Mentor schedule fetched successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -536,17 +670,19 @@ class menteeController {
     try {
       const { id } = req.params;
       if (!id) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
       const blockedDates =
         await this.MentorProfileService.getMentorBlockedDates(id);
-      res.json(
-        new ApiResponse(
-          200,
-          blockedDates,
-          "Mentor blocked dates fetched successfully"
-        )
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            blockedDates,
+            "Mentor blocked dates fetched successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -561,14 +697,21 @@ class menteeController {
     try {
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
       const { serviceId, bookingId, content, pdfFiles } = req.body;
       if (!serviceId || !content) {
-        throw new ApiError(400, "Service ID and content are required");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Service ID and content are required"
+        );
       }
-
+      console.log("MenteeController createPriorityDM step 1", {
+        menteeId,
+        serviceId,
+        bookingId,
+      });
       const priorityDM = await this.MenteeProfileService.createPriorityDM({
         serviceId,
         bookingId,
@@ -577,9 +720,15 @@ class menteeController {
         pdfFiles,
       });
 
-      res.json(
-        new ApiResponse(201, priorityDM, "Priority DM created successfully")
-      );
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            priorityDM,
+            "Priority DM created successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -593,13 +742,11 @@ class menteeController {
     try {
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(401, "Unauthorized", "User ID is required");
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
-      console.log("Mentee controller getPriorityDMs step 1", menteeId);
-
       const { bookingId } = req.params;
       if (!bookingId) {
-        throw new ApiError(400, "Service ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Booking ID is required");
       }
       console.log("Mentee controller getPriorityDMs step 2", bookingId);
       const priorityDMs = await this.MenteeProfileService.getPriorityDMs(
@@ -607,9 +754,15 @@ class menteeController {
         menteeId
       );
       console.log("Mentee controller getPriorityDMs step 3", priorityDMs);
-      res.json(
-        new ApiResponse(200, priorityDMs, "Priority DMs fetched successfully")
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            priorityDMs,
+            "Priority DMs fetched successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
@@ -622,30 +775,50 @@ class menteeController {
   ): Promise<void> => {
     try {
       const mentorId = req.params.mentorId;
+      if (!mentorId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
+      }
       console.log("Mentee controller getMentorPolicy step 1", mentorId);
-      const repsonse = await this.CalendarService.getMentorPolicy(mentorId);
-      console.log("Mentee controller getMentorPolicy step 2", repsonse);
-      res.json(
-        new ApiResponse(200, repsonse, "getMentorPolicy  fetched successfully")
-      );
+      const response = await this.CalendarService.getMentorPolicy(mentorId);
+      if (!response) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Mentor policy not found");
+      }
+      console.log("Mentee controller getMentorPolicy step 2", response);
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Mentor policy fetched successfully"
+          )
+        );
     } catch (error) {
       next(error);
     }
   };
+
   public getDashboardData = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("MenteeController getDashboardData step 1");
       const dashboardData = await this.MenteeProfileService.getDashboardData();
-      res.json(
-        new ApiResponse(
-          200,
-          dashboardData,
-          "Dashboard data fetched successfully"
-        )
-      );
+      console.log("MenteeController getDashboardData step 2", {
+        dashboardData,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            dashboardData,
+            "Dashboard data fetched successfully"
+          )
+        );
     } catch (error: any) {
       next(error);
     }
@@ -676,9 +849,16 @@ class menteeController {
         oneToOneType as string,
         digitalProductType as string
       );
-      res.json(
-        new ApiResponse(200, servicesData, "Services fetched successfully")
-      );
+      console.log("MenteeController getAllServices step 2", { servicesData });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            servicesData,
+            "Services fetched successfully"
+          )
+        );
     } catch (error: any) {
       next(error);
     }

@@ -138,6 +138,11 @@ userPrivateRoute.put(
   authenticate,
   bookingController.updateBookingServiceStatus.bind(bookingController)
 );
+userPrivateRoute.put(
+  "/booking/:bookingId/updatereshedule",
+  authenticate,
+  bookingController.updateBookingResheduleStatus.bind(bookingController)
+);
 
 userPrivateRoute.get(
   "/bookings/:bookingId",

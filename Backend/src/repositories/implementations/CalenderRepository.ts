@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import Policy from "../../models/policyModel";
 import Schedule from "../../models/scheduleModel";
 import BlockedDate from "../../models/blockedModel";
-import ApiError from "../../utils/apiResponse";
 
 import {
   ICalendarRepository,
@@ -134,23 +133,85 @@ export default class CalendarRepository implements ICalendarRepository {
         { $pull: { blockedDates: { date, slotTime, type: "booking" } } }
       );
     } catch (error: any) {
-      throw new ApiError(500, "Failed to remove blocked date", error.message);
+      throw new Error("Failed to remove blocked date", error.message);
     }
   }
+  // async deleteBlockedDate(
+  //   mentorId: string,
+  //   date: string,
+  //   slotTime: string
+  // ): Promise<void> {
+  //   try {
+  //     console.log("deleteDate >>>>> step1", mentorId);
+  //     console.log("deleteDate >>>>> step2", date);
+  //     console.log("deleteDate >>>>> step3", slotTime);
+  //     const deleteDate = await BlockedDate.deleteOne({
+  //       mentorId,
+  //       slotTime,
+  //       date,
+  //     });
+  //     console.log("deleteDate >>>>> 4", deleteDate);
+  //   } catch (error: any) {
+  //     throw new Error("Failed to remove blocked date", error.message);
+  //   }
+  // }
   async deleteBlockedDate(
     mentorId: string,
     date: string,
     slotTime: string
   ): Promise<void> {
     try {
-      const deleteDate = await BlockedDate.deleteOne({
+      console.log("deleteDate >>>>> step1", mentorId);
+      console.log("deleteDate >>>>> step2", date);
+      console.log("deleteDate >>>>> step3", slotTime);
+
+      // Normalize date to a Date object and strip time for comparison
+      const normalizedDate = new Date(date);
+      normalizedDate.setUTCHours(0, 0, 0, 0); // Set to midnight UTC
+      console.log(
+        "deleteDate >>>>> normalizedDate",
+        normalizedDate.toISOString()
+      );
+
+      // Normalize slotTime (trim and standardize case)
+      const normalizedSlotTime = slotTime.trim().toUpperCase(); // e.g., "11:00 AM"
+      console.log("deleteDate >>>>> normalizedSlotTime", normalizedSlotTime);
+
+      // Check if document exists
+      const existingDocument = await BlockedDate.findOne({
         mentorId,
-        slotTime,
-        date,
+        date: normalizedDate,
+        slotTime: normalizedSlotTime,
       });
-      console.log("deleteDate >>>>> ", deleteDate);
+      console.log("deleteDate >>>>> existingDocument", existingDocument);
+
+      if (!existingDocument) {
+        console.log("deleteDate >>>>> No document found with query", {
+          mentorId,
+          date: normalizedDate,
+          slotTime: normalizedSlotTime,
+        });
+        throw new Error("No blocked date found to delete");
+      }
+
+      // Perform deletion
+      const deleteResult = await BlockedDate.deleteOne({
+        mentorId,
+        date: normalizedDate,
+        slotTime: normalizedSlotTime,
+      });
+      console.log("deleteDate >>>>> deleteResult", deleteResult);
+
+      if (deleteResult.deletedCount === 0) {
+        throw new Error(
+          "Failed to delete blocked date: No document was deleted"
+        );
+      }
+
+      console.log("deleteDate >>>>> Successfully deleted blocked date");
     } catch (error: any) {
-      throw new ApiError(500, "Failed to remove blocked date", error.message);
+      console.error("deleteDate >>>>> error", error);
+      throw new Error(`Failed to remove blocked date: ${error.message}`);
     }
   }
 }

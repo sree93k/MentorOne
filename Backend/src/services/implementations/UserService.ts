@@ -111,7 +111,8 @@ export default class UserService implements IUserService {
         );
         const user = await this.userBaseRepository.findById(id);
         console.log(
-          "Updating portfolio-related or achievements-related fields.step 2 "
+          "Updating portfolio-related or achievements-related fields.step 2 ",
+          user
         );
         const mentorId = user?.mentorId?.toString();
         console.log(

@@ -1,15 +1,18 @@
 import { NextFunction, Request, Response } from "express";
+import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import { IUserService } from "../../services/interface/IUserService";
 import UserService from "../../services/implementations/UserService";
 import { createClient } from "@redis/client";
 import { getIO } from "../../utils/socket/chat";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 interface AuthUser {
   id: string;
   role?: string[];
   rawToken?: string;
 }
+
 const redisClient = createClient({ url: process.env.REDIS_URL });
 
 redisClient.on("error", (err) => console.error("Redis connection error:", err));
@@ -24,92 +27,108 @@ redisClient.on("connect", () =>
     console.error("Failed to connect to Redis in UserController:", err);
   }
 })();
+
 class UserController {
   private UserService: IUserService;
+
   constructor() {
     this.UserService = new UserService();
   }
 
-  public validateSuccessResponse = (
+  public validateSuccessResponse = async (
     req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      res.status(200).json(new ApiResponse(200, null, "Success"));
-      return;
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  //editUserProfile
-  public editUserProfile = async (
-    req: Request & { user?: { id: string } },
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("user copntroller editUserProfile step 1", req.user);
+      console.log("UserController validateSuccessResponse step 1");
+
+      res
+        .status(HttpStatus.OK)
+        .json(new ApiResponse(HttpStatus.OK, null, "Success"));
+    } catch (error) {
+      console.error("Error in validateSuccessResponse:", error);
+      next(error);
+    }
+  };
+
+  public editUserProfile = async (
+    req: Request & { user?: AuthUser },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("UserController editUserProfile step 1", { user: req.user });
 
       const id = req.user?.id;
       if (!id) {
-        console.log("user copntroller editUserProfile step 2");
-        res.status(401).json(new ApiResponse(401, null, "Unauthorized"));
-        return;
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User not authenticated");
       }
-      console.log("user copntroller editUserProfile step 3");
+
       const payload = req.body;
-      console.log("user copntroller editUserProfile step 4", payload);
+      console.log("UserController editUserProfile step 2", { payload });
+
       const updatedUser = await this.UserService.editUserProfile(id, payload);
-      console.log("user copntroller editUserProfile step 5", updatedUser);
       if (!updatedUser) {
-        console.log("user copntroller editUserProfile step 6");
-        res.status(404).json(new ApiResponse(404, null, "User not found"));
-        return;
+        throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
       }
-      console.log("user copntroller editUserProfile step 7");
+
+      console.log("UserController editUserProfile step 3", { updatedUser });
+
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
-          new ApiResponse(200, updatedUser, "Profile updated successfully")
+          new ApiResponse(
+            HttpStatus.OK,
+            updatedUser,
+            "Profile updated successfully"
+          )
         );
     } catch (error) {
-      console.log("user copntroller editUserProfile step 8 errror", error);
+      console.error("Error in editUserProfile:", error);
       next(error);
     }
   };
 
   public resetPassword = async (
-    req: Request,
+    req: Request & { user?: AuthUser },
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { currentPassword: password, newPassword } = req.body;
+      console.log("UserController resetPassword step 1", { body: req.body });
+
+      const { currentPassword, newPassword } = req.body;
       const id = req.user?.id;
 
-      console.log("resetPassword request", req.body);
-
       if (!id) {
-        res.status(400).json(new ApiResponse(400, null, "User ID is required"));
-        return;
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User not authenticated");
+      }
+      if (!currentPassword || !newPassword) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Current password and new password are required"
+        );
       }
 
       const result = await this.UserService.updatePassword(
         id,
-        password,
+        currentPassword,
         newPassword
       );
-
       if (!result.success) {
-        console.log("result.message....", result.message);
-        res.status(400).json(new ApiResponse(400, null, result.message));
-      } else {
-        res.status(200).json(new ApiResponse(200, null, result.message));
+        throw new ApiError(HttpStatus.BAD_REQUEST, result.message);
       }
+
+      console.log("UserController resetPassword step 2", {
+        message: result.message,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(new ApiResponse(HttpStatus.OK, null, result.message));
     } catch (error) {
-      console.error("resetPassword error:", error);
+      console.error("Error in resetPassword:", error);
       next(error);
     }
   };
@@ -120,106 +139,88 @@ class UserController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("UserController updateOnlineStatus step 1", {
+        user: req.user,
+        body: req.body,
+      });
+
       const { isOnline, role } = req.body;
       const userId = req.user?.id;
-      const authRole = req.user?.role || [];
-
-      console.log(
-        `updateOnlineStatus: userId=${userId}, isOnline=${isOnline}, role=${role}, authRole=${authRole}`
-      );
 
       if (!userId || typeof isOnline !== "boolean") {
-        console.log("updateOnlineStatus: Invalid input");
-        res
-          .status(400)
-          .json(
-            new ApiResponse(400, null, "Invalid userId or isOnline status")
-          );
-        return;
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "User ID and valid isOnline status are required"
+        );
       }
 
-      if (role !== null && !["mentor", "mentee"].includes(role)) {
-        console.log("updateOnlineStatus: Invalid role");
-        res.status(400).json(new ApiResponse(400, null, "Invalid role"));
-        return;
+      if (role && !["mentor", "mentee"].includes(role)) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid role");
       }
 
       // Update Redis
       try {
         if (isOnline) {
           await redisClient.sAdd("online_users", userId);
-          console.log(`Added ${userId} to online_users`);
+          console.log("UserController updateOnlineStatus step 2", {
+            userId,
+            action: "added to online_users",
+          });
         } else {
           await redisClient.sRem("online_users", userId);
-          console.log(`Removed ${userId} from online_users`);
+          console.log("UserController updateOnlineStatus step 2", {
+            userId,
+            action: "removed from online_users",
+          });
         }
-      } catch (err: any) {
-        console.error("Redis operation error:", err.message);
-        res
-          .status(500)
-          .json(
-            new ApiResponse(500, null, "Failed to update Redis online status")
-          );
-        return;
+      } catch (err) {
+        console.error("Redis operation error:", err);
+        throw new ApiError(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to update Redis online status"
+        );
       }
 
       // Emit Socket.IO event
       try {
         const io = getIO();
         io.emit("userStatus", { userId, isOnline });
-        console.log(`Emitted userStatus: ${userId}, isOnline=${isOnline}`);
-      } catch (err: any) {
-        console.error("Socket.IO emit error:", err.message);
+        console.log("UserController updateOnlineStatus step 3", {
+          userId,
+          isOnline,
+          action: "emitted userStatus",
+        });
+      } catch (err) {
+        console.warn("Socket.IO emit error:", err);
         // Non-critical, proceed with database update
       }
 
       // Update database
-      let updatedUser = null;
-      if (role) {
-        updatedUser = await this.UserService.updateOnlineStatus(
-          userId,
-          isOnline,
-          role as "mentor" | "mentee"
+      const updatedUser = await this.UserService.updateOnlineStatus(
+        userId,
+        isOnline,
+        role ? (role as "mentor" | "mentee") : null
+      );
+      if (!updatedUser) {
+        throw new ApiError(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to update database online status"
         );
-        console.log(`Updated database online status for ${userId}`);
-      } else {
-        // For logout, set isOnline to false without role
-        updatedUser = await this.UserService.updateOnlineStatus(
-          userId,
-          false,
-          null
-        );
-        console.log(`Cleared online status for ${userId} on logout`);
       }
 
-      if (!updatedUser) {
-        console.log("updateOnlineStatus: Failed to update user");
-        res
-          .status(500)
-          .json(
-            new ApiResponse(
-              500,
-              null,
-              "Failed to update database online status"
-            )
-          );
-        return;
-      }
+      console.log("UserController updateOnlineStatus step 4", { updatedUser });
 
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
           new ApiResponse(
-            200,
+            HttpStatus.OK,
             updatedUser,
             "Online status updated successfully"
           )
         );
-    } catch (error: any) {
-      console.error("Error updating online status:", error.message);
-      res
-        .status(500)
-        .json(new ApiResponse(500, null, "Failed to update online status"));
+    } catch (error) {
+      console.error("Error in updateOnlineStatus:", error);
       next(error);
     }
   };
