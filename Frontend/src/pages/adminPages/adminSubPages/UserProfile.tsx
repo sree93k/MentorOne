@@ -196,34 +196,6 @@ const UserProfile: React.FC = () => {
   const dispatch = useDispatch();
   const { error, loading } = useSelector((state: RootState) => state.admin);
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     dispatch(setLoading(true));
-  //     dispatch(setError(null));
-  //     try {
-  //       const response = await getUserRoleData(id!);
-  //       console.log("**************getUserRoleData reposne ", response);
-
-  //       if (response && response.status === 200) {
-  //         const data = response.data.data;
-  //         console.log("dattas are", data);
-
-  //         setUserProfile(data);
-  //         console.log("**************setUserProfile  ", userProfile);
-  //         setStatus(data.user.isBlocked ? "Blocked" : "Active");
-  //         setMentorStatus(data.mentorData?.isApproved || "N/A");
-  //       } else {
-  //         dispatch(setError("Failed to fetch user data"));
-  //       }
-  //     } catch (err) {
-  //       dispatch(setError("An error occurred while fetching user data"));
-  //       console.error("Fetch error:", err);
-  //     } finally {
-  //       dispatch(setLoading(false));
-  //     }
-  //   };
-  //   fetchUserData();
-  // }, [id]);
   useEffect(() => {
     const fetchUserData = async () => {
       dispatch(setLoading(true));
@@ -252,27 +224,6 @@ const UserProfile: React.FC = () => {
     fetchUserData();
   }, [id, dispatch]);
 
-  // const handleStatusUpdate = async () => {
-  //   if (!userProfile) return;
-  //   const newIsBlocked = status === "Blocked";
-  //   if (newIsBlocked !== userProfile.user.isBlocked) {
-  //     dispatch(setLoading(true));
-  //     try {
-  //       await updateUserStatus(userProfile.user._id, newIsBlocked);
-  //       setUserProfile({
-  //         ...userProfile,
-  //         user: { ...userProfile.user, isBlocked: newIsBlocked },
-  //       });
-  //       setIsEditingStatus(false);
-  //     } catch (err) {
-  //       dispatch(setError("Failed to update user status"));
-  //     } finally {
-  //       dispatch(setLoading(false));
-  //     }
-  //   } else {
-  //     setIsEditingStatus(false);
-  //   }
-  // };
   const handleStatusUpdate = async () => {
     if (!userProfile) return;
     const newIsBlocked = status === "Blocked";
@@ -294,37 +245,6 @@ const UserProfile: React.FC = () => {
       setIsEditingStatus(false);
     }
   };
-
-  // const handleMentorStatusUpdate = async (reason: string) => {
-  //   if (!userProfile || !userProfile.mentorData) return;
-  //   const newMentorStatus = mentorStatus;
-  //   if (newMentorStatus !== userProfile.mentorData.isApproved) {
-  //     dispatch(setLoading(true));
-  //     try {
-  //       const response = await updateMentorStatus(
-  //         userProfile.mentorData._id,
-  //         newMentorStatus,
-  //         reason
-  //       );
-  //       setUserProfile({
-  //         ...userProfile,
-  //         mentorData: {
-  //           ...userProfile.mentorData,
-  //           isApproved: newMentorStatus,
-  //         },
-  //       });
-  //       setIsEditingMentorStatus(false);
-  //       setReason("");
-  //     } catch (err) {
-  //       dispatch(setError("Failed to update mentor status"));
-  //     } finally {
-  //       dispatch(setLoading(false));
-  //     }
-  //   } else {
-  //     setIsEditingMentorStatus(false);
-  //     setReason("");
-  //   }
-  // };
 
   const handleMentorStatusUpdate = async (reason: string) => {
     if (!userProfile || !userProfile.mentorData) return;

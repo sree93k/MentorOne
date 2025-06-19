@@ -20,11 +20,7 @@ export interface IBookingRepository {
   ): Promise<any | null>;
   findAllBookings(skip: number, limit: number, query: any): Promise<EBooking[]>;
   countAllBookings(query: any): Promise<number>;
-  // findAllVideoCalls(
-  //   mentorId: string,
-  //   status?: string,
-  //   limit?: number
-  // ): Promise<EBooking[]>;
+
   findAllVideoCalls(
     mentorId: string,
     status?: string[],

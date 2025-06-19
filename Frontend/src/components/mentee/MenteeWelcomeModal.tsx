@@ -254,19 +254,6 @@ export function WelcomeModal({
     setStep(1);
   };
 
-  // const handleSubmit = async () => {
-  //   if (isForm2Valid) {
-  //     setLoading(true);
-  //     console.log("handlesubmit welocmemodal 1");
-  //     console.log("form data welocmemodal is ", formData);
-  //     const success = await onSubmit(formData);
-  //     console.log("handlesubmit 2 welocmemodal success>>", success);
-  //     setLoading(false);
-  //     if (success) {
-  //       onOpenChange(false);
-  //     }
-  //   }
-  // };
   const handleSubmit = async () => {
     if (isForm2Valid) {
       setLoading(true);

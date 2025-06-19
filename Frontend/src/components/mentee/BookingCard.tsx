@@ -437,12 +437,7 @@ const BookingCard = ({
               <Clock className="w-4 h-4 mr-2 text-gray-500" />
               <span>{booking.time}</span>
             </div>
-            {/* {serviceSlot && (
-              <div className="flex items-center text-sm">
-                <Clock className="w-4 h-4 mr-2 text-gray-500" />
-                <span>Slot: {serviceSlot}</span>
-              </div>
-            )} */}
+
             <div className="font-bold mt-2">₹{booking.price}/-</div>
           </div>
         </div>

@@ -15,10 +15,10 @@ import {
 } from "chart.js";
 import { Pie, Doughnut, Bar, Line } from "react-chartjs-2";
 import { getBookingsByMentor } from "@/services/bookingService";
-import { getAllMentorPayments } from "@/services/paymentServcie"; // Fixed typo
+import { getAllMentorPayments } from "@/services/paymentServcie";
 import { getAllServices } from "@/services/mentorService";
 import { getTestimonialsByMentor } from "@/services/testimonialService";
-import { getChatHistory } from "@/services/userServices"; // Fixed typo
+import { getChatHistory } from "@/services/userServices";
 
 ChartJS.register(
   CategoryScale,
@@ -32,6 +32,7 @@ ChartJS.register(
   Legend
 );
 
+// Interfaces remain unchanged
 interface Booking {
   _id: string;
   createdAt: string;
@@ -49,7 +50,7 @@ interface Payment {
   createdAt: string;
   amount: number;
   total: number;
-  serviceDetails: { _id: string; title: string; type: string }; // Changed to serviceDetails
+  serviceDetails: { _id: string; title: string; type: string };
 }
 
 interface Service {
@@ -78,6 +79,7 @@ interface ChatUser {
 }
 
 const MentorDashboard: React.FC = () => {
+  // State and useEffect logic remains unchanged
   const [monthlyBookings, setMonthlyBookings] = useState<{
     [key: string]: number[];
   }>({});
@@ -110,212 +112,137 @@ const MentorDashboard: React.FC = () => {
         const currentMonth = new Date().getMonth();
 
         // Fetch bookings
-        try {
-          const bookingsResponse = await getBookingsByMentor(mentorId, 1, 1000);
-          const bookings: Booking[] = Array.isArray(bookingsResponse.data)
-            ? bookingsResponse.data
-            : [];
-          const monthlyByService: { [key: string]: number[] } = {};
-          let monthBookings = 0;
-          bookings.forEach((booking) => {
-            const date = new Date(booking.createdAt);
-            if (date.getFullYear() === currentYear) {
-              const month = date.getMonth();
-              const serviceType = booking.serviceId?.type || "Unknown";
-              if (!monthlyByService[serviceType]) {
-                monthlyByService[serviceType] = Array(12).fill(0);
-              }
-              monthlyByService[serviceType][month] += 1;
-              if (month === currentMonth) {
-                monthBookings += 1;
-              }
+        const bookingsResponse = await getBookingsByMentor(mentorId, 1, 1000);
+        const bookings: Booking[] = Array.isArray(bookingsResponse.data)
+          ? bookingsResponse.data
+          : [];
+        const monthlyByService: { [key: string]: number[] } = {};
+        let monthBookings = 0;
+        bookings.forEach((booking) => {
+          const date = new Date(booking.createdAt);
+          if (date.getFullYear() === currentYear) {
+            const month = date.getMonth();
+            const serviceType = booking.serviceId?.type || "Unknown";
+            if (!monthlyByService[serviceType]) {
+              monthlyByService[serviceType] = Array(12).fill(0);
             }
-          });
-          setMonthlyBookings(monthlyByService);
-          console.log("Set monthlyBookings:", monthlyByService);
-          setCurrentMonthBookings(monthBookings);
+            monthlyByService[serviceType][month] += 1;
+            if (month === currentMonth) {
+              monthBookings += 1;
+            }
+          }
+        });
+        setMonthlyBookings(monthlyByService);
+        setCurrentMonthBookings(monthBookings);
 
-          const yearlyMap: {
-            [key: number]: { bookings: number; mentees: Set<string> };
-          } = {};
-          bookings.forEach((item) => {
-            const year = new Date(item.createdAt).getFullYear();
-            if (!yearlyMap[year]) {
-              yearlyMap[year] = { bookings: 0, mentees: new Set() };
-            }
-            yearlyMap[year].bookings += 1;
-            yearlyMap[year].mentees.add(item.menteeId._id);
-          });
-          const yearlyData = Object.entries(yearlyMap)
-            .map(([year, data]) => ({
-              year: parseInt(year),
-              bookings: data.bookings,
-              mentees: data.mentees.size,
-            }))
-            .sort((a, b) => a.year - b.year);
-          setYearlyData(yearlyData);
-        } catch (err) {
-          console.error("Bookings fetch error:", err);
-          setError((prev) => prev || "Failed to fetch bookings");
-        }
+        const yearlyMap: {
+          [key: number]: { bookings: number; mentees: Set<string> };
+        } = {};
+        bookings.forEach((item) => {
+          const year = new Date(item.createdAt).getFullYear();
+          if (!yearlyMap[year]) {
+            yearlyMap[year] = { bookings: 0, mentees: new Set() };
+          }
+          yearlyMap[year].bookings += 1;
+          yearlyMap[year].mentees.add(item.menteeId._id);
+        });
+        const yearlyData = Object.entries(yearlyMap)
+          .map(([year, data]) => ({
+            year: parseInt(year),
+            bookings: data.bookings,
+            mentees: data.mentees.size,
+          }))
+          .sort((a, b) => a.year - b.year);
+        setYearlyData(yearlyData);
 
         // Fetch payments
-        try {
-          const paymentsResponse = await getAllMentorPayments(1, 1000);
-          console.log("Payments response:", paymentsResponse);
-          if (paymentsResponse && Array.isArray(paymentsResponse.payments)) {
-            const payments: Payment[] = paymentsResponse.payments;
-            const earningsByService: { [key: string]: number } = {};
-            let monthEarnings = 0;
-            const monthlyPayments = Array(12).fill(0);
-            payments.forEach((payment) => {
-              console.log("Payment serviceDetails:", payment.serviceDetails);
-              const date = new Date(payment.createdAt);
-              const serviceType = payment.serviceDetails?.type || "Unknown";
-              if (date.getFullYear() === currentYear) {
-                const month = date.getMonth();
-                monthlyPayments[month] += payment.total;
-                if (month === currentMonth) {
-                  monthEarnings += payment.total;
-                }
+        const paymentsResponse = await getAllMentorPayments(1, 1000);
+        if (paymentsResponse && Array.isArray(paymentsResponse.payments)) {
+          const payments: Payment[] = paymentsResponse.payments;
+          const earningsByService: { [key: string]: number } = {};
+          let monthEarnings = 0;
+          const monthlyPayments = Array(12).fill(0);
+          payments.forEach((payment) => {
+            const date = new Date(payment.createdAt);
+            const serviceType = payment.serviceDetails?.type || "Unknown";
+            if (date.getFullYear() === currentYear) {
+              const month = date.getMonth();
+              monthlyPayments[month] += payment.total;
+              if (month === currentMonth) {
+                monthEarnings += payment.total;
               }
-              earningsByService[serviceType] =
-                (earningsByService[serviceType] || 0) + payment.total;
-            });
-            setCurrentMonthEarnings(monthEarnings);
-            setMonthlyBookingsPayments((prev) => ({
-              ...prev,
-              payments: monthlyPayments,
-            }));
-            console.log("Processed earningsByService:", earningsByService);
-            setEarningsBreakdown(
-              Object.entries(earningsByService).map(([name, value]) => ({
-                name,
-                value,
-              }))
-            );
-          } else {
-            console.error(
-              "Unexpected payments response structure:",
-              paymentsResponse
-            );
-            setError((prev) => prev || "No payments found in the response");
-          }
-        } catch (err) {
-          console.error("Payments fetch error:", err);
-          setError((prev) => prev || "Failed to fetch payments");
+            }
+            earningsByService[serviceType] =
+              (earningsByService[serviceType] || 0) + payment.total;
+          });
+          setCurrentMonthEarnings(monthEarnings);
+          setMonthlyBookingsPayments((prev) => ({
+            ...prev,
+            payments: monthlyPayments,
+          }));
+          setEarningsBreakdown(
+            Object.entries(earningsByService).map(([name, value]) => ({
+              name,
+              value,
+            }))
+          );
         }
 
         // Fetch services
-        try {
-          const servicesResponse = await getAllServices({
-            page: 1,
-            limit: 1000,
-          });
-          console.log("Services response:", servicesResponse);
-          if (servicesResponse && Array.isArray(servicesResponse.services)) {
-            const services: Service[] = servicesResponse.services;
-            const validServiceTypes = new Set(
-              services.map((service) => service.type)
-            );
-            console.log("Valid service types:", validServiceTypes);
-            setMonthlyBookings((prev) => {
-              const updatedBookings = { ...prev };
-              services.forEach((service) => {
-                const serviceType = service.type || "Unknown";
-                if (!updatedBookings[serviceType]) {
-                  updatedBookings[serviceType] = Array(12).fill(0);
-                }
-              });
-              return updatedBookings;
-            });
+        const servicesResponse = await getAllServices({ page: 1, limit: 1000 });
+        if (servicesResponse && Array.isArray(servicesResponse.services)) {
+          const services: Service[] = servicesResponse.services;
+          setMonthlyBookings((prev) => {
+            const updatedBookings = { ...prev };
             services.forEach((service) => {
-              if (service.stats && service.stats.views > 0) {
-                const conversionRate =
-                  (service.stats.bookings / service.stats.views) * 100;
-                console.log(
-                  `Service ${
-                    service.title
-                  } Conversion Rate: ${conversionRate.toFixed(2)}%`
-                );
+              const serviceType = service.type || "Unknown";
+              if (!updatedBookings[serviceType]) {
+                updatedBookings[serviceType] = Array(12).fill(0);
               }
             });
-          } else {
-            console.error(
-              "Unexpected services response structure:",
-              servicesResponse
-            );
-            setError((prev) => prev || "No services found in the response");
-          }
-        } catch (err) {
-          console.error("Services fetch error:", err);
-          setError((prev) => prev || "Failed to fetch services");
+            return updatedBookings;
+          });
         }
 
         // Fetch testimonials
-        try {
-          const testimonialsResponse = await getTestimonialsByMentor(1, 1000);
-          console.log("Testimonials response:", testimonialsResponse);
-          if (
-            testimonialsResponse &&
-            Array.isArray(testimonialsResponse.testimonials)
-          ) {
-            const testimonials: Testimonial[] =
-              testimonialsResponse.testimonials;
-            const counts = Array(12).fill(0);
-            const ratings = Array(12).fill(0);
-            const ratingCounts = Array(12).fill(0);
-            testimonials.forEach((testimonial) => {
-              const date = new Date(testimonial.createdAt);
-              if (date.getFullYear() === currentYear) {
-                const month = date.getMonth();
-                counts[month] += 1;
-                ratings[month] += testimonial.rating;
-                ratingCounts[month] += 1;
-              }
-            });
-            const avgRatings = ratings.map((sum, i) =>
-              ratingCounts[i] > 0 ? sum / ratingCounts[i] : 0
-            );
-            setTestimonialsData({ counts, ratings: avgRatings });
-          } else {
-            console.error(
-              "Unexpected testimonials response structure:",
-              testimonialsResponse
-            );
-            setError((prev) => prev || "No testimonials found in the response");
-          }
-        } catch (err) {
-          console.error("Testimonials fetch error:", err);
-          setError((prev) => prev || "Failed to fetch testimonials");
+        const testimonialsResponse = await getTestimonialsByMentor(1, 1000);
+        if (
+          testimonialsResponse &&
+          Array.isArray(testimonialsResponse.testimonials)
+        ) {
+          const testimonials: Testimonial[] = testimonialsResponse.testimonials;
+          const counts = Array(12).fill(0);
+          const ratings = Array(12).fill(0);
+          const ratingCounts = Array(12).fill(0);
+          testimonials.forEach((testimonial) => {
+            const date = new Date(testimonial.createdAt);
+            if (date.getFullYear() === currentYear) {
+              const month = date.getMonth();
+              counts[month] += 1;
+              ratings[month] += testimonial.rating;
+              ratingCounts[month] += 1;
+            }
+          });
+          const avgRatings = ratings.map((sum, i) =>
+            ratingCounts[i] > 0 ? sum / ratingCounts[i] : 0
+          );
+          setTestimonialsData({ counts, ratings: avgRatings });
         }
 
         // Fetch chat history
-        try {
-          const chatResponse = await getChatHistory("mentor");
-          console.log("Chat history response:", chatResponse);
-          if (chatResponse && Array.isArray(chatResponse.data)) {
-            const uniqueMentees = new Set(
-              chatResponse.data
-                .map((chat: ChatUser) => chat.otherUserId)
-                .filter(Boolean)
-            );
-            setYearlyData((prev) =>
-              prev.map((yearData) => ({
-                ...yearData,
-                mentees: Math.max(yearData.mentees, uniqueMentees.size),
-              }))
-            );
-          } else {
-            console.error(
-              "Unexpected chat history response structure:",
-              chatResponse
-            );
-            setError((prev) => prev || "No chat history found in the response");
-          }
-        } catch (err) {
-          console.error("Chat history fetch error:", err);
-          setError((prev) => prev || "Failed to fetch chat history");
+        const chatResponse = await getChatHistory("mentor");
+        if (chatResponse && Array.isArray(chatResponse.data)) {
+          const uniqueMentees = new Set(
+            chatResponse.data
+              .map((chat: ChatUser) => chat.otherUserId)
+              .filter(Boolean)
+          );
+          setYearlyData((prev) =>
+            prev.map((yearData) => ({
+              ...yearData,
+              mentees: Math.max(yearData.mentees, uniqueMentees.size),
+            }))
+          );
         }
       } catch (err: any) {
         const errorMessage =
@@ -323,7 +250,6 @@ const MentorDashboard: React.FC = () => {
             ? `API error: ${err.message}`
             : "Unexpected error fetching data";
         setError((prev) => prev || errorMessage);
-        console.error("Global fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -338,15 +264,11 @@ const MentorDashboard: React.FC = () => {
         (acc, curr) => acc.map((val, i) => val + curr[i]),
         Array(12).fill(0)
       );
-      console.log("Updated monthlyBookingsPayments:", {
-        bookings: newBookings,
-        payments: prev.payments,
-      });
       return { bookings: newBookings, payments: prev.payments };
     });
   }, [monthlyBookings]);
 
-  // Chart data
+  // Chart data remains unchanged
   const monthlyBookingsChart = {
     labels: [
       "Jan",
@@ -468,24 +390,47 @@ const MentorDashboard: React.FC = () => {
     ],
   };
 
+  // Responsive chart options
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // Allow charts to fill container height
     plugins: {
-      legend: { position: "top" as const },
-      title: { display: true, text: "" },
+      legend: {
+        position: "top" as const,
+        labels: {
+          font: {
+            size: window.innerWidth < 640 ? 10 : 12, // Smaller font on mobile
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "",
+        font: {
+          size: window.innerWidth < 640 ? 14 : 16,
+        },
+      },
     },
     scales: {
       "y-bookings": {
         type: "linear" as const,
         position: "left" as const,
         beginAtZero: true,
-        title: { display: true, text: "Bookings" },
+        title: {
+          display: true,
+          text: "Bookings",
+          font: { size: window.innerWidth < 640 ? 10 : 12 },
+        },
       },
       "y-payments": {
         type: "linear" as const,
         position: "right" as const,
         beginAtZero: true,
-        title: { display: true, text: "Payments (₹)" },
+        title: {
+          display: true,
+          text: "Payments (₹)",
+          font: { size: window.innerWidth < 640 ? 10 : 12 },
+        },
         grid: { drawOnChartArea: false },
       },
     },
@@ -493,44 +438,67 @@ const MentorDashboard: React.FC = () => {
 
   const standardChartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { position: "top" as const },
-      title: { display: true, text: "" },
+      legend: {
+        position: "top" as const,
+        labels: {
+          font: {
+            size: window.innerWidth < 640 ? 10 : 12,
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "",
+        font: {
+          size: window.innerWidth < 640 ? 14 : 16,
+        },
+      },
     },
     scales: {
-      y: { beginAtZero: true },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          font: { size: window.innerWidth < 640 ? 10 : 12 },
+        },
+      },
     },
   };
 
-  console.log("monthlyBookingsChart:", monthlyBookingsChart);
-  console.log("earningsBreakdownChart:", earningsBreakdownChart);
-
   return (
-    <main className="ml-24 p-8 bg-white">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Mentor Dashboard</h1>
+    <main className="ml-0 sm:ml-24 p-4 sm:p-8 bg-white min-h-screen overflow-x-hidden">
+      <div className="flex justify-between items-center mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold">Mentor Dashboard</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card className="p-6">
-          <h3 className="text-sm text-gray-600 mb-2">Current Month Bookings</h3>
-          <p className="text-3xl font-bold">{currentMonthBookings}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <Card className="p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm text-gray-600 mb-2">
+            Current Month Bookings
+          </h3>
+          <p className="text-2xl sm:text-3xl font-bold">
+            {currentMonthBookings}
+          </p>
         </Card>
-        <Card className="p-6">
-          <h3 className="text-sm text-gray-600 mb-2">Current Month Earnings</h3>
-          <p className="text-3xl font-bold">
+        <Card className="p-4 sm:p-6">
+          <h3 className="text-xs sm:text-sm text-gray-600 mb-2">
+            Current Month Earnings
+          </h3>
+          <p className="text-2xl sm:text-3xl font-bold">
             ₹{currentMonthEarnings.toLocaleString()}
           </p>
         </Card>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div className="lg:col-span-2">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Monthly Bookings vs Payments ({new Date().getFullYear()})
             </h2>
-            <div className="h-[600px] ">
+            <div className="h-[300px] sm:h-[400px] lg:h-[500px]">
               {monthlyBookingsPayments.bookings.some((v) => v > 0) ||
               monthlyBookingsPayments.payments.some((v) => v > 0) ? (
                 <Bar
@@ -553,12 +521,12 @@ const MentorDashboard: React.FC = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Lifetime Earnings by Service
             </h2>
-            <div className="h-[500px]">
+            <div className="h-[250px] sm:h-[300px] lg:h-[400px]">
               {earningsBreakdown.length > 0 ? (
                 <Doughnut
                   data={earningsBreakdownChart}
@@ -580,11 +548,11 @@ const MentorDashboard: React.FC = () => {
               )}
             </div>
           </Card>
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Monthly Bookings by Service Type ({new Date().getFullYear()})
             </h2>
-            <div className="h-[500px]">
+            <div className="h-[250px] sm:h-[300px] lg:h-[400px]">
               {Object.keys(monthlyBookings).length > 0 &&
               Object.values(monthlyBookings).some((counts) =>
                 counts.some((v) => v > 0)
@@ -610,11 +578,11 @@ const MentorDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Yearly Bookings and Mentees
             </h2>
-            <div className="h-[400px]">
+            <div className="h-[250px] sm:h-[300px] lg:h-[400px]">
               {yearlyData.length > 0 ? (
                 <Bar
                   data={yearlyChart}
@@ -637,11 +605,11 @@ const MentorDashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
               Monthly Testimonials and Ratings ({new Date().getFullYear()})
             </h2>
-            <div className="h-[400px]">
+            <div className="h-[250px] sm:h-[300px] lg:h-[400px]">
               {testimonialsData.counts.some((v) => v > 0) ||
               testimonialsData.ratings.some((v) => v > 0) ? (
                 <Line
@@ -667,8 +635,8 @@ const MentorDashboard: React.FC = () => {
         </div>
       </div>
 
-      {loading && <p>Loading charts...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {loading && <p className="text-center">Loading charts...</p>}
+      {error && <p className="text-red-500 text-center">{error}</p>}
     </main>
   );
 };

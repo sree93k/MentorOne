@@ -148,7 +148,7 @@ export default function MentorPaymentsPage() {
 
   const totalPages = Math.ceil(total / limit);
   const pendingAmount = payments
-    .filter((p: PaymentItem) => p.status === "transferred")
+    .filter((p: PaymentItem) => p.status === "completed")
     .reduce(
       (sum: number, p: PaymentItem) =>
         sum + parseFloat(p.amountFormatted!.replace("₹", "")),
@@ -409,13 +409,13 @@ export default function MentorPaymentsPage() {
                         {item.bookingId.slice(-10)} {/* Show last 10 digits */}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        {item.transactionId}
+                        {item.transactionId.slice(-10)}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
                         {item.paymentMode}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
-                        ₹ {item.total}
+                        ₹ {item.amount}
                       </TableCell>
                       <TableCell className="text-gray-700 dark:text-gray-300 py-3">
                         {item.status}

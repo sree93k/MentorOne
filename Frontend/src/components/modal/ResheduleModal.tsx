@@ -105,8 +105,6 @@ const RescheduleModal = ({
 
   const fetchScheduleAndBlockedDates = async () => {
     try {
-      console.log("AAAAAAAAAAAAAAAAAAA");
-
       setLoading(true);
       if (!serviceSlot) {
         console.error(
@@ -116,20 +114,21 @@ const RescheduleModal = ({
         return;
       }
 
-      console.log("TTTTTTTTTTTTTTT  serviceSlot.....", serviceSlot);
-      console.log("TTTTTTTTTTTTTTT  mentorId.....", mentorId);
       const [schedules, fetchedBlockedDates] = await Promise.all([
         getMentorSchedule(serviceSlot),
         getMentorBlockedDates(mentorId),
       ]);
-      console.log("TTTTTTTTTTTTTTT  schdules.....", schedules);
-      console.log("TTTTTTTTTTTTTTT  blocked dates .....", fetchedBlockedDates);
+
       const blockedDateSet = new Set(
         fetchedBlockedDates
           .filter((bd: BlockedDate) => bd.type === "blocked")
-          .map(
-            (bd: BlockedDate) => new Date(bd.date).toISOString().split("T")[0]
-          )
+          .map((bd: BlockedDate) => {
+            // Fix: Use local date formatting for blocked dates too
+            const date = new Date(bd.date);
+            return `${date.getFullYear()}-${String(
+              date.getMonth() + 1
+            ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+          })
       );
 
       const today = new Date();
@@ -142,9 +141,14 @@ const RescheduleModal = ({
       }[] = [];
 
       for (let i = 0; i < 30; i++) {
-        const date = new Date();
+        const date = new Date(today);
         date.setDate(today.getDate() + i);
-        const fullDate = date.toISOString().split("T")[0];
+
+        // Fix: Use local date formatting instead of toISOString()
+        const fullDate = `${date.getFullYear()}-${String(
+          date.getMonth() + 1
+        ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
         const dayName = date
           .toLocaleString("en-US", { weekday: "long" })
           .toLowerCase();
@@ -163,12 +167,20 @@ const RescheduleModal = ({
               scheduleDay?.slots.some(
                 (slot: ScheduleSlot) =>
                   slot.isAvailable &&
-                  !fetchedBlockedDates.some(
-                    (bd: BlockedDate) =>
+                  !fetchedBlockedDates.some((bd: BlockedDate) => {
+                    const bdDate = new Date(bd.date);
+                    const bdFullDate = `${bdDate.getFullYear()}-${String(
+                      bdDate.getMonth() + 1
+                    ).padStart(2, "0")}-${String(bdDate.getDate()).padStart(
+                      2,
+                      "0"
+                    )}`;
+                    return (
                       bd.type === "booking" &&
                       bd.slotTime === slot.startTime &&
-                      new Date(bd.date).toISOString().split("T")[0] === fullDate
-                  )
+                      bdFullDate === fullDate
+                    );
+                  })
               )
             ) {
               isAvailable = true;
@@ -202,6 +214,7 @@ const RescheduleModal = ({
     event.preventDefault();
     const dateObj = availableDates.find((d) => d.fullDate === fullDate);
     if (!dateObj?.isAvailable) return;
+
     setSelectedDate(fullDate);
     setSelectedTime(null);
     setSelectedSlotIndex(null);
@@ -211,13 +224,17 @@ const RescheduleModal = ({
       const selectedDay = new Date(fullDate)
         .toLocaleString("en-US", { weekday: "long" })
         .toLowerCase();
+
       const bookedSlotsForDate = blockedDates
-        .filter(
-          (bd: BlockedDate) =>
-            bd.type === "booking" &&
-            new Date(bd.date).toISOString().split("T")[0] === fullDate &&
-            bd.slotTime
-        )
+        .filter((bd: BlockedDate) => {
+          const bdDate = new Date(bd.date);
+          const bdFullDate = `${bdDate.getFullYear()}-${String(
+            bdDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(bdDate.getDate()).padStart(2, "0")}`;
+          return (
+            bd.type === "booking" && bdFullDate === fullDate && bd.slotTime
+          );
+        })
         .map((bd: BlockedDate) => bd.slotTime);
 
       let times: { time: string; slotIndex: number; isBooked: boolean }[] = [];
@@ -261,7 +278,15 @@ const RescheduleModal = ({
       setSelectedSlotIndex(slotIndex);
     }
   };
-
+  const formatSelectedDate = (dateString: string) => {
+    const date = new Date(dateString + "T00:00:00"); // Add time to avoid timezone issues
+    return date.toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
   const handleRescheduleSubmit = async () => {
     try {
       await requestReschedule(bookingId, {
@@ -309,31 +334,6 @@ const RescheduleModal = ({
             </div>
           ) : (
             <>
-              {/* <div className="flex items-center space-x-2 mb-6 bg-white p-3 rounded-lg shadow-sm">
-                <Switch
-                  id="mentor-decides"
-                  checked={mentorDecides}
-                  onCheckedChange={(checked) => {
-                    setMentorDecides(checked);
-                    if (checked) {
-                      setSelectedDate(null);
-                      setSelectedTime(null);
-                      setSelectedSlotIndex(null);
-                      setAvailableTimes([]);
-                    }
-                  }}
-                  className={`${
-                    mentorDecides ? "bg-blue-500" : "bg-gray-200"
-                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
-                />
-                <Label
-                  htmlFor="mentor-decides"
-                  className="text-sm font-medium text-gray-900"
-                >
-                  Let Mentor Decide
-                </Label>
-              </div> */}
-
               {!mentorDecides && (
                 <>
                   <h3 className="font-semibold text-lg mb-1">Select Date</h3>
@@ -452,7 +452,7 @@ const RescheduleModal = ({
                     )}
                   </div>
 
-                  {(selectedDate || selectedTime) && (
+                  {/* {(selectedDate || selectedTime) && (
                     <div className="mb-6">
                       <h3 className="font-semibold text-lg mb-2">
                         Selected Schedule
@@ -461,6 +461,25 @@ const RescheduleModal = ({
                         <p className="text-sm">
                           <span className="font-medium">Date:</span>{" "}
                           {selectedDate || "Not selected"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Time:</span>{" "}
+                          {selectedTime || "Not selected"}
+                        </p>
+                      </div>
+                    </div>
+                  )} */}
+                  {(selectedDate || selectedTime) && (
+                    <div className="mb-6">
+                      <h3 className="font-semibold text-lg mb-2">
+                        Selected Schedule
+                      </h3>
+                      <div className="bg-white p-3 rounded-lg shadow-sm">
+                        <p className="text-sm">
+                          <span className="font-medium">Date:</span>{" "}
+                          {selectedDate
+                            ? formatSelectedDate(selectedDate)
+                            : "Not selected"}
                         </p>
                         <p className="text-sm">
                           <span className="font-medium">Time:</span>{" "}

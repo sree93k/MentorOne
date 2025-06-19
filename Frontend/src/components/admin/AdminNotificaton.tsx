@@ -20,9 +20,6 @@ function AdminNotification({ open, onOpenChange }: AdminNotificationProps) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        {/* <SheetTrigger asChild>
-            <Button variant="outline">Open</Button>
-          </SheetTrigger> */}
         <SheetContent
           side="right"
           className="pr-0 gap-0 bg-white"
@@ -32,24 +29,9 @@ function AdminNotification({ open, onOpenChange }: AdminNotificationProps) {
             <SheetTitle>Notifications</SheetTitle>
             <SheetDescription>No new Notifictaions...</SheetDescription>
           </SheetHeader>
-          {/* <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" value="Pedro Duarte" className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="username" className="text-right">
-                Username
-              </Label>
-              <Input id="username" value="@peduarte" className="col-span-3" />
-            </div>
-          </div>  */}
+
           <SheetFooter>
-            <SheetClose asChild>
-              {/* <Button type="submit">Save changes</Button> */}
-            </SheetClose>
+            <SheetClose asChild></SheetClose>
           </SheetFooter>
         </SheetContent>
       </Sheet>

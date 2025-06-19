@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import AdminAuthService from "../../services/implementations/AdminAuthService";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 class AdminAuthController {
   private adminAuthService: AdminAuthService;
@@ -17,7 +18,8 @@ class AdminAuthController {
   constructor() {
     this.adminAuthService = new AdminAuthService();
   }
-  //login
+
+  // Login
   public login = async (req: Request, res: Response): Promise<void> => {
     console.log("Controller - Login request received:", req.body);
     const loginData = await this.adminAuthService.login(req.body);
@@ -25,21 +27,28 @@ class AdminAuthController {
 
     if (!loginData) {
       console.log("Controller - Login failed: Invalid credentials");
-      res.status(400).json(new ApiError(400, "Invalid email or password"));
+      res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            HttpStatus.BAD_REQUEST,
+            null,
+            "Invalid email or password"
+          )
+        );
       return;
     }
 
     console.log("Controller - Login successful login data is", loginData);
 
     res
-      .status(200)
+      .status(HttpStatus.OK)
       .cookie("adminRefreshToken", loginData.refreshToken, this.options)
-      .json(new ApiResponse(200, loginData));
+      .json(new ApiResponse(HttpStatus.OK, loginData));
     return;
   };
 
-  //logout
-
+  // Logout
   public logout = async (req: Request, res: Response) => {
     // Assert that req.user is defined since middleware guarantees it
     const { rawToken, id } = req.user!;
@@ -50,11 +59,11 @@ class AdminAuthController {
     if (logoutData) {
       console.log("admin logout step 3 error");
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .clearCookie("adminRefreshToken")
         .json(
           new ApiResponse(
-            200,
+            HttpStatus.OK,
             { message: "successfully cleared the token" },
             "logout success"
           )
@@ -64,10 +73,10 @@ class AdminAuthController {
     }
 
     res
-      .status(500)
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .json(
         new ApiResponse(
-          500,
+          HttpStatus.INTERNAL_SERVER_ERROR,
           null,
           "Something Went Wrong Clear your Browser Cookies"
         )
@@ -76,25 +85,38 @@ class AdminAuthController {
     return;
   };
 
+  // Refresh Access Token
   public refreshAccessToken = async (req: Request, res: Response) => {
     // Assert that req.user is defined since middleware guarantees it
     const { id } = req.user!;
-    console.log("admin refreshAccessToken  step1 ");
+    console.log("admin refreshAccessToken step1 ");
     const accessToken = await this.adminAuthService.refreshAccessToken(id);
-    console.log("admin refreshAccessToken  step2 ", accessToken);
+    console.log("admin refreshAccessToken step2 ", accessToken);
     if (accessToken) {
-      console.log("admin refreshAccessToken  step3 have token");
+      console.log("admin refreshAccessToken step3 have token");
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
-          new ApiResponse(200, { accessToken }, "token Created Successfully")
+          new ApiResponse(
+            HttpStatus.OK,
+            { accessToken },
+            "token Created Successfully"
+          )
         );
-      console.log("admin refreshAccessToken  step4 no toekn");
+      console.log("admin refreshAccessToken step4 no token");
       return;
     }
     // Add error handling if needed
-    console.log("admin refreshAccessToken  step6 errorr ");
-    res.status(500).json(new ApiResponse(500, null, "Failed to refresh token"));
+    console.log("admin refreshAccessToken step6 error ");
+    res
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .json(
+        new ApiResponse(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          null,
+          "Failed to refresh token"
+        )
+      );
   };
 }
 

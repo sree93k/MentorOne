@@ -153,23 +153,7 @@ export default function MentorServicePage() {
             service={service}
             mentor={mentor}
           />
-          {/* <div className="bg-gray-50 p-4 rounded-lg mt-6">
-            <h3 className="font-medium mb-4">Testimonials</h3>
-            {isLoadingTestimonials ? (
-              <p>Loading testimonials...</p>
-            ) : testimonials.length ? (
-              <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
-                {testimonials.map((testimonial) => (
-                  <TestimonialCard
-                    key={testimonial._id}
-                    testimonial={testimonial}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No testimonials available.</p>
-            )}
-          </div> */}
+
           <div className="bg-gray-50 p-4 rounded-lg mt-6">
             <h3 className="font-medium mb-4">Testimonials</h3>
             {isLoadingTestimonials ? (

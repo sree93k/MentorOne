@@ -42,23 +42,6 @@ const VideoCallHome: React.FC = () => {
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
 
-  // Fetch confirmed video call bookings for mentors
-  // const fetchBookings = async () => {
-  //   try {
-  //     const response = await allVideoCallBookings();
-  //     const confirmedBookings = response.data
-  //       .filter((booking: any) => booking.status === "confirmed")
-  //       .slice(0, 5);
-  //     setBookings(confirmedBookings);
-  //   } catch (error: any) {
-  //     toast({
-  //       title: "Error",
-  //       description: error.message || "Failed to fetch bookings",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // };
-  // VideoCallHome.tsx (partial update for fetchBookings)
   const fetchBookings = async () => {
     try {
       const response = await allVideoCallBookings();
@@ -69,11 +52,7 @@ const VideoCallHome: React.FC = () => {
         .slice(0, 5);
       setBookings(filteredBookings);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to fetch bookings",
-        variant: "destructive",
-      });
+      console.log("error :", error);
     }
   };
 
@@ -85,6 +64,9 @@ const VideoCallHome: React.FC = () => {
 
   const handleLogoClick = () => {
     const role = isOnline?.role;
+    console.log("LOG>>>>>>>role", isOnline);
+    console.log("LOG>>>>>>>role", role);
+
     if (role === "mentor") {
       navigate("/expert/dashboard");
     } else if (role === "mentee") {
@@ -100,11 +82,7 @@ const VideoCallHome: React.FC = () => {
       });
 
       if (!selectedBookingId) {
-        toast({
-          title: "No Booking Selected",
-          description: "Please select a booking to start a meeting.",
-          variant: "destructive",
-        });
+        toast.error("No Booking Selected");
         return;
       }
 
@@ -127,18 +105,15 @@ const VideoCallHome: React.FC = () => {
 
       const meetingId = await startVideoCall(menteeId, bookingId);
       console.log("videocallhome got meetingid from backend", meetingId);
-      toast({
-        title: "Success",
-        description: `Meeting created and notification sent to ${selectedBooking.menteeId.firstName}`,
-      });
+
+      toast.success(
+        `Meeting created and notification sent to ${selectedBooking.menteeId.firstName}`
+      );
       navigate(`/user/meeting/${meetingId}`);
     } catch (error: any) {
       console.error("@@@ handleCreateMeeting ERROR", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create meeting",
-        variant: "destructive",
-      });
+
+      toast.error(error.message);
     } finally {
       setShowNewMeetingOptions(false);
     }
@@ -161,24 +136,16 @@ const VideoCallHome: React.FC = () => {
           selectedBooking.menteeId._id,
           selectedBooking._id
         );
-        toast({
-          title: "Success",
-          description: `Meeting created and notification sent to ${selectedBooking.menteeId.firstName}`,
-        });
+
+        toast.success(
+          `Meeting created and notification sent to ${selectedBooking.menteeId.firstName}`
+        );
         navigate(`/user/meeting/${meetingId}`);
       } catch (error: any) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create meeting",
-          variant: "destructive",
-        });
+        toast.error(error.message);
       }
     } else {
-      toast({
-        title: "Invalid Input",
-        description: "Please enter a meeting code or select a booking",
-        variant: "destructive",
-      });
+      toast.error("Invalid Input");
     }
   };
 
@@ -202,19 +169,14 @@ const VideoCallHome: React.FC = () => {
         status: pendingStatus,
       });
       await updateStatus(pendingBookingId, { status: pendingStatus });
-      toast({
-        title: "Success",
-        description: `Booking status updated to ${pendingStatus}`,
-      });
+
+      toast.success(`Booking status updated to ${pendingStatus}`);
       // Refresh bookings
       await fetchBookings();
     } catch (error: any) {
       console.error("Error updating status:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update booking status",
-        variant: "destructive",
-      });
+
+      toast.error(error.message);
     } finally {
       setModalOpen(false);
       setPendingStatus(null);
@@ -387,7 +349,7 @@ const VideoCallHome: React.FC = () => {
                             <SelectTrigger className="w-[140px]">
                               <SelectValue placeholder="Select Status" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white">
                               <SelectGroup>
                                 <SelectItem value="confirmed">
                                   Confirmed

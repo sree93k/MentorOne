@@ -167,7 +167,7 @@ export const getAllBookings = async (
     });
 
     console.log("admin get all bookings step 2 response...", response.data);
-    return response;
+    return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Axios error:", error.response?.data || error.message);
@@ -202,7 +202,7 @@ export const getAllPayments = async (
     });
 
     console.log("admin get all payments step 2 response...", response.data);
-    return response;
+    return response.data;
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Axios error:", error.response?.data || error.message);

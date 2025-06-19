@@ -31,6 +31,7 @@ import Participants from "@/components/videoCall/Participants";
 import MeetingInfo from "@/components/videoCall/MeetingInfo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+// import { userVideoCallAuthenticate } from "@/services/userServices";
 
 interface Participant {
   id: string;
@@ -62,7 +63,7 @@ const VideoCallMeeting: React.FC = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useSelector((state: RootState) => state.user);
+  const { user, isOnline } = useSelector((state: RootState) => state.user);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [peer, setPeer] = useState<Peer | null>(null);
   const [screenSharePeer, setScreenSharePeer] = useState<Peer | null>(null);
@@ -647,6 +648,7 @@ const VideoCallMeeting: React.FC = () => {
 
   useEffect(() => {
     document.title = `Meeting: ${meetingId} | MentorOne Meet`;
+    // const userAuthticate = checkUserAuthenticate();
 
     if (!meetingId || !userId) {
       toast.error("Invalid meeting ID or user ID.");

@@ -13,9 +13,9 @@ export const uploadProfileImage = async (formData: FormData) => {
       },
     });
     console.log("Image upload response:1st", response);
-    console.log("Image upload response:2nd", response.data);
+    console.log("Image upload response:2nd", response.data.data);
     const profileData = {
-      profilePicture: response.data.imageUrl, // Rename imageUrl to profilePicture
+      profilePicture: response.data.data.imageUrl, // Rename imageUrl to profilePicture
     };
     const userData = await api.put("/user/profileEdit", profileData, {
       headers: {

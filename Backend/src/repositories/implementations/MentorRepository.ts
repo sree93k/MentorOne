@@ -1,7 +1,7 @@
 import { EUsers } from "../../entities/userEntity";
 import { EMentor } from "../../entities/mentorEntity";
 import { IMentorRepository } from "../interface/IMentorRepository";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import Mentor from "../../models/mentorModel";
 import { Stats } from "fs";
 import OnlineService from "../../models/onlineServiceModel";
@@ -62,7 +62,7 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createService repo step 4");
       console.error("Error creating service:", error);
-      throw new ApiError(500, "Failed to create service");
+      throw new Error("Failed to create service");
     }
   }
 
@@ -79,7 +79,7 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createOnlineService repo step 4");
       console.error("Error creating online service:", error);
-      throw new ApiError(500, "Failed to create online service");
+      throw new Error("Failed to create online service");
     }
   }
 
@@ -96,7 +96,7 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createDigitalProduct repo step 4");
       console.error("Error creating digital product:", error);
-      throw new ApiError(500, "Failed to create digital product");
+      throw new Error("Failed to create digital product");
     }
   }
 
@@ -113,7 +113,7 @@ export default class MentorRepository implements IMentorRepository {
     } catch (error) {
       console.log("createVideoTutorial repo step 4");
       console.error("Error creating video tutorial:", error);
-      throw new ApiError(500, "Failed to create video tutorial");
+      throw new Error("Failed to create video tutorial");
     }
   }
 
@@ -121,7 +121,7 @@ export default class MentorRepository implements IMentorRepository {
     try {
       return await Mentor.findById(id);
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find mentor", error.message);
+      throw new Error("Failed to find mentor", error.message);
     }
   }
 
@@ -132,11 +132,11 @@ export default class MentorRepository implements IMentorRepository {
       const mentor = await Mentor.findByIdAndUpdate(id, data, { new: true });
       console.log("UPdate mentor rpsository step 2", mentor);
       if (!mentor) {
-        throw new ApiError(404, "Mentor not found");
+        throw new Error("Mentor not found");
       }
       return mentor;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update mentor", error.message);
+      throw new Error("Failed to update mentor", error.message);
     }
   }
 }

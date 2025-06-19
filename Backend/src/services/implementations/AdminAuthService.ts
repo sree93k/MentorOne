@@ -8,7 +8,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import { HttpStatus } from "../../constants/HttpStatus";
 
 export default class AdminAuthService implements IAdminAuthService {

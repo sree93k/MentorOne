@@ -14,7 +14,6 @@ import { IMenteeRepository } from "../../repositories/interface/IMenteeRepositor
 import MenteeRepository from "../../repositories/implementations/MenteeRepository";
 import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepositotry from "../../repositories/implementations/BaseRepository";
-import { ApiError } from "../../middlewares/errorHandler";
 import Users from "../../models/userModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
@@ -249,7 +248,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
         message: error.message,
         stack: error.stack,
       });
-      throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+      throw new Error(`Failed to fetch mentors: ${error.message}`);
     }
   }
   async getMentorById(mentorId: string): Promise<EUsers> {
@@ -259,7 +258,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       console.log("getMentorById service step 2: Mentor fetched", mentor);
 
       if (mentor.isBlocked) {
-        throw new ApiError(403, "Mentor is blocked");
+        throw new Error("Mentor is blocked");
       }
 
       return mentor;
@@ -268,9 +267,9 @@ export default class MenteeProfileService implements IMenteeProfileService {
         message: error.message,
         stack: error.stack,
       });
-      throw error instanceof ApiError
+      throw error instanceof Error
         ? error
-        : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
+        : new Error(`Failed to fetch mentor: ${error.message}`);
     }
   }
 
@@ -286,33 +285,33 @@ export default class MenteeProfileService implements IMenteeProfileService {
 
       // Validate serviceId
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, "Invalid serviceId format");
+        throw new Error("Invalid serviceId format");
       }
 
       // Fetch service to get mentorId
       const service = await this.ServiceRepository.getServiceById(serviceId);
       if (!service) {
-        throw new ApiError(404, "Service not found");
+        throw new Error("Service not found");
       }
 
       if (service.type !== "priorityDM") {
-        throw new ApiError(400, "Service is not a Priority DM");
+        throw new Error("Service is not a Priority DM");
       }
 
       // Validate menteeId
       if (!mongoose.Types.ObjectId.isValid(menteeId)) {
-        throw new ApiError(400, "Invalid menteeId format");
+        throw new Error("Invalid menteeId format");
       }
 
       // Validate bookingId
       if (!mongoose.Types.ObjectId.isValid(bookingId)) {
-        throw new ApiError(400, "Invalid bookingId format");
+        throw new Error("Invalid bookingId format");
       }
 
       // Verify booking exists
       const booking = await this.BookingRepository.findById(bookingId);
       if (!booking) {
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
 
       // Prepare PriorityDM data
@@ -331,7 +330,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       // Create PriorityDM
       const priorityDM = await this.PriorityDMRepository.create(priorityDMData);
       if (!priorityDM) {
-        throw new ApiError(500, "Failed to create Priority DM");
+        throw new Error("Failed to create Priority DM");
       }
       const bookingStatusChange = await this.BookingRepository.update(
         bookingId,
@@ -351,7 +350,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
   ): Promise<EPriorityDM[]> {
     try {
       if (!mongoose.Types.ObjectId.isValid(bookingId)) {
-        throw new ApiError(400, `Invalid serviceId format: ${bookingId}`);
+        throw new Error(`Invalid serviceId format: ${bookingId}`);
       }
       console.log("menteeservice getPriorityDMs step 1", bookingId, menteeId);
 
@@ -376,23 +375,9 @@ export default class MenteeProfileService implements IMenteeProfileService {
       return services;
     } catch (error: any) {
       console.error("getTopServices service error", error);
-      throw new ApiError(500, `Failed to fetch top services: ${error.message}`);
+      throw new Error(`Failed to fetch top services: ${error.message}`);
     }
   }
-
-  // async getTopMentors(limit: number = 8): Promise<EUsers[]> {
-  //   try {
-  //     console.log("getTopMentors service step 1", { limit });
-  //     const mentors = await this.UserRepository.getTopMentors(limit);
-  //     console.log("getTopMentors service step 2", mentors.length);
-  //     return mentors.filter(
-  //       (mentor) => !mentor.isBlocked && mentor.isApproved === "Approved"
-  //     );
-  //   } catch (error: any) {
-  //     console.error("getTopMentors service error", error);
-  //     throw new ApiError(500, `Failed to fetch top mentors: ${error.message}`);
-  //   }
-  // }
 
   async getDashboardData(): Promise<DashboardData> {
     try {
@@ -410,10 +395,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       return { topServices, topMentors, topTestimonials };
     } catch (error: any) {
       console.error("getDashboardData service error", error);
-      throw new ApiError(
-        500,
-        `Failed to fetch dashboard data: ${error.message}`
-      );
+      throw new Error(`Failed to fetch dashboard data: ${error.message}`);
     }
   }
 }

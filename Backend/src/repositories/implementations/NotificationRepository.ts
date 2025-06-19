@@ -1,5 +1,5 @@
 import Notification from "../../models/notificationModel";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import {
   INotificationRepository,
   ICreateNotificationDTO,
@@ -16,14 +16,18 @@ export default class NotificationRepository implements INotificationRepository {
       });
       return savedNotification;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to create notification", error.message);
+      throw new Error("Failed to create notification", error.message);
     }
   }
 
   async findUnreadByRecipient(recipientId: string) {
     try {
       return await Notification.find({ recipientId })
-        .populate("senderId", "firstName lastName", "Users")
+        .populate({
+          path: "senderId",
+          select: "firstName lastName",
+          model: "Users",
+        })
         .sort({ createdAt: -1 })
         .lean()
         .then((notifications) =>
@@ -35,16 +39,19 @@ export default class NotificationRepository implements INotificationRepository {
             relatedId: n.relatedId,
             isRead: n.isRead,
             createdAt: n.createdAt,
-            sender: n.senderId
-              ? {
-                  firstName: n.senderId?.firstName,
-                  lastName: n.senderId?.lastName,
-                }
-              : undefined,
+            sender:
+              n.senderId &&
+              typeof n.senderId === "object" &&
+              "firstName" in n.senderId
+                ? {
+                    firstName: (n.senderId as any).firstName,
+                    lastName: (n.senderId as any).lastName,
+                  }
+                : undefined,
           }))
         );
     } catch (error: any) {
-      throw new ApiError(500, "Failed to fetch notifications", error.message);
+      throw new Error("Failed to fetch notifications", error.message);
     }
   }
 
@@ -52,7 +59,7 @@ export default class NotificationRepository implements INotificationRepository {
     try {
       return await Notification.findById(notificationId);
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find notification", error.message);
+      throw new Error("Failed to find notification", error.message);
     }
   }
 
@@ -64,11 +71,7 @@ export default class NotificationRepository implements INotificationRepository {
         { new: true }
       );
     } catch (error: any) {
-      throw new ApiError(
-        500,
-        "Failed to mark notification as read",
-        error.message
-      );
+      throw new Error("Failed to mark notification as read", error.message);
     }
   }
 }

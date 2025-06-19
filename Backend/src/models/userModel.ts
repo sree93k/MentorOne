@@ -179,21 +179,16 @@ const UsersSchema: Schema<EUsers> = new Schema(
         },
         role: {
           type: String,
-          enum: ["mentor", "mentee"], // Restricts the role to either 'mentor' or 'mentee'
-          default: null, // Default to null when the user is not online
+          enum: ["mentor", "mentee"],
+          default: null,
           required: false,
         },
       },
-      default: { status: false, role: null }, // Default for the entire object
+      default: { status: false, role: null },
       required: false,
     },
     contacts: {
       type: [Schema.Types.ObjectId],
-      required: false,
-    },
-    wallet: {
-      type: Number,
-      default: 0,
       required: false,
     },
   },

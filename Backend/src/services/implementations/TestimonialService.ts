@@ -1,4 +1,3 @@
-import { ApiError } from "../../middlewares/errorHandler";
 import TestimonialRepository from "../../repositories/implementations/TestimonialRepository";
 import { ITestimonialRepository } from "../../repositories/interface/ITestimonialRepository";
 import { ETestimonial } from "../../entities/testimonialEntity";
@@ -50,22 +49,22 @@ export default class TestimonialService {
 
       // Validate inputs
       if (!mongoose.Types.ObjectId.isValid(menteeId)) {
-        throw new ApiError(400, "Invalid Mentee ID");
+        throw new Error("Invalid Mentee ID");
       }
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(400, "Invalid Mentor ID");
+        throw new Error("Invalid Mentor ID");
       }
       if (!mongoose.Types.ObjectId.isValid(serviceId)) {
-        throw new ApiError(400, "Invalid Service ID");
+        throw new Error("Invalid Service ID");
       }
       if (!mongoose.Types.ObjectId.isValid(bookingId)) {
-        throw new ApiError(400, "Invalid Booking ID");
+        throw new Error("Invalid Booking ID");
       }
       if (!comment || comment.trim() === "") {
-        throw new ApiError(400, "Comment is required");
+        throw new Error("Comment is required");
       }
       if (!rating || rating < 1 || rating > 5) {
-        throw new ApiError(400, "Rating must be between 1 and 5");
+        throw new Error("Rating must be between 1 and 5");
       }
 
       // Check if booking exists and is completed
@@ -78,14 +77,11 @@ export default class TestimonialService {
       );
       if (!booking) {
         console.log("Testimonialservice saveTestimonial step 7.1");
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
       if (booking.status !== "completed") {
         console.log("Testimonialservice saveTestimonial step 7.2");
-        throw new ApiError(
-          400,
-          "Booking must be completed to leave a testimonial"
-        );
+        throw new Error("Booking must be completed to leave a testimonial");
       }
       if (booking.menteeId._id.toString() !== menteeId) {
         console.log(
@@ -93,8 +89,7 @@ export default class TestimonialService {
           menteeId,
           booking.menteeId._id.toString()
         );
-        throw new ApiError(
-          403,
+        throw new Error(
           "Not authorized to leave a testimonial for this booking"
         );
       }
@@ -108,7 +103,7 @@ export default class TestimonialService {
         existingTestimonial
       );
       if (existingTestimonial) {
-        throw new ApiError(400, "Testimonial already exists for this booking");
+        throw new Error("Testimonial already exists for this booking");
       }
 
       const testimonial = await this.testimonialRepository.create({
@@ -136,7 +131,7 @@ export default class TestimonialService {
       return testimonial;
     } catch (error: any) {
       console.error("Testimonialservice saveTestimonial error", error);
-      throw new ApiError(500, error.message || "Failed to save testimonial");
+      throw new Error(error.message || "Failed to save testimonial");
     }
   }
 
@@ -157,10 +152,10 @@ export default class TestimonialService {
 
       // Validate inputs
       if (comment && comment.trim() === "") {
-        throw new ApiError(400, "Comment cannot be empty");
+        throw new Error("Comment cannot be empty");
       }
       if (rating !== undefined && (rating < 0 || rating > 5)) {
-        throw new ApiError(400, "Rating must be between 0 and 5");
+        throw new Error("Rating must be between 0 and 5");
       }
 
       const testimonial = await this.testimonialRepository.findById(
@@ -171,7 +166,7 @@ export default class TestimonialService {
         testimonial
       );
       if (!testimonial) {
-        throw new ApiError(404, "Testimonial not found");
+        throw new Error("Testimonial not found");
       }
 
       const updatedTestimonial = await this.testimonialRepository.update(
@@ -188,7 +183,7 @@ export default class TestimonialService {
       );
       return updatedTestimonial;
     } catch (error: any) {
-      throw new ApiError(500, error.message || "Failed to update testimonial");
+      throw new Error(error.message || "Failed to update testimonial");
     }
   }
 
@@ -199,7 +194,7 @@ export default class TestimonialService {
   ): Promise<{ testimonials: ETestimonial[]; total: number }> {
     try {
       if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-        throw new ApiError(400, "Invalid Mentor ID");
+        throw new Error("Invalid Mentor ID");
       }
       const skip = (page - 1) * limit;
       console.log(
@@ -222,8 +217,7 @@ export default class TestimonialService {
       return { testimonials, total };
     } catch (error: any) {
       console.error("Testimonialservice getTestimonialsByMentor error", error);
-      throw new ApiError(
-        500,
+      throw new Error(
         process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch testimonials"
@@ -248,7 +242,7 @@ export default class TestimonialService {
       );
       return testimonial;
     } catch (error: any) {
-      throw new ApiError(500, error.message || "Failed to fetch testimonial");
+      throw new Error(error.message || "Failed to fetch testimonial");
     }
   }
 
@@ -288,8 +282,7 @@ export default class TestimonialService {
         "TestimonialService getTestimonialsByMentorAndService error",
         error
       );
-      throw new ApiError(
-        500,
+      throw new Error(
         process.env.NODE_ENV === "development"
           ? error.message
           : "Failed to fetch testimonials"
@@ -306,10 +299,7 @@ export default class TestimonialService {
       return testimonials;
     } catch (error: any) {
       console.error("getTopTestimonials service error", error);
-      throw new ApiError(
-        500,
-        `Failed to fetch top testimonials: ${error.message}`
-      );
+      throw new Error(`Failed to fetch top testimonials: ${error.message}`);
     }
   }
 }

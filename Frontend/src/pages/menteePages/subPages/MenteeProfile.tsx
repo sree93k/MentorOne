@@ -279,6 +279,7 @@ const MenteeProfile: React.FC = () => {
       dispatch(setLoading(true));
       try {
         const response = await userProfileData();
+
         if (response) {
           dispatch(setUser(response));
         } else {
@@ -921,31 +922,36 @@ const MenteeProfile: React.FC = () => {
                   </p>
                 </div>
               )}
-              <EditableField
-                label="Bio"
-                field="bio"
-                value={profileData.bio}
-                isEditing={editingField === "bio"}
-                onEdit={() => setEditingField("bio")}
-                onSave={async () =>
-                  await updateProfileField("bio", profileData.bio)
-                }
-                onCancel={() => setEditingField(null)}
-                onChange={(value) =>
-                  setProfileData((prev) => ({ ...prev, bio: value }))
-                }
-                error={formErrors.bio}
-              >
-                <textarea
-                  className="w-full p-2 border rounded-md h-24"
-                  placeholder="Enter about yourself"
+              {user?.mentorActivated && (
+                <EditableField
+                  label="Bio"
+                  field="bio"
                   value={profileData.bio}
-                  onChange={(e) =>
-                    setProfileData((prev) => ({ ...prev, bio: e.target.value }))
+                  isEditing={editingField === "bio"}
+                  onEdit={() => setEditingField("bio")}
+                  onSave={async () =>
+                    await updateProfileField("bio", profileData.bio)
                   }
-                  readOnly={editingField !== "bio"}
-                />
-              </EditableField>
+                  onCancel={() => setEditingField(null)}
+                  onChange={(value) =>
+                    setProfileData((prev) => ({ ...prev, bio: value }))
+                  }
+                  error={formErrors.bio}
+                >
+                  <textarea
+                    className="w-full p-2 border rounded-md h-24"
+                    placeholder="Enter about yourself"
+                    value={profileData.bio}
+                    onChange={(e) =>
+                      setProfileData((prev) => ({
+                        ...prev,
+                        bio: e.target.value,
+                      }))
+                    }
+                    readOnly={editingField !== "bio"}
+                  />
+                </EditableField>
+              )}
             </div>
           </Tabs.Content>
           <Tabs.Content value="as-mentee">

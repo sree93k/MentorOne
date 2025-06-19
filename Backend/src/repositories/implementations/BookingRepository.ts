@@ -1,9 +1,10 @@
 import Booking from "../../models/bookingModel";
-import { ApiError } from "../../middlewares/errorHandler";
+
 import { IBookingRepository } from "../interface/IBookingRepository";
 import { EBooking } from "../../entities/bookingEntity";
 import { response } from "express";
 import mongoose from "mongoose";
+import { ErrorReply } from "redis";
 
 export default class BookingRepository implements IBookingRepository {
   async create(data: any) {
@@ -11,7 +12,7 @@ export default class BookingRepository implements IBookingRepository {
       const booking = new Booking(data);
       return await booking.save();
     } catch (error: any) {
-      throw new ApiError(500, "Failed to create booking", error.message);
+      throw new Error("Failed to create booking", error.message);
     }
   }
 
@@ -36,7 +37,7 @@ export default class BookingRepository implements IBookingRepository {
       return booking;
     } catch (error: any) {
       console.error("BookingRepository findById error", error);
-      throw new ApiError(500, "Failed to find booking", error.message);
+      throw new Error("Failed to find booking", error.message);
     }
   }
 
@@ -52,7 +53,7 @@ export default class BookingRepository implements IBookingRepository {
           select: "title technology price serviceType",
         });
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find booking", error.message);
+      throw new Error("Failed to find booking", error.message);
     }
   }
 
@@ -91,7 +92,7 @@ export default class BookingRepository implements IBookingRepository {
       return response;
     } catch (error: any) {
       console.log("booking repository findByMentee step 3 error", error);
-      throw new ApiError(500, "Failed to find bookings", error.message);
+      throw new Error("Failed to find bookings", error.message);
     }
   }
 
@@ -100,11 +101,7 @@ export default class BookingRepository implements IBookingRepository {
       const total = await Booking.countDocuments(query);
       return total;
     } catch (error: any) {
-      throw new ApiError(
-        500,
-        "Failed to count bookings by mentee",
-        error.message
-      );
+      throw new Error("Failed to count bookings by mentee", error.message);
     }
   }
 
@@ -124,7 +121,7 @@ export default class BookingRepository implements IBookingRepository {
         .limit(limit)
         .lean();
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find bookings", error.message);
+      throw new Error("Failed to find bookings", error.message);
     }
   }
   async countByMentor(mentorId: string) {
@@ -153,7 +150,7 @@ export default class BookingRepository implements IBookingRepository {
       return response;
     } catch (error: any) {
       console.log("booking repository update step 3 error", error);
-      throw new ApiError(500, "Failed to update booking", error.message);
+      throw new Error("Failed to update booking", error.message);
     }
   }
 
@@ -176,7 +173,7 @@ export default class BookingRepository implements IBookingRepository {
       console.log("booking repository findByMenteeAndService step 2", booking);
       return booking;
     } catch (error: any) {
-      throw new ApiError(500, "Failed to find booking", error.message);
+      throw new Error("Failed to find booking", error.message);
     }
   }
 
@@ -312,7 +309,7 @@ export default class BookingRepository implements IBookingRepository {
         "booking repository findByMenteeWithTestimonials step 3 error",
         error
       );
-      throw new ApiError(500, "Failed to find bookings", error.message);
+      throw new Error("Failed to find bookings", error.message);
     }
   }
   async updateBookingStatus(
@@ -325,7 +322,7 @@ export default class BookingRepository implements IBookingRepository {
         status,
       });
       if (!mongoose.Types.ObjectId.isValid(bookingId)) {
-        throw new ApiError(400, "Invalid Booking ID");
+        throw new Error("Invalid Booking ID");
       }
       const booking = await Booking.findByIdAndUpdate(
         bookingId,
@@ -333,13 +330,13 @@ export default class BookingRepository implements IBookingRepository {
         { new: true }
       );
       if (!booking) {
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
       console.log("BookingRepository updateBookingStatus step 2", booking);
       return booking;
     } catch (error: any) {
       console.error("BookingRepository updateBookingStatus error", error);
-      throw new ApiError(500, "Failed to update booking status", error.message);
+      throw new Error("Failed to update booking status", error.message);
     }
   }
 
@@ -353,7 +350,7 @@ export default class BookingRepository implements IBookingRepository {
         bookingId,
       });
       if (!mongoose.Types.ObjectId.isValid(bookingId)) {
-        throw new ApiError(400, "Invalid Booking ID");
+        throw new Error("Invalid Booking ID");
       }
       const query = { _id: bookingId };
 
@@ -361,11 +358,11 @@ export default class BookingRepository implements IBookingRepository {
         "_id status userId mentorId"
       );
       if (!booking) {
-        throw new ApiError(404, "Booking not found");
+        throw new Error("Booking not found");
       }
       return booking;
     } catch (error: any) {
-      throw new ApiError(500, error.message);
+      throw new Error(error.message);
     }
   }
 }

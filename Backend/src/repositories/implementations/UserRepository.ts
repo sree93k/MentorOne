@@ -4,7 +4,7 @@ import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import mongoose from "mongoose";
-import { ApiError } from "../../middlewares/errorHandler"; // Adjust the import path as necessary
+
 import { log } from "winston";
 import Service from "../../models/serviceModel";
 export default class UserRepository implements IUserRepository {
@@ -16,7 +16,7 @@ export default class UserRepository implements IUserRepository {
       const isUserExists = await Users.findOne({ email: user.email });
       console.log("create user repo start 2");
       if (isUserExists) {
-        throw new ApiError(400, "Account already exists!");
+        throw new Error("Account already exists!");
       }
       console.log("repo started>>>>>>>>>>>>>");
       console.log("step repo user 1 is user: ", user);
@@ -57,12 +57,6 @@ export default class UserRepository implements IUserRepository {
     try {
       console.log("google sign in user step 1 user", user);
 
-      // const isUserExists = await Users.findOne({ email: user.email });
-      // console.log("google sign in user step 2");
-      // if (isUserExists) {
-      //   return isUserExists;
-      // }
-      // console.log("google sign in user step 3 userexists", isUserExists);
       const newUser = new Users(user);
       console.log("google sign in user step 4", newUser);
       const userData = await newUser.save();
@@ -82,10 +76,6 @@ export default class UserRepository implements IUserRepository {
     try {
       console.log("step 1 repor changepassowrd email ", email);
       console.log("step 1 repor changepassowrd password ", password);
-      // const allUsers = await Users.find();
-
-      // console.log("all users data", allUsers);
-      // console.log("all users above");
 
       const userExits = await Users.findOne({ email });
       console.log("user exisrts", userExits);
@@ -425,7 +415,7 @@ export default class UserRepository implements IUserRepository {
         message: error.message,
         stack: error.stack,
       });
-      throw new ApiError(500, `Failed to fetch mentors: ${error.message}`);
+      throw new Error(`Failed to fetch mentors: ${error.message}`);
     }
   }
 
@@ -451,7 +441,7 @@ export default class UserRepository implements IUserRepository {
       return await Users.countDocuments(query);
     } catch (error: any) {
       console.error("countMentors repo error", { message: error.message });
-      throw new ApiError(500, `Failed to count mentors: ${error.message}`);
+      throw new Error(`Failed to count mentors: ${error.message}`);
     }
   }
 
@@ -505,7 +495,7 @@ export default class UserRepository implements IUserRepository {
 
       if (!mentor) {
         console.log("getMentorById repo step 2: Mentor not found");
-        throw new ApiError(404, "Mentor not found");
+        throw new Error("Mentor not found");
       }
 
       const services = await Service.find({
@@ -596,9 +586,9 @@ export default class UserRepository implements IUserRepository {
         message: error.message,
         stack: error.stack,
       });
-      throw error instanceof ApiError
+      throw error instanceof Error
         ? error
-        : new ApiError(500, `Failed to fetch mentor: ${error.message}`);
+        : new Error(`Failed to fetch mentor: ${error.message}`);
     }
   }
 
@@ -611,7 +601,7 @@ export default class UserRepository implements IUserRepository {
       const modelName = role === "mentor" ? "Mentor" : "Mentee";
       await mongoose.model(modelName).findByIdAndUpdate(userId, { isOnline });
     } catch (error: any) {
-      throw new ApiError(500, "Failed to update online status", error.message);
+      throw new Error("Failed to update online status", error.message);
     }
   }
 
@@ -633,14 +623,14 @@ export default class UserRepository implements IUserRepository {
       const mentors = await Users.aggregate([
         {
           $match: {
-            role: "mentor",
+            role: { $in: ["mentor"] },
             isBlocked: false,
             isApproved: "Approved",
           },
         },
         {
           $lookup: {
-            from: "bookings",
+            from: "Booking",
             localField: "_id",
             foreignField: "mentorId",
             as: "bookings",
@@ -648,7 +638,7 @@ export default class UserRepository implements IUserRepository {
         },
         {
           $lookup: {
-            from: "testimonials",
+            from: "Testimonial",
             localField: "_id",
             foreignField: "mentorId",
             as: "testimonials",
@@ -656,7 +646,7 @@ export default class UserRepository implements IUserRepository {
         },
         {
           $lookup: {
-            from: "mentors",
+            from: "Mentor",
             localField: "mentorId",
             foreignField: "_id",
             as: "mentorDetails",
@@ -698,6 +688,8 @@ export default class UserRepository implements IUserRepository {
             averageRating: 1,
             isBlocked: 1,
             isApproved: 1,
+            bookings: 1, // For debugging
+            mentorDetails: 1,
           },
         },
       ]).exec();
@@ -705,7 +697,7 @@ export default class UserRepository implements IUserRepository {
       return mentors;
     } catch (error: any) {
       console.error("UserRepository getTopMentors error", error);
-      throw new ApiError(500, "Failed to fetch top mentors", error.message);
+      throw new Error("Failed to fetch top mentors", error.message);
     }
   }
 }

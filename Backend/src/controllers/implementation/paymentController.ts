@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, response } from "express";
+import { Request, Response, NextFunction } from "express";
 import PaymentService from "../../services/implementations/PaymentService";
 import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
@@ -6,6 +6,11 @@ import { IBookingService } from "../../services/interface/IBookingService";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import stripe from "../../config/stripe";
+import { HttpStatus } from "../../constants/HttpStatus";
+
+interface AuthUser {
+  id: string;
+}
 
 class PaymentController {
   private paymentService: IPaymentService;
@@ -16,35 +21,31 @@ class PaymentController {
     this.bookingService = new BookingService();
   }
 
-  private handleStripeError = (
-    error: any,
-    res: Response,
-    next: NextFunction
-  ) => {
-    console.log("payemntController handleStripeError step 1");
+  private handleStripeError = (error: any): ApiError => {
+    console.log("PaymentController handleStripeError step 1", { error });
     if (
       error.type === "StripeInvalidRequestError" &&
       error.code === "payment_intent_unexpected_state"
     ) {
-      res.status(400).json({
-        error:
-          "This PaymentIntent has already succeeded and cannot be confirmed again.",
-      });
+      return new ApiError(
+        HttpStatus.BAD_REQUEST,
+        "This PaymentIntent has already succeeded and cannot be confirmed again"
+      );
     } else if (
       error.type === "StripeInvalidRequestError" &&
       error.code === "resource_missing"
     ) {
-      res
-        .status(404)
-        .json(
-          new ApiError(
-            404,
-            "PaymentIntent not found",
-            "This PaymentIntent does not exist"
-          )
-        );
+      return new ApiError(
+        HttpStatus.NOT_FOUND,
+        "PaymentIntent not found",
+        "This PaymentIntent does not exist"
+      );
     } else {
-      next(error);
+      return new ApiError(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "Stripe error occurred",
+        error.message
+      );
     }
   };
 
@@ -52,28 +53,33 @@ class PaymentController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
-    const {
-      serviceId,
-      mentorId,
-      menteeId,
-      amount,
-      bookingDate,
-      platformPercentage,
-      platformCharge,
-      total,
-      startTime,
-      endTime,
-      day,
-      slotIndex,
-    } = req.body;
-
-    console.log(
-      "OOOOOOOOOOOOOOO Payemntcontroller createCheckoutSession request: step 1",
-      req.body
-    );
+  ): Promise<void> => {
     try {
-      console.log("payemntcontroller createCheckoutSession request: step 2");
+      const {
+        serviceId,
+        mentorId,
+        menteeId,
+        amount,
+        bookingDate,
+        platformPercentage,
+        platformCharge,
+        total,
+        startTime,
+        endTime,
+        day,
+        slotIndex,
+      } = req.body;
+      console.log("PaymentController createCheckoutSession step 1", {
+        reqBody: req.body,
+      });
+
+      if (!serviceId || !mentorId || !menteeId || !amount || !total) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Required fields missing: serviceId, mentorId, menteeId, amount, total"
+        );
+      }
+
       const checkoutSession = await this.paymentService.createCheckoutSession({
         serviceId,
         mentorId,
@@ -88,21 +94,25 @@ class PaymentController {
         day,
         slotIndex,
       });
-      console.log(
-        "payemntcontroller createCheckoutSession request: step 3",
-        checkoutSession
-      );
-      res.json({ sessionId: checkoutSession.id });
-    } catch (error: any) {
-      console.error("Error in createCheckoutSession controller:", error);
+      console.log("PaymentController createCheckoutSession step 2", {
+        sessionId: checkoutSession.id,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { sessionId: checkoutSession.id },
+            "Checkout session created successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in createCheckoutSession:", error);
       if (error instanceof ApiError) {
-        res.status(error.statusCode).json({ error: error.message });
-      } else if (error.type === "StripeInvalidRequestError") {
-        res
-          .status(400)
-          .json({ error: error.message || "Invalid request to Stripe API" });
+        next(error);
       } else {
-        res.status(500).json({ error: "Failed to create checkout session" });
+        next(this.handleStripeError(error));
       }
     }
   };
@@ -111,24 +121,33 @@ class PaymentController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
-    const {
-      amount,
-      serviceId,
-      mentorId,
-      menteeId,
-      bookingDate,
-      platformPercentage,
-      platformCharge,
-      total,
-      startTime,
-      endTime,
-      day,
-      slotIndex,
-    } = req.body;
-
+  ): Promise<void> => {
     try {
-      console.log("payemntcontroller createPaymentIntent step 1");
+      const {
+        amount,
+        serviceId,
+        mentorId,
+        menteeId,
+        bookingDate,
+        platformPercentage,
+        platformCharge,
+        total,
+        startTime,
+        endTime,
+        day,
+        slotIndex,
+      } = req.body;
+      console.log("PaymentController createPaymentIntent step 1", {
+        reqBody: req.body,
+      });
+
+      if (!amount || !serviceId || !mentorId || !menteeId || !total) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Required fields missing: amount, serviceId, mentorId, menteeId, total"
+        );
+      }
+
       const paymentIntent = await this.paymentService.createPaymentIntent({
         amount,
         serviceId,
@@ -143,11 +162,22 @@ class PaymentController {
         day,
         slotIndex,
       });
-      console.log("payemntcontroller createPaymentIntent step 2");
-      res.json({ data: { clientSecret: paymentIntent.client_secret } });
+      console.log("PaymentController createPaymentIntent step 2", {
+        clientSecret: paymentIntent.client_secret,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { clientSecret: paymentIntent.client_secret },
+            "Payment intent created successfully"
+          )
+        );
     } catch (error) {
-      console.log("payemntcontroller createPaymentIntent step 4", error);
-      this.handleStripeError(error, res, next);
+      console.error("Error in createPaymentIntent:", error);
+      next(this.handleStripeError(error));
     }
   };
 
@@ -155,14 +185,18 @@ class PaymentController {
     req: Request,
     res: Response,
     next: NextFunction
-  ) => {
-    const { sessionId } = req.params;
-
+  ): Promise<void> => {
     try {
+      const { sessionId } = req.params;
+      if (!sessionId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Session ID is required");
+      }
+      console.log("PaymentController verifySession step 1", { sessionId });
+
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       if (session.payment_status !== "paid") {
         throw new ApiError(
-          400,
+          HttpStatus.BAD_REQUEST,
           "Payment not completed",
           "Invalid payment status"
         );
@@ -171,128 +205,151 @@ class PaymentController {
       const booking = await this.bookingService.verifyBookingBySessionId(
         sessionId
       );
-      res.json({ bookingId: booking._id });
-    } catch (error: any) {
-      console.error("Error verifying session:", error);
+      if (!booking) {
+        throw new ApiError(HttpStatus.NOT_FOUND, "Booking not found");
+      }
+      console.log("PaymentController verifySession step 2", {
+        bookingId: booking._id,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { bookingId: booking._id },
+            "Session verified successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in verifySession:", error);
       if (error instanceof ApiError) {
-        res.status(error.statusCode).json({ error: error.message });
+        next(error);
       } else {
-        res.status(500).json({ error: "Failed to verify session" });
+        next(this.handleStripeError(error));
       }
     }
   };
 
   public getAllPayments = async (
-    req: Request,
+    req: Request & { user?: AuthUser },
     res: Response,
     next: NextFunction
-  ) => {
-    const { page = 1, limit = 10, searchQuery = "", status = "" } = req.query;
-    const mentorId = req.user?.id; // Assuming req.user is set by authenticate middleware
-
+  ): Promise<void> => {
     try {
-      console.log("paymentController getAllPayments step 1", {
+      const {
+        page = "1",
+        limit = "10",
+        searchQuery = "",
+        status = "",
+      } = req.query;
+      const mentorId = req.user?.id;
+      console.log("PaymentController getAllPayments step 1", {
         mentorId,
         page,
         limit,
         searchQuery,
         status,
       });
+
+      if (!mentorId) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
+      }
+
       const result = await this.paymentService.getAllPayments(
-        Number(page),
-        Number(limit),
-        String(searchQuery),
-        String(status)
+        parseInt(page as string, 10),
+        parseInt(limit as string, 10),
+        searchQuery as string,
+        status as string
       );
-      console.log("paymentController getAllPayments step 2", result);
-      res.json(result);
-    } catch (error: any) {
-      console.error("Error in getAllPayments controller:", error);
+      console.log("PaymentController getAllPayments step 2", { result });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            result,
+            "Payments fetched successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in getAllPayments:", error);
       next(error);
     }
   };
 
   public getAllMentorPayments = async (
-    req: Request,
+    req: Request & { user?: AuthUser },
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
-      console.log("paymentcontroller getAllMentorPayments step 1");
       const menteeId = req.user?.id;
       if (!menteeId) {
-        throw new ApiError(
-          401,
-          "Unauthorized: No mentee ID",
-          "Authentication required"
-        );
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
+      console.log("PaymentController getAllMentorPayments step 1", {
+        menteeId,
+      });
 
       const paymentData = await this.paymentService.getAllMentorPayments(
-        menteeId.toString()
+        menteeId
       );
-      console.log("paymentcontroller getAllMentorPayments step 2", paymentData);
+      console.log("PaymentController getAllMentorPayments step 2", {
+        paymentData,
+      });
 
-      res.json(
-        new ApiResponse(
-          200,
-          "Mentee payments fetched successfully",
-          paymentData
-        )
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            paymentData,
+            "Mentor payments fetched successfully"
+          )
+        );
     } catch (error) {
-      console.error("Error in getAllMentorPayments controller:", error);
+      console.error("Error in getAllMentorPayments:", error);
       next(error);
     }
   };
 
-  // public getMenteeWallet = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) => {
-  //   try {
-  //     const userId = req?.user?.id;
-  //     console.log("payment controller getMenteeWallet step 1", userId);
-  //     const walletData = this.paymentService.getMenteeWallet(userId);
-  //     console.log("payment controller getMenteeWallet step 2", walletData);
-
-  //     res.json(
-  //       new ApiResponse(200, "Mentee payments fetched successfully", walletData)
-  //     );
-  //   } catch (error) {
-  //     console.error("Error in getMenteeWallet controller:", error);
-  //     next(error);
-  //   }
-  // };
   public getMenteeWallet = async (
-    req: Request,
+    req: Request & { user?: AuthUser },
     res: Response,
     next: NextFunction
-  ) => {
+  ): Promise<void> => {
     try {
-      const userId = req?.user?.id;
-      const { page = 1, limit = 10 } = req.query;
-
-      console.log("payment controller getMenteeWallet step 1", {
+      const userId = req.user?.id;
+      const { page = "1", limit = "10" } = req.query;
+      if (!userId) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
+      }
+      console.log("PaymentController getMenteeWallet step 1", {
         userId,
         page,
         limit,
       });
 
       const walletData = await this.paymentService.getMenteeWallet(
-        userId as string,
-        parseInt(page as string),
-        parseInt(limit as string)
+        userId,
+        parseInt(page as string, 10),
+        parseInt(limit as string, 10)
       );
+      console.log("PaymentController getMenteeWallet step 2", { walletData });
 
-      console.log("payment controller getMenteeWallet step 2", walletData);
-
-      res.json(
-        new ApiResponse(200, "Mentee wallet fetched successfully", walletData)
-      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            walletData,
+            "Mentee wallet fetched successfully"
+          )
+        );
     } catch (error) {
-      console.error("Error in getMenteeWallet controller:", error);
+      console.error("Error in getMenteeWallet:", error);
       next(error);
     }
   };

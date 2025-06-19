@@ -39,5 +39,5 @@ export interface IServiceRepository {
     type?: string;
     oneToOneType?: string;
     digitalProductType?: string;
-  }): Promise<{ services: EService[]; totalCount: number }>;
+  }): Promise<{ services: EService[]; total: number }>;
 }

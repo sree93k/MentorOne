@@ -9,7 +9,8 @@ import { IBookingService } from "../../services/interface/IBookingService";
 import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import PaymentService from "../../services/implementations/PaymentService";
-
+import { HttpStatus } from "../../constants/HttpStatus";
+import { http } from "winston";
 class AdminController {
   private adminService: IAdminService;
   private bookingService: IBookingService;
@@ -29,8 +30,9 @@ class AdminController {
     try {
       console.log("admincontrolleer validateSuccessResponse step1");
 
-      res.status(200).json(new ApiResponse(200, null, "Success"));
-      return;
+      res
+        .status(HttpStatus.OK)
+        .json(new ApiResponse(HttpStatus.OK, null, "Success"));
     } catch (error) {
       next(error);
     }
@@ -55,11 +57,19 @@ class AdminController {
       if (response) {
         console.log("adminController all users step3 success response");
         res
-          .status(200)
-          .json(new ApiResponse(200, response, "Users fetched successfully"));
+          .status(HttpStatus.OK)
+          .json(
+            new ApiResponse(
+              HttpStatus.OK,
+              response,
+              "Users fetched successfully"
+            )
+          );
       } else {
         console.log("adminController all users step4 no response");
-        res.status(404).json(new ApiResponse(404, null, "No users found"));
+        res
+          .status(HttpStatus.NOT_FOUND)
+          .json(new ApiResponse(HttpStatus.NOT_FOUND, null, "No users found"));
       }
     } catch (error) {
       next(error);
@@ -78,16 +88,20 @@ class AdminController {
       console.log("userDatas admin controller step 2:", response);
       if (response) {
         res
-          .status(200)
+          .status(HttpStatus.OK)
           .json(
-            new ApiResponse(200, response, "User data fetched successfully")
+            new ApiResponse(
+              HttpStatus.OK,
+              response,
+              "User data fetched successfully"
+            )
           );
       } else {
         res
-          .status(404)
+          .status(HttpStatus.NOT_FOUND)
           .json(
             new ApiResponse(
-              404,
+              HttpStatus.NOT_FOUND,
               null,
               "User not found or data retrieval failed"
             )
@@ -95,7 +109,15 @@ class AdminController {
       }
     } catch (error) {
       console.error("Error in userDatas:", error);
-      res.status(500).json(new ApiResponse(500, null, "Internal server error"));
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(
+          new ApiResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            null,
+            "Internal server error"
+          )
+        );
       next(error);
     }
   };
@@ -119,9 +141,13 @@ class AdminController {
         response
       );
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
-          new ApiResponse(200, response, "Mentor status updated successfully")
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Mentor status updated successfully"
+          )
         );
     } catch (error) {
       next(error);
@@ -144,9 +170,13 @@ class AdminController {
         repsonse
       );
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
-          new ApiResponse(200, repsonse, "Mentor status updated successfully")
+          new ApiResponse(
+            HttpStatus.OK,
+            repsonse,
+            "Mentor status updated successfully"
+          )
         );
     } catch (error) {
       next(error);
@@ -173,7 +203,15 @@ class AdminController {
         status
       );
 
-      res.json({ data: bookings, total });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { data: bookings, total: total },
+            "Bookings fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error fetching all bookings:", error);
       next(error);
@@ -198,7 +236,15 @@ class AdminController {
         status
       );
 
-      res.json({ data: payments, total });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { data: payments, total: total },
+            "Payments fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error fetching all payments:", error);
       next(error);
@@ -224,10 +270,10 @@ class AdminController {
       );
       console.log("admincontroller transferToMentor step2", response);
       res
-        .status(200)
+        .status(HttpStatus.OK)
         .json(
           new ApiResponse(
-            200,
+            HttpStatus.OK,
             response,
             "Payment transferred to mentor successfully"
           )

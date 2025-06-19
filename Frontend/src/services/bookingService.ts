@@ -95,10 +95,10 @@ export const getBookings = async (
       },
       params: { page, limit, searchQuery },
     });
-    console.log("bookingservice getBookings.. step 2", response);
+    console.log("BOOOKINGSERVICE getBookings.. step 2", response.data.data);
     return {
-      data: response.data.data,
-      total: response.data.total,
+      data: response.data.data.data,
+      total: response.data.data.total,
     };
   } catch (error: any) {
     console.error("Error fetching bookings:", error);
@@ -166,8 +166,8 @@ export const getBookingsByMentor = async (
     });
     console.log("getBookingsByMentor step 2: Bookings fetched", response.data);
     return {
-      data: response.data.data,
-      total: response.data.total,
+      data: response.data.data.data,
+      total: response.data.data.total,
     };
   } catch (error: any) {
     console.error("getBookingsByMentor error:", error);
@@ -189,7 +189,7 @@ export const allVideoCallBookings = async () => {
     });
 
     console.log("bookingservice allVideoCallBookings step 2", response.data);
-    return response.data; // Return the data directly
+    return response.data.data; // Return the data directly
   } catch (error: any) {
     console.error("bookingservice allVideoCallBookings error:", error);
     throw new Error(`Failed to fetch videocall bookings: ${error.message}`);
@@ -203,9 +203,13 @@ export const updateStatus = async (bookingId: string, payload: any) => {
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
+
+    console.log("bookingservice updateStatus step 1.1", bookingId);
+
+    console.log("bookingservice updateStatus step 1.2", payload);
     const response = await api.put(
-      `/user/booking/${bookingId}/updatestatus`,
-      payload,
+      `/user/booking/${bookingId}/updatereshedule`,
+      { payload },
       {
         headers: {
           "Content-Type": "application/json",

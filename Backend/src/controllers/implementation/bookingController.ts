@@ -7,6 +7,8 @@ import { ApiError } from "../../middlewares/errorHandler";
 import TestimonialService from "../../services/implementations/TestimonialService";
 import { ITestimonialService } from "../../services/interface/ITestimonialService";
 import stripe from "../../config/stripe";
+import { HttpStatus } from "../../constants/HttpStatus";
+import ApiResponse from "../../utils/apiResponse";
 
 class BookingController {
   private paymentService: IPaymentService;
@@ -58,10 +60,18 @@ class BookingController {
         platformCharge,
         total,
       });
-      res.json({
-        bookingId: result.booking._id,
-        paymentId: result.payment._id,
-      });
+
+      console.log("BookingController createBooking step 1", result);
+      res.status(HttpStatus.CREATED).json(
+        new ApiResponse(
+          HttpStatus.CREATED,
+          {
+            bookingId: result.booking._id,
+            paymentId: result.payment._id,
+          },
+          "Booking created successfully"
+        )
+      );
     } catch (error: any) {
       console.error("Error saving booking:", error);
       next(error);
@@ -87,7 +97,7 @@ class BookingController {
         searchQuery,
       });
       if (!menteeId) {
-        throw new ApiError(400, "Mentee ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentee ID is required");
       }
       const { bookings, total } = await this.bookingService.getBookingsByMentee(
         menteeId,
@@ -99,7 +109,15 @@ class BookingController {
         bookings,
         total,
       });
-      res.json({ data: bookings, total });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { data: bookings, total },
+            "Bookings fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.log("booking controller get bookings step error", error);
       console.error("Error fetching bookings:", error);
@@ -125,7 +143,7 @@ class BookingController {
         limit
       );
       if (!mentorId) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
       const { bookings, total } = await this.bookingService.getBookingsByMentor(
         mentorId,
@@ -137,9 +155,16 @@ class BookingController {
         bookings,
         total
       );
-      res.json({ data: bookings, total });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { data: bookings, total },
+            "Mentor bookings fetched successfully"
+          )
+        );
     } catch (error: any) {
-      console.log("booking controller get mentor bookings step error", error);
       console.error("Error fetching mentor bookings:", error);
       next(error);
     }
@@ -156,7 +181,11 @@ class BookingController {
 
       await this.bookingService.cancelBooking(bookingId);
       console.log("Cancel booking controller step 2");
-      res.json({ message: "Booking cancelled" });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(HttpStatus.OK, null, "Booking cancelled successfully")
+        );
     } catch (error: any) {
       console.error("Error cancelling booking:", error);
       next(error);
@@ -179,7 +208,7 @@ class BookingController {
       const limit: number = parseInt(req.query.limit as string) || 5;
 
       if (!mentorId) {
-        throw new ApiError(400, "Invalid input");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
 
       const bookings = await this.bookingService.getAllVideoCalls(
@@ -187,11 +216,18 @@ class BookingController {
         status,
         limit
       );
-      console.log(
-        "BookingController getAllVideoCallsByMentor step 2",
-        bookings
-      );
-      res.json({ data: bookings, total: bookings.length });
+      console.log("BookingController getAllVideoCallsByMentor step 2", {
+        bookings,
+      });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { data: bookings, total: bookings.length },
+            "Video calls fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error fetching video call bookings:", error);
       next(error);
@@ -210,10 +246,10 @@ class BookingController {
 
     try {
       if (!mentorId) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
       if (!status) {
-        throw new ApiError(400, "Status is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Status is required");
       }
       const validStatuses = [
         "confirmed",
@@ -223,7 +259,7 @@ class BookingController {
         "completed",
       ];
       if (!validStatuses.includes(status)) {
-        throw new ApiError(400, "Invalid status value");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid status value");
       }
       if (
         rescheduleRequest &&
@@ -231,7 +267,10 @@ class BookingController {
           rescheduleRequest.rescheduleStatus
         )
       ) {
-        throw new ApiError(400, "Invalid reschedule status value");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Invalid reschedule status value"
+        );
       }
 
       const updates: any = { status };
@@ -251,11 +290,18 @@ class BookingController {
         updates,
         mentorId
       );
-      console.log("BookingController updateBookingStatus step 2");
-      res.json({
-        message: "Booking status updated successfully",
-        booking: updatedBooking,
+      console.log("BookingController updateBookingStatus step 2", {
+        updatedBooking,
       });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { booking: updatedBooking },
+            "Booking status updated successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error updating booking status:", error);
       next(error);
@@ -275,18 +321,16 @@ class BookingController {
 
     try {
       if (!menteeId) {
-        return next(new ApiError(400, "Mentee ID is required"));
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentee ID is required");
       }
 
       if (
         !mentorDecides &&
         (!requestedDate || !requestedTime || requestedSlotIndex === undefined)
       ) {
-        return next(
-          new ApiError(
-            400,
-            "Requested date, time, and slot index are required unless mentor decides"
-          )
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Requested date, time, and slot index are required unless mentor decides"
         );
       }
 
@@ -301,10 +345,18 @@ class BookingController {
         }
       );
 
-      res.json({
-        message: "Reschedule request submitted successfully",
-        booking: updatedBooking,
+      console.log("BookingController requestReschedule step 1", {
+        updatedBooking,
       });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { booking: updatedBooking },
+            "Reschedule request submitted successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error requesting reschedule:", error);
       next(error);
@@ -332,10 +384,10 @@ class BookingController {
 
     try {
       if (!menteeId) {
-        throw new ApiError(400, "Mentee ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentee ID is required");
       }
       if (!bookingId) {
-        throw new ApiError(400, "Booking ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Booking ID is required");
       }
 
       // Verify booking exists
@@ -345,7 +397,7 @@ class BookingController {
         booking
       );
       if (!booking) {
-        throw new ApiError(404, "Booking not found");
+        throw new ApiError(HttpStatus.NOT_FOUND, "Booking not found");
       }
 
       const testimonial = await this.testimonialService.saveTestimonial({
@@ -361,10 +413,18 @@ class BookingController {
         testimonial
       );
 
-      res.json({
-        message: "Testimonial submitted successfully",
+      console.log("BookingController submitTestimonial step 3", {
         testimonial,
       });
+      res
+        .status(HttpStatus.CREATED)
+        .json(
+          new ApiResponse(
+            HttpStatus.CREATED,
+            { testimonial },
+            "Testimonial submitted successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error submitting testimonial:", error);
       next(error);
@@ -392,7 +452,13 @@ class BookingController {
     );
     try {
       if (!menteeId) {
-        throw new ApiError(400, "Mentee ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentee ID is required");
+      }
+      if (!testimonialId) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Testimonial ID is required"
+        );
       }
 
       const testimonial = await this.testimonialService.updateTestimonial({
@@ -400,14 +466,18 @@ class BookingController {
         comment,
         rating,
       });
-      console.log(
-        "BookingController updateTestimonial step 4 testimonial reponse",
-        testimonial
-      );
-      res.json({
-        message: "Testimonial updated successfully",
+      console.log("BookingController updateTestimonial step 2", {
         testimonial,
       });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { testimonial },
+            "Testimonial updated successfully"
+          )
+        );
     } catch (error: any) {
       console.error("Error updating testimonial:", error);
       next(error);
@@ -427,7 +497,7 @@ class BookingController {
 
     try {
       if (!bookingId) {
-        throw new ApiError(400, "Booking ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Booking ID is required");
       }
       const testimonial =
         await this.testimonialService.getTestimonialByBookingId(bookingId);
@@ -436,12 +506,17 @@ class BookingController {
         testimonial
       );
 
-      res.status(200).json({
-        message: testimonial
-          ? "Testimonial fetched successfully"
-          : "No testimonial found",
-        testimonial,
-      });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { testimonial },
+            testimonial
+              ? "Testimonial fetched successfully"
+              : "No testimonial found"
+          )
+        );
     } catch (error: any) {
       console.error("BookingController getTestimonialByBookingId error", error);
       next(error);
@@ -468,7 +543,7 @@ class BookingController {
 
     try {
       if (!mentorId) {
-        throw new ApiError(400, "Mentor ID is required");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
       const { testimonials, total } =
         await this.testimonialService.getTestimonialsByMentor(
@@ -481,13 +556,15 @@ class BookingController {
         total,
       });
 
-      res.status(200).json({
-        message: "Testimonials fetched successfully",
-        testimonials,
-        total,
-        page,
-        limit,
-      });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { testimonials, total, page, limit },
+            "Testimonials fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.error("BookingController getTestimonialsByMentor error", error);
       next(error);
@@ -513,7 +590,10 @@ class BookingController {
 
     try {
       if (!mentorId || !serviceId) {
-        throw new ApiError(400, "Mentor ID and Service ID are required");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Mentor ID and Service ID are required"
+        );
       }
       const { testimonials, total } =
         await this.testimonialService.getTestimonialsByMentorAndService(
@@ -522,19 +602,20 @@ class BookingController {
           page,
           limit
         );
-      // console.log("TestimonialController getTestimonialsByMentorAndService step 2", {
-      //   testimonials.length,
-      //   total,
-      // });
 
-      res.status(200).json({
-        success: true,
-        message: "Testimonials fetched successfully",
-        testimonials,
-        total,
-        page,
-        limit,
-      });
+      console.log(
+        "BookingController getTestimonialsByMentorAndService step 2",
+        { testimonials, total }
+      );
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { testimonials, total, page, limit },
+            "Testimonials fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.error(
         "TestimonialController getTestimonialsByMentorAndService error",
@@ -552,6 +633,7 @@ class BookingController {
     const { bookingId } = req.params;
     const { status } = req.body;
     const user = req.user; // Assuming auth middleware attaches user
+
     console.log("BookingController updateBookingServiceStatus step 1", {
       bookingId,
       status,
@@ -560,29 +642,33 @@ class BookingController {
 
     try {
       if (!bookingId || !status) {
-        throw new ApiError(400, "Booking ID and status are required");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Booking ID and status are required"
+        );
       }
       if (!["pending", "confirmed", "completed"].includes(status)) {
-        throw new ApiError(400, "Invalid status");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid status");
       }
-      // if (user?.role !== "mentor") {
-      //   throw new ApiError(403, "Only mentors can update booking status");
-      // }
+
       console.log("BookingController updateBookingServiceStatus step 2");
 
       const booking = await this.bookingService.updateBookingServiceStatus(
         bookingId,
         status
       );
-      console.log(
-        "BookingController updateBookingServiceStatus step 3",
-        booking
-      );
-      res.status(200).json({
-        success: true,
-        message: "Booking status updated successfully",
+      console.log("BookingController updateBookingServiceStatus step 3", {
         booking,
       });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { booking },
+            "Booking status updated successfully"
+          )
+        );
     } catch (error: any) {
       console.error(
         "BookingController updateBookingServiceStatus error",
@@ -591,6 +677,116 @@ class BookingController {
       next(error);
     }
   };
+
+  // public updateBookingResheduletatus = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ) => {
+  //   const { bookingId } = req.params;
+  //   const { paylaod } = req.body;
+  //   const user = req.user; // Assuming auth middleware attaches user
+
+  //   console.log("BookingController updateBookingResheduletatus step 1", {
+  //     bookingId,
+  //     userId: user?.id,
+  //     paylaod,
+  //   });
+
+  //   try {
+  //     if (!bookingId || !paylaod) {
+  //       throw new ApiError(
+  //         HttpStatus.BAD_REQUEST,
+  //         "Booking ID and status are required"
+  //       );
+  //     }
+  //     if (!["pending", "confirmed", "completed"].includes(paylaod.status)) {
+  //       throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid status");
+  //     }
+
+  //     console.log("BookingController updateBookingResheduletatus step 2");
+
+  //     const booking = await this.bookingService.updateResheduleBooking(
+  //       bookingId,
+  //       paylaod
+  //     );
+  //     console.log("BookingController updateBookingResheduletatus step 3", {
+  //       booking,
+  //     });
+  //     res
+  //       .status(HttpStatus.OK)
+  //       .json(
+  //         new ApiResponse(
+  //           HttpStatus.OK,
+  //           { booking },
+  //           "Booking status updated successfully"
+  //         )
+  //       );
+  //   } catch (error: any) {
+  //     console.error(
+  //       "BookingController updateBookingResheduletatus error",
+  //       error
+  //     );
+  //     next(error);
+  //   }
+  // };
+  public updateBookingResheduleStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { bookingId } = req.params;
+    const { payload } = req.body; // Fixed typo: paylaod -> payload
+    const userId = req?.user?.id;
+
+    console.log("BookingController updateBookingResheduletatus step 1", {
+      bookingId,
+      userId,
+      payload,
+    });
+
+    try {
+      if (!userId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
+      }
+      if (!bookingId || !payload) {
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Booking ID and payload are required"
+        );
+      }
+      if (!["pending", "confirmed", "rescheduled"].includes(payload.status)) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid status");
+      }
+
+      console.log("BookingController updateBookingResheduletatus step 2");
+
+      const booking = await this.bookingService.updateResheduleBooking(
+        userId,
+        bookingId,
+        payload
+      );
+      console.log("BookingController updateBookingResheduletatus step 3", {
+        booking,
+      });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { booking },
+            "Booking reschedule status updated successfully"
+          )
+        );
+    } catch (error: any) {
+      console.error(
+        "BookingController updateBookingResheduletatus error",
+        error
+      );
+      next(error);
+    }
+  };
+
   public getBookingData = async (
     req: Request,
     res: Response,
@@ -599,40 +795,43 @@ class BookingController {
     try {
       const { dashboard } = req.query;
       const { bookingId } = req.params;
+      const userId = req.user?.id;
 
       if (!dashboard || !["mentor", "mentee"].includes(dashboard as string)) {
-        throw new ApiError(400, "Invalid or missing dashboard parameter");
+        throw new ApiError(
+          HttpStatus.BAD_REQUEST,
+          "Invalid or missing dashboard parameter"
+        );
       }
       if (!bookingId) {
-        throw new ApiError(400, "Missing bookingId parameter");
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Booking ID is required");
       }
-
-      const userId = (req as any).user?._id;
       if (!userId) {
-        throw new ApiError(401, "Unauthorized: User ID not found");
-      }
-      if (!dashboard) {
         throw new ApiError(
-          400,
-          "Dashboard must be either 'mentor' or 'mentee'"
+          HttpStatus.UNAUTHORIZED,
+          "Unauthorized: User ID not found"
         );
       }
 
-      console.log("BookingController getBookingData step 3");
-
+      console.log("BookingController getBookingData step 1", {
+        dashboard,
+        bookingId,
+        userId,
+      });
       const booking = await this.bookingService.getBookingData(
         dashboard as "mentor" | "mentee",
         bookingId
       );
-      console.log(
-        "BookingController updateBookingServiceStatus step 4",
-        booking
-      );
-      res.status(200).json({
-        success: true,
-        message: "Booking status updated successfully",
-        booking,
-      });
+      console.log("BookingController getBookingData step 2", { booking });
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { booking },
+            "Booking data fetched successfully"
+          )
+        );
     } catch (error: any) {
       console.error(
         "BookingController updateBookingServiceStatus error",
