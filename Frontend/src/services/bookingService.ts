@@ -228,6 +228,7 @@ export const updateStatus = async (bookingId: string, payload: any) => {
     }
   }
 };
+
 interface RescheduleRequestParams {
   requestedDate?: string;
   requestedTime?: string;
@@ -366,7 +367,7 @@ export const getTestimonialByBookingId = async (
     if (!accessToken) {
       throw new Error("No access token found. Please log in again.");
     }
-    console.log("getTestimonialByBookingId BookingId ", bookingId);
+    console.log("getTestimonialByBookingId BookingId step1", bookingId);
 
     const response = await api.get(
       `/seeker/bookings/${bookingId}/testimonial`,
@@ -376,7 +377,8 @@ export const getTestimonialByBookingId = async (
         },
       }
     );
-    return response.data.testimonial;
+    console.log("getTestimonialByBookingId BookingId step 2", response);
+    return response.data.data.testimonial;
   } catch (error: any) {
     console.error("Error fetching testimonial:", error);
     throw new Error(
@@ -386,7 +388,7 @@ export const getTestimonialByBookingId = async (
 };
 export const updateBookingStatus = async (
   bookingId: string,
-  status: "pending" | "confirmed" | "completed"
+  status: "pending" | "confirmed" | "completed" | "rescheduled" | "cancelled"
 ): Promise<any> => {
   try {
     console.log("updateBookingStatus step 1", { bookingId, status });

@@ -107,7 +107,7 @@ export interface IBookingService {
   findById(bookingId: string): Promise<any>;
   updateBookingServiceStatus(
     bookingId: string,
-    status: "pending" | "confirmed" | "completed"
+    status: "pending" | "confirmed" | "completed" | "rescheduled" | "cancelled"
   ): Promise<any>;
   // updateResheduleBooking(bookingId: string, paylaod: object): Promise<any>;
   updateResheduleBooking(
