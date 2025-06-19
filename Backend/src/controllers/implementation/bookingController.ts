@@ -642,12 +642,23 @@ class BookingController {
 
     try {
       if (!bookingId || !status) {
+        console.log("BookingController updateBookingServiceStatus step 1.1");
         throw new ApiError(
           HttpStatus.BAD_REQUEST,
           "Booking ID and status are required"
         );
       }
-      if (!["pending", "confirmed", "completed"].includes(status)) {
+      console.log("BookingController updateBookingServiceStatus step 1.2");
+      if (
+        ![
+          "pending",
+          "confirmed",
+          "completed",
+          "rescheduled",
+          "cancelled",
+        ].includes(status)
+      ) {
+        console.log("BookingController updateBookingServiceStatus step 1.3");
         throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid status");
       }
 

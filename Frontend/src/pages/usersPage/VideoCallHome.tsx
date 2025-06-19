@@ -7,7 +7,10 @@ import { toast } from "react-hot-toast";
 import Logo from "@/assets/logo6.png";
 import MeetingImage from "@/assets/MeetingImage.jpg";
 import { startVideoCall } from "@/services/userServices";
-import { allVideoCallBookings, updateStatus } from "@/services/bookingService";
+import {
+  allVideoCallBookings,
+  updateBookingStatus,
+} from "@/services/bookingService";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import {
@@ -39,7 +42,9 @@ const VideoCallHome: React.FC = () => {
   );
   const { isOnline } = useSelector((state: RootState) => state.user);
   const [modalOpen, setModalOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<
+    "pending" | "confirmed" | "completed" | "rescheduled" | "cancelled" | null
+  >(null);
   const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
 
   const fetchBookings = async () => {
@@ -153,7 +158,15 @@ const VideoCallHome: React.FC = () => {
     setSelectedBookingId(bookingId);
   };
 
-  const handleStatusChange = (newStatus: string, bookingId: string) => {
+  const handleStatusChange = (
+    newStatus:
+      | "pending"
+      | "confirmed"
+      | "completed"
+      | "rescheduled"
+      | "cancelled",
+    bookingId: string
+  ) => {
     console.log("handleStatusChange", { newStatus, bookingId });
     setPendingStatus(newStatus);
     setPendingBookingId(bookingId);
@@ -168,7 +181,7 @@ const VideoCallHome: React.FC = () => {
         bookingId: pendingBookingId,
         status: pendingStatus,
       });
-      await updateStatus(pendingBookingId, { status: pendingStatus });
+      await updateBookingStatus(pendingBookingId, pendingStatus);
 
       toast.success(`Booking status updated to ${pendingStatus}`);
       // Refresh bookings
@@ -354,13 +367,7 @@ const VideoCallHome: React.FC = () => {
                                 <SelectItem value="confirmed">
                                   Confirmed
                                 </SelectItem>
-                                <SelectItem value="rescheduled">
-                                  Rescheduled
-                                </SelectItem>
-                                <SelectItem value="cancelled">
-                                  Cancelled
-                                </SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
+                                {/* <SelectItem value="pending">Pending</SelectItem> */}
                                 <SelectItem value="completed">
                                   Completed
                                 </SelectItem>

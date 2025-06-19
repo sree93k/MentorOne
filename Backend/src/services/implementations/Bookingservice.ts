@@ -851,7 +851,7 @@ export default class BookingService implements IBookingService {
 
   async updateBookingServiceStatus(
     bookingId: string,
-    status: "pending" | "confirmed" | "completed"
+    status: "pending" | "confirmed" | "completed" | "rescheduled" | "cancelled"
   ): Promise<any> {
     try {
       console.log("BookingService updateBookingStatus step 1", {
