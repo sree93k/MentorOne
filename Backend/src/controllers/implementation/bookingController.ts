@@ -6,7 +6,6 @@ import { IBookingService } from "../../services/interface/IBookingService";
 import { ApiError } from "../../middlewares/errorHandler";
 import TestimonialService from "../../services/implementations/TestimonialService";
 import { ITestimonialService } from "../../services/interface/ITestimonialService";
-import stripe from "../../config/stripe";
 import { HttpStatus } from "../../constants/HttpStatus";
 import ApiResponse from "../../utils/apiResponse";
 
