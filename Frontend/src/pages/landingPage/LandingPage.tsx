@@ -728,7 +728,6 @@ const LandingPage: React.FC = () => {
         const data = await getDashboardData();
         setDashboardData(data);
       } catch (err: any) {
-        setError(err.message || "Failed to load dashboard data");
       } finally {
         setIsLoading(false);
       }

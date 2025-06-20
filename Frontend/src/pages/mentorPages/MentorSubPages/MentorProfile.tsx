@@ -710,10 +710,6 @@ const MentorProfile: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <div className="px-24 p-6">Loading profile data...</div>;
-  }
-
   if (!profileData) {
     return <div className="px-24 p-6">No profile data found.</div>;
   }
