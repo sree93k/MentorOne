@@ -1,10 +1,7 @@
 import { IUploadService } from "../interface/IUploadService";
-import {
-  UploadResponse,
-  uploadToCloudinary,
-} from "../../utils/uploadToCloudninary";
+
 import * as fs from "fs";
-import cloudinary from "../../config/cloudinary";
+
 import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepository from "../../repositories/implementations/BaseRepository";
 import Users from "../../models/userModel";
@@ -21,11 +18,7 @@ export default class UploadService implements IUploadService {
   constructor() {
     this.BaseRepository = new BaseRepository<EUsers>(Users);
   }
-  //singelphoto
-  public async uploadSinglePhoto(buffer: Buffer): Promise<UploadResponse> {
-    const result = await uploadToCloudinary(buffer);
-    return result;
-  }
+
   public async uploadProfileImage(
     file: Express.Multer.File
   ): Promise<{ url: string; public_id?: string }> {

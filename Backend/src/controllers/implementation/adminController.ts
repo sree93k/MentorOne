@@ -1,16 +1,14 @@
 // src/controllers/adminController.ts
 import { NextFunction, Request, response, Response } from "express";
 import ApiResponse from "../../utils/apiResponse";
-import { EUsers } from "../../entities/userEntity";
 import { IAdminService } from "../../services/interface/IAdminService";
 import AdminService from "../../services/implementations/AdminService";
-import { string } from "joi";
 import { IBookingService } from "../../services/interface/IBookingService";
 import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import PaymentService from "../../services/implementations/PaymentService";
 import { HttpStatus } from "../../constants/HttpStatus";
-import { http } from "winston";
+
 class AdminController {
   private adminService: IAdminService;
   private bookingService: IBookingService;

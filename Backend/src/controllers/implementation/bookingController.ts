@@ -689,58 +689,6 @@ class BookingController {
     }
   };
 
-  // public updateBookingResheduletatus = async (
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ) => {
-  //   const { bookingId } = req.params;
-  //   const { paylaod } = req.body;
-  //   const user = req.user; // Assuming auth middleware attaches user
-
-  //   console.log("BookingController updateBookingResheduletatus step 1", {
-  //     bookingId,
-  //     userId: user?.id,
-  //     paylaod,
-  //   });
-
-  //   try {
-  //     if (!bookingId || !paylaod) {
-  //       throw new ApiError(
-  //         HttpStatus.BAD_REQUEST,
-  //         "Booking ID and status are required"
-  //       );
-  //     }
-  //     if (!["pending", "confirmed", "completed"].includes(paylaod.status)) {
-  //       throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid status");
-  //     }
-
-  //     console.log("BookingController updateBookingResheduletatus step 2");
-
-  //     const booking = await this.bookingService.updateResheduleBooking(
-  //       bookingId,
-  //       paylaod
-  //     );
-  //     console.log("BookingController updateBookingResheduletatus step 3", {
-  //       booking,
-  //     });
-  //     res
-  //       .status(HttpStatus.OK)
-  //       .json(
-  //         new ApiResponse(
-  //           HttpStatus.OK,
-  //           { booking },
-  //           "Booking status updated successfully"
-  //         )
-  //       );
-  //   } catch (error: any) {
-  //     console.error(
-  //       "BookingController updateBookingResheduletatus error",
-  //       error
-  //     );
-  //     next(error);
-  //   }
-  // };
   public updateBookingResheduleStatus = async (
     req: Request,
     res: Response,

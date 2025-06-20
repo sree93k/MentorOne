@@ -185,7 +185,7 @@ class UserAuthController {
         );
       }
 
-      console.log("auth step 2");
+      console.log("auth step 2", profilePicture);
       const userExists = await this.userAuthService.googleSignIn({ email });
       console.log("auth step 3", userExists);
       if (userExists) {
@@ -210,17 +210,20 @@ class UserAuthController {
       });
       console.log("auth step 5");
       const imageBuffer = Buffer.from(response.data, "binary");
-      console.log("auth step 6");
+      console.log("auth step 6", imageBuffer);
+
       const resizedImageBuffer = await sharp(imageBuffer)
         .resize({ width: 1024 }) // Resize to max 1024px width
+        .jpeg({ quality: 80 }) // Optimize for smaller file size
         .toBuffer();
-      console.log("auth step 7");
-      // Upload the buffer directly to Cloudinary
-      const fromGoogleImage = await this.uploadService.uploadSinglePhoto(
-        resizedImageBuffer
-      );
+      console.log("auth step 7", resizedImageBuffer);
 
-      console.log("auth step 8");
+      const fromGoogleImage = await this.uploadService.uploadProfileImage({
+        buffer: resizedImageBuffer,
+        mimetype: "image/jpeg",
+        originalname: `${firstName}_${lastName}_google_profile.jpg`,
+      } as Express.Multer.File);
+      console.log("auth step 8", fromGoogleImage);
 
       const userAfterAuth = await this.userAuthService.googleSignUp({
         firstName: firstName,
