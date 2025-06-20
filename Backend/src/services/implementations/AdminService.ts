@@ -256,12 +256,31 @@ export default class AdminService implements IAdminService {
       }
       // Send email notification if status is updated
       if (updateMentor && (status === "Approved" || status === "Rejected")) {
-        const message = `Your mentor status has been updated to "${status}". Reason: ${
-          reason || "No reason provided"
-        }`;
-
+        // const message = `Your mentor status has been updated to "${status}" and the reason: ${
+        //   reason || "No reason provided"
+        // }`;
+        const message =
+          status === "Approved"
+            ? `Your mentor status has been updated to "${status}".`
+            : `Your mentor status has been updated to "${status}" and the reason: ${
+                reason || "No reason provided"
+              }.`;
         console.log("user emails  is ", user?.email, "and message", message);
-        const OTPDetails = await sendMail(user?.email, message);
+
+        const capitalizeFirstLetter = (str: string): string => {
+          if (!str) return str;
+          return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        };
+
+        const name = `${capitalizeFirstLetter(
+          user?.firstName
+        )} ${capitalizeFirstLetter(user?.lastName)}`;
+        const OTPDetails = await sendMail(
+          user?.email,
+          message,
+          name,
+          "Mentor One Status Updated"
+        );
         console.log("Email sent:", OTPDetails);
         // If Rejected, deactivate mentor in user model
         if (status === "Rejected") {

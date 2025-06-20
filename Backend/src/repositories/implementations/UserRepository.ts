@@ -1,11 +1,8 @@
-import { error, profile } from "console";
-
 import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import mongoose from "mongoose";
 
-import { log } from "winston";
 import Service from "../../models/serviceModel";
 export default class UserRepository implements IUserRepository {
   //create user

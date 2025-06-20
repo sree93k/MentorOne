@@ -57,8 +57,21 @@ export default class OTPServices implements IOTPService {
       if (!user.email) {
         throw new Error("User email is null");
       }
+      const capitalizeFirstLetter = (str: string): string => {
+        if (!str) return str;
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      };
+
+      const name = `${capitalizeFirstLetter(
+        user?.firstName
+      )} ${capitalizeFirstLetter(user?.lastName)}`;
       console.log("otp sent service 5");
-      const OTPDetails = await sendMail(user.email, OTPNumber);
+      const OTPDetails = await sendMail(
+        user.email,
+        OTPNumber,
+        name,
+        "Mentor One OTP Verification"
+      );
       console.log("otp sent service 6");
       if (!OTPDetails) {
         return null;
