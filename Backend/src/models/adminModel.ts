@@ -14,8 +14,8 @@ const AdminSchema = new Schema(
       lowercase: true,
     },
     role: {
-      type: String,
-      default: "admin",
+      type: [String],
+      default: ["admin"],
     },
     adminPassword: {
       type: String,

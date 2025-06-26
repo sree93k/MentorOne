@@ -214,36 +214,7 @@ export function LoginForm({
                   />
                 </div>
               </div>
-              {/* <div className="grid gap-1">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <button
-                    type="button"
-                    onClick={() => setForgotPasswordOpen(true)}
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={handleChange("password")}
-                    className="pl-10"
-                    placeholder="Enter your password"
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-red-500">
-                    Invalid EmailID or Password
-                  </p>
-                )}
-              </div> */}
+
               <div className="grid gap-1">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>

@@ -1,5 +1,5 @@
 import { TAdminLogin, TAdminLoginResponse } from "@/types/admin";
-import axios, { AxiosError, AxiosResponse } from "axios";
+import { AxiosError } from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
 const api = userAxiosInstance;
 

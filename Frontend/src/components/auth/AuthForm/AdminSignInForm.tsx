@@ -18,7 +18,7 @@ import {
   setAccessToken,
 } from "@/redux/slices/adminSlice";
 import { RootState } from "@/redux/store/store";
-
+import { EyeIcon, EyeOffIcon, Mail, Lock } from "lucide-react";
 interface LoginError {
   adminEmail?: string;
   adminPassword?: string;
@@ -28,7 +28,7 @@ const AdminLoginForm: React.FC = () => {
   const [adminEmail, setEmail] = useState("");
   const [adminPassword, setPassword] = useState("");
   const [error, setError] = useState<LoginError>({});
-
+  const [showPassword, setShowPassword] = useState(false);
   const { loading } = useSelector((state: RootState) => state.admin);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -142,7 +142,7 @@ const AdminLoginForm: React.FC = () => {
                   )} */}
                 </div>
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <label
                     htmlFor="password"
                     className="text-2xl block font-normal"
@@ -152,13 +152,46 @@ const AdminLoginForm: React.FC = () => {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={adminPassword}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     className="h-[53px] bg-white text-black text-base text-left"
                   />
+                  {error.adminPassword && (
+                    <p className="text-white">{error.adminPassword}</p>
+                  )}
+                </div> */}
+                <div className="space-y-2 relative">
+                  <label
+                    htmlFor="password"
+                    className="text-2xl block font-normal"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={adminPassword}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Password"
+                      className="h-[53px] bg-white text-black text-base pr-12" // add padding right for the icon
+                    />
+                    <span
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600"
+                    >
+                      {showPassword ? (
+                        <EyeOffIcon size={20} />
+                      ) : (
+                        <EyeIcon size={20} />
+                      )}
+                    </span>
+                  </div>
                   {error.adminPassword && (
                     <p className="text-white">{error.adminPassword}</p>
                   )}

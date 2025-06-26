@@ -119,10 +119,18 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname)),
 });
 
-const upload = multer({ storage });
-
 app.use("/", router);
 
+app.get("/*", function (req, res) {
+  res.sendFile(
+    path.join(__dirname, "../../Frontend/index.html"),
+    function (err) {
+      if (err) {
+        res.status(500).send("something wrong");
+      }
+    }
+  );
+});
 const PORT = process.env.PORT || 5002;
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -2,8 +2,7 @@ import Payment from "../../models/paymentModel";
 
 import mongoose from "mongoose";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
-import { EPayment } from "../../entities/paymentEntity";
-import Wallet from "../../models/WalletSchema";
+
 export default class PaymentRepository implements IPaymentRepository {
   async create(data: any) {
     try {

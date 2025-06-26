@@ -1,9 +1,6 @@
-import { EUsers } from "../../entities/userEntity";
 import { EMentor } from "../../entities/mentorEntity";
 import { IMentorRepository } from "../interface/IMentorRepository";
-
 import Mentor from "../../models/mentorModel";
-import { Stats } from "fs";
 import OnlineService from "../../models/onlineServiceModel";
 import DigitalProduct from "../../models/digitalProductsModel";
 import VideoTutorial from "../../models/videoTutorialModel";
