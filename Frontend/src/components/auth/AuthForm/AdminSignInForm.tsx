@@ -18,7 +18,7 @@ import {
   setAccessToken,
 } from "@/redux/slices/adminSlice";
 import { RootState } from "@/redux/store/store";
-import { EyeIcon, EyeOffIcon, Mail, Lock } from "lucide-react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 interface LoginError {
   adminEmail?: string;
   adminPassword?: string;
@@ -66,6 +66,7 @@ const AdminLoginForm: React.FC = () => {
       console.log("repsonse data", response.data);
 
       if (response.success && response.data) {
+        toast.success("Welcome Admin");
         console.log("submit 9");
         const { adminFound, accessToken } = response.data;
         console.log("user>>", adminFound); // Fixed: comma inside parentheses
@@ -74,10 +75,12 @@ const AdminLoginForm: React.FC = () => {
         console.log("LOGIN success>>>>>> accesstoken ", accessToken);
 
         dispatch(setAdmin(adminFound));
+        console.log();
+
         dispatch(setIsAuthenticated(true));
         dispatch(setAccessToken(accessToken));
         localStorage.setItem("accessToken", accessToken);
-        toast.success("Welcome");
+
         navigate("/admin/dashboard");
       } else {
         console.log("submit 10");
@@ -137,32 +140,8 @@ const AdminLoginForm: React.FC = () => {
                     placeholder="Email ID"
                     className="h-[53px] bg-white text-black text-base text-left"
                   />
-                  {/* {error.adminEmail && (
-                    <p className="text-white">{error.adminEmail}</p>
-                  )} */}
                 </div>
 
-                {/* <div className="space-y-2">
-                  <label
-                    htmlFor="password"
-                    className="text-2xl block font-normal"
-                  >
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={adminPassword}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="h-[53px] bg-white text-black text-base text-left"
-                  />
-                  {error.adminPassword && (
-                    <p className="text-white">{error.adminPassword}</p>
-                  )}
-                </div> */}
                 <div className="space-y-2 relative">
                   <label
                     htmlFor="password"

@@ -9,7 +9,8 @@ import {
   LogOut,
   BadgeIndianRupee,
 } from "lucide-react";
-
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
 import { LogoutConfirmationModal } from "@/components/modal/Logout";
 import { logout } from "@/services/adminAuth";
 import { toast, Toaster } from "react-hot-toast";
@@ -17,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import Logo from "@/assets/logo3.png";
 import LogoName from "@/assets/logoname3.png";
 import { resetAdmin } from "@/redux/slices/adminSlice";
-import { useDispatch } from "react-redux";
 import ThemeToggle from "../users/ThemeToggle";
 import AdminNotification from "../users/Notification";
 const SidebarItem = ({
@@ -28,7 +28,7 @@ const SidebarItem = ({
   active = false,
 }: {
   icon: any;
-  text: string;
+  text: React.ReactNode;
   isExpanded: boolean;
   onClick?: () => void;
   active?: boolean;
@@ -59,6 +59,7 @@ const AdminSidebar: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const { user } = useSelector((state: RootState) => state.admin);
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
@@ -141,6 +142,26 @@ const AdminSidebar: React.FC = () => {
           />
         </nav>
         <div className="absolute bottom-4 w-full px-2">
+          {user?.adminName && (
+            <SidebarItem
+              icon={() => (
+                <img
+                  src={user?.profilePicture || "https://via.placeholder.com/24"}
+                  alt="Profile"
+                  className="w-6 h-6 rounded-full object-cover"
+                />
+              )}
+              text={
+                <div className="flex flex-col">
+                  <span className="font-medium">{user.adminName}</span>
+                  <span className="text-xs text-gray-500">
+                    {user.adminEmail}
+                  </span>
+                </div>
+              }
+              isExpanded={isExpanded}
+            />
+          )}
           <SidebarItem
             icon={LogOut}
             text="Logout"
