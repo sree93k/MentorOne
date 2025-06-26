@@ -31,8 +31,8 @@ export const authenticate = (
     const decoded = verifyAccessToken(token);
     console.log("autheticte start5");
     req.user = decoded;
-    console.log("autheticte start6", req.user);
-    if (decoded.role !== "admin") {
+    console.log("autheticte start6.....admin auth", req.user);
+    if (!decoded.role.includes("admin")) {
       console.log("autheticte start7", decoded.role);
       console.log("autheticte failed2");
       res
@@ -184,7 +184,7 @@ export const authenticateUser = (
     const decoded = verifyAccessToken(token);
     req.user = decoded;
 
-    if (decoded.role != "user") {
+    if (decoded.role.includes("mentee") || decoded.role.includes("mentor")) {
       res
         .status(401)
         .json(new ApiResponse(401, null, "you are not authorized"));

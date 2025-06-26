@@ -4,7 +4,7 @@ export interface EAdmin extends Document {
   _id: ObjectId;
   adminName: string | null;
   adminEmail: string | null;
-  role: string | null;
+  role: string[] | null;
   adminPassword: string | null;
   profilePicture: string | null;
 }
