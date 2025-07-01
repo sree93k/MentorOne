@@ -53,14 +53,25 @@ const io = new Server(httpServer, {
 export const pubClient = createClient({ url: process.env.REDIS_URL });
 export const subClient = pubClient.duplicate();
 
+export const tokenClient = createClient({ url: process.env.REDIS_URL });
+
 pubClient.on("error", (err) => console.error("Redis Pub Client Error:", err));
 subClient.on("error", (err) => console.error("Redis Sub Client Error:", err));
+tokenClient.on("error", (err) =>
+  console.error("Redis Token Client Error:", err)
+);
+
 pubClient.on("connect", () => console.log("Redis Pub Client connected"));
 subClient.on("connect", () => console.log("Redis Sub Client connected"));
+tokenClient.on("connect", () => console.log("Redis Token Client connected"));
 
 (async () => {
   try {
-    await Promise.all([pubClient.connect(), subClient.connect()]);
+    await Promise.all([
+      pubClient.connect(),
+      subClient.connect(),
+      tokenClient.connect(),
+    ]);
     io.adapter(createAdapter(pubClient, subClient));
     console.log("Redis adapter connected for Socket.IO");
   } catch (err) {
@@ -132,7 +143,19 @@ app.get("/*", function (req, res) {
   );
 });
 const PORT = process.env.PORT || 5002;
+
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log("Environment:", process.env.NODE_ENV || "development");
+});
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received, shutting down gracefully");
+  await Promise.all([pubClient.quit(), subClient.quit(), tokenClient.quit()]);
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log("SIGINT received, shutting down gracefully");
+  await Promise.all([pubClient.quit(), subClient.quit(), tokenClient.quit()]);
+  process.exit(0);
 });

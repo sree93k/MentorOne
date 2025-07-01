@@ -80,6 +80,20 @@ class PaymentController {
         );
       }
 
+      // const checkoutSession = await this.paymentService.createCheckoutSession({
+      //   serviceId,
+      //   mentorId,
+      //   menteeId,
+      //   amount,
+      //   bookingDate,
+      //   platformPercentage,
+      //   platformCharge,
+      //   total,
+      //   startTime,
+      //   endTime,
+      //   day,
+      //   slotIndex,
+      // });
       const checkoutSession = await this.paymentService.createCheckoutSession({
         serviceId,
         mentorId,
@@ -93,6 +107,7 @@ class PaymentController {
         endTime,
         day,
         slotIndex,
+        testFailure: req.body.testFailure || false, // 👈 add this
       });
       console.log("PaymentController createCheckoutSession step 2", {
         sessionId: checkoutSession.id,

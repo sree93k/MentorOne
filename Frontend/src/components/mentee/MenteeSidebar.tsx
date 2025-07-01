@@ -27,7 +27,7 @@ import {
   setOnlineStatus,
 } from "@/redux/slices/userSlice";
 import { uploadMenteeWelcomeForm } from "@/services/menteeService";
-import { updateOnlineStatus } from "@/services/userServices"; // Import updateOnlineStatus
+import { updateOnlineStatus } from "@/services/userServices";
 import Notification from "../users/Notification";
 import logo from "@/assets/logo.png";
 

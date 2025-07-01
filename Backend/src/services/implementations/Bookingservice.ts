@@ -7,7 +7,6 @@ import ChatService from "./ChatService";
 import { IChatService } from "../interface/IChatService";
 import NotificationService from "./NotificationService";
 import { INotificationService } from "../interface/INotificationService";
-
 import { EService } from "../../entities/serviceEntity";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";

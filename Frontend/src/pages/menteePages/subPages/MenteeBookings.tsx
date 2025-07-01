@@ -7,6 +7,9 @@ import { getBookings } from "@/services/bookingService"; // Remove getBookingsWi
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CalendarDays } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+
+import PaymentStatusModal from "@/components/modal/PaymentStatusModal";
 interface Booking {
   id: string;
   serviceId: string;
@@ -42,7 +45,10 @@ export default function BookingsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const status = searchParams.get("status");
+  const sessionId = searchParams.get("session_id");
+  const [showModal, setShowModal] = useState(false);
   const bookingsPerPage = 40;
   const navigate = useNavigate();
 
@@ -165,6 +171,18 @@ export default function BookingsPage() {
       return filtered;
     };
   }, [searchQuery]);
+  useEffect(() => {
+    if (status === "success") {
+      setShowModal(true);
+    }
+  }, [status]);
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    searchParams.delete("status");
+    searchParams.delete("session_id");
+    setSearchParams(searchParams);
+  };
 
   const filteredBookings = filterBookings(
     bookings,
@@ -514,6 +532,11 @@ export default function BookingsPage() {
         }}
         bookingId={selectedBooking?.id}
         existingTestimonial={selectedBooking?.testimonial}
+      />
+      <PaymentStatusModal
+        isOpen={showModal}
+        status="success"
+        onCancel={handleModalClose}
       />
     </div>
   );

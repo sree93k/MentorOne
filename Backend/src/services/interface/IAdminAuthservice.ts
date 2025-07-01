@@ -8,7 +8,11 @@ export interface IAdminAuthService {
     adminFound: Omit<EAdmin, "adminPassword">;
   } | null>;
 
-  logout(token: string, id: string): Promise<EAdmin | null>;
-
-  refreshAccessToken(user: string | jwt.JwtPayload): Promise<string | null>;
+  logout(token: string, id: string): Promise<boolean | null>;
+  refreshAccessToken(
+    userId: string,
+    refreshToken: string
+  ): Promise<string | null>;
+  logoutFromAllDevices(userId: string): Promise<boolean>;
+  // findById(id: string): Promise<EAdmin | null>;
 }

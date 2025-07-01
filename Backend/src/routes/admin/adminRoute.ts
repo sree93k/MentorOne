@@ -9,8 +9,8 @@ const adminRoutes = Router();
 adminRoutes.use("/auth", adminAuthRoute);
 
 adminRoutes.get("/validate_session", adminController.validateSuccessResponse);
-adminRoutes.get("/allUsers", authenticate, adminController.getAllUsers);
-adminRoutes.get("/userData/:id", authenticate, adminController.userDatas);
+adminRoutes.get("/users", authenticate, adminController.getAllUsers);
+adminRoutes.get("/user/:id", authenticate, adminController.userDatas);
 adminRoutes.get("/bookings", authenticate, adminController.getAllBookings);
 adminRoutes.get("/payments", authenticate, adminController.getAllPayments);
 adminRoutes.post(
