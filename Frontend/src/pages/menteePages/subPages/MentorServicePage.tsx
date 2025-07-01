@@ -12,7 +12,9 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { verifySession } from "@/services/paymentServcie";
 import { getMentorServiceTestimonials } from "@/services/testimonialService";
+import { useSearchParams } from "react-router-dom";
 
+import PaymentStatusModal from "@/components/modal/PaymentStatusModal";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface Testimonial {
@@ -43,7 +45,9 @@ export default function MentorServicePage() {
     (state: RootState) => state.user
   );
   const menteeId = user?._id || null;
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const status = searchParams.get("status");
+  const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     if (loading) return;
     console.log("^^^^^^^^^^^^^^^^^^^^^^mentor DETAILS", mentor);
@@ -104,6 +108,26 @@ export default function MentorServicePage() {
 
     verifyBooking();
   }, [location, navigate]);
+  useEffect(() => {
+    if (status === "cancel") {
+      setShowModal(true);
+    }
+  }, [status]);
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    searchParams.delete("status");
+    searchParams.delete("session_id");
+    setSearchParams(searchParams);
+  };
+
+  const handleRetry = () => {
+    // Retry logic — maybe take from localStorage or re-initiate booking
+    searchParams.delete("status");
+    searchParams.delete("session_id");
+    setSearchParams(searchParams);
+    window.location.reload(); // or open your checkout session again
+  };
 
   const handleConfirmClick = () => {
     console.log("BookingDetails Confirm clicked");
@@ -215,6 +239,12 @@ export default function MentorServicePage() {
           />
         </Elements>
       )}
+      <PaymentStatusModal
+        isOpen={showModal}
+        status="failure"
+        onCancel={handleModalClose}
+        onRetry={handleRetry}
+      />
     </div>
   );
 }

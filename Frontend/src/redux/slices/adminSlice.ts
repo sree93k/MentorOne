@@ -15,7 +15,6 @@ interface InitialState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  accessToken: string;
   formData: object;
   pageTitle: string;
   tempData: object;
@@ -26,7 +25,6 @@ const initialState: InitialState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-  accessToken: "",
   formData: {},
   pageTitle: "Admin Panel",
   tempData: {},
@@ -48,9 +46,6 @@ const adminSlice = createSlice({
     setIsAuthenticated(state, action) {
       state.isAuthenticated = action.payload;
     },
-    setAccessToken(state, action) {
-      state.accessToken = action.payload;
-    },
     setTempData(state, action) {
       state.tempData = action.payload;
     },
@@ -63,7 +58,6 @@ export const {
   setLoading,
   setError,
   setIsAuthenticated,
-  setAccessToken,
   resetAdmin,
 } = adminSlice.actions;
 

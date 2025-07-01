@@ -33,7 +33,7 @@ export const getAllusers = async (
       throw new Error("No admin token found. Please log in.");
     }
     console.log("admin get allusers step 1 sending........");
-    let url = `/admin/allUsers?page=${page}&limit=${limit}`; // Note: Updated to match backend route
+    let url = `/admin/users?page=${page}&limit=${limit}`; // Note: Updated to match backend route
     if (role) url += `&role=${role}`;
     if (status) url += `&status=${status}`;
 
@@ -61,7 +61,7 @@ export const getUserRoleData = async (id: string) => {
     console.log("getUserRoleData service start 1:", id);
     const accessToken = localStorage.getItem("accessToken");
     console.log("getUserRoleData service start 2:", accessToken);
-    const response = await api.get(`/admin/userData/${id}`, {
+    const response = await api.get(`/admin/user /${id}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },

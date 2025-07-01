@@ -88,7 +88,7 @@ export default class PaymentService implements IPaymentService {
                 name: "Mentorship Session",
                 metadata: { serviceId, mentorId, menteeId },
               },
-              unit_amount: Math.round(total * 100), // Use total for Stripe
+              unit_amount: Math.round(total * 100),
             },
             quantity: 1,
           },
@@ -97,10 +97,11 @@ export default class PaymentService implements IPaymentService {
         success_url: `${
           process.env.STRIPE_SUCCESS_URL ||
           "http://localhost:5173/seeker/bookings"
-        }?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url:
+        }?status=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${
           process.env.STRIPE_CANCEL_URL ||
-          "http://localhost:5173/seeker/mentorservice",
+          "http://localhost:5173/seeker/mentorservice"
+        }?status=cancel`,
         metadata: {
           serviceId,
           mentorId,
@@ -117,6 +118,7 @@ export default class PaymentService implements IPaymentService {
         },
       });
       // Initialize mentor's wallet if it doesn't exist
+      console.log("Created checkout session:>>>>> ", session);
       let wallet = await this.walletRepository.findByUserId(mentorId);
       if (!wallet) {
         wallet = await this.walletRepository.createWallet(mentorId);
