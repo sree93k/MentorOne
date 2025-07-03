@@ -1,8 +1,8 @@
+import "reflect-metadata";
+import express from "express";
 import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-import express from "express";
 import { createServer } from "http";
 import cors from "cors";
 import compression from "compression";

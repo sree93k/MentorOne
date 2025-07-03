@@ -1,34 +1,34 @@
+import { injectable, inject } from "inversify";
 import stripe from "../../config/stripe";
-import mongoose from "mongoose";
+import { Types } from "mongoose";
 import {
   IPaymentService,
   CreateCheckoutSessionParams,
   Payment,
 } from "../interface/IPaymentService";
-import Stripe from "stripe";
-import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import UserRepository from "../../repositories/implementations/UserRepository";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import { TYPES } from "../../inversify/types";
+import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
-export default class PaymentService implements IPaymentService {
-  private paymentRepository: PaymentRepository;
-  private bookingRepository: BookingRepository;
-  private userRepository: UserRepository;
-  private serviceRepository: ServiceRepository;
-  private walletRepository: WalletRepository;
+import Stripe from "stripe";
+import { logger } from "../../utils/logger";
+import AppError from "../../errors/appError";
+import { HttpStatus } from "../../constants/HttpStatus";
 
-  constructor() {
-    this.paymentRepository = new PaymentRepository();
-    this.bookingRepository = new BookingRepository();
-    this.userRepository = new UserRepository();
-    this.serviceRepository = new ServiceRepository();
-    this.walletRepository = new WalletRepository();
-  }
+@injectable()
+export default class PaymentService implements IPaymentService {
+  constructor(
+    @inject(TYPES.IPaymentRepository)
+    private paymentRepository: IPaymentRepository,
+    @inject(TYPES.IBookingRepository)
+    private bookingRepository: IBookingRepository,
+    @inject(TYPES.IUserRepository) private userRepository: IUserRepository,
+    @inject(TYPES.IServiceRepository)
+    private serviceRepository: IServiceRepository,
+    @inject(TYPES.IWalletRepository) private walletRepository: IWalletRepository
+  ) {}
 
   async createCheckoutSession(
     params: CreateCheckoutSessionParams
@@ -48,7 +48,7 @@ export default class PaymentService implements IPaymentService {
       slotIndex,
     } = params;
 
-    console.log("payment service createCheckoutSession params: step 1", params);
+    logger.debug("Creating checkout session", { params });
 
     try {
       if (
@@ -65,18 +65,23 @@ export default class PaymentService implements IPaymentService {
         !day ||
         slotIndex === undefined
       ) {
-        console.error("Missing required fields:", params);
-        throw new Error("Missing required fields");
+        logger.error("Missing required fields", { params });
+        throw new AppError("Missing required fields", HttpStatus.BAD_REQUEST);
       }
-      console.log("payment service createCheckoutSession params: step 2");
 
       if (amount <= 0 || platformCharge < 0 || total <= 0) {
-        console.error("Invalid amounts:", { amount, platformCharge, total });
-        throw new Error("Amounts must be valid");
+        logger.error("Invalid amounts", { amount, platformCharge, total });
+        throw new AppError("Amounts must be valid", HttpStatus.BAD_REQUEST);
       }
 
-      console.log("payment service createCheckoutSession params: step 3");
-      console.log("Calling stripe.checkout.sessions.create");
+      if (
+        !Types.ObjectId.isValid(serviceId) ||
+        !Types.ObjectId.isValid(mentorId) ||
+        !Types.ObjectId.isValid(menteeId)
+      ) {
+        logger.error("Invalid ObjectId", { serviceId, mentorId, menteeId });
+        throw new AppError("Invalid ObjectId", HttpStatus.BAD_REQUEST);
+      }
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -117,17 +122,22 @@ export default class PaymentService implements IPaymentService {
           total: total.toString(),
         },
       });
-      // Initialize mentor's wallet if it doesn't exist
-      console.log("Created checkout session:>>>>> ", session);
+
       let wallet = await this.walletRepository.findByUserId(mentorId);
       if (!wallet) {
         wallet = await this.walletRepository.createWallet(mentorId);
       }
-      console.log("Created checkout session:", session.id);
+
+      logger.info("Created checkout session", { sessionId: session.id });
       return session;
-    } catch (error: any) {
-      console.error("Detailed error in createCheckoutSession:", error);
-      throw error;
+    } catch (error) {
+      logger.error("Error creating checkout session", { error });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            error.message || "Failed to create checkout session",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
 
@@ -146,7 +156,7 @@ export default class PaymentService implements IPaymentService {
       slotIndex,
     } = params;
 
-    console.log("createPaymentIntent params:", params);
+    logger.debug("Creating payment intent", { params });
 
     try {
       if (
@@ -160,8 +170,17 @@ export default class PaymentService implements IPaymentService {
         !day ||
         slotIndex === undefined
       ) {
-        console.error("Missing required fields:", params);
-        throw new Error("Missing required fields");
+        logger.error("Missing required fields", { params });
+        throw new AppError("Missing required fields", HttpStatus.BAD_REQUEST);
+      }
+
+      if (
+        !Types.ObjectId.isValid(serviceId) ||
+        !Types.ObjectId.isValid(mentorId) ||
+        !Types.ObjectId.isValid(menteeId)
+      ) {
+        logger.error("Invalid ObjectId", { serviceId, mentorId, menteeId });
+        throw new AppError("Invalid ObjectId", HttpStatus.BAD_REQUEST);
       }
 
       const paymentIntent = await stripe.paymentIntents.create({
@@ -181,11 +200,18 @@ export default class PaymentService implements IPaymentService {
         },
       });
 
-      console.log("Created payment intent:", paymentIntent.id);
+      logger.info("Created payment intent", {
+        paymentIntentId: paymentIntent.id,
+      });
       return paymentIntent;
-    } catch (error: any) {
-      console.error("Detailed error in createPaymentIntent:", error);
-      throw new Error(error.message || "Failed to create payment intent");
+    } catch (error) {
+      logger.error("Error creating payment intent", { error });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            error.message || "Failed to create payment intent",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
 
@@ -195,14 +221,24 @@ export default class PaymentService implements IPaymentService {
   ): Promise<Stripe.Event> {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!webhookSecret) {
-      console.error("Missing STRIPE_WEBHOOK_SECRET");
-      throw new Error("Webhook secret is not configured");
+      logger.error("Missing STRIPE_WEBHOOK_SECRET");
+      throw new AppError(
+        "Webhook secret is not configured",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
     try {
-      return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-    } catch (error: any) {
-      console.error("Webhook constructEvent error:", error);
-      throw new Error(error.message || "Webhook signature verification failed");
+      return await stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        webhookSecret
+      );
+    } catch (error) {
+      logger.error("Webhook signature verification failed", { error });
+      throw new AppError(
+        error.message || "Webhook signature verification failed",
+        HttpStatus.BAD_REQUEST
+      );
     }
   }
 
@@ -215,41 +251,65 @@ export default class PaymentService implements IPaymentService {
     totalAmount: number;
     totalCount: number;
   }> {
+    logger.debug("Fetching all mentee payments", { menteeId, page, limit });
+
     try {
-      console.log("payment service getAllMenteePayments step 1", menteeId);
+      if (!Types.ObjectId.isValid(menteeId)) {
+        logger.error("Invalid mentee ID", { menteeId });
+        throw new AppError("Invalid mentee ID", HttpStatus.BAD_REQUEST);
+      }
 
       const result = await this.paymentRepository.findAllByMenteeId(
         menteeId,
         page,
         limit
       );
-
-      console.log("payment service getAllMenteePayments step 2", result);
-
+      logger.info("Fetched mentee payments", {
+        menteeId,
+        totalCount: result.totalCount,
+      });
       return result;
-    } catch (error: any) {
-      console.error("Error in getAllMenteePayments service:", error);
-      throw new Error("Failed to fetch mentee payments", error.message);
+    } catch (error) {
+      logger.error("Error fetching mentee payments", { error });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            error.message || "Failed to fetch mentee payments",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
+
   async getAllMentorPayments(mentorId: string): Promise<{
     payments: Payment[];
     totalAmount: number;
     totalCount: number;
   }> {
+    logger.debug("Fetching all mentor payments", { mentorId });
+
     try {
-      console.log("payment service getAllMentorPayments step 1", mentorId);
+      if (!Types.ObjectId.isValid(mentorId)) {
+        logger.error("Invalid mentor ID", { mentorId });
+        throw new AppError("Invalid mentor ID", HttpStatus.BAD_REQUEST);
+      }
 
       const result = await this.paymentRepository.findAllByMentorId(mentorId);
-
-      console.log("payment service getAllMentorPayments step 2", result);
-
+      logger.info("Fetched mentor payments", {
+        mentorId,
+        totalCount: result.totalCount,
+      });
       return result;
-    } catch (error: any) {
-      console.error("Error in getAllMentorPayments service:", error);
-      throw new Error("Failed to fetch mentee payments", error.message);
+    } catch (error) {
+      logger.error("Error fetching mentor payments", { error });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            error.message || "Failed to fetch mentor payments",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
+
   async getAllPayments(
     page: number,
     limit: number,
@@ -259,14 +319,9 @@ export default class PaymentService implements IPaymentService {
     payments: any[];
     total: number;
   }> {
-    try {
-      console.log("payment service getAllPayments step 1", {
-        page,
-        limit,
-        searchQuery,
-        status,
-      });
+    logger.debug("Fetching all payments", { page, limit, searchQuery, status });
 
+    try {
       const skip = (page - 1) * limit;
       let query: any = {};
 
@@ -297,21 +352,19 @@ export default class PaymentService implements IPaymentService {
         }
       }
 
-      const payments = await this.paymentRepository.findAllPayments(
-        skip,
-        limit,
-        query
-      );
-      const total = await this.paymentRepository.countAllPayments(query);
+      const payments = await this.paymentRepository.findAll(query, skip, limit);
+      const total = await this.paymentRepository.countDocuments(query);
 
-      console.log("payment service getAllPayments step 2", {
-        payments: payments.length,
-        total,
-      });
+      logger.info("Fetched all payments", { payments: payments.length, total });
       return { payments, total };
-    } catch (error: any) {
-      console.error("Error in getAllPayments service:", error);
-      throw new Error("Failed to fetch payments", error.message);
+    } catch (error) {
+      logger.error("Error fetching all payments", { error });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            error.message || "Failed to fetch payments",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
 
@@ -320,37 +373,66 @@ export default class PaymentService implements IPaymentService {
     mentorId: string,
     amount: number
   ): Promise<any> {
+    logger.debug("Transferring to mentor", { paymentId, mentorId, amount });
+
     try {
-      console.log("payment service transferToMentor step 1", {
-        paymentId,
-        mentorId,
-        amount,
-      });
+      if (
+        !Types.ObjectId.isValid(paymentId) ||
+        !Types.ObjectId.isValid(mentorId)
+      ) {
+        logger.error("Invalid payment or mentor ID", { paymentId, mentorId });
+        throw new AppError(
+          "Invalid payment or mentor ID",
+          HttpStatus.BAD_REQUEST
+        );
+      }
 
       const payment = await this.paymentRepository.findById(paymentId);
       if (!payment) {
-        throw new Error("Payment not found");
+        logger.error("Payment not found", { paymentId });
+        throw new AppError("Payment not found", HttpStatus.NOT_FOUND);
       }
       if (payment.status !== "completed") {
-        throw new Error("Payment is not in completed status");
+        logger.error("Payment is not in completed status", {
+          paymentId,
+          status: payment.status,
+        });
+        throw new AppError(
+          "Payment is not in completed status",
+          HttpStatus.BAD_REQUEST
+        );
       }
       if (payment.mentorId.toString() !== mentorId) {
-        throw new Error("Mentor ID does not match payment");
+        logger.error("Mentor ID does not match payment", {
+          paymentId,
+          mentorId,
+        });
+        throw new AppError(
+          "Mentor ID does not match payment",
+          HttpStatus.BAD_REQUEST
+        );
       }
 
       const mentor = await this.userRepository.findById(mentorId);
       if (!mentor) {
-        throw new Error("Mentor not found");
+        logger.error("Mentor not found", { mentorId });
+        throw new AppError("Mentor not found", HttpStatus.NOT_FOUND);
+      }
+      if (!mentor.stripeAccountId) {
+        logger.error("Mentor has no Stripe account", { mentorId });
+        throw new AppError(
+          "Mentor has no Stripe account",
+          HttpStatus.BAD_REQUEST
+        );
       }
 
-      const transferAmount = payment.amount; // Excludes platformCharge
+      const transferAmount = payment.amount;
 
       const wallet = await this.walletRepository.releasePendingBalance(
         mentorId,
         transferAmount,
         paymentId
       );
-
       const updatedPayment = await this.paymentRepository.update(paymentId, {
         status: "transferred",
         updatedAt: new Date(),
@@ -359,34 +441,46 @@ export default class PaymentService implements IPaymentService {
       const transfer = await stripe.transfers.create({
         amount: Math.round(transferAmount * 100),
         currency: "inr",
-        destination: mentor?.stripeAccountId, // Assumes mentor has a connected Stripe account
+        destination: mentor.stripeAccountId,
         transfer_group: paymentId,
       });
 
-      console.log("payment service transferToMentor step 2", {
-        transfer,
-        updatedPayment,
-        wallet,
+      logger.info("Transferred to mentor", {
+        transferId: transfer.id,
+        paymentId,
       });
       return { transfer, payment: updatedPayment, wallet };
-    } catch (error: any) {
-      console.error("Error in transferToMentor service:", error);
-      throw error instanceof Error
+    } catch (error) {
+      logger.error("Error transferring to mentor", { error });
+      throw error instanceof AppError
         ? error
-        : new Error("Failed to transfer payment to mentor", error.message);
+        : new AppError(
+            error.message || "Failed to transfer payment to mentor",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
 
   async getMenteeWallet(userId: string): Promise<any> {
+    logger.debug("Fetching mentee wallet", { userId });
+
     try {
-      console.log("paymentservice getMenteeWallet step 1", userId);
+      if (!Types.ObjectId.isValid(userId)) {
+        logger.error("Invalid user ID", { userId });
+        throw new AppError("Invalid user ID", HttpStatus.BAD_REQUEST);
+      }
 
-      const walletData = await this.walletRepository.findByUserId(userId);
-
-      console.log("paymentservice getMenteeWallet step 2", walletData);
+      const walletData = await this.walletRepository.findOne(userId);
+      logger.info("Fetched mentee wallet", { userId, walletData });
       return walletData;
     } catch (error) {
-      throw error;
+      logger.error("Error fetching mentee wallet", { error });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            error.message || "Failed to fetch mentee wallet",
+            HttpStatus.INTERNAL_SERVER_ERROR
+          );
     }
   }
 }

@@ -149,5 +149,3 @@ export class RedisTokenService {
     }
   }
 }
-
-export default new RedisTokenService();

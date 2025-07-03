@@ -1,13 +1,13 @@
-import { Router } from "express";
-import webhookController from "../../controllers/implementation/webHookController";
-import { stripeMiddleware } from "../../middlewares/stripeMiddleware";
+// import { Router } from "express";
+// import webhookController from "../../controllers/implementation/webHookController";
+// import { stripeMiddleware } from "../../middlewares/stripeMiddleware";
 
-const webhookRoute = Router();
+// const webhookRoute = Router();
 
-webhookRoute.post(
-  "/webhook",
-  stripeMiddleware,
-  webhookController.handleWebhook
-);
+// webhookRoute.post(
+//   "/webhook",
+//   stripeMiddleware,
+//   webhookController.handleWebhook
+// );
 
-export default webhookRoute;
+// export default webhookRoute;

@@ -1,22 +1,27 @@
-import mongoose from "mongoose";
-import { IWallet } from "../../entities/WalletEntity";
+import { IWalletRepository } from "../interface/IWalletRepository";
+import BaseRepository from "../implementations/BaseRepository"; // Make sure path is correct
 import Wallet from "../../models/WalletSchema";
+import { EWallet } from "../../entities/WalletEntity";
+import { Types } from "mongoose";
+import { injectable } from "inversify";
 
-export default class WalletRepository {
-  async createWallet(userId: string): Promise<IWallet> {
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
+@injectable()
+export default class WalletRepository
+  extends BaseRepository<EWallet>
+  implements IWalletRepository
+{
+  constructor() {
+    super(Wallet);
+  }
 
-    const wallet = new Wallet({ userId });
+  async createWallet(userId: string): Promise<EWallet> {
+    const wallet = new this.model({ userId });
     return wallet.save();
   }
 
-  async findByUserId(userId: string): Promise<IWallet | null> {
-    return Wallet.findOne({ userId }).exec();
-  }
+  // async findByUserId(userId: string): Promise<EWallet | null> {
+  //   return this.model.findOne({ userId }).exec();
+  // }
 
   async updateBalance(
     userId: string,
@@ -24,29 +29,19 @@ export default class WalletRepository {
     type: "credit" | "debit",
     paymentId: string,
     description: string
-  ): Promise<IWallet> {
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    const wallet = await Wallet.findOne({ userId });
-    if (!wallet) {
-      throw new Error("Wallet not found");
-    }
+  ): Promise<EWallet> {
+    const wallet = await this.findById(userId);
+    if (!wallet) throw new Error("Wallet not found");
 
     if (type === "credit") {
       wallet.balance += amount;
     } else {
-      if (wallet.balance < amount) {
-        throw new Error("Insufficient balance");
-      }
+      if (wallet.balance < amount) throw new Error("Insufficient balance");
       wallet.balance -= amount;
     }
 
     wallet.transactions.push({
-      paymentId: new mongoose.Types.ObjectId(paymentId),
+      paymentId: new Types.ObjectId(paymentId),
       amount,
       type,
       description,
@@ -61,39 +56,21 @@ export default class WalletRepository {
     userId: string,
     amount: number,
     paymentId: string
-  ): Promise<IWallet> {
-    console.log("WALLET REPOSITRORY addPendingBalance step1");
-    console.log("WALLET REPOSITRORY", userId);
-    console.log("WALLET REPOSITRORY", amount);
-    console.log("WALLET REPOSITRORY", paymentId);
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-
-    const wallet = await Wallet.findOne({ userId });
-    if (!wallet) {
-      throw new Error("Wallet not found");
-    }
-
-    console.log("WALLET REPOSITRORY addPendingBalance step2");
+  ): Promise<EWallet> {
+    const wallet = await this.findById(userId);
+    if (!wallet) throw new Error("Wallet not found");
 
     wallet.pendingBalance += amount;
 
-    console.log("WALLET REPOSITRORY addPendingBalance step3");
-
     wallet.transactions.push({
-      paymentId: new mongoose.Types.ObjectId(paymentId),
+      paymentId: new Types.ObjectId(paymentId),
       amount,
       type: "credit",
       description: "Transfer from cancelled booking",
       createdAt: new Date(),
     });
 
-    console.log("WALLET REPOSITRORY addPendingBalance step4");
-
     wallet.updatedAt = new Date();
-
-    console.log("WALLET REPOSITRORY addPendingBalance step5", wallet);
-
     return wallet.save();
   }
 
@@ -101,20 +78,18 @@ export default class WalletRepository {
     userId: string,
     amount: number,
     paymentId: string
-  ): Promise<IWallet> {
-    const wallet = await Wallet.findOne({ userId });
-    if (!wallet) {
-      throw new Error("Wallet not found");
-    }
+  ): Promise<EWallet> {
+    const wallet = await this.findById(userId);
+    if (!wallet) throw new Error("Wallet not found");
 
-    if (wallet.pendingBalance < amount) {
+    if (wallet.pendingBalance < amount)
       throw new Error("Insufficient pending balance");
-    }
 
     wallet.pendingBalance -= amount;
     wallet.balance += amount;
+
     wallet.transactions.push({
-      paymentId: new mongoose.Types.ObjectId(paymentId),
+      paymentId: new Types.ObjectId(paymentId),
       amount,
       type: "credit",
       description: "Released from pending to balance",

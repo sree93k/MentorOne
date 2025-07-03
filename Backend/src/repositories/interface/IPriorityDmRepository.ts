@@ -1,3 +1,4 @@
+// repositories/interfaces/IPriorityDMRepository.ts
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 
 export interface IPriorityDMRepository {
@@ -11,7 +12,6 @@ export interface IPriorityDMRepository {
     serviceId: string,
     mentorId: string
   ): Promise<EPriorityDM[]>;
-  // findByMentor(mentorId: string): Promise<EPriorityDM[]>;
   findByMentor(
     mentorId: string,
     page: number,

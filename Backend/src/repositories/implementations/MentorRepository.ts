@@ -1,139 +1,87 @@
-import { EMentor } from "../../entities/mentorEntity";
+import { injectable, inject } from "inversify";
+import { Types } from "mongoose";
 import { IMentorRepository } from "../interface/IMentorRepository";
-import Mentor from "../../models/mentorModel";
-import OnlineService from "../../models/onlineServiceModel";
-import DigitalProduct from "../../models/digitalProductsModel";
-import VideoTutorial from "../../models/videoTutorialModel";
-import Service from "../../models/serviceModel";
-import { EService } from "../../entities/serviceEntity";
-export default class MentorRepository implements IMentorRepository {
-  async createMentor(mentorData: EMentor): Promise<EMentor | null> {
-    console.log("mentor repo statt 1", mentorData);
+import BaseRepository from "./BaseRepository";
+import MentorModel from "../../models/mentorModel";
+import { EMentor } from "../../entities/mentorEntity";
+import { TYPES } from "../../inversify/types";
+import { logger } from "../../utils/logger";
+import AppError from "../../errors/appError";
+import { HttpStatus } from "../../constants/HttpStatus";
 
-    const newMentor = new Mentor(mentorData);
-    await newMentor.save();
-    console.log("mentor repo statt 2", newMentor);
-
-    return newMentor;
+@injectable()
+export default class MentorRepository
+  extends BaseRepository<EMentor>
+  implements IMentorRepository
+{
+  constructor(@inject(TYPES.MentorModel) model: typeof MentorModel) {
+    super(model);
   }
 
   async getMentor(id: string): Promise<EMentor | null> {
-    console.log("mentor getMneter step1 ", id);
-    const response = await Mentor.findById(id);
-    console.log("mentor getMneter step 2 ");
-    return response;
+    try {
+      if (!Types.ObjectId.isValid(id)) {
+        throw new AppError("Invalid mentor ID", HttpStatus.BAD_REQUEST);
+      }
+      logger.info("Fetching mentor by ID", { id });
+      return await this.model.findById(id).lean().exec();
+    } catch (error) {
+      logger.error("Error fetching mentor", {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to fetch mentor",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   async updateField(
     id: string,
     field: string,
-    status: string,
-    reason: string = ""
+    value: string,
+    reason?: string
   ): Promise<EMentor | null> {
-    console.log("mentor repo updateMentorStatus step1", id, status, reason);
-
-    const updateFields: { [key: string]: string } = { [field]: status };
-    if (reason) {
-      updateFields.approvalReason = reason;
-    }
-
-    const response = await Mentor.findByIdAndUpdate(
-      id,
-      {
-        $set: updateFields,
-      },
-      { new: true }
-    );
-    console.log("mentor repo updateMentorStatus repsonse", response);
-    return response;
-  }
-  //create servcie
-  async createService(service: Partial<EService>): Promise<EService | null> {
     try {
-      console.log("createService repo step 1", service);
-      const newService = new Service(service);
-      console.log("createService repo step 2");
-      await newService.save();
-      console.log("createService repo step 3");
-      return newService;
-    } catch (error) {
-      console.log("createService repo step 4");
-      console.error("Error creating service:", error);
-      throw new Error("Failed to create service");
-    }
-  }
-
-  async createOnlineService(
-    onlineService: Record<string, any>
-  ): Promise<string> {
-    try {
-      console.log("createOnlineService repo step 1");
-      const newOnlineService = new OnlineService(onlineService);
-      console.log("createOnlineService repo step 2");
-      await newOnlineService.save();
-      console.log("createOnlineService repo step 3");
-      return newOnlineService._id.toString();
-    } catch (error) {
-      console.log("createOnlineService repo step 4");
-      console.error("Error creating online service:", error);
-      throw new Error("Failed to create online service");
-    }
-  }
-
-  async createDigitalProduct(
-    digitalProduct: Record<string, any>
-  ): Promise<string> {
-    try {
-      console.log("createDigitalProduct repo step 1");
-      const newDigitalProduct = new DigitalProduct(digitalProduct);
-      console.log("createDigitalProduct repo step 2");
-      await newDigitalProduct.save();
-      console.log("createDigitalProduct repo step 3");
-      return newDigitalProduct._id.toString();
-    } catch (error) {
-      console.log("createDigitalProduct repo step 4");
-      console.error("Error creating digital product:", error);
-      throw new Error("Failed to create digital product");
-    }
-  }
-
-  async createVideoTutorial(
-    videoTutorial: Record<string, any>
-  ): Promise<string> {
-    try {
-      console.log("createVideoTutorial repo step 1");
-      const newVideoTutorial = new VideoTutorial(videoTutorial);
-      console.log("createVideoTutorial repo step 2");
-      await newVideoTutorial.save();
-      console.log("createVideoTutorial repo step 3");
-      return newVideoTutorial._id.toString();
-    } catch (error) {
-      console.log("createVideoTutorial repo step 4");
-      console.error("Error creating video tutorial:", error);
-      throw new Error("Failed to create video tutorial");
-    }
-  }
-
-  async findById(id: string): Promise<EMentor | null> {
-    try {
-      return await Mentor.findById(id);
-    } catch (error: any) {
-      throw new Error("Failed to find mentor", error.message);
-    }
-  }
-
-  async update(id: string, data: any): Promise<EMentor> {
-    try {
-      console.log("UPdate mentor rpsository step 1", id, data);
-
-      const mentor = await Mentor.findByIdAndUpdate(id, data, { new: true });
-      console.log("UPdate mentor rpsository step 2", mentor);
+      if (!Types.ObjectId.isValid(id)) {
+        throw new AppError("Invalid mentor ID", HttpStatus.BAD_REQUEST);
+      }
+      const update: any = { [field]: value, updatedAt: new Date() };
+      if (reason) update.reason = reason;
+      logger.info("Updating mentor field", { id, field, value });
+      const mentor = await this.model
+        .findByIdAndUpdate(id, update, { new: true })
+        .exec();
       if (!mentor) {
-        throw new Error("Mentor not found");
+        logger.warn("Mentor not found", { id });
+        return null;
       }
       return mentor;
-    } catch (error: any) {
-      throw new Error("Failed to update mentor", error.message);
+    } catch (error) {
+      logger.error("Error updating mentor field", {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to update mentor",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  async countDocuments(query: any): Promise<number> {
+    try {
+      logger.info("Counting mentors", { query });
+      return await this.model.countDocuments(query).exec();
+    } catch (error) {
+      logger.error("Error counting mentors", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to count mentors",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 }

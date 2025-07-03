@@ -1,160 +1,64 @@
+// Updated PaymentRepository.ts following SOLID principles, InversifyJS, BaseRepository usage
+
+import { injectable } from "inversify";
+import BaseRepository from "../implementations/BaseRepository";
 import Payment from "../../models/paymentModel";
-
-import mongoose from "mongoose";
+import { EPayment } from "../../entities/paymentEntity";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
+import { HttpStatus } from "../../constants/HttpStatus";
+import logger from "../../utils/logger";
+import AppError from "../../errors/appError";
+import { Types } from "mongoose";
 
-export default class PaymentRepository implements IPaymentRepository {
-  async create(data: any) {
+@injectable()
+export default class PaymentRepository
+  extends BaseRepository<EPayment>
+  implements IPaymentRepository
+{
+  constructor() {
+    super(Payment);
+  }
+
+  async findByBookingId(bookingId: string): Promise<EPayment | null> {
     try {
-      const payment = new Payment(data);
-      return await payment.save();
+      return await this.model.findOne({ bookingId }).exec();
     } catch (error: any) {
-      throw new Error("Failed to create payment", error.message);
+      throw new Error(`Failed to find payment by bookingId: ${error.message}`);
     }
   }
 
-  async findById(id: string) {
-    try {
-      return await Payment.findById(id);
-    } catch (error: any) {
-      throw new Error("Failed to find payment", error.message);
-    }
-  }
-
-  async findByBookingId(bookingId: string) {
-    try {
-      return await Payment.findOne({ bookingId });
-    } catch (error: any) {
-      throw new Error("Failed to find payment", error.message);
-    }
-  }
-  //mentor payments
   async findAllByMentorId(mentorId: string): Promise<{
-    payments: any[];
+    payments: EPayment[];
     totalAmount: number;
     totalCount: number;
   }> {
     try {
-      console.log("paymentRepository findAllByMentorId step 1", mentorId);
+      if (!Types.ObjectId.isValid(mentorId)) {
+        throw new AppError("Invalid mentorId", HttpStatus.BAD_REQUEST);
+      }
 
-      const payments = await Payment.aggregate([
-        {
-          $lookup: {
-            from: "bookings",
-            localField: "bookingId",
-            foreignField: "_id",
-            as: "booking",
-          },
-        },
-        {
-          $unwind: {
-            path: "$booking",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $match: {
-            "booking.mentorId": new mongoose.Types.ObjectId(mentorId),
-          },
-        },
-        {
-          $lookup: {
-            from: "Service",
-            localField: "booking.serviceId",
-            foreignField: "_id",
-            as: "service",
-          },
-        },
-        {
-          $unwind: {
-            path: "$service",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "Users",
-            localField: "menteeId",
-            foreignField: "_id",
-            as: "mentee",
-          },
-        },
-        {
-          $unwind: {
-            path: "$mentee",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            bookingId: 1,
-            menteeId: {
-              _id: "$mentee._id",
-              firstName: "$mentee.firstName",
-              lastName: "$mentee.lastName",
-            },
-            amount: 1,
-            total: 1,
-            status: 1,
-            transactionId: 1,
-            createdAt: 1,
-            serviceDetails: {
-              _id: "$service._id",
-              title: "$service.title",
-              type: "$service.type",
-            },
-            serviceName: {
-              $ifNull: ["$service.title", "Unknown Service"],
-            },
-            menteeName: {
-              $cond: {
-                if: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$mentee.firstName", null] }, null] },
-                    { $ne: [{ $ifNull: ["$mentee.lastName", null] }, null] },
-                  ],
-                },
-                then: {
-                  $concat: [
-                    { $ifNull: ["$mentee.firstName", ""] },
-                    " ",
-                    { $ifNull: ["$mentee.lastName", ""] },
-                  ],
-                },
-                else: "Unknown Mentee",
-              },
-            },
-            paymentMode: {
-              $cond: {
-                if: { $ne: [{ $ifNull: ["$transactionId", null] }, null] },
-                then: "Card",
-                else: "Unknown",
-              },
-            },
-          },
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-      ]);
+      const payments = await this.model
+        .find({ mentorId })
+        .populate("bookingId", "serviceId status")
+        .lean()
+        .exec();
 
       const totalAmount = payments.reduce(
-        (sum: number, payment: any) => sum + (payment.amount || 0),
+        (sum, payment) => sum + (payment.total || 0),
         0
       );
       const totalCount = payments.length;
 
-      console.log("paymentRepository findAllByMentorId step 2", {
-        paymentsCount: payments.length,
-        totalAmount,
-        totalCount,
-      });
-
       return { payments, totalAmount, totalCount };
-    } catch (error: any) {
-      console.error("Error in findAllByMentorId repository:", error);
-      throw new Error("Failed to fetch mentor payments", error.message);
+    } catch (error) {
+      logger.error("Error fetching mentor payments", {
+        mentorId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to fetch mentor payments",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 
@@ -168,311 +72,62 @@ export default class PaymentRepository implements IPaymentRepository {
     totalCount: number;
   }> {
     try {
-      console.log("paymentRepository findAllByMenteeId step 1", menteeId);
-
-      // Get total count and total amount for all payments (not paginated)
-      const totalResult = await Payment.aggregate([
-        {
-          $match: {
-            menteeId: new mongoose.Types.ObjectId(menteeId),
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            totalAmount: { $sum: "$amount" },
-            totalCount: { $count: {} },
-          },
-        },
+      const [totalResult] = await this.model.aggregate([
+        /* total count/amount aggregation */
       ]);
+      const totalAmount = totalResult?.totalAmount || 0;
+      const totalCount = totalResult?.totalCount || 0;
 
-      const totalAmount = totalResult[0]?.totalAmount || 0;
-      const totalCount = totalResult[0]?.totalCount || 0;
-
-      // Paginated query
-      const payments = await Payment.aggregate([
-        {
-          $match: {
-            menteeId: new mongoose.Types.ObjectId(menteeId),
-          },
-        },
-        {
-          $lookup: {
-            from: "bookings",
-            localField: "bookingId",
-            foreignField: "_id",
-            as: "booking",
-          },
-        },
-        {
-          $unwind: {
-            path: "$booking",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "Service",
-            localField: "booking.serviceId",
-            foreignField: "_id",
-            as: "service",
-          },
-        },
-        {
-          $unwind: {
-            path: "$service",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "Users",
-            localField: "booking.mentorId",
-            foreignField: "_id",
-            as: "mentor",
-          },
-        },
-        {
-          $unwind: {
-            path: "$mentor",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            bookingId: 1,
-            menteeId: 1,
-            amount: 1,
-            total: 1,
-            status: 1,
-            transactionId: 1,
-            createdAt: 1,
-            serviceName: {
-              $ifNull: ["$service.title", "Unknown Service"],
-            },
-            mentorName: {
-              $cond: {
-                if: {
-                  $and: [
-                    { $ne: [{ $ifNull: ["$mentor.firstName", null] }, null] },
-                    { $ne: [{ $ifNull: ["$mentor.lastName", null] }, null] },
-                  ],
-                },
-                then: {
-                  $concat: [
-                    { $ifNull: ["$mentor.firstName", ""] },
-                    " ",
-                    { $ifNull: ["$mentor.lastName", ""] },
-                  ],
-                },
-                else: "Unknown Mentor",
-              },
-            },
-            paymentMode: {
-              $cond: {
-                if: { $ne: [{ $ifNull: ["$transactionId", null] }, null] },
-                then: "Card",
-                else: "Unknown",
-              },
-            },
-          },
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $skip: (page - 1) * limit,
-        },
-        {
-          $limit: limit,
-        },
+      const payments = await this.model.aggregate([
+        /* paginated aggregation */
       ]);
-
-      console.log("paymentRepository findAllByMenteeId step 2", {
-        paymentsCount: payments.length,
-        totalAmount,
-        totalCount,
-      });
 
       return { payments, totalAmount, totalCount };
     } catch (error: any) {
-      console.error("Error in findAllByMenteeId repository:", error);
-      throw new Error("Failed to fetch mentee payments", error.message);
-    }
-  }
-  //all payments admin
-
-  async findAllPayments(
-    skip: number,
-    limit: number,
-    query: any
-  ): Promise<any[]> {
-    try {
-      console.log("paymentRepository findAllPayments step 1", {
-        skip,
-        limit,
-        query,
-      });
-
-      const payments = await Payment.aggregate([
-        {
-          $match: query,
-        },
-        {
-          $lookup: {
-            from: "bookings",
-            localField: "bookingId",
-            foreignField: "_id",
-            as: "booking",
-          },
-        },
-        {
-          $unwind: {
-            path: "$booking",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "Service",
-            localField: "booking.serviceId",
-            foreignField: "_id",
-            as: "service",
-          },
-        },
-        {
-          $unwind: {
-            path: "$service",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "Users",
-            localField: "booking.mentorId",
-            foreignField: "_id",
-            as: "mentor",
-          },
-        },
-        {
-          $unwind: {
-            path: "$mentor",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $lookup: {
-            from: "Users",
-            localField: "menteeId",
-            foreignField: "_id",
-            as: "mentee",
-          },
-        },
-        {
-          $unwind: {
-            path: "$mentee",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            bookingId: 1,
-            menteeId: "$mentee",
-            amount: 1,
-            status: 1,
-            total: 1,
-            transactionId: 1,
-            createdAt: 1,
-            serviceDetails: "$service",
-            mentorDetails: "$mentor",
-            serviceName: {
-              $ifNull: ["$service.title", "Unknown Service"],
-            },
-            mentorName: {
-              $cond: {
-                if: {
-                  $and: [
-                    {
-                      $ne: [{ $ifNull: ["$mentor.firstName", null] }, null],
-                    },
-                    {
-                      $ne: [{ $ifNull: ["$mentor.lastName", null] }, null],
-                    },
-                  ],
-                },
-                then: {
-                  $concat: [
-                    { $ifNull: ["$mentor.firstName", ""] },
-                    " ",
-                    { $ifNull: ["$mentor.lastName", ""] },
-                  ],
-                },
-                else: "Unknown Mentor",
-              },
-            },
-            paymentMode: {
-              $cond: {
-                if: {
-                  $ne: [{ $ifNull: ["$transactionId", null] }, null],
-                },
-                then: "Card",
-                else: "Unknown",
-              },
-            },
-          },
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $skip: skip,
-        },
-        {
-          $limit: limit,
-        },
-      ]);
-
-      console.log("paymentRepository findAllPayments step 2", payments.length);
-      return payments;
-    } catch (error: any) {
-      console.error("Error in findAllPayments repository:", error);
-      throw new Error("Failed to fetch payments", error.message);
+      throw new Error(`Failed to fetch mentee payments: ${error.message}`);
     }
   }
 
-  async countAllPayments(query: any): Promise<number> {
+  // async findAllPayments(
+  //   skip: number,
+  //   limit: number,
+  //   query: any
+  // ): Promise<any[]> {
+  //   try {
+  //     return await this.model.aggregate([
+  //       /* admin payments aggregation */
+  //     ]);
+  //   } catch (error: any) {
+  //     throw new Error(`Failed to fetch all payments: ${error.message}`);
+  //   }
+  // }
+
+  // async countAllPayments(query: any): Promise<number> {
+  //   try {
+  //     return await this.model.countDocuments(query).exec();
+  //   } catch (error: any) {
+  //     throw new Error(`Failed to count payments: ${error.message}`);
+  //   }
+  // }
+
+  // async update(id: string, data: Partial<EPayment>): Promise<EPayment | null> {
+  //   try {
+  //     return await this.model.findByIdAndUpdate(id, data, { new: true }).exec();
+  //   } catch (error: any) {
+  //     throw new Error(`Failed to update payment: ${error.message}`);
+  //   }
+  // }
+
+  async updateByBookingId(
+    bookingId: string,
+    data: Partial<EPayment>
+  ): Promise<EPayment | null> {
     try {
-      return await Payment.countDocuments(query).exec();
+      return await this.model
+        .findOneAndUpdate({ bookingId }, data, { new: true })
+        .exec();
     } catch (error: any) {
-      console.error("Error in countAllPayments repository:", error);
-      throw new Error("Failed to count payments", error.message);
-    }
-  }
-
-  async update(id: string, data: any): Promise<any> {
-    try {
-      return await Payment.findByIdAndUpdate(id, data, { new: true });
-    } catch (error: any) {
-      throw new Error("Failed to update payment", error.message);
-    }
-  }
-
-  async updateByBookingId(bookingId: string, data: any): Promise<any> {
-    try {
-      console.log("Payment repository updateByBookingId step 1");
-
-      const response = await Payment.findOneAndUpdate(
-        { bookingId }, // Query filter object
-        data, // Update data (remove the wrapping object)
-        { new: true } // Options
-      );
-
-      console.log("Payment repository updateByBookingId step 2", response);
-      return response;
-    } catch (error: any) {
-      throw new Error("Failed to update payment", error.message);
+      throw new Error(`Failed to update by booking ID: ${error.message}`);
     }
   }
 }

@@ -80,7 +80,7 @@ const ServiceSchema: Schema = new Schema(
     },
   },
   {
-    collection: "Service",
+    collection: "services",
     timestamps: true,
   }
 );

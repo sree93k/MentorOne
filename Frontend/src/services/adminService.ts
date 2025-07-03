@@ -1,112 +1,143 @@
 import { AxiosError } from "axios";
+import Cookies from "js-cookie";
 import { adminAxiosInstance } from "./instances/adminInstance";
-import { useId } from "react";
 
 const api = adminAxiosInstance;
 
+export interface UserResponse {
+  data: {
+    users: Array<{
+      _id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+      mentorId?: { isApproved: string };
+      role: string[];
+      isBlocked?: boolean;
+    }>;
+    total: number;
+    totalMentors: number;
+    totalMentees: number;
+    totalBoth: number;
+    approvalPending: number;
+  };
+}
+
 export const validateAdminSession = async () => {
   try {
-    console.log("amdin validate_session step 1");
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
 
-    const response = await api.get("/admin/validate_session");
-    console.log("amdin validate_session step 2 response =>", response);
+    const response = await api.get("/admin/validate_session", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
+      console.error("Axios error:", error.response?.data || error.message);
       return error.response;
-    } else {
-      return null;
     }
+    console.error("Unexpected error:", error);
+    return null;
   }
 };
 
-export const getAllusers = async (
-  page: number,
-  limit: number,
-  role?: string,
-  status?: string
-) => {
+interface DashboardDatas {
+  users: object;
+  bookings: object;
+  payment: object;
+  services: object;
+}
+
+export const getDashboardData = async (): Promise<DashboardDatas | null> => {
   try {
-    // Retrieve the admin token from localStorage
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No admin token found. Please log in.");
-    }
-    console.log("admin get allusers step 1 sending........");
-    let url = `/admin/users?page=${page}&limit=${limit}`; // Note: Updated to match backend route
-    if (role) url += `&role=${role}`;
-    if (status) url += `&status=${status}`;
+    const token = Cookies.get("adminAccessToken");
 
-    const response = await api.get(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const url = `/admin/dashboard`;
+    const response = await api.get<UserResponse>(url, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("admin get allusers step 2 response ......", response.data);
-    return response;
+    // Map the response to match DashboardDatas interface
+    return {
+      users: response.data.data?.users || {},
+      bookings: response.data.data?.bookings || {},
+      payment: response.data.data?.payment || {},
+      services: response.data.data?.services || {},
+    };
   } catch (error) {
     if (error instanceof AxiosError) {
       console.error("Axios error:", error.response?.data || error.message);
-      return error.response; // Return error response for handling in component
-    } else {
-      console.error("Unexpected error:", error);
       return null;
     }
+    console.error("Unexpected error:", error);
+    return null;
+  }
+};
+export const getAllUsers = async (
+  page: number,
+  limit: number,
+  role?: string,
+  status?: string,
+  searchQuery?: string
+): Promise<UserResponse | null> => {
+  try {
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
+
+    let url = `/admin/users?page=${page}&limit=${limit}`;
+    if (role) url += `&role=${role}`;
+    if (status) url += `&status=${status}`;
+    if (searchQuery) url += `&searchQuery=${encodeURIComponent(searchQuery)}`;
+
+    const response = await api.get<UserResponse>(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      console.error("Axios error:", error.response?.data || error.message);
+      return null;
+    }
+    console.error("Unexpected error:", error);
+    return null;
   }
 };
 
 export const getUserRoleData = async (id: string) => {
   try {
-    console.log("getUserRoleData service start 1:", id);
-    const accessToken = localStorage.getItem("accessToken");
-    console.log("getUserRoleData service start 2:", accessToken);
-    const response = await api.get(`/admin/user /${id}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
+
+    const response = await api.get(`/admin/user/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("getUserRoleData service start 3:", response);
     return response;
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AxiosError) {
-      console.log("getUserRoleData service start 4 error:", error);
       console.error("Axios error:", error.response?.data || error.message);
-      return error.response; // Return error response for handling in component
-    } else {
-      console.error("Unexpected error:", error);
-      return null;
+      return error.response;
     }
+    console.error("Unexpected error:", error);
+    return null;
   }
 };
 
-// Update user blocked status
 export const updateUserStatus = async (userId: string, isBlocked: boolean) => {
   try {
-    // const response = await api.patch(`/admin/users/${userId}/status`, {
-    //   isBlocked,
-    // });
-    console.log("updateUserStatus service 1", useId, isBlocked);
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
 
-    const accessToken = localStorage.getItem("accessToken");
-    const userData = await api.patch(
+    const response = await api.patch(
       `/admin/userstatus_update/${userId}`,
-      { isBlocked }, // This is the body
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+      { isBlocked },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-    console.log("updateUserStatus service 2", userData);
-    return userData;
-  } catch (error) {
+    return response;
+  } catch (error: unknown) {
     console.error("Error updating user status:", error);
     throw error;
   }
 };
-
-// Update mentor approval status
 
 export const updateMentorStatus = async (
   mentorId: string,
@@ -114,27 +145,16 @@ export const updateMentorStatus = async (
   reason: string = ""
 ) => {
   try {
-    console.log(
-      "updateMentorStatus step 1 sending...",
-      mentorId,
-      status,
-      reason
-    );
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
 
-    const accessToken = localStorage.getItem("accessToken");
-    const mentorData = await api.patch(
+    const response = await api.patch(
       `/admin/mentorstatus_update/${mentorId}`,
-      { status, reason }, // Include reason in the body
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+      { status, reason },
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-    console.log("updateMentorStatus response", mentorData);
-
-    return mentorData;
-  } catch (error) {
+    return response;
+  } catch (error: unknown) {
     console.error("Error updating mentor status:", error);
     throw error;
   }
@@ -148,11 +168,9 @@ export const getAllBookings = async (
   status?: string
 ) => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No admin token found. Please log in.");
-    }
-    console.log("admin get all bookings step 1 sending...");
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
+
     let url = `/admin/bookings?page=${page}&limit=${limit}`;
     if (searchQuery) url += `&searchQuery=${encodeURIComponent(searchQuery)}`;
     if (service && service !== "All")
@@ -161,23 +179,19 @@ export const getAllBookings = async (
       url += `&status=${encodeURIComponent(status)}`;
 
     const response = await api.get(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("admin get all bookings step 2 response...", response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AxiosError) {
       console.error("Axios error:", error.response?.data || error.message);
-      return error.response;
-    } else {
-      console.error("Unexpected error:", error);
       return null;
     }
+    console.error("Unexpected error:", error);
+    return null;
   }
 };
+
 export const getAllPayments = async (
   page: number,
   limit: number,
@@ -185,32 +199,25 @@ export const getAllPayments = async (
   status?: string
 ) => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No admin token found. Please log in.");
-    }
-    console.log("admin get all payments step 1 sending...");
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
+
     let url = `/admin/payments?page=${page}&limit=${limit}`;
     if (searchQuery) url += `&searchQuery=${encodeURIComponent(searchQuery)}`;
     if (status && status !== "All")
       url += `&status=${encodeURIComponent(status)}`;
 
     const response = await api.get(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("admin get all payments step 2 response...", response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AxiosError) {
       console.error("Axios error:", error.response?.data || error.message);
-      return error.response;
-    } else {
-      console.error("Unexpected error:", error);
       return null;
     }
+    console.error("Unexpected error:", error);
+    return null;
   }
 };
 
@@ -220,34 +227,21 @@ export const transferToMentor = async (
   amount: number
 ) => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No admin token found. Please log in.");
-    }
-    console.log(
-      "admin transfer to mentor step 1 sending...",
-      paymentId,
-      mentorId,
-      amount
-    );
+    const token = Cookies.get("adminAccessToken");
+    if (!token) throw new Error("No authentication token found");
+
     const response = await api.post(
       "/admin/transfer-to-mentor",
       { paymentId, mentorId, amount },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     );
-    console.log("admin transfer to mentor step 2 response...", response.data);
     return response;
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof AxiosError) {
       console.error("Axios error:", error.response?.data || error.message);
-      return error.response;
-    } else {
-      console.error("Unexpected error:", error);
       return null;
     }
+    console.error("Unexpected error:", error);
+    return null;
   }
 };

@@ -1,9 +1,886 @@
-import { useState, useEffect } from "react";
+// // import { useState, useEffect } from "react";
+// // import { useNavigate } from "react-router-dom";
+// // import { ChevronDown } from "lucide-react";
+// // import { getAllusers } from "@/services/adminService";
+// // import { Card } from "@/components/ui/card";
+// // import { Button } from "@/components/ui/button";
+// // import {
+// //   DropdownMenu,
+// //   DropdownMenuContent,
+// //   DropdownMenuItem,
+// //   DropdownMenuTrigger,
+// // } from "@/components/ui/dropdown-menu";
+// // import {
+// //   Pagination,
+// //   PaginationContent,
+// //   PaginationEllipsis,
+// //   PaginationItem,
+// //   PaginationLink,
+// //   PaginationNext,
+// //   PaginationPrevious,
+// // } from "@/components/ui/pagination";
+// // import { Badge } from "flowbite-react";
+// // import { HiCheck } from "react-icons/hi";
+// // import { Users } from "lucide-react";
+// // import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
+// // interface User {
+// //   _id: string;
+// //   firstName: string;
+// //   lastName: string;
+// //   email: string;
+// //   mentorStatus?: string;
+// //   role: string[];
+// //   status: string;
+// //   isBlocked?: boolean;
+// //   mentorId?: { isApproved: string };
+// // }
+
+// // const AllUsers: React.FC = () => {
+// //   const [users, setUsers] = useState<User[]>([]);
+// //   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+// //   const [total, setTotal] = useState(0);
+// //   const [page, setPage] = useState(1);
+// //   const [roleFilter, setRoleFilter] = useState<string | null>(null);
+// //   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+// //   const [loading, setLoading] = useState(false);
+// //   const [error, setError] = useState<string | null>(null);
+// //   const [totalMentees, setTotalMentees] = useState(0);
+// //   const [totalMentors, setTotalMentors] = useState(0);
+// //   const [totalBoth, setTotalBoth] = useState(0);
+// //   const [approvalPending, setApprovalPending] = useState(0);
+// //   const limit = 10;
+// //   const navigate = useNavigate();
+
+// //   // Reset page to 1 when filters change
+// //   useEffect(() => {
+// //     setPage(1);
+// //   }, [roleFilter, statusFilter]);
+
+// //   // Fetch users when page or filters change
+// //   useEffect(() => {
+// //     const fetchUsers = async () => {
+// //       setLoading(true);
+// //       setError(null);
+// //       try {
+// //         const response = await getAllusers(
+// //           page,
+// //           limit,
+// //           roleFilter ?? undefined,
+// //           statusFilter ?? undefined
+// //         );
+// //         if (response && response.status === 200) {
+// //           const fetchedUsers = response.data.data.users;
+// //           setUsers(fetchedUsers);
+// //           setTotal(response.data.data.total);
+// //           setTotalMentors(response.data.data.totalMentors);
+// //           setTotalMentees(response.data.data.totalMentees);
+// //           setTotalBoth(response.data.data.totalBoth);
+// //           setApprovalPending(response.data.data.approvalPending);
+
+// //           // Apply frontend filtering for role display
+// //           const filtered = fetchedUsers.filter((user: User) => {
+// //             if (!roleFilter) return true;
+// //             if (roleFilter === "mentee")
+// //               return (
+// //                 Array.isArray(user.role) &&
+// //                 user.role.includes("mentee") &&
+// //                 user.role.length === 1
+// //               );
+// //             if (roleFilter === "mentor")
+// //               return (
+// //                 Array.isArray(user.role) &&
+// //                 user.role.includes("mentor") &&
+// //                 user.role.length === 1
+// //               );
+// //             if (roleFilter === "both")
+// //               return (
+// //                 Array.isArray(user.role) &&
+// //                 user.role.includes("mentor") &&
+// //                 user.role.includes("mentee")
+// //               );
+// //             return true;
+// //           });
+
+// //           setFilteredUsers(filtered);
+// //         } else {
+// //           setError("Failed to fetch users. Please try again.");
+// //         }
+// //       } catch (err) {
+// //         setError("An error occurred while fetching users.");
+// //       } finally {
+// //         setLoading(false);
+// //       }
+// //     };
+// //     fetchUsers();
+// //   }, [page, roleFilter, statusFilter]);
+
+// //   const totalPages = Math.ceil(total / limit);
+
+// //   // Generate pagination items
+// //   const getPageItems = () => {
+// //     if (totalPages <= 5) {
+// //       return Array.from({ length: totalPages }, (_, i) => i + 1);
+// //     } else {
+// //       const pages = [1];
+// //       if (page > 3) pages.push(0); // Ellipsis
+// //       for (
+// //         let i = Math.max(2, page - 1);
+// //         i <= Math.min(totalPages - 1, page + 1);
+// //         i++
+// //       ) {
+// //         pages.push(i);
+// //       }
+// //       if (page < totalPages - 2) pages.push(0); // Ellipsis
+// //       if (totalPages > 1) pages.push(totalPages);
+// //       return pages;
+// //     }
+// //   };
+
+// //   const renderEmptyState = () => (
+// //     <tr>
+// //       <td colSpan={7} className="px-4 py-12 text-center">
+// //         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+// //           <Users className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
+// //           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+// //             No Users Found
+// //           </h2>
+// //           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md">
+// //             It looks like there are no users matching your criteria. Try
+// //             adjusting the filters or invite new users to join!
+// //           </p>
+// //           <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
+// //             No New Users
+// //           </Button>
+// //         </div>
+// //       </td>
+// //     </tr>
+// //   );
+
+// //   return (
+// //     <div className="flex min-h-screen">
+// //       <main className="flex-1 mx-32 p-6 bg-white dark:bg-gray-900">
+// //         {/* Header and Stats */}
+// //         <div className="mb-3 flex items-start justify-between flex-wrap">
+// //           <div className="mb-4 items-center pt-5">
+// //             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+// //               Users List
+// //             </h1>
+// //           </div>
+// //           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
+// //             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+// //               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+// //                 Total Users
+// //               </h3>
+// //               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+// //                 {total}
+// //               </p>
+// //             </Card>
+// //             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+// //               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+// //                 Total Mentors
+// //               </h3>
+// //               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+// //                 {totalMentors}
+// //               </p>
+// //             </Card>
+// //             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+// //               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+// //                 Total Mentees
+// //               </h3>
+// //               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+// //                 {totalMentees}
+// //               </p>
+// //             </Card>
+// //             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+// //               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+// //                 Total Both
+// //               </h3>
+// //               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+// //                 {totalBoth}
+// //               </p>
+// //             </Card>
+// //             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+// //               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+// //                 Approval Pendings
+// //               </h3>
+// //               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+// //                 {approvalPending}
+// //               </p>
+// //             </Card>
+// //           </div>
+// //         </div>
+
+// //         {/* Users Table */}
+// //         <div className="rounded-md border border-gray-200 dark:border-gray-700">
+// //           {loading ? (
+// //             <TableSkeleton />
+// //           ) : error ? (
+// //             <div className="p-4 text-center">
+// //               <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+// //                 <svg
+// //                   className="h-16 w-16 text-red-400 mb-4"
+// //                   fill="none"
+// //                   viewBox="0 0 24 24"
+// //                   stroke="currentColor"
+// //                 >
+// //                   <path
+// //                     strokeLinecap="round"
+// //                     strokeLinejoin="round"
+// //                     strokeWidth={2}
+// //                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+// //                   />
+// //                 </svg>
+// //                 <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+// //                   Something went wrong
+// //                 </h2>
+// //                 <p className="text-red-500 dark:text-red-400 mt-2">{error}</p>
+// //                 <Button
+// //                   onClick={() => window.location.reload()}
+// //                   className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+// //                 >
+// //                   Try Again
+// //                 </Button>
+// //               </div>
+// //             </div>
+// //           ) : (
+// //             <div className="overflow-x-auto">
+// //               <table className="w-full">
+// //                 <thead>
+// //                   <tr className="border-b bg-gray-50 dark:bg-gray-800 text-left">
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       SI No
+// //                     </th>
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       Name
+// //                     </th>
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       Email ID
+// //                     </th>
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       Mentor Status
+// //                     </th>
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       <DropdownMenu>
+// //                         <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+// //                           Role
+// //                           <ChevronDown className="h-4 w-4" />
+// //                         </DropdownMenuTrigger>
+// //                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
+// //                           <DropdownMenuItem
+// //                             onClick={() => setRoleFilter(null)}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             All
+// //                           </DropdownMenuItem>
+// //                           <DropdownMenuItem
+// //                             onClick={() => setRoleFilter("mentee")}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             Mentee
+// //                           </DropdownMenuItem>
+// //                           <DropdownMenuItem
+// //                             onClick={() => setRoleFilter("mentor")}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             Mentor
+// //                           </DropdownMenuItem>
+// //                           <DropdownMenuItem
+// //                             onClick={() => setRoleFilter("both")}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             Both
+// //                           </DropdownMenuItem>
+// //                         </DropdownMenuContent>
+// //                       </DropdownMenu>
+// //                     </th>
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       <DropdownMenu>
+// //                         <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+// //                           Status
+// //                           <ChevronDown className="h-4 w-4" />
+// //                         </DropdownMenuTrigger>
+// //                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
+// //                           <DropdownMenuItem
+// //                             onClick={() => setStatusFilter(null)}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             All
+// //                           </DropdownMenuItem>
+// //                           <DropdownMenuItem
+// //                             onClick={() => setStatusFilter("Active")}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             Active
+// //                           </DropdownMenuItem>
+// //                           <DropdownMenuItem
+// //                             onClick={() => setStatusFilter("Blocked")}
+// //                             className="text-gray-700 dark:text-gray-200"
+// //                           >
+// //                             Blocked
+// //                           </DropdownMenuItem>
+// //                         </DropdownMenuContent>
+// //                       </DropdownMenu>
+// //                     </th>
+// //                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+// //                       Action
+// //                     </th>
+// //                   </tr>
+// //                 </thead>
+// //                 <tbody>
+// //                   {filteredUsers.length === 0
+// //                     ? renderEmptyState()
+// //                     : filteredUsers.map((user, index) => (
+// //                         <tr
+// //                           key={user._id}
+// //                           className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+// //                         >
+// //                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+// //                             {(page - 1) * limit + index + 1}
+// //                           </td>
+// //                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+// //                             {`${user.firstName} ${user.lastName}`}
+// //                           </td>
+// //                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+// //                             {user.email}
+// //                           </td>
+// //                           <td className="px-4 py-3 text-sm">
+// //                             {user.mentorId?.isApproved === "Pending" ? (
+// //                               <Badge icon={HiCheck} color="purple">
+// //                                 Pending
+// //                               </Badge>
+// //                             ) : user.mentorId?.isApproved === "Rejected" ? (
+// //                               <Badge icon={HiCheck} color="failure">
+// //                                 Rejected
+// //                               </Badge>
+// //                             ) : user.mentorId?.isApproved === "Approved" ? (
+// //                               <Badge icon={HiCheck} color="success">
+// //                                 Approved
+// //                               </Badge>
+// //                             ) : (
+// //                               <Badge icon={HiCheck} color="warning">
+// //                                 N/A
+// //                               </Badge>
+// //                             )}
+// //                           </td>
+// //                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+// //                             {Array.isArray(user.role)
+// //                               ? user.role.length === 2
+// //                                 ? "Both"
+// //                                 : user.role.includes("mentor")
+// //                                 ? "Mentor"
+// //                                 : user.role.includes("mentee")
+// //                                 ? "Mentee"
+// //                                 : "N/A"
+// //                               : "N/A"}
+// //                           </td>
+// //                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+// //                             {user.isBlocked ? "Blocked" : "Active"}
+// //                           </td>
+// //                           <td className="px-4 py-3 text-sm">
+// //                             <Button
+// //                               className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
+// //                               onClick={() =>
+// //                                 navigate(`/admin/userProfile/${user._id}`)
+// //                               }
+// //                             >
+// //                               Edit
+// //                             </Button>
+// //                           </td>
+// //                         </tr>
+// //                       ))}
+// //                 </tbody>
+// //               </table>
+// //             </div>
+// //           )}
+// //         </div>
+
+// //         {/* Pagination */}
+// //         {!loading && !error && total > 0 && (
+// //           <div className="mt-4">
+// //             <Pagination>
+// //               <PaginationContent>
+// //                 <PaginationItem>
+// //                   {page > 1 ? (
+// //                     <PaginationPrevious
+// //                       onClick={() => setPage((prev) => prev - 1)}
+// //                       className="cursor-pointer"
+// //                     />
+// //                   ) : (
+// //                     <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
+// //                   )}
+// //                 </PaginationItem>
+// //                 {getPageItems().map((pageNum, index) =>
+// //                   pageNum === 0 ? (
+// //                     <PaginationItem key={`ellipsis-${index}`}>
+// //                       <PaginationEllipsis />
+// //                     </PaginationItem>
+// //                   ) : (
+// //                     <PaginationItem key={pageNum}>
+// //                       <PaginationLink
+// //                         onClick={() => setPage(pageNum)}
+// //                         isActive={pageNum === page}
+// //                         className="cursor-pointer text-gray-700 dark:text-gray-200"
+// //                       >
+// //                         {pageNum}
+// //                       </PaginationLink>
+// //                     </PaginationItem>
+// //                   )
+// //                 )}
+// //                 <PaginationItem>
+// //                   {page < totalPages ? (
+// //                     <PaginationNext
+// //                       onClick={() => setPage((prev) => prev + 1)}
+// //                       className="cursor-pointer"
+// //                     />
+// //                   ) : (
+// //                     <PaginationNext className="pointer-events-none opacity-50" />
+// //                   )}
+// //                 </PaginationItem>
+// //               </PaginationContent>
+// //             </Pagination>
+// //           </div>
+// //         )}
+// //       </main>
+// //     </div>
+// //   );
+// // };
+
+// // export default AllUsers;
+// // src/components/admin/AllUsers.tsx
+// import { useState, useEffect } from "react";
+// import { useNavigate } from "react-router-dom";
+// import { ChevronDown } from "lucide-react";
+// import { getAllusers } from "@/services/adminService";
+// import { Card } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import {
+//   Pagination,
+//   PaginationContent,
+//   PaginationEllipsis,
+//   PaginationItem,
+//   PaginationLink,
+//   PaginationNext,
+//   PaginationPrevious,
+// } from "@/components/ui/pagination";
+// import { Badge } from "flowbite-react";
+// import { HiCheck } from "react-icons/hi";
+// import { Users } from "lucide-react";
+// import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
+
+// interface User {
+//   _id: string;
+//   firstName: string;
+//   lastName: string;
+//   email: string;
+//   mentorId?: { isApproved: string };
+//   role: string[];
+//   isBlocked?: boolean;
+// }
+
+// const AllUsers: React.FC = () => {
+//   const [users, setUsers] = useState<User[]>([]);
+//   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+//   const [total, setTotal] = useState(0);
+//   const [totalMentors, setTotalMentors] = useState(0);
+//   const [totalMentees, setTotalMentees] = useState(0);
+//   const [totalBoth, setTotalBoth] = useState(0);
+//   const [approvalPending, setApprovalPending] = useState(0);
+//   const [page, setPage] = useState(1);
+//   const [roleFilter, setRoleFilter] = useState<string | null>(null);
+//   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState<string | null>(null);
+//   const limit = 12;
+//   const navigate = useNavigate();
+
+//   // Fetch initial counts (unchanged by filters or search)
+//   useEffect(() => {
+//     const fetchInitialCounts = async () => {
+//       try {
+//         const response = await getAllusers(1, limit);
+//         if (response && response.status === 200) {
+//           setTotal(response.data.data.total);
+//           setTotalMentors(response.data.data.totalMentors);
+//           setTotalMentees(response.data.data.totalMentees);
+//           setTotalBoth(response.data.data.totalBoth);
+//           setApprovalPending(response.data.data.approvalPending);
+//         }
+//       } catch (err) {
+//         console.error("Error fetching initial counts:", err);
+//       }
+//     };
+//     fetchInitialCounts();
+//   }, []);
+
+//   // Reset page to 1 when filters or search change
+//   useEffect(() => {
+//     setPage(1);
+//   }, [roleFilter, statusFilter, searchQuery]);
+
+//   // Fetch users when page, filters, or search change
+//   useEffect(() => {
+//     const fetchUsers = async () => {
+//       setLoading(true);
+//       setError(null);
+//       try {
+//         const response = await getAllusers(
+//           page,
+//           limit,
+//           roleFilter,
+//           statusFilter,
+//           searchQuery
+//         );
+//         if (response && response.status === 200) {
+//           const fetchedUsers = response.data.data.users;
+//           setUsers(fetchedUsers);
+//           setFilteredUsers(fetchedUsers); // No client-side filtering needed
+//         } else {
+//           setError("Failed to fetch users. Please try again.");
+//         }
+//       } catch (err) {
+//         setError("An error occurred while fetching users.");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchUsers();
+//   }, [page, roleFilter, statusFilter, searchQuery]);
+
+//   const totalPages = Math.ceil(total / limit);
+
+//   // Generate pagination items
+//   const getPageItems = () => {
+//     if (totalPages <= 5) {
+//       return Array.from({ length: totalPages }, (_, i) => i + 1);
+//     }
+//     const pages = [1];
+//     if (page > 3) pages.push(0); // Ellipsis
+//     for (
+//       let i = Math.max(2, page - 1);
+//       i <= Math.min(totalPages - 1, page + 1);
+//       i++
+//     ) {
+//       pages.push(i);
+//     }
+//     if (page < totalPages - 2) pages.push(0); // Ellipsis
+//     if (totalPages > 1) pages.push(totalPages);
+//     return pages;
+//   };
+
+//   const renderEmptyState = () => (
+//     <tr>
+//       <td colSpan={7} className="px-4 py-12 text-center">
+//         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+//           <Users className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
+//           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+//             No Users Found
+//           </h2>
+//           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md">
+//             No users match your criteria. Try adjusting the filters or search
+//             query.
+//           </p>
+//         </div>
+//       </td>
+//     </tr>
+//   );
+
+//   return (
+//     <div className="flex min-h-screen">
+//       <main className="flex-1 mx-32 p-6 bg-white dark:bg-gray-900">
+//         {/* Header and Stats */}
+//         <div className="mb-3 flex items-start justify-between flex-wrap">
+//           <div className="mb-4 items-center pt-5">
+//             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+//               Users List
+//             </h1>
+//           </div>
+//           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
+//             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Total Users
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {total}
+//               </p>
+//             </Card>
+//             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Total Mentors
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {totalMentors}
+//               </p>
+//             </Card>
+//             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Total Mentees
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {totalMentees}
+//               </p>
+//             </Card>
+//             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Total Both
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {totalBoth}
+//               </p>
+//             </Card>
+//             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Approval Pending
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {approvalPending}
+//               </p>
+//             </Card>
+//           </div>
+//         </div>
+
+//         {/* Search and Filters */}
+//         <div className="mb-4 flex justify-between items-center">
+//           <Input
+//             type="text"
+//             placeholder="Search by name or email..."
+//             value={searchQuery}
+//             onChange={(e) => setSearchQuery(e.target.value)}
+//             className="w-1/3 h-10"
+//           />
+//           <div className="flex gap-4">
+//             <DropdownMenu>
+//               <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+//                 Role <ChevronDown className="h-4 w-4" />
+//               </DropdownMenuTrigger>
+//               <DropdownMenuContent className="bg-white dark:bg-gray-800">
+//                 <DropdownMenuItem onClick={() => setRoleFilter(null)}>
+//                   All
+//                 </DropdownMenuItem>
+//                 <DropdownMenuItem onClick={() => setRoleFilter("mentee")}>
+//                   Mentee
+//                 </DropdownMenuItem>
+//                 <DropdownMenuItem onClick={() => setRoleFilter("mentor")}>
+//                   Mentor
+//                 </DropdownMenuItem>
+//                 <DropdownMenuItem onClick={() => setRoleFilter("both")}>
+//                   Both
+//                 </DropdownMenuItem>
+//               </DropdownMenuContent>
+//             </DropdownMenu>
+//             <DropdownMenu>
+//               <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+//                 Status <ChevronDown className="h-4 w-4" />
+//               </DropdownMenuTrigger>
+//               <DropdownMenuContent className="bg-white dark:bg-gray-800">
+//                 <DropdownMenuItem onClick={() => setStatusFilter(null)}>
+//                   All
+//                 </DropdownMenuItem>
+//                 <DropdownMenuItem onClick={() => setStatusFilter("Active")}>
+//                   Active
+//                 </DropdownMenuItem>
+//                 <DropdownMenuItem onClick={() => setStatusFilter("Blocked")}>
+//                   Blocked
+//                 </DropdownMenuItem>
+//               </DropdownMenuContent>
+//             </DropdownMenu>
+//           </div>
+//         </div>
+
+//         {/* Users Table */}
+//         <div className="rounded-md border border-gray-200 dark:border-gray-700">
+//           {loading ? (
+//             <TableSkeleton />
+//           ) : error ? (
+//             <div className="p-4 text-center">
+//               <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+//                 <svg
+//                   className="h-16 w-16 text-red-400 mb-4"
+//                   fill="none"
+//                   viewBox="0 0 24 24"
+//                   stroke="currentColor"
+//                 >
+//                   <path
+//                     strokeLinecap="round"
+//                     strokeLinejoin="round"
+//                     strokeWidth={2}
+//                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+//                   />
+//                 </svg>
+//                 <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+//                   Something went wrong
+//                 </h2>
+//                 <p className="text-red-500 dark:text-red-400 mt-2">{error}</p>
+//                 <Button
+//                   onClick={() => window.location.reload()}
+//                   className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+//                 >
+//                   Try Again
+//                 </Button>
+//               </div>
+//             </div>
+//           ) : (
+//             <div className="overflow-x-auto">
+//               <table className="w-full">
+//                 <thead>
+//                   <tr className="border-b bg-gray-50 dark:bg-gray-800 text-left">
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       SI No
+//                     </th>
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       Name
+//                     </th>
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       Email ID
+//                     </th>
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       Mentor Status
+//                     </th>
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       Role
+//                     </th>
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       Status
+//                     </th>
+//                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+//                       Action
+//                     </th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {filteredUsers.length === 0
+//                     ? renderEmptyState()
+//                     : filteredUsers.map((user, index) => (
+//                         <tr
+//                           key={user._id}
+//                           className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+//                         >
+//                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+//                             {(page - 1) * limit + index + 1}
+//                           </td>
+//                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+//                             {`${user.firstName} ${user.lastName}`}
+//                           </td>
+//                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+//                             {user.email}
+//                           </td>
+//                           <td className="px-4 py-3 text-sm">
+//                             {user.mentorId?.isApproved === "Pending" ? (
+//                               <Badge icon={HiCheck} color="purple">
+//                                 Pending
+//                               </Badge>
+//                             ) : user.mentorId?.isApproved === "Rejected" ? (
+//                               <Badge icon={HiCheck} color="failure">
+//                                 Rejected
+//                               </Badge>
+//                             ) : user.mentorId?.isApproved === "Approved" ? (
+//                               <Badge icon={HiCheck} color="success">
+//                                 Approved
+//                               </Badge>
+//                             ) : (
+//                               <Badge icon={HiCheck} color="warning">
+//                                 N/A
+//                               </Badge>
+//                             )}
+//                           </td>
+//                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+//                             {Array.isArray(user.role)
+//                               ? user.role.length === 2
+//                                 ? "Both"
+//                                 : user.role.includes("mentor")
+//                                 ? "Mentor"
+//                                 : user.role.includes("mentee")
+//                                 ? "Mentee"
+//                                 : "N/A"
+//                               : "N/A"}
+//                           </td>
+//                           <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+//                             {user.isBlocked ? "Blocked" : "Active"}
+//                           </td>
+//                           <td className="px-4 py-3 text-sm">
+//                             <Button
+//                               className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
+//                               onClick={() =>
+//                                 navigate(`/admin/userProfile/${user._id}`)
+//                               }
+//                             >
+//                               Edit
+//                             </Button>
+//                           </td>
+//                         </tr>
+//                       ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Pagination */}
+//         {!loading && !error && total > 0 && (
+//           <div className="mt-4">
+//             <Pagination>
+//               <PaginationContent>
+//                 <PaginationItem>
+//                   {page > 1 ? (
+//                     <PaginationPrevious
+//                       onClick={() => setPage((prev) => prev - 1)}
+//                       className="cursor-pointer"
+//                     />
+//                   ) : (
+//                     <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
+//                   )}
+//                 </PaginationItem>
+//                 {getPageItems().map((pageNum, index) =>
+//                   pageNum === 0 ? (
+//                     <PaginationItem key={`ellipsis-${index}`}>
+//                       <PaginationEllipsis />
+//                     </PaginationItem>
+//                   ) : (
+//                     <PaginationItem key={pageNum}>
+//                       <PaginationLink
+//                         onClick={() => setPage(pageNum)}
+//                         isActive={pageNum === page}
+//                         className="cursor-pointer text-gray-700 dark:text-gray-200"
+//                       >
+//                         {pageNum}
+//                       </PaginationLink>
+//                     </PaginationItem>
+//                   )
+//                 )}
+//                 <PaginationItem>
+//                   {page < totalPages ? (
+//                     <PaginationNext
+//                       onClick={() => setPage((prev) => prev + 1)}
+//                       className="cursor-pointer"
+//                     />
+//                   ) : (
+//                     <PaginationNext className="pointer-events-none opacity-50" />
+//                   )}
+//                 </PaginationItem>
+//               </PaginationContent>
+//             </Pagination>
+//           </div>
+//         )}
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default AllUsers;
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
-import { getAllusers } from "@/services/adminService";
+import Cookies from "js-cookie";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,117 +900,126 @@ import { Badge } from "flowbite-react";
 import { HiCheck } from "react-icons/hi";
 import { Users } from "lucide-react";
 import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
+
+// Interfaces
 interface User {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
-  mentorStatus?: string;
-  role: string[];
-  status: string;
-  isBlocked?: boolean;
   mentorId?: { isApproved: string };
+  role: string[];
+  isBlocked?: boolean;
 }
 
-const AllUsers: React.FC = () => {
+interface UserResponse {
+  users: User[];
+  total: number;
+  totalMentors: number;
+  totalMentees: number;
+  totalBoth: number;
+  approvalPending: number;
+}
+
+// Custom Hook for Fetching Users
+const useFetchUsers = (
+  page: number,
+  limit: number,
+  roleFilter: string | null,
+  statusFilter: string | null,
+  searchQuery: string
+) => {
   const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState({
+    total: 0,
+    totalMentors: 0,
+    totalMentees: 0,
+    totalBoth: 0,
+    approvalPending: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = Cookies.get("adminAccessToken");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch(
+        `/api/admin/users?page=${page}&limit=${limit}${
+          roleFilter ? `&role=${roleFilter}` : ""
+        }${statusFilter ? `&status=${statusFilter}` : ""}${
+          searchQuery ? `&searchQuery=${encodeURIComponent(searchQuery)}` : ""
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch users");
+
+      const data: UserResponse = await response.json();
+      setUsers(data.users);
+      setStats({
+        total: data.total,
+        totalMentors: data.totalMentors,
+        totalMentees: data.totalMentees,
+        totalBoth: data.totalBoth,
+        approvalPending: data.approvalPending,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit, roleFilter, statusFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  return { users, stats, loading, error };
+};
+
+// Component
+const AllUsers: React.FC = () => {
   const [page, setPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [totalMentees, setTotalMentees] = useState(0);
-  const [totalMentors, setTotalMentors] = useState(0);
-  const [totalBoth, setTotalBoth] = useState(0);
-  const [approvalPending, setApprovalPending] = useState(0);
-  const limit = 10;
+  const [searchQuery, setSearchQuery] = useState("");
+  const limit = 12;
   const navigate = useNavigate();
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [roleFilter, statusFilter]);
+  const { users, stats, loading, error } = useFetchUsers(
+    page,
+    limit,
+    roleFilter,
+    statusFilter,
+    searchQuery
+  );
 
-  // Fetch users when page or filters change
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await getAllusers(
-          page,
-          limit,
-          roleFilter ?? undefined,
-          statusFilter ?? undefined
-        );
-        if (response && response.status === 200) {
-          const fetchedUsers = response.data.data.users;
-          setUsers(fetchedUsers);
-          setTotal(response.data.data.total);
-          setTotalMentors(response.data.data.totalMentors);
-          setTotalMentees(response.data.data.totalMentees);
-          setTotalBoth(response.data.data.totalBoth);
-          setApprovalPending(response.data.data.approvalPending);
+  const totalPages = Math.ceil(stats.total / limit);
 
-          // Apply frontend filtering for role display
-          const filtered = fetchedUsers.filter((user: User) => {
-            if (!roleFilter) return true;
-            if (roleFilter === "mentee")
-              return (
-                Array.isArray(user.role) &&
-                user.role.includes("mentee") &&
-                user.role.length === 1
-              );
-            if (roleFilter === "mentor")
-              return (
-                Array.isArray(user.role) &&
-                user.role.includes("mentor") &&
-                user.role.length === 1
-              );
-            if (roleFilter === "both")
-              return (
-                Array.isArray(user.role) &&
-                user.role.includes("mentor") &&
-                user.role.includes("mentee")
-              );
-            return true;
-          });
-
-          setFilteredUsers(filtered);
-        } else {
-          setError("Failed to fetch users. Please try again.");
-        }
-      } catch (err) {
-        setError("An error occurred while fetching users.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
-  }, [page, roleFilter, statusFilter]);
-
-  const totalPages = Math.ceil(total / limit);
-
-  // Generate pagination items
   const getPageItems = () => {
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
-    } else {
-      const pages = [1];
-      if (page > 3) pages.push(0); // Ellipsis
-      for (
-        let i = Math.max(2, page - 1);
-        i <= Math.min(totalPages - 1, page + 1);
-        i++
-      ) {
-        pages.push(i);
-      }
-      if (page < totalPages - 2) pages.push(0); // Ellipsis
-      if (totalPages > 1) pages.push(totalPages);
-      return pages;
     }
+    const pages = [1];
+    if (page > 3) pages.push(0);
+    for (
+      let i = Math.max(2, page - 1);
+      i <= Math.min(totalPages - 1, page + 1);
+      i++
+    ) {
+      pages.push(i);
+    }
+    if (page < totalPages - 2) pages.push(0);
+    if (totalPages > 1) pages.push(totalPages);
+    return pages;
   };
 
   const renderEmptyState = () => (
@@ -145,12 +1031,9 @@ const AllUsers: React.FC = () => {
             No Users Found
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md">
-            It looks like there are no users matching your criteria. Try
-            adjusting the filters or invite new users to join!
+            No users match your criteria. Try adjusting the filters or search
+            query.
           </p>
-          <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
-            No New Users
-          </Button>
         </div>
       </td>
     </tr>
@@ -159,7 +1042,6 @@ const AllUsers: React.FC = () => {
   return (
     <div className="flex min-h-screen">
       <main className="flex-1 mx-32 p-6 bg-white dark:bg-gray-900">
-        {/* Header and Stats */}
         <div className="mb-3 flex items-start justify-between flex-wrap">
           <div className="mb-4 items-center pt-5">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -172,7 +1054,7 @@ const AllUsers: React.FC = () => {
                 Total Users
               </h3>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {total}
+                {stats.total}
               </p>
             </Card>
             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
@@ -180,7 +1062,7 @@ const AllUsers: React.FC = () => {
                 Total Mentors
               </h3>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {totalMentors}
+                {stats.totalMentors}
               </p>
             </Card>
             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
@@ -188,7 +1070,7 @@ const AllUsers: React.FC = () => {
                 Total Mentees
               </h3>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {totalMentees}
+                {stats.totalMentees}
               </p>
             </Card>
             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
@@ -196,21 +1078,67 @@ const AllUsers: React.FC = () => {
                 Total Both
               </h3>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {totalBoth}
+                {stats.totalBoth}
               </p>
             </Card>
             <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Approval Pendings
+                Approval Pending
               </h3>
               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {approvalPending}
+                {stats.approvalPending}
               </p>
             </Card>
           </div>
         </div>
 
-        {/* Users Table */}
+        <div className="mb-4 flex justify-between items-center">
+          <Input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-1/3 h-10"
+          />
+          <div className="flex gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                Role <ChevronDown className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white dark:bg-gray-800">
+                <DropdownMenuItem onClick={() => setRoleFilter(null)}>
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setRoleFilter("mentee")}>
+                  Mentee
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setRoleFilter("mentor")}>
+                  Mentor
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setRoleFilter("both")}>
+                  Both
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                Status <ChevronDown className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white dark:bg-gray-800">
+                <DropdownMenuItem onClick={() => setStatusFilter(null)}>
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("Active")}>
+                  Active
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("Blocked")}>
+                  Blocked
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
         <div className="rounded-md border border-gray-200 dark:border-gray-700">
           {loading ? (
             <TableSkeleton />
@@ -260,66 +1188,10 @@ const AllUsers: React.FC = () => {
                       Mentor Status
                     </th>
                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                          Role
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter(null)}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            All
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter("mentee")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Mentee
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter("mentor")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Mentor
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter("both")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Both
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      Role
                     </th>
                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                          Status
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => setStatusFilter(null)}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            All
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setStatusFilter("Active")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Active
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setStatusFilter("Blocked")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Blocked
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      Status
                     </th>
                     <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
                       Action
@@ -327,9 +1199,9 @@ const AllUsers: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.length === 0
+                  {users.length === 0
                     ? renderEmptyState()
-                    : filteredUsers.map((user, index) => (
+                    : users.map((user, index) => (
                         <tr
                           key={user._id}
                           className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -394,8 +1266,7 @@ const AllUsers: React.FC = () => {
           )}
         </div>
 
-        {/* Pagination */}
-        {!loading && !error && total > 0 && (
+        {!loading && !error && stats.total > 0 && (
           <div className="mt-4">
             <Pagination>
               <PaginationContent>

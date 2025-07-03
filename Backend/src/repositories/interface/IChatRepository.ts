@@ -1,8 +1,7 @@
 import { EChat } from "../../entities/chatEntity";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IChatRepository {
-  create(data: Partial<EChat>): Promise<EChat>;
-  findById(id: string): Promise<EChat | null>;
+export interface IChatRepository extends IBaseRepository<EChat> {
   findByIdAndUpdate(id: string, update: Partial<EChat>): Promise<EChat | null>;
   findByUserAndRole(
     userId: string,

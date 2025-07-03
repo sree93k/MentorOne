@@ -1,43 +1,20 @@
+import { QueryOptions } from "mongoose";
 import { EBooking } from "../../entities/bookingEntity";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IBookingRepository {
-  create(data: any): Promise<any>;
-  findById(id: string): Promise<any | null>;
-  findBySessionId(sessionId: string): Promise<any | null>;
-  findByMentee(
-    menteeId: string,
-    skip: number,
+export interface IBookingRepository extends IBaseRepository<EBooking> {
+  findByMenteeSimple(menteeId: string): Promise<EBooking[]>;
+  findAll(query?: any, options?: QueryOptions): Promise<EBooking[]>;
+  findAllBookings(
+    page: number,
     limit: number,
-    query: string
-  ): Promise<any[]>;
-  countByMentee(menteeId: string, query: any): Promise<any>;
-  findByMentor(mentorId: string, skip: number, limit: number): Promise<any[]>;
-  countByMentor(mentorId: string): Promise<any | null>;
-  update(id: string, data: any): Promise<any | null>;
-  findByMenteeAndService(
-    menteeId: string,
-    serviceId: string
-  ): Promise<any | null>;
-  findAllBookings(skip: number, limit: number, query: any): Promise<EBooking[]>;
-  countAllBookings(query: any): Promise<number>;
-
-  findAllVideoCalls(
-    mentorId: string,
-    status?: string[],
-    limit?: number
+    searchQuery?: string,
+    service?: string,
+    status?: string
   ): Promise<EBooking[]>;
-  findByMenteeWithTestimonials(
-    menteeId: string,
-    skip: number,
-    limit: number,
-    query: any
-  ): Promise<any[]>;
-  updateBookingStatus(
-    bookingId: string,
-    status: "pending" | "confirmed" | "completed"
-  ): Promise<any>;
-  getBookingsByDashboard(
-    dashboard: "mentor" | "mentee",
-    bookingId: string
-  ): Promise<EBooking>;
+  count(
+    searchQuery?: string,
+    service?: string,
+    status?: string
+  ): Promise<number>;
 }

@@ -1,10 +1,15 @@
-import { Document, ObjectId } from "mongoose";
+import { Document } from "mongoose";
+
+export interface Participant {
+  userId: string;
+  joinedAt: Date;
+}
 
 export interface EVideoCall extends Document {
   meetingId: string;
   creatorId: string;
   bookingId: string;
-  participants: { userId: string; joinedAt: Date }[];
+  participants: Participant[];
   createdAt: Date;
   endedAt?: Date;
 }

@@ -1,74 +1,64 @@
-import { Model } from "mongoose";
-import { IBaseRepository } from "../interface/IBaseRepository";
+import { injectable } from "inversify";
+import { Document, Model } from "mongoose";
 
-export default class BaseRepository<T> implements IBaseRepository<T> {
-  private model: Model<T>;
+@injectable()
+export default class BaseRepository<T extends Document> {
+  protected model: Model<T>;
 
   constructor(model: Model<T>) {
+    if (!model) {
+      throw new Error("Mongoose model is undefined");
+    }
     this.model = model;
   }
 
-  get models(): Model<T> {
-    return this.model;
-  }
-
-  getModel(): Model<T> {
-    return this.model;
-  }
-  async create(item: T): Promise<T> {
-    const createdItem = new this.model(item);
-    return createdItem;
+  async create(data: Partial<T>): Promise<T> {
+    return this.model.create(data);
   }
 
   async findById(id: string): Promise<T | null> {
-    return await this.model
-      .findById(id)
-      .populate("schoolDetails")
-      .populate("collegeDetails")
-      .populate("professionalDetails");
-  }
-  async findByEmail(email: string): Promise<T | null> {
-    return await this.model.findOne({ email }).exec();
-  }
-  async findAll(): Promise<T[]> {
-    return await this.model.find().exec();
+    return this.model.findById(id).exec();
   }
 
-  async update(id: string, item: Partial<T>): Promise<T | null> {
-    return await this.model
-      .findByIdAndUpdate(id, item, { new: true })
-      .populate("schoolDetails")
-      .populate("collegeDetails")
-      .populate("professionalDetails")
+  async findOne(query: any): Promise<T | null> {
+    return this.model.findOne(query).exec();
+  }
+
+  async findAll(query: any): Promise<T[]> {
+    return this.model.find(query).exec();
+  }
+  async findMany(query: any, page: number, limit: number): Promise<any[]> {
+    return this.model
+      .find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
       .exec();
   }
 
-  async updateField(
-    id: string,
-    field: keyof T,
-    value: string
-  ): Promise<T | null> {
-    console.log("base rrpoo ", id, field, value);
-
-    return await this.model
-      .findByIdAndUpdate(id, { $set: { [field]: value } } as any, { new: true })
+  async update(id: string, data: Partial<T>): Promise<T | null> {
+    return this.model
+      .findByIdAndUpdate(id, { $set: data }, { new: true })
       .exec();
   }
-  async delete(id: string): Promise<boolean> {
-    const result = await this.model.findByIdAndDelete(id).exec();
-    return result !== null;
+
+  async delete(id: string): Promise<T | null> {
+    return this.model.findByIdAndDelete(id).exec();
   }
 
-  async findByField<K extends keyof T>(
-    field: K,
-    value: string
-  ): Promise<T[] | null> {
-    try {
-      const query = { [field]: value } as unknown as Partial<T>;
-      return await this.model.find(query).exec();
-    } catch (error) {
-      console.error("Error in findByField:", error);
-      return null;
-    }
+  async countDocuments(query: any): Promise<number> {
+    return this.model.countDocuments(query).exec();
+  }
+
+  async findOneAndUpdate(query: any, data: Partial<T>): Promise<T | null> {
+    return await this.model.findOneAndUpdate(
+      query,
+      { $set: data },
+      { new: true }
+    );
+  }
+
+  async aggregate(pipeline: any[]): Promise<any[]> {
+    return await this.model.aggregate(pipeline).exec();
   }
 }

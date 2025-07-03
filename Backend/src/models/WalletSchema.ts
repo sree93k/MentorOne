@@ -1,61 +1,24 @@
-import mongoose, { Schema } from "mongoose";
-import { IWallet } from "../entities/WalletEntity";
+import { Schema, model } from "mongoose";
+import { EWallet } from "../entities/WalletEntity";
 
-const WalletSchema = new Schema<IWallet>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-    unique: true,
+const WalletSchema = new Schema<EWallet>(
+  {
+    userId: { type: String, required: true, unique: true },
+    balance: { type: Number, default: 0 },
+    pendingBalance: { type: Number, default: 0 },
+    transactions: [
+      {
+        paymentId: { type: Schema.Types.ObjectId, ref: "Payment" },
+        amount: Number,
+        type: { type: String, enum: ["credit", "debit"] },
+        description: String,
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
-  balance: {
-    type: Number,
-    required: true,
-    min: 0,
-    default: 0,
-  },
-  pendingBalance: {
-    type: Number,
-    required: true,
-    min: 0,
-    default: 0,
-  },
-  status: {
-    type: String,
-    enum: ["pending", "completed"],
-    default: "pending",
-  },
-  transactions: [
-    {
-      paymentId: {
-        type: Schema.Types.ObjectId,
-        ref: "Payment",
-        required: true,
-      },
-      amount: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-      type: {
-        type: String,
-        enum: ["credit", "debit"],
-        required: true,
-      },
-      description: {
-        type: String,
-        required: true,
-      },
-      createdAt: {
-        type: Date,
-        default: Date.now,
-      },
-    },
-  ],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+  { versionKey: false }
+);
 
-const Wallet = mongoose.model<IWallet>("Wallet", WalletSchema);
-
-export default Wallet;
+export default model<EWallet>("Wallet", WalletSchema);

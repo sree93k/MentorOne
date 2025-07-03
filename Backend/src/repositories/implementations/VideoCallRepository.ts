@@ -1,56 +1,67 @@
-import VideoCall from "../../models/VideoCall";
+import { injectable } from "inversify";
+import { Types } from "mongoose";
+import VideoCallModel from "../../models/VideoCall";
 import { EVideoCall } from "../../entities/videoCallEntity";
 import IVideoCallRepository from "../interface/IVideoCallRepository";
+import BaseRepository from "./BaseRepository";
 
-class VideoCallRepository implements IVideoCallRepository {
+@injectable()
+export default class VideoCallRepository
+  extends BaseRepository<EVideoCall>
+  implements IVideoCallRepository
+{
+  constructor() {
+    super(VideoCallModel);
+  }
   async createMeeting(meetingData: Partial<EVideoCall>): Promise<EVideoCall> {
-    const videoCall = new VideoCall(meetingData);
-    return await videoCall.save();
+    const meeting = new VideoCallModel(meetingData);
+    return await meeting.save();
   }
 
   async findMeeting(meetingId: string): Promise<EVideoCall | null> {
-    return await VideoCall.findOne({ meetingId });
+    return await VideoCallModel.findOne({ meetingId }).exec();
   }
 
   async addParticipant(meetingId: string, userId: string): Promise<void> {
-    await VideoCall.updateOne(
+    await VideoCallModel.updateOne(
       { meetingId },
       {
         $addToSet: {
-          participants: { userId, joinedAt: new Date() },
+          participants: {
+            userId,
+            joinedAt: new Date(),
+          },
         },
       }
-    );
+    ).exec();
   }
 
   async removeParticipant(meetingId: string, userId: string): Promise<void> {
-    const result = await VideoCall.updateOne(
+    const result = await VideoCallModel.updateOne(
       { meetingId },
       { $pull: { participants: { userId } } }
-    );
+    ).exec();
+
     if (result.modifiedCount === 0) {
       console.warn(
-        `VideoCallRepository: No participant ${userId} found in meeting ${meetingId}`
-      );
-    } else {
-      console.log(
-        `VideoCallRepository: Removed participant ${userId} from meeting ${meetingId}`
+        `[VideoCallRepository] Participant ${userId} not found in ${meetingId}`
       );
     }
   }
+
   async update(
     meetingId: string,
     updateData: Partial<EVideoCall>
-  ): Promise<any> {
-    const result = await VideoCall.updateOne(
-      { meetingId },
-      { $set: updateData }
-    );
-    return result;
+  ): Promise<EVideoCall | null> {
+    return await VideoCallModel.findOneAndUpdate({ meetingId }, updateData, {
+      new: true,
+    }).exec();
   }
+
   async endMeeting(meetingId: string): Promise<void> {
-    await VideoCall.updateOne({ meetingId }, { $set: { endedAt: new Date() } });
+    await VideoCallModel.updateOne(
+      { meetingId },
+      { $set: { endedAt: new Date() } }
+    ).exec();
   }
 }
-
-export default VideoCallRepository;

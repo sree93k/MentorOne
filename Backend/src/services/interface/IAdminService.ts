@@ -1,35 +1,27 @@
-// src/services/interface/inAdminService.ts
-import { EMentee } from "../../entities/menteeEntiry";
-import { EUsers } from "../../entities/userEntity";
-import { EMentor } from "../../entities/mentorEntity";
+import {
+  GetAllUsersRequestDTO,
+  GetAllUsersResponseDTO,
+  GetUserDataResponseDTO,
+  MentorStatusUpdateDTO,
+  UserStatusUpdateDTO,
+  FetchBookingsQueryDto,
+  FetchPaymentsQueryDto,
+  TransferToMentorDto,
+  DashboardDataResponseDTO,
+} from "../../dtos/adminDTO";
 
 export interface IAdminService {
-  fetchAllUsers(
-    page: number,
-    limit: number,
-    role?: string,
-    status?: string
-  ): Promise<{
-    users: Omit<EUsers, "password">[];
-    total: number;
-  } | null>;
-
-  getUserDatas(id: string): Promise<{
-    user: EUsers;
-    menteeData: EMentee | null;
-    mentorData: EMentor | null;
-  } | null>;
-
-  mentorStatusChange(
-    id: string,
-    status: string,
-    reason: string
-  ): Promise<{
-    mentorData: EMentor | null;
-  } | null>;
-
-  userStatusChange(
-    id: string,
-    status: string
-  ): Promise<{ userData: EUsers | null } | null>;
+  validateSession(): Promise<void>;
+  fetchDashboardDatas(): Promise<DashboardDataResponseDTO>;
+  fetchAllUsers(dto: GetAllUsersRequestDTO): Promise<GetAllUsersResponseDTO>;
+  getUserDetails(id: string): Promise<GetUserDataResponseDTO | null>;
+  mentorStatusChange(dto: MentorStatusUpdateDTO): Promise<{ mentorData: any }>;
+  userStatusChange(dto: UserStatusUpdateDTO): Promise<{ userData: any }>;
+  getAllBookings(
+    query: FetchBookingsQueryDto
+  ): Promise<{ bookings: any[]; total: number }>;
+  getAllPayments(
+    query: FetchPaymentsQueryDto
+  ): Promise<{ payments: any[]; total: number }>;
+  transferToMentor(dto: TransferToMentorDto): Promise<any>;
 }

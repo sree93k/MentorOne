@@ -1,17 +1,18 @@
-import mongoose, { Schema } from "mongoose";
+import { Document, Types, ObjectId } from "mongoose";
 
-export interface IWallet {
-  userId: mongoose.Types.ObjectId; // Mentor ID
-  balance: number; // Available balance
-  pendingBalance: number; // Pending transfers
-  status: string;
-  transactions: {
-    paymentId: mongoose.Types.ObjectId;
-    amount: number;
-    type: "credit" | "debit";
-    description: string;
-    createdAt: Date;
-  }[];
+export interface WalletTransaction {
+  paymentId: Types.ObjectId;
+  amount: number;
+  type: "credit" | "debit";
+  description: string;
+  createdAt: Date;
+}
+
+export interface EWallet extends Document {
+  userId: string;
+  balance: number;
+  pendingBalance: number;
+  transactions: WalletTransaction[];
   createdAt: Date;
   updatedAt: Date;
 }

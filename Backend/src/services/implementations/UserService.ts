@@ -1,5 +1,5 @@
 import { EUsers } from "../../entities/userEntity";
-import { EMentee } from "../../entities/menteeEntiry";
+import { EMentee } from "../../entities/menteeEntity";
 import { EMentor } from "../../entities/mentorEntity";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUserService } from "../interface/IUserService";
@@ -7,8 +7,8 @@ import UserRespository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepositotry from "../../repositories/implementations/BaseRepository";
-import CareerRepository from "../../repositories/implementations/CareerRepository";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
+// import CareerRepository from "../../repositories/implementations/CareerRepository";
+// import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
 import Users from "../../models/userModel";
 import Mentees from "../../models/menteeModel";
 import Mentors from "../../models/mentorModel";
@@ -42,7 +42,6 @@ export default class UserService implements IUserService {
   private userBaseRepository: IBaseRepository<EUsers>;
   private menteeBaseRepository: IBaseRepository<EMentee>;
   private mentorBaseRepository: IBaseRepository<EMentor>;
-  private careerRepository: ICareerRepository;
   private mentorRepository: IMentorRepository;
 
   constructor() {
@@ -50,8 +49,6 @@ export default class UserService implements IUserService {
     this.userBaseRepository = new BaseRepositotry<EUsers>(Users);
     this.menteeBaseRepository = new BaseRepositotry<EMentee>(Mentees);
     this.mentorBaseRepository = new BaseRepositotry<EMentor>(Mentors);
-    this.careerRepository = new CareerRepository();
-    this.mentorRepository = new MentorRepository();
   }
 
   async findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null> {

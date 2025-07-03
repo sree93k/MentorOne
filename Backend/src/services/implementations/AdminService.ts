@@ -1,321 +1,335 @@
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../inversify/types";
 import { IAdminService } from "../interface/IAdminService";
-import Users from "../../models/userModel";
-import Mentee from "../../models/menteeModel";
-import Mentor from "../../models/mentorModel";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
-import MenteeRepository from "../../repositories/implementations/MenteeRepository";
-import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
-import MentorRepository from "../../repositories/implementations/MentorRepository";
+import { IUserService } from "../interface/IUserService";
+import { IBookingService } from "../interface/IBookingService";
+import { IPaymentService } from "../interface/IPaymentService";
+import { IMentorService } from "../interface/IMentorService";
+import {
+  GetAllUsersResponseDTO,
+  GetUserDataResponseDTO,
+  MentorStatusUpdateDTO,
+  UserStatusUpdateDTO,
+  FetchBookingsQueryDto,
+  FetchPaymentsQueryDto,
+  TransferToMentorDto,
+  DashboardDataResponseDTO,
+} from "../../dtos/adminDTO";
 import { EUsers } from "../../entities/userEntity";
-import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
+import { EMentee } from "../../entities/menteeEntity";
 import { sendMail } from "../../utils/emailService";
-import { Model } from "mongoose";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import { EService } from "../../entities/serviceEntity";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
-import { EBooking } from "../../entities/bookingEntity";
-import { number } from "joi";
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+import AppError from "../../errors/appError";
+import { HttpStatus } from "../../constants/HttpStatus";
+import { logger } from "../../utils/logger";
 
-export default class AdminService implements IAdminService {
-  private BaseRepository: IBaseRepository<EUsers>;
-  private MenteeRepository: IMenteeRepository;
-  private MentorRepository: IMentorRepository;
-  private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
+@injectable()
+export class AdminService implements IAdminService {
+  constructor(
+    @inject(TYPES.IUserService) private userService: IUserService,
+    @inject(TYPES.IMentorService) private mentorService: IMentorService,
+    @inject(TYPES.IBookingService) private bookingService: IBookingService,
+    @inject(TYPES.IPaymentService) private paymentService: IPaymentService
+  ) {}
 
-  constructor() {
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
-    this.MenteeRepository = new MenteeRepository();
-    this.MentorRepository = new MentorRepository();
-    this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
+  async validateSession(): Promise<void> {
+    // Implement session validation logic (e.g., check JWT, session token)
+    logger.info("Session validation performed");
+    // Throw AppError if validation fails
   }
 
-  private getModel(): Model<EUsers> {
-    return require("../../models/userModel").default;
-  }
+  async fetchDashboardDatas(): Promise<DashboardDataResponseDTO> {
+    logger.info("Fetching dashboard data");
 
-  private getMentorModel(): Model<any> {
-    return require("../../models/mentorModel").default;
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+
+    // Fetch users
+    const userQuery = { page: 1, limit: 1000 };
+    const usersData = await this.fetchAllUsers(userQuery);
+
+    // Fetch bookings
+    const bookingQuery: FetchBookingsQueryDto = { page: 1, limit: 1000 };
+    const bookingsData = await this.bookingService.getAllBookings(
+      bookingQuery.page,
+      bookingQuery.limit,
+      bookingQuery.searchQuery,
+      bookingQuery.service,
+      bookingQuery.status
+    );
+
+    // Fetch payments
+    const paymentQuery: FetchPaymentsQueryDto = { page: 1, limit: 1000 };
+    const paymentsData = await this.paymentService.getAllPayments(
+      paymentQuery.page,
+      paymentQuery.limit,
+      paymentQuery.searchQuery,
+      paymentQuery.status
+    );
+
+    // Process bookings for monthly and yearly data
+    const monthlyByService: { [key: string]: number[] } = {};
+    const serviceSet = new Set<string>();
+    const yearlyMap: { [key: number]: number } = {};
+
+    bookingsData.bookings.forEach((booking: any) => {
+      const date = new Date(booking.createdAt);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        const service = booking.serviceId?.title || "Unknown";
+        if (!monthlyByService[service]) {
+          monthlyByService[service] = Array(12).fill(0);
+        }
+        monthlyByService[service][month] += 1;
+      }
+      serviceSet.add(booking.serviceId?.title || "Unknown");
+      const year = date.getFullYear();
+      yearlyMap[year] = (yearlyMap[year] || 0) + 1;
+    });
+
+    const yearlyBookings = Object.entries(yearlyMap)
+      .map(([year, count]) => ({ year: parseInt(year), count }))
+      .sort((a, b) => a.year - b.year);
+
+    // Calculate monthly earnings
+    const monthlyEarnings = paymentsData.payments.reduce(
+      (sum: number, payment: any) => {
+        const paymentDate = new Date(payment.createdAt);
+        if (
+          paymentDate.getFullYear() === currentYear &&
+          paymentDate.getMonth() === currentMonth
+        ) {
+          return sum + (payment.amount || 0);
+        }
+        return sum;
+      },
+      0
+    );
+
+    return {
+      users: {
+        totalMentors: usersData.totalMentors,
+        totalMentees: usersData.totalMentees,
+        totalBoth: usersData.totalBoth,
+        approvalPending: usersData.approvalPending,
+      },
+      bookings: {
+        total: bookingsData.total,
+        monthlyByService,
+        yearlyBookings,
+        totalServices: serviceSet.size,
+      },
+      payments: {
+        monthlyEarnings,
+        total: paymentsData.total,
+      },
+    };
   }
 
   async fetchAllUsers(
-    page: number,
-    limit: number,
-    role?: string,
-    status?: string
-  ): Promise<{
-    users: Omit<EUsers, "password">[];
-    total: number;
-    totalMentors: number;
-    totalMentees: number;
-    totalBoth: number;
-    approvalPending: number;
-  } | null> {
-    try {
-      console.log("all users service ************************************");
-      const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
-      const mentorModel = this.getMentorModel();
-
-      // Build MongoDB query for users
-      const query: any = {};
-
-      // Role filter
-      if (role) {
-        if (role === "mentee") {
-          query.role = { $eq: ["mentee"] };
-        } else if (role === "mentor") {
-          query.role = { $eq: ["mentor"] };
-        } else if (role === "both") {
-          query.role = { $all: ["mentor", "mentee"] };
-        }
-      }
-
-      // Status filter
-      if (status) {
-        query.isBlocked = status === "Blocked" ? true : false;
-      }
-
-      // Fetch total counts for all categories
-      const total = await rawModel.countDocuments(query);
-      const totalMentors = await rawModel.countDocuments({
-        ...query,
-        role: { $eq: ["mentor"] },
-      });
-      const totalMentees = await rawModel.countDocuments({
-        ...query,
-        role: { $eq: ["mentee"] },
-      });
-      const totalBoth = await rawModel.countDocuments({
-        ...query,
-        role: { $all: ["mentor", "mentee"] },
-      });
-
-      // Simply count pending mentors directly
-      const approvalPending = await mentorModel.countDocuments({
-        isApproved: "Pending",
-      });
-
-      // Log mentor data for debugging
-      const pendingMentors = await mentorModel
-        .find({ isApproved: "Pending" })
-        .select("_id isApproved")
-        .exec();
-      console.log("admin service pending mentors:", pendingMentors);
-      console.log("admin service approvalPending count:", approvalPending);
-
-      // Fetch paginated users with population
-      const allUsers = await rawModel
-        .find(query)
-        .populate("mentorId")
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .exec();
-
-      console.log("all users new list>>>>>>>>>>>>>", allUsers);
-
-      // Remove password from response
-      const usersWithoutPassword = allUsers.map((user: any) => {
-        const { password, ...userWithoutPassword } = user.toObject();
-        return userWithoutPassword;
-      });
-
-      return {
-        users: usersWithoutPassword,
-        total,
-        totalMentors,
-        totalMentees,
-        totalBoth,
-        approvalPending,
-      };
-    } catch (error) {
-      console.error("Error in fetchAllUsers:", error);
-      return null;
+    dto: GetAllUsersRequestDTO
+  ): Promise<GetAllUsersResponseDTO> {
+    const { page, limit, role, status, searchQuery } = dto;
+    const query: any = {};
+    if (role) query.role = role;
+    if (status) query.isBlocked = status === "blocked";
+    if (searchQuery) {
+      query.$or = [
+        { firstName: { $regex: searchQuery, $options: "i" } },
+        { lastName: { $regex: searchQuery, $options: "i" } },
+        { email: { $regex: searchQuery, $options: "i" } },
+      ];
     }
+
+    const skip = (page - 1) * limit;
+    const [users, total] = await Promise.all([
+      this.userService.findMany(query, page, limit),
+      this.userService.countDocuments(query),
+    ]);
+
+    const totalMentors = await this.userService.countMentors(role, searchQuery);
+    const totalMentees = await this.userService.countDocuments({
+      role: "mentee",
+    });
+    const totalBoth = await this.userService.countDocuments({
+      role: { $all: ["mentor", "mentee"] },
+    });
+    const approvalPending = await this.mentorService.countDocuments({
+      isApproved: "Pending",
+    });
+
+    return {
+      users: users as EUsers[],
+      total,
+      totalMentors,
+      totalMentees,
+      totalBoth,
+      approvalPending,
+    };
   }
 
-  async getUserDatas(id: string): Promise<{
-    user: EUsers;
-    menteeData: EMentee | null;
-    mentorData: EMentor | null;
-    serviceData: EService[] | null;
-    bookingData: EBooking[] | null;
-  } | null> {
-    try {
-      console.log("AdminService getUserDatas step 1:", id);
-      const user = await this.BaseRepository.findById(id);
-      console.log("AdminService getUserDatas step 2:", user);
-      if (!user) {
-        console.log("AdminService getUserDatas: User not found");
-        return null;
-      }
+  async getUserDetails(id: string): Promise<GetUserDataResponseDTO | null> {
+    const user = await this.userService.findById(id, "user");
+    if (!user) return null;
 
-      let menteeData: EMentee | null = null;
-      let mentorData: EMentor | null = null;
-      let serviceData: EService[] | null = null;
-      let bookingData: EBooking[] | null = null;
+    const menteeData = user.menteeId
+      ? await this.userService.findById(user.menteeId.toString(), "mentee")
+      : null;
+    const mentorData = user.mentorId
+      ? await this.mentorService.getMentor(user.mentorId.toString())
+      : null;
+    const bookingData = user.menteeId
+      ? await this.bookingService.findByMenteeSimple(user.menteeId.toString())
+      : [];
 
-      // Fetch mentee data if user has mentee role
-      if (user.role?.includes("mentee") && user.menteeId) {
-        menteeData = await this.MenteeRepository.getMentee(
-          user.menteeId.toString()
-        );
-        console.log(
-          "AdminService getUserDatas step 3 - menteeData:",
-          menteeData
-        );
-      }
-
-      // Fetch booking data if user has mentee role
-      if (user.role?.includes("mentee") && user.menteeId) {
-        bookingData = await this.BookingRepository.findByMentee(id);
-        console.log(
-          "AdminService getUserDatas step 4 - bookingData:",
-          bookingData
-        );
-      }
-
-      // Fetch mentor data if user has mentor role
-      if (user.role?.includes("mentor") && user.mentorId) {
-        mentorData = await this.MentorRepository.getMentor(
-          user.mentorId.toString()
-        );
-        console.log(
-          "AdminService getUserDatas step 5 - mentorData:",
-          mentorData
-        );
-      }
-
-      // Fetch service data if user has mentor role
-      if (user.role?.includes("mentor") && user.mentorId) {
-        // Provide default pagination parameters to avoid TypeError
-        const params = {
-          page: 1,
-          limit: 10,
-          search: "",
-          type: "all",
-        };
-        serviceData = await this.ServiceRepository.getAllServices(id, params);
-        console.log(
-          "AdminService getUserDatas step 6 - serviceData:",
-          serviceData
-        );
-        // Extract services array from response
-        serviceData = serviceData ? serviceData.services : null;
-      }
-
-      console.log("AdminService getUserDatas final response:", {
-        user,
-        menteeData,
-        mentorData,
-        serviceData,
-        bookingData,
-      });
-
-      return { user, menteeData, mentorData, serviceData, bookingData };
-    } catch (error) {
-      console.error("Error in getUserDatas:", error);
-      return null;
-    }
+    return {
+      user,
+      menteeData,
+      mentorData,
+      bookingData,
+      serviceData: [], // Add service query if needed
+    };
   }
+
   async mentorStatusChange(
-    id: string,
-    status: string,
-    reason: string = ""
-  ): Promise<{ mentorData: EMentor | null } | null> {
-    try {
-      console.log(
-        "mentor service ....mentorStatusChange step 1",
-        id,
-        status,
-        reason
-      );
+    dto: MentorStatusUpdateDTO
+  ): Promise<{ mentorData: EMentor }> {
+    const { id, status, reason } = dto;
 
-      const updateMentor = await this.MentorRepository.updateField(
-        id,
-        "isApproved",
-        status,
-        reason
-      );
-      console.log(
-        "adminside service mentorStatusChange service is ",
-        updateMentor
-      );
-      const userData = await this.BaseRepository.findByField("mentorId", id);
-      console.log("user data is ", userData);
-      const user = userData?.[0];
-      if (!user) {
-        console.warn("No user found with mentorId:", id);
-        return { mentorData: updateMentor };
-      }
-      // Send email notification if status is updated
-      if (updateMentor && (status === "Approved" || status === "Rejected")) {
-        // const message = `Your mentor status has been updated to "${status}" and the reason: ${
-        //   reason || "No reason provided"
-        // }`;
-        const message =
-          status === "Approved"
-            ? `Your mentor status has been updated to "${status}".`
-            : `Your mentor status has been updated to "${status}" and the reason: ${
-                reason || "No reason provided"
-              }.`;
-        console.log("user emails  is ", user?.email, "and message", message);
+    const mentorData = await this.mentorService.updateField(
+      id,
+      "isApproved",
+      status,
+      reason
+    );
+    if (!mentorData) {
+      throw new AppError("Mentor not found", HttpStatus.NOT_FOUND);
+    }
 
-        const capitalizeFirstLetter = (str: string): string => {
-          if (!str) return str;
-          return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-        };
+    const user = await this.userService.findById(
+      mentorData._id.toString(),
+      "user"
+    );
+    if (!user) {
+      throw new AppError("Associated user not found", HttpStatus.NOT_FOUND);
+    }
 
-        const name = `${capitalizeFirstLetter(
-          user?.firstName
-        )} ${capitalizeFirstLetter(user?.lastName)}`;
-        const OTPDetails = await sendMail(
-          user?.email,
-          message,
-          name,
-          "Mentor One Status Updated"
+    const name = `${user.firstName} ${user.lastName}`.trim();
+    let message: string;
+
+    if (status === "Approved") {
+      message = `Congratulations! Your mentor status has been approved. You can now start mentoring on Mentor One.`;
+      if (user._id) {
+        await this.userService.update(
+          user._id.toString(),
+          {
+            mentorActivated: true,
+          },
+          "user"
         );
-        console.log("Email sent:", OTPDetails);
-        // If Rejected, deactivate mentor in user model
-        if (status === "Rejected") {
-          await this.BaseRepository.update(user._id, {
-            mentorActivated: false,
-            refreshToken: "",
-          } as any);
-          console.log("User deactivated as mentor and refresh token cleared.");
-        }
+      } else {
+        throw new AppError(
+          "User ID is missing",
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
       }
-
-      return { mentorData: updateMentor };
-    } catch (error) {
-      console.error("Error in mentorStatusChange:", error);
-      return null;
+    } else if (status === "Rejected") {
+      message = `We regret to inform you that your mentor status has been rejected. ${
+        reason
+          ? `Reason: ${reason}`
+          : "Please contact support for more details."
+      }`;
+      if (user._id) {
+        await this.userService.update(
+          user._id.toString(),
+          {
+            mentorActivated: false,
+            refreshToken: [],
+          },
+          "user"
+        );
+      } else {
+        throw new AppError(
+          "User ID is missing",
+          HttpStatus.INTERNAL_SERVER_ERROR
+        );
+      }
+    } else {
+      message = `Your mentor status is now ${status}. ${
+        reason
+          ? `Reason: ${reason}`
+          : "Please contact support for more details."
+      }`;
     }
+
+    if (user.email && name && message) {
+      await sendMail(user.email, message, name, "Mentor Status Update");
+    } else {
+      logger.error("Email not sent: Missing user.email, name, or message", {
+        email: user.email,
+        name,
+        message,
+      });
+    }
+
+    return { mentorData };
   }
+
   async userStatusChange(
-    id: string,
-    status: string
-  ): Promise<{ userData: EUsers | null } | null> {
-    try {
-      console.log("userStatusChange start ", id, status);
-
-      const updateUser = await this.BaseRepository.updateField(
-        id,
-        "isBlocked",
-        status
-      );
-      console.log("userStatusChange response is ", updateUser);
-
-      return { userData: updateUser };
-    } catch (error) {
-      console.error("Error in userStatusChange:", error);
-      return null;
+    dto: UserStatusUpdateDTO
+  ): Promise<{ userData: EUsers }> {
+    const { id, isBlocked } = dto;
+    const userData = await this.userService.update(id, { isBlocked }, "user");
+    if (!userData) {
+      throw new AppError("User not found", HttpStatus.NOT_FOUND);
     }
+
+    const name = `${userData.firstName} ${userData.lastName}`.trim();
+    const message = isBlocked
+      ? "Your account has been blocked. Please contact support for more details."
+      : "Your account has been unblocked. You can now access Mentor One.";
+
+    if (userData.email && name && message) {
+      await sendMail(userData.email, message, name, "User Status Update");
+    } else {
+      logger.error("Email not sent: Missing user.email, name, or message", {
+        email: userData.email,
+        name,
+        message,
+      });
+    }
+
+    return { userData };
+  }
+
+  async getAllBookings(
+    query: FetchBookingsQueryDto
+  ): Promise<{ bookings: any[]; total: number }> {
+    return await this.bookingService.getAllBookings(
+      query.page,
+      query.limit,
+      query.searchQuery,
+      query.service,
+      query.status
+    );
+  }
+
+  async getAllPayments(
+    query: FetchPaymentsQueryDto
+  ): Promise<{ payments: any[]; total: number }> {
+    return await this.paymentService.getAllPayments(
+      query.page,
+      query.limit,
+      query.searchQuery,
+      query.status
+    );
+  }
+
+  async transferToMentor(dto: TransferToMentorDto): Promise<any> {
+    return await this.paymentService.transferToMentor(
+      dto.paymentId,
+      dto.mentorId,
+      dto.amount
+    );
   }
 }

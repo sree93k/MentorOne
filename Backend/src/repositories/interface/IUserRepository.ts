@@ -1,88 +1,11 @@
-// import { EUsers } from "../../entities/userEntity";
-
-// export interface IUserRepository {
-//   createUser(user: EUsers): Promise<EUsers | null>;
-//   saveRefreshToken(
-//     userID: string,
-//     refreshToken: string
-//   ): Promise<EUsers | null>;
-//   removeRefreshToken(
-//     userId: string,
-//     refreshToken: string
-//   ): Promise<EUsers | null>;
-//   findByEmail(email: string): Promise<EUsers | null>;
-//   googleSignUp(user: Partial<EUsers>): Promise<EUsers | null>;
-//   changePassword(email: string, password: string): Promise<EUsers | null>;
-//   findById(id: string): Promise<EUsers | null>;
-//   updateUser(data: {
-//     id: string;
-//     userType: string;
-//     experienceId: string;
-//     menteeId: string;
-//     role: string[];
-//   }): Promise<EUsers | null>;
-
-//   mentorUpdate(data: {
-//     id: string;
-//     userType: string;
-//     experienceId: string;
-//     mentorId: string;
-//     profilePicture: string;
-//     role: string[];
-//   }): Promise<EUsers | null>;
-//   getAllMentors(serviceType?: string): Promise<EUsers[]>;
-//   getMentorById(mentorId: string): Promise<EUsers>;
-//   updateOnlineStatus(
-//     userId: string,
-//     role: "mentor" | "mentee",
-//     isOnline: boolean
-//   ): Promise<void>;
-//   findUsersByNameOrEmail(searchQuery: string): Promise<any[]>;
-// }
+// src/repositories/interface/IUserRepository.ts
 import { EUsers } from "../../entities/userEntity";
+import { FilterQuery } from "mongoose";
 
 export interface IUserRepository {
-  createUser(user: EUsers): Promise<EUsers | null>;
-  saveRefreshToken(
-    userID: string,
-    refreshToken: string
-  ): Promise<EUsers | null>;
-  removeRefreshToken(
-    userId: string,
-    refreshToken: string
-  ): Promise<EUsers | null>;
-  findByEmail(email: string): Promise<EUsers | null>;
-  googleSignUp(user: Partial<EUsers>): Promise<EUsers | null>;
-  changePassword(email: string, password: string): Promise<EUsers | null>;
-  findById(id: string): Promise<EUsers | null>;
-  updateUser(data: {
-    id: string;
-    userType: string;
-    experienceId: string;
-    menteeId: string;
-    role: string[];
-  }): Promise<EUsers | null>;
-  mentorUpdate(data: {
-    id: string;
-    userType: string;
-    experienceId: string;
-    mentorId: string;
-    profilePicture: string;
-    role: string[];
-  }): Promise<EUsers | null>;
-  getAllMentors(
-    role?: string,
-    page?: number,
-    limit?: number,
-    searchQuery?: string
-  ): Promise<EUsers[]>;
+  findMany(query: any, page: number, limit: number): Promise<EUsers[]>;
+  countDocuments(query: any): Promise<number>;
   countMentors(role?: string, searchQuery?: string): Promise<number>;
-  getMentorById(mentorId: string): Promise<EUsers>;
-  updateOnlineStatus(
-    userId: string,
-    role: "mentor" | "mentee",
-    isOnline: boolean
-  ): Promise<void>;
-  findUsersByNameOrEmail(searchQuery: string): Promise<any[]>;
-  getTopMentors(limit: number): Promise<EUsers[]>;
+  findById(id: string): Promise<EUsers | null>;
+  update(id: string, updates: Partial<EUsers>): Promise<EUsers | null>;
 }

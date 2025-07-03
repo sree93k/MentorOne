@@ -9,7 +9,7 @@ interface DashboardData {
   topTestimonials: ETestimonial[];
 }
 
-export interface IMenteeProfileService {
+export interface IMenteeService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   deleteAccount(id: string): Promise<boolean>;
   userProfielData(

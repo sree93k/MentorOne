@@ -1,11 +1,7 @@
-import { EMentee } from "../../entities/menteeEntiry";
+// src/repositories/interface/IMenteeRepository.ts
+import { EMentee } from "../../entities/menteeEntity";
+import { IBaseRepository } from "./IBaseRepository";
 
-export interface IMenteeRepository {
-  createMentee(data: {
-    careerGoals: string;
-    interestedNewcareer: string[];
-    joinPurpose: string[];
-  }): Promise<EMentee>;
-
+export interface IMenteeRepository extends IBaseRepository<EMentee> {
   getMentee(id: string): Promise<EMentee | null>;
 }

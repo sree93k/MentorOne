@@ -8,9 +8,9 @@ interface TimeUnit {
 export interface EPolicy extends Document {
   _id: ObjectId;
   userId: ObjectId;
-  reschedulePeriod: Omit<TimeUnit, "minutes">; // only "hours" or "days"
-  bookingPeriod: Omit<TimeUnit, "minutes">; // only "hours" or "days"
-  noticePeriod: Omit<TimeUnit, "hours" | "days">; // only "minutes"
+  reschedulePeriod: Omit<TimeUnit, "minutes">;
+  bookingPeriod: Omit<TimeUnit, "minutes">;
+  noticePeriod: Omit<TimeUnit, "hours" | "days">;
   createdAt: Date;
   updatedAt: Date;
 }

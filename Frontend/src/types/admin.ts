@@ -41,7 +41,6 @@ export interface TAdminLoginResponse {
   success: boolean;
   data?: {
     adminFound: Admin; // Use the updated Admin type
-    accessToken: string;
   };
   error?: string;
 }
@@ -62,3 +61,21 @@ export interface TAdminLoginResponse {
 //   };
 //   error?: string;
 // }
+export interface DashboardDataResponseDTO {
+  users: {
+    totalMentors: number;
+    totalMentees: number;
+    totalBoth: number;
+    approvalPending: number;
+  };
+  bookings: {
+    total: number;
+    monthlyByService: { [key: string]: number[] };
+    yearlyBookings: { year: number; count: number }[];
+    totalServices: number;
+  };
+  payments: {
+    monthlyEarnings: number;
+    total: number;
+  };
+}

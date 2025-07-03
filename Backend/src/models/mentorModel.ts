@@ -1,4 +1,3 @@
-import { required, string } from "joi";
 import { EMentor } from "../entities/mentorEntity";
 import mongoose, { Schema } from "mongoose";
 
@@ -97,6 +96,7 @@ const MentorSchema: Schema<EMentor> = new Schema(
   },
 
   {
+    collection: "mentors",
     timestamps: true,
   }
 );

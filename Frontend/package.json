@@ -63,6 +63,7 @@
     "framer-motion": "^12.5.0",
     "input-otp": "^1.4.2",
     "joi": "^17.13.3",
+    "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.483.0",
     "motion": "^12.6.3",
@@ -97,6 +98,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/dompurify": "^3.0.5",
+    "@types/js-cookie": "^3.0.6",
     "@types/lodash": "^4.17.17",
     "@types/node": "^22.13.13",
     "@types/peerjs": "^0.0.30",

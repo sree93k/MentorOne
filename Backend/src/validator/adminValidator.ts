@@ -1,6 +1,8 @@
 import Joi from "joi";
 import { Request, Response, NextFunction } from "express";
-import { ApiError } from "../middlewares/errorHandler";
+import { logger } from "../utils/logger";
+import AppError from "../errors/appError";
+import { HttpStatus } from "../constants/HttpStatus";
 
 const adminLoginSchema = Joi.object({
   adminEmail: Joi.string().email().required().messages({
@@ -17,18 +19,17 @@ export function validateAdminLogin(
   res: Response,
   next: NextFunction
 ): void {
-  console.log("Validation - Request body:", req.body);
+  logger.info("Validating admin login request", { body: req.body });
   const { error } = adminLoginSchema.validate(req.body, { abortEarly: false });
 
   if (error) {
-    console.log("Validation - Error:", error.details);
     const errorMessage = error.details
       .map((detail) => detail.message)
       .join(", ");
-    res.status(400).json(new ApiError(400, "Validation Error", errorMessage));
-    return;
+    logger.warn("Validation failed", { error: errorMessage });
+    throw new AppError(errorMessage, HttpStatus.BAD_REQUEST, "warn");
   }
 
-  console.log("Validation - Success");
+  logger.info("Validation successful");
   next();
 }

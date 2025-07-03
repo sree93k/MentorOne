@@ -5,7 +5,8 @@ import "winston-mongodb";
 import path from "path";
 
 // Import environment variables
-const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/mentorOne";
+const mongoUri =
+  process.env.MONGODB_URI || "mongodb://localhost:27017/mentorOne";
 const logLevel = process.env.LOG_LEVEL || "info";
 
 // Create the logger
@@ -28,35 +29,29 @@ const logger = createLogger({
         )
       ),
     }),
-    
+
     // File transport for errors
-    new transports.File({ 
+    new transports.File({
       filename: path.join(__dirname, "../../logs/error.log"),
       level: "error",
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
-    
+
     // File transport for all logs
-    new transports.File({ 
+    new transports.File({
       filename: path.join(__dirname, "../../logs/combined.log"),
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
-    
-    // MongoDB transport
+
+    //MongoDB transport
     new transports.MongoDB({
       level: "info",
       db: mongoUri,
-      options: {
-        useUnifiedTopology: true,
-      },
       collection: "logs",
       tryReconnect: true,
-      format: format.combine(
-        format.timestamp(),
-        format.json()
-      ),
+      format: format.combine(format.timestamp(), format.json()),
       // Optional capped collection (limits the size of the logs collection)
       capped: true,
       cappedSize: 10000000, // 10MB
@@ -65,7 +60,7 @@ const logger = createLogger({
   ],
   // Handle uncaught exceptions
   exceptionHandlers: [
-    new transports.File({ 
+    new transports.File({
       filename: path.join(__dirname, "../../logs/exceptions.log"),
     }),
   ],

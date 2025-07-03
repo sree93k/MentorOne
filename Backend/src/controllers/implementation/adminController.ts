@@ -1,285 +1,196 @@
-// src/controllers/adminController.ts
-import { NextFunction, Request, response, Response } from "express";
-import ApiResponse from "../../utils/apiResponse";
+import { Request, Response } from "express";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../inversify/types";
 import { IAdminService } from "../../services/interface/IAdminService";
-import AdminService from "../../services/implementations/AdminService";
-import { IBookingService } from "../../services/interface/IBookingService";
-import BookingService from "../../services/implementations/Bookingservice";
-import { IPaymentService } from "../../services/interface/IPaymentService";
-import PaymentService from "../../services/implementations/PaymentService";
+import { wrapAsync } from "../../errors/catchAsync";
+import ApiResponse from "../../utils/apiResponse";
 import { HttpStatus } from "../../constants/HttpStatus";
+import { logger } from "../../utils/logger";
+import {
+  FetchUsersQueryDto,
+  MentorStatusUpdateDTO,
+  UserStatusUpdateDTO,
+  FetchBookingsQueryDto,
+  FetchPaymentsQueryDto,
+  TransferToMentorDto,
+} from "../../dtos/adminDTO";
 
-class AdminController {
-  private adminService: IAdminService;
-  private bookingService: IBookingService;
-  private paymentService: IPaymentService;
+@injectable()
+export class AdminController {
+  constructor(
+    @inject(TYPES.IAdminService) private adminService: IAdminService
+  ) {}
 
-  constructor() {
-    this.adminService = new AdminService();
-    this.bookingService = new BookingService();
-    this.paymentService = new PaymentService();
-  }
-
-  public validateSuccessResponse = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      console.log("admincontrolleer validateSuccessResponse step1");
-
-      res
-        .status(HttpStatus.OK)
-        .json(new ApiResponse(HttpStatus.OK, null, "Success"));
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public getAllUsers = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      console.log("adminController all users step1", req.query);
-      const { page = 1, limit = 10, role, status } = req.query;
-
-      const response = await this.adminService.fetchAllUsers(
-        Number(page),
-        Number(limit),
-        role as string | undefined,
-        status as string | undefined
+  public validateSession = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Validating admin session");
+    await this.adminService.validateSession();
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(HttpStatus.OK, null, "Session validated successfully")
       );
-      console.log("adminController all users step2", response);
-      if (response) {
-        console.log("adminController all users step3 success response");
-        res
-          .status(HttpStatus.OK)
-          .json(
-            new ApiResponse(
-              HttpStatus.OK,
-              response,
-              "Users fetched successfully"
-            )
-          );
-      } else {
-        console.log("adminController all users step4 no response");
-        res
-          .status(HttpStatus.NOT_FOUND)
-          .json(new ApiResponse(HttpStatus.NOT_FOUND, null, "No users found"));
-      }
-    } catch (error) {
-      next(error);
-    }
-  };
+  });
 
-  public userDatas = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      console.log("userDatas admin controller step 1:", req.params.id);
-      const id = req.params.id;
-      const response = await this.adminService.getUserDatas(id);
-      console.log("userDatas admin controller step 2:", response);
-      if (response) {
-        res
-          .status(HttpStatus.OK)
-          .json(
-            new ApiResponse(
-              HttpStatus.OK,
-              response,
-              "User data fetched successfully"
-            )
-          );
-      } else {
-        res
-          .status(HttpStatus.NOT_FOUND)
-          .json(
-            new ApiResponse(
-              HttpStatus.NOT_FOUND,
-              null,
-              "User not found or data retrieval failed"
-            )
-          );
-      }
-    } catch (error) {
-      console.error("Error in userDatas:", error);
-      res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            null,
-            "Internal server error"
-          )
-        );
-      next(error);
-    }
-  };
-  public mentorStatusUpdate = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      console.log("admincontroller mentorStatusUpdate step1 ", req.params.id);
-      console.log("admincontroller mentorStatusUpdate step2 ", req.body);
-      const id = req.params.id;
-      const { status, reason } = req.body; // Extract reason from body
-      const response = await this.adminService.mentorStatusChange(
-        id,
-        status,
-        reason
+  public getDashboardDatas = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Fetching dashboard data");
+    const response = await this.adminService.fetchDashboardDatas();
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          response,
+          "Dashboard data fetched successfully"
+        )
       );
-      console.log(
-        "admincontroller mentorStatusUpdate step3 response",
-        response
+  });
+
+  public getAllUsers = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Fetching all users", { query: req.query });
+    const query: FetchUsersQueryDto = {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 12,
+      role: req.query.role as string | undefined,
+      status: req.query.status as string | undefined,
+      searchQuery: req.query.searchQuery as string | undefined,
+    };
+
+    const response = await this.adminService.fetchAllUsers(query);
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(HttpStatus.OK, response, "Users fetched successfully")
       );
-      res
-        .status(HttpStatus.OK)
-        .json(
-          new ApiResponse(
-            HttpStatus.OK,
-            response,
-            "Mentor status updated successfully"
-          )
-        );
-    } catch (error) {
-      next(error);
-    }
-  };
+  });
 
-  public userStatusUpdate = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      console.log("admincontroller mentorStatusUpdate step1 ", req.params.id);
-      console.log("admincontroller mentorStatusUpdate step2 ", req.body);
-      const id = req.params.id;
-      const status = req.body.isBlocked;
-      const repsonse = await this.adminService.userStatusChange(id, status);
-      console.log(
-        "admincontroller mentorStatusUpdate step3 resposne",
-        repsonse
+  public getUserDetails = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Fetching user data", { userId: req.params.id });
+    const userId = req.params.id;
+    const response = await this.adminService.getUserDetails(userId);
+
+    if (!response) {
+      res
+        .status(HttpStatus.NOT_FOUND)
+        .json(new ApiResponse(HttpStatus.NOT_FOUND, null, "User not found"));
+      return;
+    }
+
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          response,
+          "User data fetched successfully"
+        )
       );
-      res
-        .status(HttpStatus.OK)
-        .json(
-          new ApiResponse(
-            HttpStatus.OK,
-            repsonse,
-            "Mentor status updated successfully"
-          )
-        );
-    } catch (error) {
-      next(error);
-    }
-  };
+  });
 
-  public getAllBookings = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const searchQuery = (req.query.searchQuery as string) || "";
-      const service = (req.query.service as string) || "";
-      const status = (req.query.status as string) || "";
+  public updateMentorStatus = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Updating mentor status", {
+      mentorId: req.params.id,
+      body: req.body,
+    });
+    const dto: MentorStatusUpdateDTO = {
+      id: req.params.id,
+      status: req.body.status,
+      reason: req.body.reason,
+    };
 
-      const { bookings, total } = await this.bookingService.getAllBookings(
-        page,
-        limit,
-        searchQuery,
-        service,
-        status
+    const response = await this.adminService.mentorStatusChange(dto);
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          response,
+          "Mentor status updated successfully"
+        )
       );
+  });
 
-      res
-        .status(HttpStatus.OK)
-        .json(
-          new ApiResponse(
-            HttpStatus.OK,
-            { data: bookings, total: total },
-            "Bookings fetched successfully"
-          )
-        );
-    } catch (error: any) {
-      console.error("Error fetching all bookings:", error);
-      next(error);
-    }
-  };
+  public updateUserStatus = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Updating user status", {
+      userId: req.params.id,
+      body: req.body,
+    });
+    const dto: UserStatusUpdateDTO = {
+      id: req.params.id,
+      isBlocked: req.body.status === "true" || req.body.status === true,
+    };
 
-  public getAllPayments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const searchQuery = (req.query.searchQuery as string) || "";
-      const status = (req.query.status as string) || "";
-
-      const { payments, total } = await this.paymentService.getAllPayments(
-        page,
-        limit,
-        searchQuery,
-        status
+    const response = await this.adminService.userStatusChange(dto);
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          response,
+          "User status updated successfully"
+        )
       );
+  });
 
-      res
-        .status(HttpStatus.OK)
-        .json(
-          new ApiResponse(
-            HttpStatus.OK,
-            { data: payments, total: total },
-            "Payments fetched successfully"
-          )
-        );
-    } catch (error: any) {
-      console.error("Error fetching all payments:", error);
-      next(error);
-    }
-  };
+  public getAllBookings = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Fetching all bookings", { query: req.query });
+    const query: FetchBookingsQueryDto = {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+      searchQuery: req.query.searchQuery as string | undefined,
+      service: req.query.service as string | undefined,
+      status: req.query.status as string | undefined,
+    };
 
-  public transferToMentor = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const { paymentId, mentorId, amount } = req.body;
-      console.log("admincontroller transferToMentor step1", {
-        paymentId,
-        mentorId,
-        amount,
-      });
-      const response = await this.paymentService.transferToMentor(
-        paymentId,
-        mentorId,
-        amount
+    const response = await this.adminService.getAllBookings(query);
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          { data: response.bookings, total: response.total },
+          "Bookings fetched successfully"
+        )
       );
-      console.log("admincontroller transferToMentor step2", response);
-      res
-        .status(HttpStatus.OK)
-        .json(
-          new ApiResponse(
-            HttpStatus.OK,
-            response,
-            "Payment transferred to mentor successfully"
-          )
-        );
-    } catch (error) {
-      console.error("Error transferring to mentor:", error);
-      next(error);
-    }
-  };
+  });
+
+  public getAllPayments = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Fetching all payments", { query: req.query });
+    const query: FetchPaymentsQueryDto = {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+      searchQuery: req.query.searchQuery as string | undefined,
+      status: req.query.status as string | undefined,
+    };
+
+    const response = await this.adminService.getAllPayments(query);
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          { data: response.payments, total: response.total },
+          "Payments fetched successfully"
+        )
+      );
+  });
+
+  public transferToMentor = wrapAsync(async (req: Request, res: Response) => {
+    logger.info("Transferring payment to mentor", { body: req.body });
+    const dto: TransferToMentorDto = {
+      paymentId: req.body.paymentId,
+      mentorId: req.body.mentorId,
+      amount: req.body.amount,
+    };
+
+    const response = await this.adminService.transferToMentor(dto);
+    res
+      .status(HttpStatus.OK)
+      .json(
+        new ApiResponse(
+          HttpStatus.OK,
+          response,
+          "Payment transferred to mentor successfully"
+        )
+      );
+  });
 }
-export default new AdminController();

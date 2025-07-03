@@ -1,25 +1,14 @@
-import UserRepository from "../../repositories/implementations/UserRepository";
-import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IMenteeProfileService } from "../interface/IMenteeProfileService";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
-import CareerRepositiory from "../../repositories/implementations/CareerRepository";
+
 import { EUsers } from "../../entities/userEntity";
-import { ObjectId } from "mongoose";
-import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
-import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
+
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
-import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
-import MenteeRepository from "../../repositories/implementations/MenteeRepository";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepositotry from "../../repositories/implementations/BaseRepository";
+
 import Users from "../../models/userModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+
 import mongoose from "mongoose";
 import { ITestimonialService } from "../interface/ITestimonialService";
 import { IBookingService } from "../interface/IBookingService";
@@ -27,8 +16,7 @@ import BookingService from "./Bookingservice";
 import TestimonialService from "./TestimonialService";
 import { EService } from "../../entities/serviceEntity";
 import { ETestimonial } from "../../entities/testimonialEntity";
-import WalletRepository from "../../repositories/implementations/WalletRepository";
-import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
+
 interface WelcomeFormData {
   careerGoal: string;
   interestedCareer: string;
@@ -43,27 +31,10 @@ interface DashboardData {
 }
 
 export default class MenteeProfileService implements IMenteeProfileService {
-  private UserRepository: IUserRepository;
-  private CareerRepository: ICareerRepository;
-  private MenteeRepository: IMenteeRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
-  private PriorityDMRepository: IPriorityDMRepository;
-  private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
   private BookingService: IBookingService;
-  private Testimonial: ITestimonialService;
-  private WalletRepository: IWalletRepository;
+
   constructor() {
-    this.UserRepository = new UserRepository();
-    this.CareerRepository = new CareerRepositiory();
-    this.MenteeRepository = new MenteeRepository();
-    this.BaseRepository = new BaseRepositotry<EUsers>(Users);
-    this.PriorityDMRepository = new PriorityDMRepository();
-    this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
     this.BookingService = new BookingService();
-    this.Testimonial = new TestimonialService();
-    this.WalletRepository = new WalletRepository();
   }
   //welcomeData
   async welcomeData(
