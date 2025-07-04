@@ -1,31 +1,60 @@
 import { Router } from "express";
-import adminController from "../../controllers/implementation/adminController";
 import { validateAdminLogin } from "../../validator/adminValidator";
-import adminAuthRoute from "./adminAuthRoute";
 import { authenticate } from "../../middlewares/authenticateAdmin";
+import { initDIContainer } from "../../diContainer/diContainer";
+import adminAuthRoutes from "./adminAuthRoute";
 
+const { adminController } = initDIContainer();
 const adminRoutes = Router();
 
-adminRoutes.use("/auth", adminAuthRoute);
+adminRoutes.use("/auth", adminAuthRoutes);
 
-adminRoutes.get("/validate_session", adminController.validateSuccessResponse);
-adminRoutes.get("/users", authenticate, adminController.getAllUsers);
-adminRoutes.get("/user/:id", authenticate, adminController.userDatas);
-adminRoutes.get("/bookings", authenticate, adminController.getAllBookings);
-adminRoutes.get("/payments", authenticate, adminController.getAllPayments);
+adminRoutes.get(
+  "/validate_session",
+  authenticate,
+  adminController.validateSuccessResponse.bind(adminController)
+);
+
+adminRoutes.get(
+  "/users",
+  authenticate,
+  adminController.getAllUsers.bind(adminController)
+);
+
+adminRoutes.get(
+  "/user/:id",
+  authenticate,
+  adminController.userDatas.bind(adminController)
+);
+
+adminRoutes.get(
+  "/bookings",
+  authenticate,
+  adminController.getAllBookings.bind(adminController)
+);
+
+adminRoutes.get(
+  "/payments",
+  authenticate,
+  adminController.getAllPayments.bind(adminController)
+);
+
 adminRoutes.post(
   "/transfer-to-mentor",
   authenticate,
-  adminController.transferToMentor
+  adminController.transferToMentor.bind(adminController)
 );
+
 adminRoutes.patch(
-  "/mentorstatus_update/:id/",
+  "/mentorstatus_update/:id",
   authenticate,
-  adminController.mentorStatusUpdate
+  adminController.mentorStatusUpdate.bind(adminController)
 );
+
 adminRoutes.patch(
-  "/userstatus_update/:id/",
+  "/userstatus_update/:id",
   authenticate,
-  adminController.userStatusUpdate
+  adminController.userStatusUpdate.bind(adminController)
 );
+
 export default adminRoutes;

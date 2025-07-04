@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-export interface EService {
-  _id: string;
+export interface EService extends Document {
   mentorId: mongoose.Types.ObjectId;
   type: "1-1Call" | "priorityDM" | "DigitalProducts";
   title: string;

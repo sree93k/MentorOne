@@ -1,68 +1,754 @@
+// import { Model } from "mongoose";
+// import { EUsers } from "../../entities/userEntity";
+// import { IUserRepository } from "../interface/IUserRepository";
+// import BaseRepository from "./BaseRepository";
+// import { logger } from "../../utils/logger";
+// import { AppError } from "../../errors/appError";
+// import { HttpStatus } from "../../constants/HttpStatus";
+
+// export class UserRepository
+//   extends BaseRepository<EUsers>
+//   implements IUserRepository
+// {
+//   constructor(model: Model<EUsers>) {
+//     super(model);
+//   }
+
+//   async createUser(user: Partial<EUsers>): Promise<EUsers | null> {
+//     try {
+//       const existing = await this.model.findOne({ email: user.email }).exec();
+//       if (existing) {
+//         throw new AppError(
+//           "Account already exists",
+//           HttpStatus.BAD_REQUEST,
+//           "warn",
+//           "ACCOUNT_EXISTS"
+//         );
+//       }
+//       const newUser = await this.model.create(user);
+//       return await this.model
+//         .findById(newUser._id)
+//         .select("-password -refreshToken")
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error creating user", {
+//         email: user.email,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to create user",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "CREATE_USER_ERROR"
+//           );
+//     }
+//   }
+
+//   async findByEmail(email: string): Promise<EUsers | null> {
+//     try {
+//       return await this.model
+//         .findOne({ email })
+//         .populate(
+//           "mentorId menteeId schoolDetails collegeDetails professionalDetails"
+//         )
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error finding user by email", {
+//         email,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to find user by email",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FIND_USER_EMAIL_ERROR"
+//       );
+//     }
+//   }
+
+//   async googleSignUp(user: Partial<EUsers>): Promise<EUsers | null> {
+//     try {
+//       return await this.model.create(user);
+//     } catch (error) {
+//       logger.error("Error creating Google user", {
+//         email: user.email,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to create Google user",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "GOOGLE_SIGNUP_ERROR"
+//       );
+//     }
+//   }
+
+//   async changePassword(
+//     email: string,
+//     password: string
+//   ): Promise<EUsers | null> {
+//     try {
+//       return await this.model
+//         .findOneAndUpdate({ email }, { password }, { new: true })
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error changing password", {
+//         email,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to change password",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "CHANGE_PASSWORD_ERROR"
+//       );
+//     }
+//   }
+
+//   async findById(id: string): Promise<EUsers | null> {
+//     try {
+//       return await this.model
+//         .findById(id)
+//         .select("-refreshToken")
+//         .populate(
+//           "mentorId menteeId schoolDetails collegeDetails professionalDetails"
+//         )
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error finding user by ID", {
+//         id,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to find user by ID",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FIND_USER_ID_ERROR"
+//       );
+//     }
+//   }
+
+//   async updateUser(data: {
+//     id: string;
+//     userType: string;
+//     experienceId: string;
+//     menteeId: string;
+//     role: string[];
+//   }): Promise<EUsers | null> {
+//     try {
+//       const { id, userType, experienceId, menteeId, role } = data;
+//       const updateData: any = { activated: true, menteeId, role };
+//       if (userType === "college" || userType === "fresher")
+//         updateData.collegeDetails = experienceId;
+//       else if (userType === "school") updateData.schoolDetails = experienceId;
+//       else if (userType === "professional")
+//         updateData.professionalDetails = experienceId;
+//       else
+//         throw new AppError(
+//           "Invalid userType",
+//           HttpStatus.BAD_REQUEST,
+//           "warn",
+//           "INVALID_USERTYPE"
+//         );
+
+//       return await this.model
+//         .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+//         .select("-refreshToken")
+//         .populate(
+//           "mentorId menteeId schoolDetails collegeDetails professionalDetails"
+//         )
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error updating user", {
+//         id: data.id,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to update user",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "UPDATE_USER_ERROR"
+//           );
+//     }
+//   }
+
+//   async mentorUpdate(data: {
+//     id: string;
+//     userType: string;
+//     experienceId: string;
+//     mentorId: string;
+//     profilePicture: string;
+//     role: string[];
+//   }): Promise<EUsers | null> {
+//     try {
+//       const { id, userType, experienceId, mentorId, profilePicture, role } =
+//         data;
+//       const updateData: any = {
+//         mentorActivated: true,
+//         profilePicture,
+//         mentorId,
+//         role,
+//       };
+//       if (userType === "college" || userType === "fresher")
+//         updateData.collegeDetails = experienceId;
+//       else if (userType === "school") updateData.schoolDetails = experienceId;
+//       else if (userType === "professional")
+//         updateData.professionalDetails = experienceId;
+//       else
+//         throw new AppError(
+//           "Invalid userType",
+//           HttpStatus.BAD_REQUEST,
+//           "warn",
+//           "INVALID_USERTYPE"
+//         );
+
+//       return await this.model
+//         .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+//         .select("-refreshToken")
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error updating mentor", {
+//         id: data.id,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to update mentor",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "UPDATE_MENTOR_ERROR"
+//           );
+//     }
+//   }
+
+//   async getAllMentors(
+//     role?: string,
+//     page: number = 1,
+//     limit: number = 12,
+//     searchQuery?: string
+//   ): Promise<EUsers[]> {
+//     try {
+//       logger.info("Fetching all mentors", { role, page, limit, searchQuery });
+//       const query: any = {
+//         mentorId: { $exists: true, $ne: null },
+//       };
+
+//       if (role && role.toLowerCase() !== "all") {
+//         if (role === "School Student") {
+//           query.schoolDetails = { $exists: true, $ne: null };
+//         } else if (role === "College Student") {
+//           query.collegeDetails = { $exists: true, $ne: null };
+//         } else if (role === "Professional") {
+//           query.professionalDetails = { $exists: true, $ne: null };
+//         }
+//       }
+
+//       if (searchQuery) {
+//         query.$or = [
+//           { firstName: { $regex: searchQuery, $options: "i" } },
+//           { lastName: { $regex: searchQuery, $options: "i" } },
+//           { email: { $regex: searchQuery, $options: "i" } },
+//           { bio: { $regex: searchQuery, $options: "i" } },
+//         ];
+//       }
+
+//       const mentors = await this.model
+//         .find(query)
+//         .skip((page - 1) * limit)
+//         .limit(limit)
+//         .populate({
+//           path: "mentorId",
+//           select: "bio skills isApproved",
+//         })
+//         .populate({
+//           path: "schoolDetails",
+//           select: "schoolName city class",
+//         })
+//         .populate({
+//           path: "collegeDetails",
+//           select: "collegeName city course specializedIn",
+//         })
+//         .populate({
+//           path: "professionalDetails",
+//           select: "company jobRole city",
+//         })
+//         .lean()
+//         .exec();
+
+//       return mentors.map((mentor: any) => {
+//         let mappedRole = "N/A";
+//         let work = "N/A";
+//         let badge = "N/A";
+//         let workRole = "N/A";
+
+//         if (mentor.professionalDetails) {
+//           mappedRole = "Professional";
+//           work = mentor.professionalDetails.company || "Unknown";
+//           badge = mentor.professionalDetails.jobRole || "N/A";
+//           workRole = mentor.professionalDetails.jobRole || "Professional";
+//         } else if (mentor.collegeDetails) {
+//           mappedRole = "College Student";
+//           work = mentor.collegeDetails.collegeName || "Unknown";
+//           badge = mentor.collegeDetails.course || "N/A";
+//           workRole = mentor.collegeDetails.specializedIn || "N/A";
+//         } else if (mentor.schoolDetails) {
+//           mappedRole = "School Student";
+//           work = mentor.schoolDetails.schoolName || "Unknown";
+//           badge = mentor.schoolDetails.schoolName || "N/A";
+//           workRole = mentor.schoolDetails.class
+//             ? String(mentor.schoolDetails.class)
+//             : "N/A";
+//         }
+
+//         return {
+//           userId: mentor?._id?.toString(),
+//           mentorId: mentor.mentorId?._id?.toString(),
+//           name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
+//           bio: mentor.mentorId?.bio,
+//           role: mappedRole,
+//           work,
+//           workRole,
+//           profileImage: mentor.profilePicture || undefined,
+//           badge,
+//           isBlocked: mentor.isBlocked,
+//           isApproved:
+//             mentor.mentorId && "isApproved" in mentor.mentorId
+//               ? mentor.mentorId.isApproved
+//               : "Pending",
+//         };
+//       });
+//     } catch (error) {
+//       logger.error("Error fetching mentors", {
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to fetch mentors",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FETCH_MENTORS_ERROR"
+//       );
+//     }
+//   }
+
+//   async countMentors(role?: string, searchQuery?: string): Promise<number> {
+//     try {
+//       const query: any = {
+//         mentorId: { $exists: true, $ne: null },
+//       };
+
+//       if (role && role.toLowerCase() !== "all") {
+//         if (role === "School Student") {
+//           query.schoolDetails = { $exists: true, $ne: null };
+//         } else if (role === "College Student") {
+//           query.collegeDetails = { $exists: true, $ne: null };
+//         } else if (role === "Professional") {
+//           query.professionalDetails = { $exists: true, $ne: null };
+//         }
+//       }
+
+//       if (searchQuery) {
+//         query.$or = [
+//           { firstName: { $regex: searchQuery, $options: "i" } },
+//           { lastName: { $regex: searchQuery, $options: "i" } },
+//           { email: { $regex: searchQuery, $options: "i" } },
+//           { bio: { $regex: searchQuery, $options: "i" } },
+//         ];
+//       }
+
+//       return await this.model.countDocuments(query).exec();
+//     } catch (error) {
+//       logger.error("Error counting mentors", {
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to count mentors",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "COUNT_MENTORS_ERROR"
+//       );
+//     }
+//   }
+
+//   async getMentorById(mentorId: string): Promise<EUsers> {
+//     try {
+//       logger.info("Fetching mentor by ID", { mentorId });
+//       const mentor = await this.model
+//         .findOne({
+//           _id: mentorId,
+//           mentorId: { $exists: true, $ne: null },
+//         })
+//         .populate({
+//           path: "mentorId",
+//           select:
+//             "bio skills isApproved topTestimonials portfolio linkedinURL featuredArticle youtubeURL",
+//           populate: {
+//             path: "topTestimonials",
+//             model: "Testimonial",
+//             select:
+//               "_id menteeId mentorId serviceId bookingId comment rating createdAt updatedAt",
+//             populate: [
+//               {
+//                 path: "menteeId",
+//                 model: "Users",
+//                 select: "firstName lastName",
+//               },
+//               {
+//                 path: "serviceId",
+//                 model: "Service",
+//                 select: "title type",
+//               },
+//             ],
+//           },
+//         })
+//         .populate({
+//           path: "schoolDetails",
+//           select: "schoolName city class",
+//         })
+//         .populate({
+//           path: "collegeDetails",
+//           select: "collegeName city course specializedIn",
+//         })
+//         .populate({
+//           path: "professionalDetails",
+//           select: "company jobRole city",
+//         })
+//         .lean()
+//         .exec();
+
+//       if (!mentor) {
+//         throw new AppError(
+//           "Mentor not found",
+//           HttpStatus.NOT_FOUND,
+//           "warn",
+//           "MENTOR_NOT_FOUND"
+//         );
+//       }
+
+//       let role = "N/A";
+//       let work = "N/A";
+//       let badge = "N/A";
+//       let workRole = "N/A";
+//       let education: EUsers["education"] = {};
+//       let workExperience: EUsers["workExperience"] = undefined;
+
+//       if (mentor.professionalDetails) {
+//         role = "Professional";
+//         work = mentor.professionalDetails.company || "Unknown";
+//         badge = mentor.professionalDetails.company || "N/A";
+//         workRole = mentor.professionalDetails.jobRole || "Professional";
+//         workExperience = {
+//           company: mentor.professionalDetails.company || "Unknown",
+//           jobRole: mentor.professionalDetails.jobRole || "Professional",
+//           city: mentor.professionalDetails.city,
+//         };
+//       } else if (mentor.collegeDetails) {
+//         role = "College Student";
+//         work = mentor.collegeDetails.collegeName || "Unknown";
+//         badge = mentor.collegeDetails.course || "N/A";
+//         workRole = mentor.collegeDetails.specializedIn || "N/A";
+//         education.collegeName = mentor.collegeDetails.collegeName;
+//         education.city = mentor.collegeDetails.city;
+//       } else if (mentor.schoolDetails) {
+//         role = "School Student";
+//         work = mentor.schoolDetails.schoolName || "Unknown";
+//         badge = mentor.schoolDetails.schoolName || "N/A";
+//         workRole = mentor.schoolDetails.class
+//           ? String(mentor.schoolDetails.class)
+//           : "N/A";
+//         education.schoolName = mentor.schoolDetails.schoolName;
+//         education.city = mentor.schoolDetails.city;
+//       }
+
+//       return {
+//         userId: mentor._id?.toString(),
+//         mentorId: mentor.mentorId?._id?.toString() || mentor._id?.toString(),
+//         name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
+//         role,
+//         work,
+//         workRole,
+//         topTestimonials: mentor.mentorId?.topTestimonials || [],
+//         profileImage: mentor.profilePicture || undefined,
+//         badge,
+//         isBlocked: mentor.isBlocked || false,
+//         isApproved:
+//           mentor.mentorId && "isApproved" in mentor.mentorId
+//             ? mentor.mentorId.isApproved
+//             : "Pending",
+//         bio: mentor.mentorId?.bio || "No bio available",
+//         skills: mentor.mentorId?.skills || [],
+//         education: Object.keys(education).length ? education : undefined,
+//         workExperience,
+//         linkedinURL: mentor.mentorId?.linkedinURL,
+//         portfolio: mentor.mentorId?.portfolio,
+//         featuredArticle: mentor.mentorId?.featuredArticle,
+//         youtubeURL: mentor.mentorId?.youtubeURL,
+//       };
+//     } catch (error) {
+//       logger.error("Error fetching mentor by ID", {
+//         mentorId,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to fetch mentor",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "FETCH_MENTOR_ERROR"
+//           );
+//     }
+//   }
+
+//   async updateOnlineStatus(
+//     userId: string,
+//     role: "mentor" | "mentee",
+//     isOnline: boolean
+//   ): Promise<void> {
+//     try {
+//       const modelName = role === "mentor" ? "Mentor" : "Mentee";
+//       await this.model.mongo
+//         .model(modelName)
+//         .findByIdAndUpdate(userId, { isOnline })
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error updating online status", {
+//         userId,
+//         role,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to update online status",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "UPDATE_ONLINE_STATUS_ERROR"
+//       );
+//     }
+//   }
+
+//   async findUsersByNameOrEmail(searchQuery: string): Promise<EUsers[]> {
+//     try {
+//       return await this.model
+//         .find({
+//           $or: [
+//             { firstName: { $regex: searchQuery, $options: "i" } },
+//             { lastName: { $regex: searchQuery, $options: "i" } },
+//             { email: { $regex: searchQuery, $options: "i" } },
+//           ],
+//         })
+//         .select("_id")
+//         .exec();
+//     } catch (error) {
+//       logger.error("Error finding users by name or email", {
+//         searchQuery,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to find users by name or email",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FIND_USERS_NAME_EMAIL_ERROR"
+//       );
+//     }
+//   }
+
+//   async getTopMentors(limit: number): Promise<EUsers[]> {
+//     try {
+//       logger.info("Fetching top mentors", { limit });
+//       const mentors = await this.model
+//         .aggregate([
+//           {
+//             $match: {
+//               role: { $in: ["mentor"] },
+//               isBlocked: false,
+//               isApproved: "Approved",
+//             },
+//           },
+//           {
+//             $lookup: {
+//               from: "bookings",
+//               localField: "_id",
+//               foreignField: "mentorId",
+//               as: "bookings",
+//             },
+//           },
+//           {
+//             $lookup: {
+//               from: "testimonials",
+//               localField: "_id",
+//               foreignField: "mentorId",
+//               as: "testimonials",
+//             },
+//           },
+//           {
+//             $lookup: {
+//               from: "mentors",
+//               localField: "mentorId",
+//               foreignField: "_id",
+//               as: "mentorDetails",
+//             },
+//           },
+//           {
+//             $unwind: "$mentorDetails",
+//           },
+//           {
+//             $addFields: {
+//               bookingCount: { $size: "$bookings" },
+//               averageRating: { $avg: "$testimonials.rating" },
+//             },
+//           },
+//           {
+//             $match: {
+//               bookingCount: { $gt: 0 },
+//             },
+//           },
+//           {
+//             $sort: {
+//               bookingCount: -1,
+//               averageRating: -1,
+//             },
+//           },
+//           {
+//             $limit: limit,
+//           },
+//           {
+//             $project: {
+//               _id: 1,
+//               firstName: 1,
+//               lastName: 1,
+//               profilePicture: 1,
+//               mentorId: 1,
+//               bio: "$mentorDetails.bio",
+//               skills: "$mentorDetails.skills",
+//               bookingCount: 1,
+//               averageRating: 1,
+//               isBlocked: 1,
+//               isApproved: 1,
+//             },
+//           },
+//         ])
+//         .exec();
+//       return mentors as EUsers[];
+//     } catch (error) {
+//       logger.error("Error fetching top mentors", {
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to fetch top mentors",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FETCH_TOP_MENTORS_ERROR"
+//       );
+//     }
+//   }
+// }
+
+import { Model } from "mongoose";
+import { Redis } from "ioredis";
+import { z } from "zod";
 import { EUsers } from "../../entities/userEntity";
-import Users from "../../models/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
-import mongoose from "mongoose";
+import BaseRepository from "./BaseRepository";
+import { logger } from "../../utils/logger";
+import { AppError } from "../../errors/appError";
+import { HttpStatus } from "../../constants/HttpStatus";
 
-import Service from "../../models/serviceModel";
-export default class UserRepository implements IUserRepository {
-  //create user
+export class UserRepository
+  extends BaseRepository<EUsers>
+  implements IUserRepository
+{
+  constructor(model: Model<EUsers>, private readonly redisClient: Redis) {
+    super(model);
+  }
+
   async createUser(user: Partial<EUsers>): Promise<EUsers | null> {
+    const UserSchema = z.object({
+      email: z.string().email(),
+      firstName: z.string().min(1),
+      lastName: z.string().min(1),
+      password: z.string().optional(),
+    });
+
     try {
-      console.log("create user repo start 1");
-
-      const isUserExists = await Users.findOne({ email: user.email });
-      console.log("create user repo start 2");
-      if (isUserExists) {
-        throw new Error("Account already exists!");
+      UserSchema.parse(user);
+      const existing = await this.findOne({ email: user.email });
+      if (existing) {
+        throw new AppError(
+          "Account already exists",
+          HttpStatus.BAD_REQUEST,
+          "warn",
+          "ACCOUNT_EXISTS"
+        );
       }
-      console.log("repo started>>>>>>>>>>>>>");
-      console.log("step repo user 1 is user: ", user);
-
-      const newUser = new Users(user);
-      console.log("step repo user 2", newUser);
-      const result = await newUser.save();
-      console.log("step repo user 3", result);
-      const registeredUser = await Users.findById(result?._id).select(
-        "-password -refreshToken"
-      );
-      console.log("step repo user 4");
-      return registeredUser;
+      const newUser = await this.create(user);
+      return await this.model.findById(newUser._id).select("-password").exec();
     } catch (error) {
-      console.error("Repository - Error in Creating User Account:", error);
-      return null;
+      logger.error("Error creating user", {
+        email: user.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to create user",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "CREATE_USER_ERROR"
+          );
     }
   }
 
-  //findByEmail
   async findByEmail(email: string): Promise<EUsers | null> {
-    console.log("Repository - Searching for user with email:", email);
-
-    const user = await Users.findOne({ email })
-      .populate("mentorId")
-      .populate("menteeId")
-      .populate("schoolDetails")
-      .populate("collegeDetails")
-      .populate("professionalDetails");
-
-    // const user = await query.exec();
-    console.log("Repository - Specific user found:", user);
-
-    return user;
+    try {
+      z.string().email().parse(email);
+      return await this.model
+        .findOne({ email })
+        .populate(
+          "mentorId menteeId schoolDetails collegeDetails professionalDetails"
+        )
+        .exec();
+    } catch (error) {
+      logger.error("Error finding user by email", {
+        email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to find user by email",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FIND_USER_EMAIL_ERROR"
+          );
+    }
   }
 
   async googleSignUp(user: Partial<EUsers>): Promise<EUsers | null> {
     try {
-      console.log("google sign in user step 1 user", user);
-
-      const newUser = new Users(user);
-      console.log("google sign in user step 4", newUser);
-      const userData = await newUser.save();
-      console.log("google sign in user step 5", userData);
-      return userData;
+      const UserSchema = z.object({
+        email: z.string().email(),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+      });
+      UserSchema.parse(user);
+      return await this.create(user);
     } catch (error) {
-      console.log("user repo google signup error", error);
-
-      return null;
+      logger.error("Error creating Google user", {
+        email: user.email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to create Google user",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "GOOGLE_SIGNUP_ERROR"
+          );
     }
   }
 
@@ -71,93 +757,71 @@ export default class UserRepository implements IUserRepository {
     password: string
   ): Promise<EUsers | null> {
     try {
-      console.log("step 1 repor changepassowrd email ", email);
-      console.log("step 1 repor changepassowrd password ", password);
-
-      const userExits = await Users.findOne({ email });
-      console.log("user exisrts", userExits);
-
-      const userAfterUpdate = await Users.findOneAndUpdate(
-        { email: email },
-        { $set: { password: password } }
-      );
-      console.log("step 2 repor changepassowrd sucess", userAfterUpdate);
-      console.log("step 3 repor changepassowrd sucess");
-      return userAfterUpdate || null;
+      z.string().email().parse(email);
+      z.string().min(6).parse(password);
+      return await this.findOneAndUpdate({ email }, { password });
     } catch (error) {
-      console.log("step 1 repor changepassowrd catch errro");
-      return null;
+      logger.error("Error changing password", {
+        email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to change password",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "CHANGE_PASSWORD_ERROR"
+          );
     }
   }
 
-  //save refresh token
-  async saveRefreshToken(
-    userId: string,
-    refreshToken: string
-  ): Promise<EUsers | null> {
-    try {
-      console.log(
-        "repo save refreshtoken step 1 userId,refreshtoken",
-        userId,
-        refreshToken
-      );
-
-      const userWithSavedToken = await Users.findByIdAndUpdate(
-        userId,
-        { $push: { refreshToken: refreshToken } },
-        { new: true }
-      ).select("-password -refreshToken");
-      console.log(
-        "repo save refreshtoken step 2 userId,refreshtoken",
-        userWithSavedToken
-      );
-      return userWithSavedToken;
-    } catch (error) {
-      console.log("refreshttoken save error at repo");
-
-      return null;
-    }
-  }
-  //remove refresh token
-  async removeRefreshToken(
-    userId: string,
-    refreshToken: string
-  ): Promise<EUsers | null> {
-    try {
-      console.log("reop removerefrsh token step 1", userId, refreshToken);
-
-      const userWithRemovedToken = await Users.findOneAndUpdate(
-        { _id: userId },
-        {
-          $pull: { refreshToken: refreshToken },
-          $set: { isOnline: { status: false, role: null } },
-        },
-        { new: true }
-      ).select("-password -refreshToken");
-      console.log("reop removerefrsh token step 1", userWithRemovedToken);
-      return userWithRemovedToken;
-    } catch (error) {
-      console.log("reop removerefrsh token step 3 error", error);
-      return null;
-    }
-  }
-  //findbyId
   async findById(id: string): Promise<EUsers | null> {
     try {
-      console.log("user repo step1", id);
-
-      const user = await Users.findById(id)
-        .select("-refreshToken")
-        .populate("mentorId")
-        .populate("menteeId")
-        .populate("schoolDetails")
-        .populate("collegeDetails")
-        .populate("professionalDetails");
-
-      console.log("user repo step2@@@@@@@@@@@@@@@", user);
-      return user;
+      z.string().nonempty().parse(id);
+      return await this.model
+        .findById(id)
+        .select("-password")
+        .populate(
+          "mentorId menteeId schoolDetails collegeDetails professionalDetails"
+        )
+        .exec();
     } catch (error) {
-      return null;
+      logger.error("Error finding user by ID", {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to find user by ID",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FIND_USER_ID_ERROR"
+          );
+    }
+  }
+
+  async findMany(query: any, page: number, limit: number): Promise<any[]> {
+    try {
+      z.number().min(1).parse(page);
+      z.number().min(1).parse(limit);
+      return await super.findMany(query, page, limit);
+    } catch (error) {
+      logger.error("Error finding paginated users", {
+        query,
+        page,
+        limit,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to find paginated users",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FIND_MANY_USERS_ERROR"
+          );
     }
   }
 
@@ -168,64 +832,45 @@ export default class UserRepository implements IUserRepository {
     menteeId: string;
     role: string[];
   }): Promise<EUsers | null> {
+    const UpdateSchema = z.object({
+      id: z.string().nonempty(),
+      userType: z.enum(["school", "college", "fresher", "professional"]),
+      experienceId: z.string().nonempty(),
+      menteeId: z.string().nonempty(),
+      role: z.array(z.enum(["mentee", "mentor"])),
+    });
+
     try {
-      console.log("Repo updateUser step1");
-
-      const { id, userType, experienceId, menteeId, role } = data;
-      let updateData: any = { activated: true, menteeId: menteeId, role: role }; // Common fields
-
-      console.log("Repo updateUser step2");
-      // Fetch user (optional, for validation)
-      const user = await Users.findById(id).select("-refreshToken");
-      if (!user) {
-        console.error("User not found for ID:", id);
-        return null;
-      }
-      console.log("Repo updateUser step3");
-
-      // Set type-specific fields
-      if (userType === "fresher" || userType === "college") {
-        // Adjusted to match frontend
-        console.log("Repo updateUser step4 - college/fresher");
+      const { id, userType, experienceId, menteeId, role } =
+        UpdateSchema.parse(data);
+      const updateData: any = { activated: true, menteeId, role };
+      if (userType === "college" || userType === "fresher")
         updateData.collegeDetails = experienceId;
-      } else if (userType === "school") {
-        // Adjusted to match frontend
-        console.log("Repo updateUser step4 - school");
-        updateData.schoolDetails = experienceId;
-      } else if (userType === "professional") {
-        console.log("Repo updateUser step5 - professional");
+      else if (userType === "school") updateData.schoolDetails = experienceId;
+      else if (userType === "professional")
         updateData.professionalDetails = experienceId;
-      } else {
-        console.error("Invalid userType:", userType);
-        return null; // Or throw an error if invalid userType is unacceptable
-      }
+      else
+        throw new AppError(
+          "Invalid userType",
+          HttpStatus.BAD_REQUEST,
+          "warn",
+          "INVALID_USERTYPE"
+        );
 
-      console.log("Repo updateUser step6 - updating user with:", updateData);
-      // Perform a single update with all changes
-      const userAfterUpdate = await Users.findOneAndUpdate(
-        { _id: id },
-        { $set: updateData },
-        { new: true } // Return the updated document
-      )
-        .select("-refreshToken")
-        .populate("mentorId")
-        .populate("menteeId")
-        .populate("schoolDetails")
-        .populate("collegeDetails")
-        .populate("professionalDetails"); // Exclude refreshToken from the result
-
-      console.log("Repo updateUser step7 - userAfterUpdate:", userAfterUpdate);
-
-      if (!userAfterUpdate) {
-        console.error("Failed to update user for ID:", id);
-        return null;
-      }
-
-      console.log("User updated at repo...>>>>>>>>>>>>>>>", userAfterUpdate);
-      return userAfterUpdate; // Return the updated user with activated: true
+      return await this.update(id, updateData);
     } catch (error) {
-      console.error("Error in updateUser:", error);
-      return null;
+      logger.error("Error updating user", {
+        id: data.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to update user",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "UPDATE_USER_ERROR"
+          );
     }
   }
 
@@ -237,70 +882,51 @@ export default class UserRepository implements IUserRepository {
     profilePicture: string;
     role: string[];
   }): Promise<EUsers | null> {
+    const MentorUpdateSchema = z.object({
+      id: z.string().nonempty(),
+      userType: z.enum(["school", "college", "fresher", "professional"]),
+      experienceId: z.string().nonempty(),
+      mentorId: z.string().nonempty(),
+      profilePicture: z.string().optional(),
+      role: z.array(z.enum(["mentee", "mentor"])),
+    });
+
     try {
-      const { id, userType, experienceId, profilePicture, mentorId, role } =
-        data;
-      console.log(
-        "Repo updateUser step1",
-        id,
-        userType,
-        experienceId,
-        mentorId,
-        profilePicture
-      );
-      let updateData: any = {
+      const { id, userType, experienceId, mentorId, profilePicture, role } =
+        MentorUpdateSchema.parse(data);
+      const updateData: any = {
         mentorActivated: true,
-        profilePicture: profilePicture,
-        mentorId: mentorId,
-        role: role,
-      }; // Common fields
-
-      console.log("Repo updateUser step2", updateData);
-      // Fetch user (optional, for validation)
-      const user = await Users.findById(id).select("-refreshToken");
-      if (!user) {
-        console.error("User not found for ID:", id);
-        return null;
-      }
-      console.log("Repo updateUser step3", user);
-
-      // Set type-specific fields
-      if (userType === "fresher" || userType === "college") {
-        // Adjusted to match frontend
-        console.log("Repo updateUser step4 - college/fresher");
+        profilePicture,
+        mentorId,
+        role,
+      };
+      if (userType === "college" || userType === "fresher")
         updateData.collegeDetails = experienceId;
-      } else if (userType === "school") {
-        // Adjusted to match frontend
-        console.log("Repo updateUser step4 - school");
-        updateData.schoolDetails = experienceId;
-      } else if (userType === "professional") {
-        console.log("Repo updateUser step5 - professional");
+      else if (userType === "school") updateData.schoolDetails = experienceId;
+      else if (userType === "professional")
         updateData.professionalDetails = experienceId;
-      } else {
-        console.error("Invalid userType:", userType);
-        return null; // Or throw an error if invalid userType is unacceptable
-      }
+      else
+        throw new AppError(
+          "Invalid userType",
+          HttpStatus.BAD_REQUEST,
+          "warn",
+          "INVALID_USERTYPE"
+        );
 
-      console.log("Repo updateUser step6 - updating user with:", updateData);
-      // Perform a single update with all changes
-      const userAfterUpdate = await Users.findOneAndUpdate(
-        { _id: id },
-        { $set: updateData },
-        { new: true } // Return the updated document
-      ).select("-refreshToken"); // Exclude refreshToken from the result
-
-      console.log("Repo updateUser step7 - userAfterUpdate:", userAfterUpdate);
-
-      if (!userAfterUpdate) {
-        console.error("Failed to update user for ID:", id);
-        return null;
-      }
-
-      console.log("User updated at repo...>>>>>>>>>>>>>>>", userAfterUpdate);
-      return userAfterUpdate; // Return the updated user with activated: true
+      return await this.update(id, updateData);
     } catch (error) {
-      console.error("Error in updateUser:", error);
-      return null;
+      logger.error("Error updating mentor", {
+        id: data.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to update mentor",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "UPDATE_MENTOR_ERROR"
+          );
     }
   }
 
@@ -310,149 +936,144 @@ export default class UserRepository implements IUserRepository {
     limit: number = 12,
     searchQuery?: string
   ): Promise<EUsers[]> {
+    const QuerySchema = z.object({
+      role: z
+        .enum(["School Student", "College Student", "Professional", "all"])
+        .optional(),
+      page: z.number().min(1).default(1),
+      limit: z.number().min(1).default(12),
+      searchQuery: z.string().optional(),
+    });
+
     try {
-      console.log("getAllMentors repo step 1", {
-        role,
-        page,
-        limit,
-        searchQuery,
+      const {
+        role: validatedRole,
+        page: validatedPage,
+        limit: validatedLimit,
+        searchQuery: validatedSearchQuery,
+      } = QuerySchema.parse({ role, page, limit, searchQuery });
+      logger.info("Fetching all mentors", {
+        role: validatedRole,
+        page: validatedPage,
+        limit: validatedLimit,
+        searchQuery: validatedSearchQuery,
       });
-      const query: any = {
-        mentorId: { $exists: true, $ne: null },
-      };
 
-      // Filter by role based on details fields
-      if (role && role.toLowerCase() !== "all") {
-        if (role === "School Student") {
+      const query: any = { mentorId: { $exists: true, $ne: null } };
+      if (validatedRole && validatedRole.toLowerCase() !== "all") {
+        if (validatedRole === "School Student")
           query.schoolDetails = { $exists: true, $ne: null };
-        } else if (role === "College Student") {
+        else if (validatedRole === "College Student")
           query.collegeDetails = { $exists: true, $ne: null };
-        } else if (role === "Professional") {
+        else if (validatedRole === "Professional")
           query.professionalDetails = { $exists: true, $ne: null };
-        }
       }
-
-      // Add search query if provided
-      if (searchQuery) {
+      if (validatedSearchQuery) {
         query.$or = [
-          { firstName: { $regex: searchQuery, $options: "i" } },
-          { lastName: { $regex: searchQuery, $options: "i" } },
-          { email: { $regex: searchQuery, $options: "i" } },
-          { bio: { $regex: searchQuery, $options: "i" } },
+          { firstName: { $regex: validatedSearchQuery, $options: "i" } },
+          { lastName: { $regex: validatedSearchQuery, $options: "i" } },
+          { email: { $regex: validatedSearchQuery, $options: "i" } },
+          { bio: { $regex: validatedSearchQuery, $options: "i" } },
         ];
       }
 
-      const mentors = await Users.find(query)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .populate({
-          path: "mentorId",
-          select: "bio skills isApproved",
-        })
-        .populate({
-          path: "schoolDetails",
-          select: "schoolName city class",
-        })
-        .populate({
-          path: "collegeDetails",
-          select: "collegeName city course specializedIn",
-        })
-        .populate({
-          path: "professionalDetails",
-          select: "company jobRole city",
-        })
-        .lean();
-
-      console.log("getAllMentors repo step 2: Found mentors", mentors.length);
-
-      return mentors.map((mentor) => {
-        let mappedRole = "N/A";
-        let work = "N/A";
-        let badge = "N/A";
-        let workRole = "N/A";
-
-        if (mentor.professionalDetails) {
-          mappedRole = "Professional";
-          work = mentor.professionalDetails.company || "Unknown";
-          badge = mentor.professionalDetails.jobRole || "N/A";
-          workRole = mentor.professionalDetails.jobRole || "Professional";
-        } else if (mentor.collegeDetails) {
-          mappedRole = "College Student";
-          work = mentor.collegeDetails.collegeName || "Unknown";
-          badge = mentor.collegeDetails.course || "N/A";
-          workRole = mentor.collegeDetails.specializedIn || "N/A";
-        } else if (mentor.schoolDetails) {
-          mappedRole = "School Student";
-          work = mentor.schoolDetails.schoolName || "Unknown";
-          badge = mentor.schoolDetails.schoolName || "N/A";
-          workRole = mentor.schoolDetails.class
+      const mentors = await this.findMany(query, validatedPage, validatedLimit);
+      return mentors.map((mentor: any) => ({
+        userId: mentor._id?.toString(),
+        mentorId: mentor.mentorId?._id?.toString(),
+        name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
+        bio: mentor.mentorId?.bio,
+        role: mentor.professionalDetails
+          ? "Professional"
+          : mentor.collegeDetails
+          ? "College Student"
+          : mentor.schoolDetails
+          ? "School Student"
+          : "N/A",
+        work:
+          mentor.professionalDetails?.company ||
+          mentor.collegeDetails?.collegeName ||
+          mentor.schoolDetails?.schoolName ||
+          "N/A",
+        workRole:
+          mentor.professionalDetails?.jobRole ||
+          mentor.collegeDetails?.specializedIn ||
+          (mentor.schoolDetails?.class
             ? String(mentor.schoolDetails.class)
-            : "N/A";
-        }
-
-        return {
-          userId: mentor?._id?.toString(),
-          mentorId: mentor.mentorId?._id?.toString(),
-          name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
-          bio: mentor.mentorId?.bio,
-          role: mappedRole, // Use mappedRole to ensure consistency
-          work,
-          workRole,
-          profileImage: mentor.profilePicture || undefined,
-          badge,
-          isBlocked: mentor.isBlocked,
-          isApproved:
-            mentor.mentorId && "isApproved" in mentor.mentorId
-              ? mentor.mentorId.isApproved
-              : "Pending",
-        };
+            : "N/A"),
+        profileImage: mentor.profilePicture || undefined,
+        badge:
+          mentor.professionalDetails?.company ||
+          mentor.collegeDetails?.course ||
+          mentor.schoolDetails?.schoolName ||
+          "N/A",
+        isBlocked: mentor.isBlocked,
+        isApproved: mentor.mentorId?.isApproved || "Pending",
+      }));
+    } catch (error) {
+      logger.error("Error fetching mentors", {
+        error: error instanceof Error ? error.message : String(error),
       });
-    } catch (error: any) {
-      console.error("getAllMentors repo step 3: Error", {
-        message: error.message,
-        stack: error.stack,
-      });
-      throw new Error(`Failed to fetch mentors: ${error.message}`);
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to fetch mentors",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FETCH_MENTORS_ERROR"
+          );
     }
   }
 
   async countMentors(role?: string, searchQuery?: string): Promise<number> {
+    const QuerySchema = z.object({
+      role: z
+        .enum(["School Student", "College Student", "Professional", "all"])
+        .optional(),
+      searchQuery: z.string().optional(),
+    });
+
     try {
-      const query: any = {
-        mentorId: { $exists: true, $ne: null },
-      };
-
-      if (role && role.toLowerCase() !== "all") {
-        query.role = { $regex: `^${role}$`, $options: "i" }; // Case-insensitive match
+      const { role: validatedRole, searchQuery: validatedSearchQuery } =
+        QuerySchema.parse({ role, searchQuery });
+      const query: any = { mentorId: { $exists: true, $ne: null } };
+      if (validatedRole && validatedRole.toLowerCase() !== "all") {
+        if (validatedRole === "School Student")
+          query.schoolDetails = { $exists: true, $ne: null };
+        else if (validatedRole === "College Student")
+          query.collegeDetails = { $exists: true, $ne: null };
+        else if (validatedRole === "Professional")
+          query.professionalDetails = { $exists: true, $ne: null };
       }
-
-      if (searchQuery) {
+      if (validatedSearchQuery) {
         query.$or = [
-          { firstName: { $regex: searchQuery, $options: "i" } },
-          { lastName: { $regex: searchQuery, $options: "i" } },
-          { email: { $regex: searchQuery, $options: "i" } },
-          { bio: { $regex: searchQuery, $options: "i" } },
+          { firstName: { $regex: validatedSearchQuery, $options: "i" } },
+          { lastName: { $regex: validatedSearchQuery, $options: "i" } },
+          { email: { $regex: validatedSearchQuery, $options: "i" } },
+          { bio: { $regex: validatedSearchQuery, $options: "i" } },
         ];
       }
-
-      return await Users.countDocuments(query);
-    } catch (error: any) {
-      console.error("countMentors repo error", { message: error.message });
-      throw new Error(`Failed to count mentors: ${error.message}`);
+      return await this.countDocuments(query);
+    } catch (error) {
+      logger.error("Error counting mentors", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to count mentors",
+        HttpStatus.INTERNAL_SERVER,
+        "error",
+        "COUNT_MENTORS_ERROR"
+      );
     }
   }
 
   async getMentorById(mentorId: string): Promise<EUsers> {
     try {
-      console.log("getMentorById repo step 1", mentorId);
-      const mentor = await Users.findOne({
-        _id: mentorId,
-        mentorId: { $exists: true, $ne: null },
-      })
-        // .populate({
-        //   path: "mentorId",
-        //   select: "bio skills isApproved topTestimonials",
-        // })
+      z.string().nonempty().parse(mentorId);
+      logger.info("Fetching mentor by ID", { mentorId });
+
+      const mentor = await this.model
+        .findOne({ _id: mentorId, mentorId: { $exists: true, $ne: null } })
         .populate({
           path: "mentorId",
           select:
@@ -468,18 +1089,11 @@ export default class UserRepository implements IUserRepository {
                 model: "Users",
                 select: "firstName lastName",
               },
-              {
-                path: "serviceId",
-                model: "Service",
-                select: "title type",
-              },
+              { path: "serviceId", model: "Service", select: "title type" },
             ],
           },
         })
-        .populate({
-          path: "schoolDetails",
-          select: "schoolName city class",
-        })
+        .populate({ path: "schoolDetails", select: "schoolName city class" })
         .populate({
           path: "collegeDetails",
           select: "collegeName city course specializedIn",
@@ -488,104 +1102,81 @@ export default class UserRepository implements IUserRepository {
           path: "professionalDetails",
           select: "company jobRole city",
         })
-        .lean();
+        .lean()
+        .exec();
 
       if (!mentor) {
-        console.log("getMentorById repo step 2: Mentor not found");
-        throw new Error("Mentor not found");
+        throw new AppError(
+          "Mentor not found",
+          HttpStatus.NOT_FOUND,
+          "warn",
+          "MENTOR_NOT_FOUND"
+        );
       }
-
-      const services = await Service.find({
-        mentorId: mentor._id,
-        $or: [
-          {
-            type: "1-1Call",
-            slot: { $exists: true, $ne: null },
-          },
-          {
-            type: { $in: ["DigitalProducts", "priorityDM"] },
-          },
-        ],
-      }).lean();
-      console.log("getMentorById repo step 2.5", mentor);
-      console.log("getMentorById repo step 3: Found services", services);
-
-      let role = "N/A";
-      let work = "N/A";
-      let badge = "N/A";
-      let workRole = "N/A";
-      let education: EUsers["education"] = {};
-      let workExperience: EUsers["workExperience"] = undefined;
-
-      if (mentor.professionalDetails) {
-        console.log("professionalDetails");
-
-        role = "Professional";
-        work = mentor.professionalDetails.company || "Unknown";
-        badge = mentor.professionalDetails.company || "N/A";
-        workRole = mentor.professionalDetails.jobRole || "Professional";
-        workExperience = {
-          company: mentor.professionalDetails.company || "Unknown",
-          jobRole: mentor.professionalDetails.jobRole || "Professional",
-          city: mentor.professionalDetails.city,
-        };
-      } else if (mentor.collegeDetails) {
-        console.log("collegeDetails");
-        role = "College Student";
-        work = mentor.collegeDetails.collegeName || "Unknown";
-        badge = mentor.collegeDetails.course || "N/A";
-        workRole = mentor.collegeDetails.specializedIn || "N/A";
-        education.collegeName = mentor.collegeDetails.collegeName;
-        education.city = mentor.collegeDetails.city;
-      } else if (mentor.schoolDetails) {
-        console.log("schoolDetails");
-        role = "School Student";
-        work = mentor.schoolDetails.schoolName || "Unknown";
-        badge = mentor.schoolDetails.schoolName || "N/A";
-        workRole = mentor.schoolDetails.class
-          ? String(mentor.schoolDetails.class)
-          : "N/A";
-        education.schoolName = mentor.schoolDetails.schoolName;
-        education.city = mentor.schoolDetails.city;
-      }
-
-      console.log("the user datat in repo is 1 ", mentor);
-      console.log("the user datat in repo is 2", services);
 
       return {
-        userData: mentor?._id?.toString(),
-        mentorData: mentor.mentorId?._id?.toString() || mentor?._id?.toString(),
+        userId: mentor._id?.toString(),
+        mentorId: mentor.mentorId?._id?.toString() || mentor._id?.toString(),
         name: `${mentor.firstName} ${mentor.lastName || ""}`.trim(),
-        role,
-        work,
-        workRole,
+        role: mentor.professionalDetails
+          ? "Professional"
+          : mentor.collegeDetails
+          ? "College Student"
+          : mentor.schoolDetails
+          ? "School Student"
+          : "N/A",
+        work:
+          mentor.professionalDetails?.company ||
+          mentor.collegeDetails?.collegeName ||
+          mentor.schoolDetails?.schoolName ||
+          "N/A",
+        workRole:
+          mentor.professionalDetails?.jobRole ||
+          mentor.collegeDetails?.specializedIn ||
+          (mentor.schoolDetails?.class
+            ? String(mentor.schoolDetails.class)
+            : "N/A"),
         topTestimonials: mentor.mentorId?.topTestimonials || [],
         profileImage: mentor.profilePicture || undefined,
-        badge,
+        badge:
+          mentor.professionalDetails?.company ||
+          mentor.collegeDetails?.course ||
+          mentor.schoolDetails?.schoolName ||
+          "N/A",
         isBlocked: mentor.isBlocked || false,
-        isApproved:
-          mentor.mentorId && "isApproved" in mentor.mentorId
-            ? mentor.mentorId.isApproved
-            : "Pending",
+        isApproved: mentor.mentorId?.isApproved || "Pending",
         bio: mentor.mentorId?.bio || "No bio available",
         skills: mentor.mentorId?.skills || [],
-
-        services: services,
-        education: Object.keys(education).length ? education : undefined,
-        workExperience,
-        linkedinURL: mentor?.mentorId?.linkedinURL,
-        portfolio: mentor?.mentorId?.portfolio,
-        featuredArticle: mentor?.mentorId?.featuredArticle,
-        youtubeURL: mentor?.mentorId?.youtubeURL,
+        education: {
+          schoolName: mentor.schoolDetails?.schoolName,
+          collegeName: mentor.collegeDetails?.collegeName,
+          city: mentor.schoolDetails?.city || mentor.collegeDetails?.city,
+        },
+        workExperience: mentor.professionalDetails
+          ? {
+              company: mentor.professionalDetails.company || "Unknown",
+              jobRole: mentor.professionalDetails.jobRole || "Professional",
+              city: mentor.professionalDetails.city,
+            }
+          : undefined,
+        linkedinURL: mentor.mentorId?.linkedinURL,
+        portfolio: mentor.mentorId?.portfolio,
+        featuredArticle: mentor.mentorId?.featuredArticle,
+        youtubeURL: mentor.mentorId?.youtubeURL,
       };
-    } catch (error: any) {
-      console.error("getMentorById repo step 5: Error", {
-        message: error.message,
-        stack: error.stack,
+    } catch (error) {
+      logger.error("Error fetching mentor by ID", {
+        mentorId,
+        error: error instanceof Error ? error.message : String(error),
       });
-      throw error instanceof Error
+      throw error instanceof AppError
         ? error
-        : new Error(`Failed to fetch mentor: ${error.message}`);
+        : new AppError(
+            "Failed to fetch mentor",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FETCH_MENTOR_ERROR"
+          );
     }
   }
 
@@ -595,29 +1186,59 @@ export default class UserRepository implements IUserRepository {
     isOnline: boolean
   ): Promise<void> {
     try {
-      const modelName = role === "mentor" ? "Mentor" : "Mentee";
-      await mongoose.model(modelName).findByIdAndUpdate(userId, { isOnline });
-    } catch (error: any) {
-      throw new Error("Failed to update online status", error.message);
+      z.string().nonempty().parse(userId);
+      z.enum(["mentor", "mentee"]).parse(role);
+      z.boolean().parse(isOnline);
+      await this.update(userId, { isOnline: { status: isOnline, role } });
+    } catch (error) {
+      logger.error("Error updating online status", {
+        userId,
+        role,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to update online status",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "UPDATE_ONLINE_STATUS_ERROR"
+          );
     }
   }
 
-  async findUsersByNameOrEmail(searchQuery: string): Promise<any[]> {
-    return await Users.find({
-      $or: [
-        { firstName: { $regex: searchQuery, $options: "i" } },
-        { lastName: { $regex: searchQuery, $options: "i" } },
-        { email: { $regex: searchQuery, $options: "i" } },
-      ],
-    })
-      .select("_id")
-      .exec();
+  async findUsersByNameOrEmail(searchQuery: string): Promise<EUsers[]> {
+    try {
+      z.string().nonempty().parse(searchQuery);
+      return await this.findAll({
+        $or: [
+          { firstName: { $regex: searchQuery, $options: "i" } },
+          { lastName: { $regex: searchQuery, $options: "i" } },
+          { email: { $regex: searchQuery, $options: "i" } },
+        ],
+      });
+    } catch (error) {
+      logger.error("Error finding users by name or email", {
+        searchQuery,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to find users by name or email",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FIND_USERS_NAME_EMAIL_ERROR"
+          );
+    }
   }
 
   async getTopMentors(limit: number): Promise<EUsers[]> {
     try {
-      console.log("UserRepository getTopMentors step 1", { limit });
-      const mentors = await Users.aggregate([
+      z.number().positive().parse(limit);
+      logger.info("Fetching top mentors", { limit });
+
+      const mentors = await this.aggregate([
         {
           $match: {
             role: { $in: ["mentor"] },
@@ -627,7 +1248,7 @@ export default class UserRepository implements IUserRepository {
         },
         {
           $lookup: {
-            from: "Booking",
+            from: "bookings",
             localField: "_id",
             foreignField: "mentorId",
             as: "bookings",
@@ -635,7 +1256,7 @@ export default class UserRepository implements IUserRepository {
         },
         {
           $lookup: {
-            from: "Testimonial",
+            from: "testimonials",
             localField: "_id",
             foreignField: "mentorId",
             as: "testimonials",
@@ -643,35 +1264,22 @@ export default class UserRepository implements IUserRepository {
         },
         {
           $lookup: {
-            from: "Mentor",
+            from: "mentors",
             localField: "mentorId",
             foreignField: "_id",
             as: "mentorDetails",
           },
         },
-        {
-          $unwind: "$mentorDetails",
-        },
+        { $unwind: "$mentorDetails" },
         {
           $addFields: {
             bookingCount: { $size: "$bookings" },
             averageRating: { $avg: "$testimonials.rating" },
           },
         },
-        {
-          $match: {
-            bookingCount: { $gt: 0 },
-          },
-        },
-        {
-          $sort: {
-            bookingCount: -1,
-            averageRating: -1,
-          },
-        },
-        {
-          $limit: limit,
-        },
+        { $match: { bookingCount: { $gt: 0 } } },
+        { $sort: { bookingCount: -1, averageRating: -1 } },
+        { $limit: limit },
         {
           $project: {
             _id: 1,
@@ -685,16 +1293,65 @@ export default class UserRepository implements IUserRepository {
             averageRating: 1,
             isBlocked: 1,
             isApproved: 1,
-            bookings: 1, // For debugging
-            mentorDetails: 1,
           },
         },
-      ]).exec();
-      console.log("UserRepository getTopMentors step 2", mentors.length);
-      return mentors;
-    } catch (error: any) {
-      console.error("UserRepository getTopMentors error", error);
-      throw new Error("Failed to fetch top mentors", error.message);
+      ]);
+
+      return mentors as EUsers[];
+    } catch (error) {
+      logger.error("Error fetching top mentors", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to fetch top mentors",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FETCH_TOP_MENTORS_ERROR"
+          );
+    }
+  }
+
+  async update(
+    userId: string,
+    payload: Partial<EUsers>
+  ): Promise<EUsers | null> {
+    try {
+      z.string().nonempty().parse(userId);
+      return await super.update(userId, payload);
+    } catch (error) {
+      logger.error("Error updating user", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to update user",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "UPDATE_USER_ERROR"
+          );
+    }
+  }
+
+  async countDocuments(query: any): Promise<number> {
+    try {
+      return await super.countDocuments(query);
+    } catch (error) {
+      logger.error("Error counting documents", {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to count documents",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "COUNT_ERROR"
+          );
     }
   }
 }

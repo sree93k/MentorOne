@@ -1,0 +1,8 @@
+import { EAdmin } from "../../entities/adminEntity";
+
+export interface IAdminRepository {
+  // findByEmail(adminEmail: string): Promise<EAdmin | null>;
+  // findById(id: string): Promise<EAdmin | null>;
+  findByEmail(adminEmail: string): Promise<EAdmin | null>;
+  findById(id: string): Promise<EAdmin | null>;
+}

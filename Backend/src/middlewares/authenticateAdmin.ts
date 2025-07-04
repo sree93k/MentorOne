@@ -1,668 +1,362 @@
-// // import { Request, Response, NextFunction } from "express";
-// // import ApiResponse from "../utils/apiResponse";
-// // // import { AuthRequest } from "../types/express";
-// // import {
-// //   decodeToken,
-// //   verifyAccessToken,
-// //   verifyRefreshToken,
-// // } from "../utils/jwt";
-// // import jwt from "jsonwebtoken";
-
-// // //====>>>>>>>>
-// // export const authenticate = (
-// //   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ): void => {
-// //   console.log("autheticte start1");
-
-// //   const token =
-// //     req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
-
-// //   console.log("autheticte start2", token);
-// //   if (!token) {
-// //     console.log("autheticte failed 1");
-// //     res.status(401).send("Access denied");
-// //     return;
-// //   }
-// //   console.log("autheticte start3");
-// //   try {
-// //     console.log("autheticte start4");
-// //     const decoded = verifyAccessToken(token);
-// //     console.log("autheticte start5");
-// //     req.user = decoded;
-// //     console.log("autheticte start6.....admin auth", req.user);
-// //     if (!decoded.role.includes("admin")) {
-// //       console.log("autheticte start7", decoded.role);
-// //       console.log("autheticte failed2");
-// //       res
-// //         .status(401)
-// //         .json(new ApiResponse(401, null, "you are not authorized"));
-// //       return;
-// //     }
-// //     console.log("autheticte success");
-// //     next();
-// //   } catch (err) {
-// //     res
-// //       .status(401)
-// //       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-// //     return;
-// //   }
-// // };
-
-// // //====>>>>>>>>
-// // export const decodedRefreshToken = (
-// //   req: Request &
-// //     Partial<{ user: string | (jwt.JwtPayload & { rawToken: string }) }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ): void => {
-// //   console.log("decode refresh token step 1 - Headers:", req.headers);
-// //   console.log("decode refresh token step 2 - Cookies:", req.cookies);
-
-// //   const refreshToken =
-// //     (req.cookies && req.cookies["adminRefreshToken"]) || // Check if cookies exist
-// //     (req.headers["adminrefreshtoken"] as string); // Lowercase header name
-
-// //   if (!refreshToken) {
-// //     console.log("decode refresh token step 3 - No token found");
-// //     res
-// //       .status(401)
-// //       .json(
-// //         new ApiResponse(401, null, "Access Denied: No refresh token provided")
-// //       );
-// //     return;
-// //   }
-
-// //   console.log("decode refresh token step 4 - Token:", refreshToken);
-// //   try {
-// //     const decoded = decodeToken(refreshToken);
-// //     // const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || "your-secret"); // Replace decodeToken with jwt.verify
-// //     console.log("decode refresh token step 5 - Decoded:", decoded);
-
-// //     req.user = { ...decoded, rawToken: refreshToken };
-// //     console.log("decode refresh token step 6 - req.user set");
-// //     next();
-// //   } catch (err) {
-// //     console.log("decode refresh token step 7 - Error:", err);
-// //     res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
-// //   }
-// // };
-
-// // export const verifyRefreshTokenMiddleware = (
-// //   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ): void => {
-// //   console.log("verifyRefreshTokenMiddleware step 1");
-// //   const refreshToken =
-// //     req.cookies["adminRefreshToken"] || req.header("adminRefreshToken");
-
-// //   if (!refreshToken) {
-// //     res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-// //     return; // Just return without value
-// //   }
-
-// //   try {
-// //     const decoded = verifyRefreshToken(refreshToken);
-
-// //     req.user = { ...decoded, rawToken: refreshToken };
-
-// //     next();
-// //   } catch (err) {
-// //     res
-// //       .status(401)
-// //       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-// //     return; // Just return without value
-// //   }
-// // };
-
-// // //====>>>>>>>>
-// // export const refreshAccessToken = (
-// //   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ) => {
-// //   const refreshToken =
-// //     req.cookies["refreshToken"] || req.header("refreshToken");
-
-// //   if (!refreshToken) {
-// //     return res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-// //   }
-
-// //   try {
-// //     const decoded = verifyRefreshToken(refreshToken);
-
-// //     req.user = { ...decoded, rawToken: refreshToken };
-
-// //     next();
-// //   } catch (err) {
-// //     res
-// //       .status(401)
-// //       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-// //   }
-// // };
-
-// // //====>>>>>>>>
-
-// // export const decodedUserRefreshToken = (
-// //   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ) => {
-// //   const refreshToken =
-// //     req.cookies["refreshToken"] || req.header("refreshToken");
-
-// //   if (!refreshToken) {
-// //     return res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-// //   }
-
-// //   try {
-// //     const decoded = decodeToken(refreshToken);
-
-// //     req.user = { ...decoded, rawToken: refreshToken };
-
-// //     next();
-// //   } catch (err) {
-// //     res.status(401).json(new ApiResponse(401, null, "Invalid "));
-// //   }
-// // };
-// // //====>>>>>>>>
-// // export const authenticateUser = (
-// //   req: Request & Partial<{ user: {} | jwt.JwtPayload }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ) => {
-// //   const token =
-// //     req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
-
-// //   if (!token) {
-// //     return res.status(401).send("Access denied");
-// //   }
-
-// //   try {
-// //     const decoded = verifyAccessToken(token);
-// //     req.user = decoded;
-
-// //     if (decoded.role.includes("mentee") || decoded.role.includes("mentor")) {
-// //       res
-// //         .status(401)
-// //         .json(new ApiResponse(401, null, "you are not authorized"));
-// //     }
-
-// //     next();
-// //   } catch (err) {
-// //     res
-// //       .status(401)
-// //       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-// //   }
-// // };
-// // //====>>>>>>>>
-// // export const verifyUserRefreshToken = (
-// //   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-// //   res: Response,
-// //   next: NextFunction
-// // ) => {
-// //   const refreshToken =
-// //     req.cookies["refreshToken"] || req.header("refreshToken");
-
-// //   if (!refreshToken) {
-// //     return res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-// //   }
-
-// //   try {
-// //     const decoded = verifyRefreshToken(refreshToken);
-
-// //     req.user = { ...decoded, rawToken: refreshToken };
-
-// //     next();
-// //   } catch (err) {
-// //     res
-// //       .status(401)
-// //       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-// //   }
-// // };
-// // //====>>>>>>>>
 // import { Request, Response, NextFunction } from "express";
-// import ApiResponse from "../utils/apiResponse";
 // import jwt from "jsonwebtoken";
-// import RedisTokenService from "../services/implementations/RedisTokenService";
-// import { verifyAccessToken, decodeToken, verifyRefreshToken } from "../utils/jwt";
+// import { logger } from "../utils/logger";
+// import { AppError } from "../errors/appError";
+// import { ApiResponse } from "../utils/apiResponse";
+// import { HttpStatus } from "../constants/HttpStatus";
+// import { RedisTokenService } from "../services/implementations/RedisTokenService";
+// import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
+
+// interface JwtPayload {
+//   id: string;
+//   role: string[];
+// }
 
 // export const authenticate = (
-//   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
+//   req: Request & { user?: JwtPayload },
 //   res: Response,
 //   next: NextFunction
 // ): void => {
-//   console.log("authenticate start");
+//   logger.info("Authenticate middleware started", { path: req.path });
+
 //   const token =
-//     req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
-//   console.log("authenticate token:", token);
+//     req.cookies?.adminAccessToken ||
+//     req.headers["authorization"]?.replace("Bearer ", "");
 
 //   if (!token) {
-//     console.log("authenticate failed: No token provided");
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Access denied: No token provided"));
-//     return;
+//     logger.warn("No token provided", { path: req.path });
+//     throw new AppError(
+//       "Access denied: No token provided",
+//       HttpStatus.UNAUTHORIZED,
+//       "warn",
+//       "NO_TOKEN"
+//     );
 //   }
 
 //   try {
-//     const decoded = verifyAccessToken(token);
-//     console.log("authenticate decoded:", decoded);
+//     const decoded = verifyAccessToken(token) as JwtPayload;
+//     logger.debug("Token decoded", { userId: decoded.id, role: decoded.role });
 
 //     if (!decoded.role?.includes("admin")) {
-//       console.log("authenticate failed: Not an admin, role:", decoded.role);
-//       res
-//         .status(403)
-//         .json(new ApiResponse(403, null, "You are not authorized"));
-//       return;
+//       logger.warn("User is not an admin", { userId: decoded.id, role: decoded.role });
+//       throw new AppError(
+//         "You are not authorized",
+//         HttpStatus.FORBIDDEN,
+//         "warn",
+//         "NOT_ADMIN"
+//       );
 //     }
 
 //     req.user = decoded;
-//     console.log("authenticate success, user:", req.user);
+//     logger.info("Authentication successful", { userId: decoded.id });
 //     next();
 //   } catch (err) {
-//     console.error("authenticate error:", err);
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Invalid or expired token"));
-//   }
-// };
-
-// export const decodedRefreshToken = (
-//   req: Request &
-//     Partial<{ user: string | (jwt.JwtPayload & { rawToken: string }) }>,
-//   res: Response,
-//   next: NextFunction
-// ): void => {
-//   console.log(
-//     "decodedRefreshToken start, headers:",
-//     req.headers,
-//     "cookies:",
-//     req.cookies
-//   );
-//   const refreshToken =
-//     req.cookies["refreshToken"] || req.header("refreshToken");
-
-//   if (!refreshToken) {
-//     console.log("decodedRefreshToken failed: No refresh token provided");
-//     res
-//       .status(401)
-//       .json(
-//         new ApiResponse(401, null, "Access denied: No refresh token provided")
-//       );
-//     return;
-//   }
-
-//   try {
-//     const decoded = decodeToken(refreshToken);
-//     console.log("decodedRefreshToken decoded:", decoded);
-//     req.user = { ...decoded, rawToken: refreshToken };
-//     console.log("decodedRefreshToken success, user:", req.user);
-//     next();
-//   } catch (err) {
-//     console.error("decodedRefreshToken error:", err);
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+//     logger.error("Authentication failed", {
+//       error: err instanceof Error ? err.message : String(err),
+//       path: req.path,
+//     });
+//     throw new AppError(
+//       "Invalid or expired token",
+//       HttpStatus.UNAUTHORIZED,
+//       "error",
+//       "INVALID_TOKEN"
+//     );
 //   }
 // };
 
 // export const verifyRefreshTokenMiddleware = (
-//   req: Request &
-//     Partial<{ user: string | (jwt.JwtPayload & { rawToken: string }) }>,
+//   req: Request & { user?: JwtPayload & { rawToken: string } },
 //   res: Response,
 //   next: NextFunction
 // ): void => {
-//   console.log(
-//     "verifyRefreshTokenMiddleware start, headers:",
-//     req.headers,
-//     "cookies:",
-//     req.cookies
-//   );
-//   const refreshToken =
-//     req.cookies["refreshToken"] || req.header("refreshToken");
+//   logger.info("Verify refresh token middleware started", { path: req.path });
+
+//   const refreshToken = req.cookies?.adminRefreshToken;
 
 //   if (!refreshToken) {
-//     console.log(
-//       "verifyRefreshTokenMiddleware failed: No refresh token provided"
+//     logger.warn("No refresh token provided", { path: req.path });
+//     throw new AppError(
+//       "Access denied: No refresh token provided",
+//       HttpStatus.UNAUTHORIZED,
+//       "warn",
+//       "NO_REFRESH_TOKEN"
 //     );
-//     res
-//       .status(401)
-//       .json(
-//         new ApiResponse(401, null, "Access denied: No refresh token provided")
-//       );
-//     return;
 //   }
 
 //   try {
-//     const decoded = jwt.verify(
-//       refreshToken,
-//       process.env.REFRESH_TOKEN_SECRET || "secret"
-//     ) as jwt.JwtPayload;
-//     console.log("verifyRefreshTokenMiddleware decoded:", decoded);
+//     const decoded = verifyRefreshToken(refreshToken) as JwtPayload;
+//     logger.debug("Refresh token decoded", { userId: decoded.id });
 
 //     RedisTokenService.verifyRefreshToken(decoded.id, refreshToken)
 //       .then((isValid) => {
 //         if (!isValid) {
-//           console.log(
-//             "verifyRefreshTokenMiddleware failed: Invalid refresh token for user:",
-//             decoded.id
+//           logger.warn("Invalid refresh token", { userId: decoded.id });
+//           throw new AppError(
+//             "Invalid or expired refresh token",
+//             HttpStatus.UNAUTHORIZED,
+//             "warn",
+//             "INVALID_REFRESH_TOKEN"
 //           );
-//           res
-//             .status(401)
-//             .json(
-//               new ApiResponse(401, null, "Invalid or expired refresh token")
-//             );
-//           return;
 //         }
 
 //         req.user = { ...decoded, rawToken: refreshToken };
-//         console.log("verifyRefreshTokenMiddleware success, user:", req.user);
+//         logger.info("Refresh token verification successful", { userId: decoded.id });
 //         next();
 //       })
 //       .catch((err) => {
-//         console.error("verifyRefreshTokenMiddleware Redis error:", err);
-//         res
-//           .status(401)
-//           .json(new ApiResponse(401, null, "Failed to verify refresh token"));
+//         logger.error("Redis verification failed", {
+//           error: err instanceof Error ? err.message : String(err),
+//           userId: decoded.id,
+//         });
+//         throw new AppError(
+//           "Failed to verify refresh token",
+//           HttpStatus.UNAUTHORIZED,
+//           "error",
+//           "REDIS_ERROR"
+//         );
 //       });
 //   } catch (err) {
-//     console.error("verifyRefreshTokenMiddleware JWT error:", err);
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+//     logger.error("Refresh token verification failed", {
+//       error: err instanceof Error ? err.message : String(err),
+//       path: req.path,
+//     });
+//     throw new AppError(
+//       "Invalid or expired refresh token",
+//       HttpStatus.UNAUTHORIZED,
+//       "error",
+//       "INVALID_REFRESH_TOKEN"
+//     );
 //   }
 // };
 
-// export const refreshAccessToken = (
-//   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
+// export const decodedRefreshToken = (
+//   req: Request & { user?: JwtPayload & { rawToken: string } },
 //   res: Response,
 //   next: NextFunction
 // ): void => {
-//   console.log(
-//     "refreshAccessToken start, headers:",
-//     req.headers,
-//     "cookies:",
-//     req.cookies
-//   );
-//   const refreshToken =
-//     req.cookies["refreshToken"] || req.header("refreshToken");
+//   logger.info("Decode refresh token middleware started", { path: req.path });
+
+//   const refreshToken = req.cookies?.adminRefreshToken;
 
 //   if (!refreshToken) {
-//     console.log("refreshAccessToken failed: No refresh token provided");
-//     res
-//       .status(401)
-//       .json(
-//         new ApiResponse(401, null, "Access denied: No refresh token provided")
+//     logger.warn("No refresh token provided", { path: req.path });
+//     throw new AppError(
+//       "Access denied: No refresh token provided",
+//       HttpStatus.UNAUTHORIZED,
+//       "warn",
+//       "NO_REFRESH_TOKEN"
+//     );
+//   }
+
+//   try {
+//     const decoded = jwt.decode(refreshToken) as JwtPayload | null;
+//     if (!decoded || typeof decoded !== "object" || !decoded.id) {
+//       logger.error("Invalid refresh token payload", { path: req.path });
+//       throw new AppError(
+//         "Invalid refresh token",
+//         HttpStatus.UNAUTHORIZED,
+//         "error",
+//         "INVALID_REFRESH_TOKEN"
 //       );
-//     return;
-//   }
-
-//   try {
-//     const decoded = verifyRefreshToken(refreshToken);
-//     req.user = { ...decoded, rawToken: refreshToken };
-//     console.log("refreshAccessToken success, user:", req.user);
-//     next();
-//   } catch (err) {
-//     console.error("refreshAccessToken error:", err);
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
-//   }
-// };
-
-// export const decodedUserRefreshToken = (
-//   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-//   res: Response,
-//   next: NextFunction
-// ): void => {
-//   console.log(
-//     "decodedUserRefreshToken start, headers:",
-//     req.headers,
-//     "cookies:",
-//     req.cookies
-//   );
-//   const refreshToken =
-//     req.cookies["refreshToken"] || req.header("refreshToken");
-
-//   if (!refreshToken) {
-//     console.log("decodedUserRefreshToken failed: No refresh token provided");
-//     res
-//       .status(401)
-//       .json(
-//         new ApiResponse(401, null, "Access denied: No refresh token provided")
-//       );
-//     return;
-//   }
-
-//   try {
-//     const decoded = decodeToken(refreshToken);
-//     req.user = { ...decoded, rawToken: refreshToken };
-//     console.log("decodedUserRefreshToken success, user:", req.user);
-//     next();
-//   } catch (err) {
-//     console.error("decodedUserRefreshToken error:", err);
-//     res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
-//   }
-// };
-
-// export const authenticateUser = (
-//   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-//   res: Response,
-//   next: NextFunction
-// ): void => {
-//   console.log("authenticateUser start");
-//   const token =
-//     req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
-
-//   if (!token) {
-//     console.log("authenticateUser failed: No token provided");
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Access denied: No token provided"));
-//     return;
-//   }
-
-//   try {
-//     const decoded = verifyAccessToken(token);
-//     console.log("authenticateUser decoded:", decoded);
-
-//     if (
-//       !decoded.role?.includes("mentee") &&
-//       !decoded.role?.includes("mentor")
-//     ) {
-//       console.log("authenticateUser failed: Invalid role:", decoded.role);
-//       res
-//         .status(403)
-//         .json(new ApiResponse(403, null, "You are not authorized"));
-//       return;
 //     }
-
-//     req.user = decoded;
-//     console.log("authenticateUser success, user:", req.user);
-//     next();
-//   } catch (err) {
-//     console.error("authenticateUser error:", err);
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Invalid or expired token"));
-//   }
-// };
-
-// export const verifyUserRefreshToken = (
-//   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-//   res: Response,
-//   next: NextFunction
-// ): void => {
-//   console.log(
-//     "verifyUserRefreshToken start, headers:",
-//     req.headers,
-//     "cookies:",
-//     req.cookies
-//   );
-//   const refreshToken =
-//     req.cookies["refreshToken"] || req.header("refreshToken");
-
-//   if (!refreshToken) {
-//     console.log("verifyUserRefreshToken failed: No refresh token provided");
-//     res
-//       .status(401)
-//       .json(
-//         new ApiResponse(401, null, "Access denied: No refresh token provided")
-//       );
-//     return;
-//   }
-
-//   try {
-//     const decoded = verifyRefreshToken(refreshToken);
 //     req.user = { ...decoded, rawToken: refreshToken };
-//     console.log("verifyUserRefreshToken success, user:", req.user);
+//     logger.info("Refresh token decoded", { userId: decoded.id });
 //     next();
 //   } catch (err) {
-//     console.error("verifyUserRefreshToken error:", err);
-//     res
-//       .status(401)
-//       .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+//     logger.error("Decode refresh token failed", {
+// 不说
+
+// System: {
+//   error: err instanceof Error ? err.message : String(err),
+//       path: req.path,
+//     });
+//     throw new AppError(
+//       "Invalid refresh token",
+//       HttpStatus.UNAUTHORIZED,
+//       "error",
+//       "INVALID_REFRESH_TOKEN"
+//     );
 //   }
 // };
-// src/middlewares/authenticateAdmin.ts
+
 import { Request, Response, NextFunction } from "express";
-import ApiResponse from "../utils/apiResponse";
 import jwt from "jsonwebtoken";
-import RedisTokenService from "../services/implementations/RedisTokenService";
+import { logger } from "../utils/logger";
+import { AppError } from "../errors/appError";
+import { ApiResponse } from "../utils/apiResponse";
+import { HttpStatus } from "../constants/HttpStatus";
+import { RedisTokenService } from "../services/implementations/RedisTokenService";
 import { verifyAccessToken, verifyRefreshToken } from "../utils/jwt";
+import { initDIContainer } from "../diContainer/diContainer";
+
+const { redisTokenService } = initDIContainer();
 
 export const authenticate = (
-  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  console.log("authenticate start");
+  logger.info("Authenticate middleware started", { path: req.path });
+
   const token =
-    req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
+    req.cookies?.adminAccessToken ||
+    req.headers["authorization"]?.replace("Bearer ", "");
 
   if (!token) {
-    console.log("authenticate failed: No token provided");
-    res
-      .status(401)
-      .json(new ApiResponse(401, null, "Access denied: No token provided"));
-    return;
+    logger.warn("No token provided", { path: req.path });
+    throw new AppError(
+      "Access denied: No token provided",
+      HttpStatus.UNAUTHORIZED,
+      "warn",
+      "NO_TOKEN"
+    );
   }
 
   try {
-    const decoded = verifyAccessToken(token);
-    console.log("authenticate decoded:", decoded);
+    const decoded = verifyAccessToken(token) as jwt.JwtPayload;
+    logger.debug("Token decoded", { userId: decoded.id, role: decoded.role });
 
     if (!decoded.role?.includes("admin")) {
-      console.log("authenticate failed: Not an admin, role:", decoded.role);
-      res
-        .status(403)
-        .json(new ApiResponse(403, null, "You are not authorized"));
-      return;
+      logger.warn("User is not an admin", {
+        userId: decoded.id,
+        role: decoded.role,
+      });
+      throw new AppError(
+        "You are not authorized",
+        HttpStatus.FORBIDDEN,
+        "warn",
+        "NOT_ADMIN"
+      );
     }
 
     req.user = decoded;
-    console.log("authenticate success, user:", req.user);
+    logger.info("Authentication successful", { userId: decoded.id });
     next();
   } catch (err) {
-    console.error("authenticate error:", err);
-    res
-      .status(401)
-      .json(new ApiResponse(401, null, "Invalid or expired token"));
+    logger.error("Authentication failed", {
+      error: err instanceof Error ? err.message : String(err),
+      path: req.path,
+    });
+    throw new AppError(
+      "Invalid or expired token",
+      HttpStatus.UNAUTHORIZED,
+      "error",
+      "INVALID_TOKEN"
+    );
   }
 };
 
 export const verifyRefreshTokenMiddleware = (
-  req: Request &
-    Partial<{ user: string | (jwt.JwtPayload & { rawToken: string }) }>,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  console.log("verifyRefreshTokenMiddleware start, cookies:", req.cookies);
-  const refreshToken = req.cookies?.refreshToken;
+  logger.info("Verify refresh token middleware started", { path: req.path });
+
+  const refreshToken = req.cookies?.adminRefreshToken;
 
   if (!refreshToken) {
-    console.log(
-      "verifyRefreshTokenMiddleware failed: No refresh token provided"
+    logger.warn("No refresh token provided", { path: req.path });
+    throw new AppError(
+      "Access denied: No refresh token provided",
+      HttpStatus.UNAUTHORIZED,
+      "warn",
+      "NO_REFRESH_TOKEN"
     );
-    res
-      .status(401)
-      .json(
-        new ApiResponse(401, null, "Access denied: No refresh token provided")
-      );
-    return;
   }
 
   try {
-    const decoded = verifyRefreshToken(refreshToken);
-    console.log("verifyRefreshTokenMiddleware decoded:", decoded);
+    const decoded = verifyRefreshToken(refreshToken) as jwt.JwtPayload;
+    logger.debug("Refresh token decoded", { userId: decoded.id });
 
-    RedisTokenService.verifyRefreshToken(decoded.id, refreshToken)
+    redisTokenService
+      .verifyRefreshToken(decoded.id, refreshToken)
       .then((isValid) => {
         if (!isValid) {
-          console.log(
-            "verifyRefreshTokenMiddleware failed: Invalid refresh token for user:",
-            decoded.id
+          logger.warn("Invalid refresh token", { userId: decoded.id });
+          throw new AppError(
+            "Invalid or expired refresh token",
+            HttpStatus.UNAUTHORIZED,
+            "warn",
+            "INVALID_REFRESH_TOKEN"
           );
-          res
-            .status(401)
-            .json(
-              new ApiResponse(401, null, "Invalid or expired refresh token")
-            );
-          return;
         }
 
         req.user = { ...decoded, rawToken: refreshToken };
-        console.log("verifyRefreshTokenMiddleware success, user:", req.user);
+        logger.info("Refresh token verification successful", {
+          userId: decoded.id,
+        });
         next();
       })
       .catch((err) => {
-        console.error("verifyRefreshTokenMiddleware Redis error:", err);
-        res
-          .status(401)
-          .json(new ApiResponse(401, null, "Failed to verify refresh token"));
+        logger.error("Redis verification failed", {
+          error: err instanceof Error ? err.message : String(err),
+          userId: decoded.id,
+        });
+        throw new AppError(
+          "Failed to verify refresh token",
+          HttpStatus.UNAUTHORIZED,
+          "error",
+          "REDIS_ERROR"
+        );
       });
   } catch (err) {
-    console.error("verifyRefreshTokenMiddleware JWT error:", err);
-    res
-      .status(401)
-      .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+    logger.error("Refresh token verification failed", {
+      error: err instanceof Error ? err.message : String(err),
+      path: req.path,
+    });
+    throw new AppError(
+      "Invalid or expired refresh token",
+      HttpStatus.UNAUTHORIZED,
+      "error",
+      "INVALID_REFRESH_TOKEN"
+    );
   }
 };
 
 export const decodedRefreshToken = (
-  req: Request &
-    Partial<{ user: string | (jwt.JwtPayload & { rawToken: string }) }>,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  console.log("decodedRefreshToken start, cookies:", req.cookies);
-  const refreshToken = req.cookies?.refreshToken;
+  logger.info("Decode refresh token middleware started", { path: req.path });
+
+  const refreshToken = req.cookies?.adminRefreshToken;
 
   if (!refreshToken) {
-    console.log("decodedRefreshToken failed: No refresh token provided");
-    res
-      .status(401)
-      .json(
-        new ApiResponse(401, null, "Access denied: No refresh token provided")
-      );
-    return;
+    logger.warn("No refresh token provided", { path: req.path });
+    throw new AppError(
+      "Access denied: No refresh token provided",
+      HttpStatus.UNAUTHORIZED,
+      "warn",
+      "NO_REFRESH_TOKEN"
+    );
   }
 
   try {
-    const decoded = jwt.decode(refreshToken) as jwt.JwtPayload;
+    const decoded = jwt.decode(refreshToken) as jwt.JwtPayload | null;
     if (!decoded || typeof decoded !== "object" || !decoded.id) {
-      console.error("decodedRefreshToken error: Missing id in token payload");
-      res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
-      return;
+      logger.error("Invalid refresh token payload", { path: req.path });
+      throw new AppError(
+        "Invalid refresh token",
+        HttpStatus.UNAUTHORIZED,
+        "error",
+        "INVALID_REFRESH_TOKEN"
+      );
     }
-    req.user = { ...decoded, rawToken: refreshToken, id: decoded.id };
-    console.log("decodedRefreshToken success, user:", req.user);
+    req.user = { ...decoded, rawToken: refreshToken };
+    logger.info("Refresh token decoded", { userId: decoded.id });
     next();
   } catch (err) {
-    console.error("decodedRefreshToken error:", err);
-    res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
+    logger.error("Decode refresh token failed", {
+      error: err instanceof Error ? err.message : String(err),
+      path: req.path,
+    });
+    throw new AppError(
+      "Invalid refresh token",
+      HttpStatus.UNAUTHORIZED,
+      "error",
+      "INVALID_REFRESH_TOKEN"
+    );
   }
 };

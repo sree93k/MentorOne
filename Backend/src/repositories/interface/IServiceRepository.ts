@@ -1,37 +1,34 @@
 import { EService } from "../../entities/serviceEntity";
-interface GetAllServicesParams {
-  page: number;
-  limit: number;
-  search: string;
-  type?: string;
-}
-
-interface GetAllServicesResponse {
-  services: EService[];
-  totalCount: number;
-}
 
 export interface IServiceRepository {
-  // getAllServices(mentorId: string): Promise<EService[]>;
   getAllServices(
     mentorId: string,
-    params: GetAllServicesParams
-  ): Promise<GetAllServicesResponse>;
+    params: {
+      page: number;
+      limit: number;
+      search: string;
+      type?: string;
+    }
+  ): Promise<{ services: EService[]; totalCount: number }>;
+
   getServiceById(serviceId: string): Promise<EService | null>;
   updateService(
     serviceId: string,
     serviceData: Partial<EService>
   ): Promise<EService | null>;
+
   getAllVideoTutorials(
     type?: string,
     searchQuery?: string,
     page?: number,
     limit?: number
-  ): Promise<{ tutorials: any[]; total: number }>;
-  getTutorialById(tutorialId: string): Promise<any>;
-  findServicesByTitle(searchQuery: string): Promise<any[]>;
-  findServicesById(id: string): Promise<any>;
+  ): Promise<{ tutorials: EService[]; total: number }>;
+
+  getTutorialById(tutorialId: string): Promise<EService | null>;
+  findServicesByTitle(searchQuery: string): Promise<Partial<EService>[]>;
+  findServicesById(id: string): Promise<EService | null>;
   getTopServices(limit: number): Promise<EService[]>;
+
   getAllServicesForMentee(params: {
     page: number;
     limit: number;
@@ -40,4 +37,14 @@ export interface IServiceRepository {
     oneToOneType?: string;
     digitalProductType?: string;
   }): Promise<{ services: EService[]; total: number }>;
+
+  getDocuments(mentorId: string): Promise<EService[]>;
+  createDocument(payload: Partial<EService>): Promise<EService>;
+
+  getAllTutorials(
+    page: number,
+    limit: number,
+    type?: "Free" | "Paid",
+    search?: string
+  ): Promise<{ tutorials: EService[]; total: number }>;
 }

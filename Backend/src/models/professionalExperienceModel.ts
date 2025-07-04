@@ -1,4 +1,3 @@
-import { strict } from "assert";
 import { EWorkExperience } from "../entities/professionalEnitity";
 import mongoose, { Schema } from "mongoose";
 
@@ -10,7 +9,7 @@ const WorkExperienceSchema = new Schema<EWorkExperience>({
   startDate: { type: Date, required: false },
   endDate: { type: Date, required: false },
   city: { type: String, required: true },
-  userType: { type: String, required: true }, // Added
+  userType: { type: String, required: true },
 });
 
 const WorkExperience = mongoose.model<EWorkExperience>(

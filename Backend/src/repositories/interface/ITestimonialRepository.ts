@@ -11,11 +11,7 @@ export interface ITestimonialRepository {
   ): Promise<ETestimonial[]>;
   countByMentor(mentorId: string): Promise<number>;
   update(id: string, data: any): Promise<ETestimonial>;
-  findBookingById(bookingId: string): Promise<any>;
-  updateBookingWithTestimonial(
-    bookingId: string,
-    testimonialId: string
-  ): Promise<void>;
+
   findByMentorAndService(
     mentorId: string,
     serviceId: string,

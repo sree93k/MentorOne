@@ -1,10 +1,25 @@
-// src/constants/HttpStatus.ts
+// // src/constants/HttpStatus.ts
+// export enum HttpStatus {
+//   OK = 200,
+//   CREATED = 201,
+//   BAD_REQUEST = 400,
+//   UNAUTHORIZED = 401,
+//   FORBIDDEN = 403,
+//   NOT_FOUND = 404,
+//   INTERNAL_SERVER_ERROR = 500,
+// }
+/**
+ * HTTP status codes used in the MentorOne API.
+ */
 export enum HttpStatus {
   OK = 200,
   CREATED = 201,
+  NO_CONTENT = 204,
   BAD_REQUEST = 400,
   UNAUTHORIZED = 401,
   FORBIDDEN = 403,
   NOT_FOUND = 404,
-  INTERNAL_SERVER_ERROR = 500,
+  CONFLICT = 409,
+  TOO_MANY_REQUESTS = 429,
+  INTERNAL_SERVER = 500,
 }

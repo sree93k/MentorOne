@@ -5,14 +5,18 @@ import {
   RedisScripts,
 } from "@redis/client";
 import bcrypt from "bcryptjs";
-import { tokenClient } from "../../server"; // Import from your main server file
+import { logger } from "../../utils/logger";
+import { ServiceError } from "../../errors/serviceError";
+import { HttpStatus } from "../../constants/HttpStatus";
 
 export class RedisTokenService {
-  private redis: RedisClientType<RedisModules, RedisFunctions, RedisScripts>;
-
-  constructor() {
-    this.redis = tokenClient; // Use the existing token client
-  }
+  constructor(
+    private readonly redis: RedisClientType<
+      RedisModules,
+      RedisFunctions,
+      RedisScripts
+    >
+  ) {}
 
   async saveRefreshToken(
     userId: string,
@@ -25,10 +29,18 @@ export class RedisTokenService {
       const expirationSeconds = expiresInDays * 24 * 60 * 60;
 
       await this.redis.setEx(key, expirationSeconds, hashedToken);
-      console.log(`Refresh token saved for user: ${userId}`);
+      logger.info("Refresh token saved", { userId });
     } catch (error) {
-      console.error("Error saving refresh token to Redis:", error);
-      throw new Error("Failed to save refresh token");
+      logger.error("Failed to save refresh token", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to save refresh token",
+        "REDIS_SAVE_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 
@@ -41,17 +53,24 @@ export class RedisTokenService {
       const hashedToken = await this.redis.get(key);
 
       if (!hashedToken) {
-        console.log(`No refresh token found for user: ${userId}`);
+        logger.warn("No refresh token found", { userId });
         return false;
       }
 
       const isValid = await bcrypt.compare(refreshToken, hashedToken);
-      console.log(`Token verification for user ${userId}:`, isValid);
-
+      logger.debug("Token verification result", { userId, isValid });
       return isValid;
     } catch (error) {
-      console.error("Error verifying refresh token:", error);
-      return false;
+      logger.error("Failed to verify refresh token", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to verify refresh token",
+        "REDIS_VERIFY_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 
@@ -60,25 +79,42 @@ export class RedisTokenService {
       const key = `refresh_token:${userId}`;
       const result = await this.redis.del(key);
 
-      console.log(`Refresh token removed for user: ${userId}`);
+      logger.info("Refresh token removed", { userId });
       return result === 1;
     } catch (error) {
-      console.error("Error removing refresh token:", error);
-      return false;
+      logger.error("Failed to remove refresh token", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to remove refresh token",
+        "REDIS_DELETE_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 
   async getTokenTTL(userId: string): Promise<number> {
     try {
       const key = `refresh_token:${userId}`;
-      return await this.redis.ttl(key);
+      const ttl = await this.redis.ttl(key);
+      logger.debug("Token TTL retrieved", { userId, ttl });
+      return ttl;
     } catch (error) {
-      console.error("Error getting token TTL:", error);
-      return -1;
+      logger.error("Failed to get token TTL", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to get token TTL",
+        "REDIS_TTL_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 
-  // Multi-device support
   async saveDeviceRefreshToken(
     userId: string,
     deviceId: string,
@@ -93,12 +129,19 @@ export class RedisTokenService {
       await this.redis.setEx(key, expirationSeconds, hashedToken);
       await this.redis.sAdd(`user_devices:${userId}`, deviceId);
 
-      console.log(
-        `Device refresh token saved for user: ${userId}, device: ${deviceId}`
-      );
+      logger.info("Device refresh token saved", { userId, deviceId });
     } catch (error) {
-      console.error("Error saving device refresh token:", error);
-      throw new Error("Failed to save device refresh token");
+      logger.error("Failed to save device refresh token", {
+        userId,
+        deviceId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to save device refresh token",
+        "REDIS_DEVICE_SAVE_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 
@@ -112,42 +155,57 @@ export class RedisTokenService {
       const hashedToken = await this.redis.get(key);
 
       if (!hashedToken) {
+        logger.warn("No device refresh token found", { userId, deviceId });
         return false;
       }
 
-      return await bcrypt.compare(refreshToken, hashedToken);
+      const isValid = await bcrypt.compare(refreshToken, hashedToken);
+      logger.debug("Device token verification result", {
+        userId,
+        deviceId,
+        isValid,
+      });
+      return isValid;
     } catch (error) {
-      console.error("Error verifying device refresh token:", error);
-      return false;
+      logger.error("Failed to verify device refresh token", {
+        userId,
+        deviceId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to verify device refresh token",
+        "REDIS_DEVICE_VERIFY_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 
   async removeAllUserTokens(userId: string): Promise<boolean> {
     try {
       const devices = await this.redis.sMembers(`user_devices:${userId}`);
-
       const pipeline = this.redis.multi();
 
-      // Remove single user token
       pipeline.del(`refresh_token:${userId}`);
-
-      // Remove all device tokens
       devices.forEach((deviceId) => {
         pipeline.del(`refresh_token:${userId}:${deviceId}`);
       });
-
-      // Remove device list
       pipeline.del(`user_devices:${userId}`);
 
       await pipeline.exec();
-
-      console.log(`All tokens removed for user: ${userId}`);
+      logger.info("All tokens removed", { userId });
       return true;
     } catch (error) {
-      console.error("Error removing all user tokens:", error);
-      return false;
+      logger.error("Failed to remove all user tokens", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceError(
+        "Failed to remove all user tokens",
+        "REDIS_DELETE_ALL_ERROR",
+        HttpStatus.INTERNAL_SERVER,
+        "error"
+      );
     }
   }
 }
-
-export default new RedisTokenService();

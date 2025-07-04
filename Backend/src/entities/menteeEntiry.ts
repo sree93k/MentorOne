@@ -1,10 +1,10 @@
-import mongoose, { Document, Schema, ObjectId } from "mongoose";
+import mongoose, { Document, ObjectId } from "mongoose";
 
 export interface EMentee extends Document {
   _id: mongoose.Types.ObjectId;
-  joinPurpose: string[] | null;
-  careerGoals: string | null;
-  interestedNewcareer: string[] | null;
-  Bookings: ObjectId[] | null;
-  isOnline: Boolean | null;
+  joinPurpose: string[];
+  careerGoals: string;
+  interestedNewcareer: string[];
+  Bookings?: ObjectId[];
+  isOnline?: boolean;
 }

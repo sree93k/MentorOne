@@ -1,47 +1,30 @@
-// import { Router } from "express";
-// import adminAuthController from "../../controllers/implementation/adminAuthController";
-// import { validateAdminLogin } from "../../validator/adminValidator";
-// import {
-//   decodedRefreshToken,
-//   verifyRefreshTokenMiddleware,
-// } from "../../middlewares/authenticateAdmin";
-
-// const adminAuthRoutes = Router();
-
-// adminAuthRoutes.post("/login", validateAdminLogin, adminAuthController.login);
-// adminAuthRoutes.patch(
-//   "/logout",
-//   decodedRefreshToken,
-//   adminAuthController.logout
-// );
-// adminAuthRoutes.get(
-//   "/refresh_token",
-//   verifyRefreshTokenMiddleware,
-//   adminAuthController.refreshToken
-// );
-
 // export default adminAuthRoutes;
-// src/routes/adminAuthRoutes.ts
 import { Router } from "express";
-import adminAuthController from "../../controllers/implementation/adminAuthController";
 import { validateAdminLogin } from "../../validator/adminValidator";
 import {
-  decodedRefreshToken,
   verifyRefreshTokenMiddleware,
+  decodedRefreshToken,
 } from "../../middlewares/authenticateAdmin";
+import { initDIContainer } from "../../diContainer/diContainer";
+
+const { adminAuthController } = initDIContainer();
 
 const adminAuthRoutes = Router();
 
-adminAuthRoutes.post("/login", validateAdminLogin, adminAuthController.login);
-adminAuthRoutes.patch(
+adminAuthRoutes.post(
+  "/login",
+  validateAdminLogin,
+  adminAuthController.login.bind(adminAuthController)
+);
+adminAuthRoutes.post(
   "/logout",
   decodedRefreshToken,
-  adminAuthController.logout
+  adminAuthController.logout.bind(adminAuthController)
 );
 adminAuthRoutes.post(
   "/refresh-token",
   verifyRefreshTokenMiddleware,
-  adminAuthController.refreshToken
+  adminAuthController.refreshToken.bind(adminAuthController)
 );
 
 export default adminAuthRoutes;

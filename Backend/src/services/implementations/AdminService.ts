@@ -1,321 +1,571 @@
-import { IAdminService } from "../interface/IAdminService";
-import Users from "../../models/userModel";
-import Mentee from "../../models/menteeModel";
-import Mentor from "../../models/mentorModel";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
-import MenteeRepository from "../../repositories/implementations/MenteeRepository";
-import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
-import MentorRepository from "../../repositories/implementations/MentorRepository";
-import { EUsers } from "../../entities/userEntity";
-import { EMentee } from "../../entities/menteeEntiry";
-import { EMentor } from "../../entities/mentorEntity";
-import { sendMail } from "../../utils/emailService";
-import { Model } from "mongoose";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import { EService } from "../../entities/serviceEntity";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
+// import { logger } from "../../utils/logger";
+// import { AppError } from "../../errors/appError";
+// import { HttpStatus } from "../../constants/HttpStatus";
+// import { IAdminRepository } from "../../repositories/interface/IAdminRepository";
+// import { IUserRepository } from "../../repositories/interface/IUserRepository";
+// import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+// import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
+// import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
+// import {
+//   FetchUsersQueryDto,
+//   MentorStatusUpdateDTO,
+//   UserStatusUpdateDTO,
+//   FetchBookingsQueryDto,
+//   FetchPaymentsQueryDto,
+//   TransferToMentorDto,
+// } from "../../dtos/adminDTO";
+// import { IAdminService } from "../interface/IAdminService";
+// import { EUsers } from "../../entities/userEntity";
+// import { EBooking } from "../../entities/bookingEntity";
+// import { EPayment } from "../../entities/paymentEntity";
+// import { EMentor } from "../../entities/mentorEntity";
+
+// export class AdminService implements IAdminService {
+//   constructor(
+//     private readonly adminRepository: IAdminRepository,
+//     private readonly userRepository: IUserRepository,
+//     private readonly bookingRepository: IBookingRepository,
+//     private readonly paymentRepository: IPaymentRepository,
+//     private readonly mentorRepository: IMentorRepository
+//   ) {}
+
+//   async validateSession(userId: string): Promise<boolean> {
+//     logger.info("Validating session", { userId });
+//     try {
+//       const admin = await this.adminRepository.findById(userId);
+//       return !!admin;
+//     } catch (error) {
+//       logger.error("Failed to validate session", {
+//         userId,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to validate session",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "VALIDATE_SESSION_ERROR"
+//       );
+//     }
+//   }
+
+//   async fetchAllUsers(
+//     query: FetchUsersQueryDto
+//   ): Promise<{ data: EUsers[]; total: number }> {
+//     logger.info("Fetching all users", { query });
+//     try {
+//       const { page, limit, role, status, searchQuery } = query;
+//       const mongoQuery: any = {};
+//       if (role) mongoQuery.role = role;
+//       if (status) mongoQuery.isBlocked = status === "blocked";
+//       if (searchQuery) {
+//         mongoQuery.$or = [
+//           { firstName: { $regex: searchQuery, $options: "i" } },
+//           { lastName: { $regex: searchQuery, $options: "i" } },
+//           { email: { $regex: searchQuery, $options: "i" } },
+//         ];
+//       }
+
+//       const [data, total] = await Promise.all([
+//         this.userRepository.findMany(mongoQuery, page, limit),
+//         this.userRepository.countDocuments(mongoQuery),
+//       ]);
+
+//       return { data: data as EUsers[], total };
+//     } catch (error) {
+//       logger.error("Failed to fetch users", {
+//         query,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to fetch users",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FETCH_USERS_ERROR"
+//       );
+//     }
+//   }
+
+//   async getUserDetails(userId: string): Promise<EUsers | null> {
+//     logger.info("Fetching user details", { userId });
+//     try {
+//       const user = await this.userRepository.findById(userId);
+//       if (!user) {
+//         throw new AppError(
+//           "User not found",
+//           HttpStatus.NOT_FOUND,
+//           "warn",
+//           "USER_NOT_FOUND"
+//         );
+//       }
+//       return user;
+//     } catch (error) {
+//       logger.error("Failed to fetch user details", {
+//         userId,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to fetch user details",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "FETCH_USER_DETAILS_ERROR"
+//           );
+//     }
+//   }
+
+//   async getAllBookings(
+//     query: FetchBookingsQueryDto
+//   ): Promise<{ bookings: EBooking[]; total: number }> {
+//     logger.info("Fetching all bookings", { query });
+//     try {
+//       const { page, limit, searchQuery, service, status } = query;
+//       const mongoQuery: any = {};
+//       if (service) mongoQuery.serviceId = service;
+//       if (status) mongoQuery.status = status;
+//       if (searchQuery) {
+//         mongoQuery.$or = [
+//           { "menteeId.firstName": { $regex: searchQuery, $options: "i" } },
+//           { "menteeId.lastName": { $regex: searchQuery, $options: "i" } },
+//           { "mentorId.firstName": { $regex: searchQuery, $options: "i" } },
+//           { "mentorId.lastName": { $regex: searchQuery, $options: "i" } },
+//         ];
+//       }
+
+//       const [bookings, total] = await Promise.all([
+//         this.bookingRepository.findAllBookings(page, limit, mongoQuery),
+//         this.bookingRepository.countAllBookings(mongoQuery),
+//       ]);
+
+//       return { bookings, total };
+//     } catch (error) {
+//       logger.error("Failed to fetch bookings", {
+//         query,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to fetch bookings",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FETCH_BOOKINGS_ERROR"
+//       );
+//     }
+//   }
+
+//   async getAllPayments(
+//     query: FetchPaymentsQueryDto
+//   ): Promise<{ payments: EPayment[]; total: number }> {
+//     logger.info("Fetching all payments", { query });
+//     try {
+//       const { page, limit, searchQuery, status } = query;
+//       const mongoQuery: any = {};
+//       if (status) mongoQuery.status = status;
+//       if (searchQuery) {
+//         mongoQuery.$or = [
+//           { "menteeId.email": { $regex: searchQuery, $options: "i" } },
+//           { "mentorId.email": { $regex: searchQuery, $options: "i" } },
+//         ];
+//       }
+
+//       const [payments, total] = await Promise.all([
+//         this.paymentRepository.findAllPayments(page, limit, mongoQuery),
+//         this.paymentRepository.countAllPayments(mongoQuery),
+//       ]);
+
+//       return { payments, total };
+//     } catch (error) {
+//       logger.error("Failed to fetch payments", {
+//         query,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw new AppError(
+//         "Failed to fetch payments",
+//         HttpStatus.INTERNAL_SERVER,
+//         "error",
+//         "FETCH_PAYMENTS_ERROR"
+//       );
+//     }
+//   }
+
+//   async transferToMentor(dto: TransferToMentorDto): Promise<EPayment> {
+//     logger.info("Transferring to mentor", { dto });
+//     try {
+//       const payment = await this.paymentRepository.findById(dto.paymentId);
+//       if (!payment) {
+//         throw new AppError(
+//           "Payment not found",
+//           HttpStatus.NOT_FOUND,
+//           "warn",
+//           "PAYMENT_NOT_FOUND"
+//         );
+//       }
+//       const mentor = await this.mentorRepository.findById(dto.mentorId);
+//       if (!mentor) {
+//         throw new AppError(
+//           "Mentor not found",
+//           HttpStatus.NOT_FOUND,
+//           "warn",
+//           "MENTOR_NOT_FOUND"
+//         );
+//       }
+//       const result = await this.paymentRepository.update(dto.paymentId, {
+//         mentorId: dto.mentorId,
+//         amount: dto.amount,
+//         status: "transferred",
+//       });
+//       if (!result) {
+//         throw new AppError(
+//           "Failed to transfer payment",
+//           HttpStatus.INTERNAL_SERVER,
+//           "error",
+//           "TRANSFER_ERROR"
+//         );
+//       }
+//       return result;
+//     } catch (error) {
+//       logger.error("Failed to transfer to mentor", {
+//         dto,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to transfer to mentor",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "TRANSFER_ERROR"
+//           );
+//     }
+//   }
+
+//   async mentorStatusChange(dto: MentorStatusUpdateDTO): Promise<EMentor> {
+//     logger.info("Updating mentor status", { dto });
+//     try {
+//       const mentor = await this.mentorRepository.findById(dto.id);
+//       if (!mentor) {
+//         throw new AppError(
+//           "Mentor not found",
+//           HttpStatus.NOT_FOUND,
+//           "warn",
+//           "MENTOR_NOT_FOUND"
+//         );
+//       }
+//       const result = await this.mentorRepository.updateField(
+//         dto.id,
+//         "isApproved",
+//         dto.status,
+//         dto.reason
+//       );
+//       if (!result) {
+//         throw new AppError(
+//           "Failed to update mentor status",
+//           HttpStatus.INTERNAL_SERVER,
+//           "error",
+//           "MENTOR_STATUS_UPDATE_ERROR"
+//         );
+//       }
+//       return result;
+//     } catch (error) {
+//       logger.error("Failed to update mentor status", {
+//         dto,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to update mentor status",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "MENTOR_STATUS_UPDATE_ERROR"
+//           );
+//     }
+//   }
+
+//   async userStatusChange(dto: UserStatusUpdateDTO): Promise<EUsers> {
+//     logger.info("Updating user status", { dto });
+//     try {
+//       const user = await this.userRepository.findById(dto.id);
+//       if (!user) {
+//         throw new AppError(
+//           "User not found",
+//           HttpStatus.NOT_FOUND,
+//           "warn",
+//           "USER_NOT_FOUND"
+//         );
+//       }
+//       const result = await this.userRepository.update(dto.id, {
+//         isBlocked: dto.isBlocked,
+//       });
+//       if (!result) {
+//         throw new AppError(
+//           "Failed to update user status",
+//           HttpStatus.INTERNAL_SERVER,
+//           "error",
+//           "USER_STATUS_UPDATE_ERROR"
+//         );
+//       }
+//       return result;
+//     } catch (error) {
+//       logger.error("Failed to update user status", {
+//         dto,
+//         error: error instanceof Error ? error.message : String(error),
+//       });
+//       throw error instanceof AppError
+//         ? error
+//         : new AppError(
+//             "Failed to update user status",
+//             HttpStatus.INTERNAL_SERVER,
+//             "error",
+//             "USER_STATUS_UPDATE_ERROR"
+//           );
+//     }
+//   }
+// }
+
+import { IUserService } from "../interface/IUserService";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
-import { EBooking } from "../../entities/bookingEntity";
-import { number } from "joi";
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
+import { IAdminService } from "../interface/IAdminService";
+import { UserResponseDto } from "../../dtos/userDTO";
+import {
+  FetchUsersQueryDto,
+  FetchBookingsQueryDto,
+  FetchPaymentsQueryDto,
+  TransferToMentorDto,
+  MentorStatusUpdateDTO,
+  UserStatusUpdateDTO,
+} from "../../dtos/adminDTO";
+import { logger } from "../../utils/logger";
+import { AppError } from "../../errors/appError";
+import { HttpStatus } from "../../constants/HttpStatus";
 
-export default class AdminService implements IAdminService {
-  private BaseRepository: IBaseRepository<EUsers>;
-  private MenteeRepository: IMenteeRepository;
-  private MentorRepository: IMentorRepository;
-  private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
+export class AdminService implements IAdminService {
+  constructor(
+    private readonly userService: IUserService,
+    private readonly bookingRepository: IBookingRepository,
+    private readonly paymentRepository: IPaymentRepository
+  ) {}
 
-  constructor() {
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
-    this.MenteeRepository = new MenteeRepository();
-    this.MentorRepository = new MentorRepository();
-    this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
-  }
-
-  private getModel(): Model<EUsers> {
-    return require("../../models/userModel").default;
-  }
-
-  private getMentorModel(): Model<any> {
-    return require("../../models/mentorModel").default;
+  async validateSession(userId: string): Promise<boolean> {
+    try {
+      const result = await this.userService.getAllUsers({
+        page: 1,
+        limit: 1,
+        searchQuery: userId,
+      });
+      return !!result.users.length;
+    } catch (error) {
+      logger.error("Error validating session", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to validate session",
+        HttpStatus.INTERNAL_SERVER,
+        "error",
+        "VALIDATE_SESSION_ERROR"
+      );
+    }
   }
 
   async fetchAllUsers(
-    page: number,
-    limit: number,
-    role?: string,
-    status?: string
-  ): Promise<{
-    users: Omit<EUsers, "password">[];
-    total: number;
-    totalMentors: number;
-    totalMentees: number;
-    totalBoth: number;
-    approvalPending: number;
-  } | null> {
+    query: FetchUsersQueryDto
+  ): Promise<{ users: UserResponseDto[]; total: number }> {
     try {
-      console.log("all users service ************************************");
-      const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
-      const mentorModel = this.getMentorModel();
-
-      // Build MongoDB query for users
-      const query: any = {};
-
-      // Role filter
-      if (role) {
-        if (role === "mentee") {
-          query.role = { $eq: ["mentee"] };
-        } else if (role === "mentor") {
-          query.role = { $eq: ["mentor"] };
-        } else if (role === "both") {
-          query.role = { $all: ["mentor", "mentee"] };
-        }
-      }
-
-      // Status filter
-      if (status) {
-        query.isBlocked = status === "Blocked" ? true : false;
-      }
-
-      // Fetch total counts for all categories
-      const total = await rawModel.countDocuments(query);
-      const totalMentors = await rawModel.countDocuments({
-        ...query,
-        role: { $eq: ["mentor"] },
-      });
-      const totalMentees = await rawModel.countDocuments({
-        ...query,
-        role: { $eq: ["mentee"] },
-      });
-      const totalBoth = await rawModel.countDocuments({
-        ...query,
-        role: { $all: ["mentor", "mentee"] },
-      });
-
-      // Simply count pending mentors directly
-      const approvalPending = await mentorModel.countDocuments({
-        isApproved: "Pending",
-      });
-
-      // Log mentor data for debugging
-      const pendingMentors = await mentorModel
-        .find({ isApproved: "Pending" })
-        .select("_id isApproved")
-        .exec();
-      console.log("admin service pending mentors:", pendingMentors);
-      console.log("admin service approvalPending count:", approvalPending);
-
-      // Fetch paginated users with population
-      const allUsers = await rawModel
-        .find(query)
-        .populate("mentorId")
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .exec();
-
-      console.log("all users new list>>>>>>>>>>>>>", allUsers);
-
-      // Remove password from response
-      const usersWithoutPassword = allUsers.map((user: any) => {
-        const { password, ...userWithoutPassword } = user.toObject();
-        return userWithoutPassword;
-      });
-
-      return {
-        users: usersWithoutPassword,
-        total,
-        totalMentors,
-        totalMentees,
-        totalBoth,
-        approvalPending,
-      };
+      return await this.userService.getAllUsers(query);
     } catch (error) {
-      console.error("Error in fetchAllUsers:", error);
-      return null;
+      logger.error("Error fetching all users in AdminService", {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to fetch users",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "FETCH_USERS_ADMIN_ERROR"
+          );
     }
   }
 
-  async getUserDatas(id: string): Promise<{
-    user: EUsers;
-    menteeData: EMentee | null;
-    mentorData: EMentor | null;
-    serviceData: EService[] | null;
-    bookingData: EBooking[] | null;
-  } | null> {
+  async getUserDetails(userId: string): Promise<UserResponseDto | null> {
     try {
-      console.log("AdminService getUserDatas step 1:", id);
-      const user = await this.BaseRepository.findById(id);
-      console.log("AdminService getUserDatas step 2:", user);
-      if (!user) {
-        console.log("AdminService getUserDatas: User not found");
-        return null;
-      }
-
-      let menteeData: EMentee | null = null;
-      let mentorData: EMentor | null = null;
-      let serviceData: EService[] | null = null;
-      let bookingData: EBooking[] | null = null;
-
-      // Fetch mentee data if user has mentee role
-      if (user.role?.includes("mentee") && user.menteeId) {
-        menteeData = await this.MenteeRepository.getMentee(
-          user.menteeId.toString()
-        );
-        console.log(
-          "AdminService getUserDatas step 3 - menteeData:",
-          menteeData
-        );
-      }
-
-      // Fetch booking data if user has mentee role
-      if (user.role?.includes("mentee") && user.menteeId) {
-        bookingData = await this.BookingRepository.findByMentee(id);
-        console.log(
-          "AdminService getUserDatas step 4 - bookingData:",
-          bookingData
-        );
-      }
-
-      // Fetch mentor data if user has mentor role
-      if (user.role?.includes("mentor") && user.mentorId) {
-        mentorData = await this.MentorRepository.getMentor(
-          user.mentorId.toString()
-        );
-        console.log(
-          "AdminService getUserDatas step 5 - mentorData:",
-          mentorData
-        );
-      }
-
-      // Fetch service data if user has mentor role
-      if (user.role?.includes("mentor") && user.mentorId) {
-        // Provide default pagination parameters to avoid TypeError
-        const params = {
-          page: 1,
-          limit: 10,
-          search: "",
-          type: "all",
-        };
-        serviceData = await this.ServiceRepository.getAllServices(id, params);
-        console.log(
-          "AdminService getUserDatas step 6 - serviceData:",
-          serviceData
-        );
-        // Extract services array from response
-        serviceData = serviceData ? serviceData.services : null;
-      }
-
-      console.log("AdminService getUserDatas final response:", {
-        user,
-        menteeData,
-        mentorData,
-        serviceData,
-        bookingData,
+      const result = await this.userService.getAllUsers({
+        page: 1,
+        limit: 1,
+        searchQuery: userId,
       });
-
-      return { user, menteeData, mentorData, serviceData, bookingData };
+      return result.users[0] || null;
     } catch (error) {
-      console.error("Error in getUserDatas:", error);
-      return null;
+      logger.error("Error fetching user details", {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to fetch user details",
+        HttpStatus.INTERNAL_SERVER,
+        "error",
+        "FETCH_USER_DETAILS_ERROR"
+      );
     }
   }
-  async mentorStatusChange(
-    id: string,
-    status: string,
-    reason: string = ""
-  ): Promise<{ mentorData: EMentor | null } | null> {
+
+  async getAllBookings(
+    query: FetchBookingsQueryDto
+  ): Promise<{ bookings: any[]; total: number }> {
     try {
-      console.log(
-        "mentor service ....mentorStatusChange step 1",
-        id,
-        status,
-        reason
-      );
-
-      const updateMentor = await this.MentorRepository.updateField(
-        id,
-        "isApproved",
-        status,
-        reason
-      );
-      console.log(
-        "adminside service mentorStatusChange service is ",
-        updateMentor
-      );
-      const userData = await this.BaseRepository.findByField("mentorId", id);
-      console.log("user data is ", userData);
-      const user = userData?.[0];
-      if (!user) {
-        console.warn("No user found with mentorId:", id);
-        return { mentorData: updateMentor };
+      const { page = 1, limit = 10, searchQuery, service, status } = query;
+      const dbQuery: any = {};
+      if (searchQuery) {
+        dbQuery.$or = [
+          { title: { $regex: searchQuery, $options: "i" } },
+          { description: { $regex: searchQuery, $options: "i" } },
+        ];
       }
-      // Send email notification if status is updated
-      if (updateMentor && (status === "Approved" || status === "Rejected")) {
-        // const message = `Your mentor status has been updated to "${status}" and the reason: ${
-        //   reason || "No reason provided"
-        // }`;
-        const message =
-          status === "Approved"
-            ? `Your mentor status has been updated to "${status}".`
-            : `Your mentor status has been updated to "${status}" and the reason: ${
-                reason || "No reason provided"
-              }.`;
-        console.log("user emails  is ", user?.email, "and message", message);
+      if (service) dbQuery.service = service;
+      if (status) dbQuery.status = status;
 
-        const capitalizeFirstLetter = (str: string): string => {
-          if (!str) return str;
-          return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-        };
+      const [bookings, total] = await Promise.all([
+        this.bookingRepository.findMany(dbQuery, page, limit),
+        this.bookingRepository.countDocuments(dbQuery),
+      ]);
 
-        const name = `${capitalizeFirstLetter(
-          user?.firstName
-        )} ${capitalizeFirstLetter(user?.lastName)}`;
-        const OTPDetails = await sendMail(
-          user?.email,
-          message,
-          name,
-          "Mentor One Status Updated"
+      return { bookings, total };
+    } catch (error) {
+      logger.error("Error fetching all bookings", {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to fetch bookings",
+        HttpStatus.INTERNAL_SERVER,
+        "error",
+        "FETCH_BOOKINGS_ERROR"
+      );
+    }
+  }
+
+  async getAllPayments(
+    query: FetchPaymentsQueryDto
+  ): Promise<{ payments: any[]; total: number }> {
+    try {
+      const { page = 1, limit = 10, searchQuery, status } = query;
+      const dbQuery: any = {};
+      if (searchQuery) {
+        dbQuery.$or = [{ paymentId: { $regex: searchQuery, $options: "i" } }];
+      }
+      if (status) dbQuery.status = status;
+
+      const [payments, total] = await Promise.all([
+        this.paymentRepository.findAllPayments(
+          (page - 1) * limit,
+          limit,
+          dbQuery
+        ),
+        this.paymentRepository.countAllPayments(dbQuery),
+      ]);
+
+      return { payments, total };
+    } catch (error) {
+      logger.error("Error fetching all payments", {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to fetch payments",
+        HttpStatus.INTERNAL_SERVER,
+        "error",
+        "FETCH_PAYMENTS_ERROR"
+      );
+    }
+  }
+
+  async transferToMentor(dto: TransferToMentorDto): Promise<any> {
+    try {
+      const payment = await this.paymentRepository.update(dto.paymentId, {
+        status: "transferred",
+        mentorId: dto.mentorId,
+        amount: dto.amount,
+      });
+      return payment;
+    } catch (error) {
+      logger.error("Error transferring to mentor", {
+        dto,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new AppError(
+        "Failed to transfer to mentor",
+        HttpStatus.INTERNAL_SERVER,
+        "error",
+        "TRANSFER_MENTOR_ERROR"
+      );
+    }
+  }
+
+  async mentorStatusChange(dto: MentorStatusUpdateDTO): Promise<any> {
+    try {
+      const result = await this.userService.getAllUsers({
+        page: 1,
+        limit: 1,
+        searchQuery: dto.id,
+      });
+      if (!result.users.length) {
+        throw new AppError(
+          "Mentor not found",
+          HttpStatus.NOT_FOUND,
+          "warn",
+          "MENTOR_NOT_FOUND"
         );
-        console.log("Email sent:", OTPDetails);
-        // If Rejected, deactivate mentor in user model
-        if (status === "Rejected") {
-          await this.BaseRepository.update(user._id, {
-            mentorActivated: false,
-            refreshToken: "",
-          } as any);
-          console.log("User deactivated as mentor and refresh token cleared.");
-        }
       }
-
-      return { mentorData: updateMentor };
+      // Placeholder: Add logic to update mentor status if needed
+      return result.users[0];
     } catch (error) {
-      console.error("Error in mentorStatusChange:", error);
-      return null;
+      logger.error("Error changing mentor status", {
+        dto,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to change mentor status",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "MENTOR_STATUS_CHANGE_ERROR"
+          );
     }
   }
-  async userStatusChange(
-    id: string,
-    status: string
-  ): Promise<{ userData: EUsers | null } | null> {
+
+  async userStatusChange(dto: UserStatusUpdateDTO): Promise<any> {
     try {
-      console.log("userStatusChange start ", id, status);
-
-      const updateUser = await this.BaseRepository.updateField(
-        id,
-        "isBlocked",
-        status
-      );
-      console.log("userStatusChange response is ", updateUser);
-
-      return { userData: updateUser };
+      const result = await this.userService.getAllUsers({
+        page: 1,
+        limit: 1,
+        searchQuery: dto.id,
+      });
+      if (!result.users.length) {
+        throw new AppError(
+          "User not found",
+          HttpStatus.NOT_FOUND,
+          "warn",
+          "USER_NOT_FOUND"
+        );
+      }
+      // Placeholder: Add logic to update user status if needed
+      return result.users[0];
     } catch (error) {
-      console.error("Error in userStatusChange:", error);
-      return null;
+      logger.error("Error changing user status", {
+        dto,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error instanceof AppError
+        ? error
+        : new AppError(
+            "Failed to change user status",
+            HttpStatus.INTERNAL_SERVER,
+            "error",
+            "USER_STATUS_CHANGE_ERROR"
+          );
     }
   }
 }

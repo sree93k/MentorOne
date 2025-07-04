@@ -55,5 +55,3 @@ export const errorHandler = (
     success: apiError.success,
   });
 };
-
-// export {ApiError}

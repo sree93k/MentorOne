@@ -1,37 +1,15 @@
-// interfaces/repositories/INotificationRepository.ts
+import { ENotification } from "../../entities/notificationEntity";
 
-export interface ICreateNotificationDTO {
+export interface ICreateNotification {
   recipientId: string;
-  type: string;
+  senderId: string;
+  type: "payment" | "booking" | "chat" | "meeting";
   message: string;
   relatedId?: string;
-  isRead: boolean;
-  createdAt: Date;
-  senderId?: string;
 }
-
-export interface ISenderInfo {
-  firstName: string;
-  lastName: string;
-}
-
-export interface INotificationResponse {
-  _id: string;
-  recipient: string;
-  type: string;
-  content: string;
-  relatedId?: string;
-  isRead: boolean;
-  createdAt: Date;
-  sender?: ISenderInfo;
-}
-
 export interface INotificationRepository {
-  create(data: ICreateNotificationDTO): Promise<any>;
-
-  findUnreadByRecipient(recipientId: string): Promise<INotificationResponse[]>;
-
-  findById(notificationId: string): Promise<any>;
-
-  markAsRead(notificationId: string): Promise<any>;
+  createNotification(data: ICreateNotification): Promise<ENotification>;
+  findUnreadByRecipient(recipientId: string): Promise<any[]>;
+  findById(notificationId: string): Promise<ENotification | null>;
+  markAsRead(notificationId: string): Promise<ENotification | null>;
 }
