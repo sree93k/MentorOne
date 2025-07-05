@@ -1,4 +1,4 @@
-import { EMentee } from "../../entities/menteeEntiry";
+import { EMentee } from "../../entities/menteeEntity";
 import { IBaseRepository } from "./IBaseRepository";
 
 export interface IMenteeRepository extends IBaseRepository<EMentee> {

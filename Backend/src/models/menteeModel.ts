@@ -1,4 +1,4 @@
-import { EMentee } from "../entities/menteeEntiry";
+import { EMentee } from "../entities/menteeEntity";
 import mongoose, { Schema } from "mongoose";
 
 const MenteeSchema = new Schema<EMentee>({

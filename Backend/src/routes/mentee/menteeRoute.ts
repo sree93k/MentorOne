@@ -162,5 +162,5 @@
 // );
 
 // menteeRoutes.get("/allServices", authenticate, menteeController.getAllServices);
-// menteeRoutes.get("/wallet", authenticate, paymentController.getMenteeWallet);
+// // menteeRoutes.get("/wallet", authenticate, paymentController.getMenteeWallet);
 // export default menteeRoutes;

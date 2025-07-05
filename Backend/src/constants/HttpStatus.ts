@@ -22,4 +22,5 @@ export enum HttpStatus {
   CONFLICT = 409,
   TOO_MANY_REQUESTS = 429,
   INTERNAL_SERVER = 500,
+  NOT_IMPLEMENTED = 501,
 }

@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { EMentee } from "../../entities/menteeEntiry";
+import { EMentee } from "../../entities/menteeEntity";
 import Mentee from "../../models/menteeModel";
 import BaseRepository from "../implementations/BaseRepository";
 import { IMenteeRepository } from "../interface/IMenteeRepository";

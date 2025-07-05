@@ -53,6 +53,21 @@ export class AdminController implements IAdminController {
     }
   );
 
+  public adminDashboard = wrapAsync(
+    async (req: Request, res: Response, _next: NextFunction) => {
+      const response = await this.adminService.fetchDashboard();
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "Dashboard data fetched successfully"
+          )
+        );
+    }
+  );
+
   public getAllUsers = wrapAsync(
     async (req: Request, res: Response, _next: NextFunction) => {
       logger.info("Fetching all users", { query: req.query });
