@@ -17,14 +17,13 @@ export interface TAdminLoginError {
   adminPassword?: string;
 }
 
-// export interface TAdminLoginResponse {
-//   success: boolean;
-//   data?: {
-//     adminFound: object;
-//     accessToken: string;
-//   };
-//   error?: string;
-// }
+export interface TAdminLoginResponse {
+  success: boolean;
+  data?: {
+    adminFound: object;
+  };
+  error?: string;
+}
 
 interface Admin {
   _id: string; // Match API response
