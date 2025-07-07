@@ -1,7 +1,39 @@
+// import { EUsers } from "../../entities/userEntity";
+
+// export interface IUserAuthService {
+//   login(user: { email: string; password: string }): Promise<{
+//     accessToken: string;
+//     refreshToken: string;
+//     userFound: Omit<EUsers, "password">;
+//   } | null>;
+
+//   createUser(email: Partial<EUsers>): Promise<{
+//     user: EUsers;
+//     accessToken: string;
+//     refreshToken: string | null;
+//   }>;
+
+//   refreshAccessToken(refreshToken: string): Promise<string | null>;
+//   generateTokenForForgotPassword(user: Partial<EUsers>): string;
+//   logout(token: string, id: string): Promise<EUsers | null>;
+//   googleSignUp(user: Partial<EUsers>): Promise<{
+//     user: EUsers;
+//     accessToken: string;
+//     refreshToken: string;
+//   } | null>;
+
+//   googleSignIn(user: { email: string }): Promise<{
+//     user: EUsers;
+//     accessToken: string;
+//     refreshToken: string;
+//   } | null>;
+//   decodeAndVerifyToken(token: string): Promise<Partial<EUsers | null>>;
+//   resetPassword(email: string, password: string): Promise<EUsers | null>;
+// }
 import { EUsers } from "../../entities/userEntity";
 
 export interface IUserAuthService {
-  login(user: { email: string; password: string }): Promise<{
+  login(user: { email: string; password: string; role: string[] }): Promise<{
     accessToken: string;
     refreshToken: string;
     userFound: Omit<EUsers, "password">;
@@ -10,12 +42,16 @@ export interface IUserAuthService {
   createUser(email: Partial<EUsers>): Promise<{
     user: EUsers;
     accessToken: string;
-    refreshToken: string | null;
+    refreshToken: string;
   }>;
 
-  refreshAccessToken(refreshToken: string): Promise<string | null>;
+  refreshAccessToken(
+    userId: string,
+    refreshToken: string
+  ): Promise<string | null>;
   generateTokenForForgotPassword(user: Partial<EUsers>): string;
-  logout(token: string, id: string): Promise<EUsers | null>;
+  // UPDATED: logout method signature to match Redis-based approach
+  logout(userId: string, refreshToken: string): Promise<boolean>;
   googleSignUp(user: Partial<EUsers>): Promise<{
     user: EUsers;
     accessToken: string;
@@ -27,6 +63,7 @@ export interface IUserAuthService {
     accessToken: string;
     refreshToken: string;
   } | null>;
+
   decodeAndVerifyToken(token: string): Promise<Partial<EUsers | null>>;
   resetPassword(email: string, password: string): Promise<EUsers | null>;
 }

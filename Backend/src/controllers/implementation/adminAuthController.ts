@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import DIContainer from "../../inversify/conatainer";
+import DIContainer from "../../inversify/container";
 import { HttpStatus } from "../../constants/HttpStatus";
 import { AdminLoginDTO } from "../../dtos/adminDTO";
 

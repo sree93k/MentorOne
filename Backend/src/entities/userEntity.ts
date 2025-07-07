@@ -38,7 +38,7 @@ export interface EUsers extends Document {
   bookings?: object | null; // To be defined later
   subscription?: ObjectId | null;
   isBlocked?: boolean | null;
-  refreshToken?: string[] | null;
+  // refreshToken?: string[] | null;
   isOnline: {
     status: boolean;
     role: "mentor" | "mentee" | null;

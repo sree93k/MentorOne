@@ -166,10 +166,10 @@ const UsersSchema: Schema<EUsers> = new Schema(
       type: Boolean,
       default: false,
     },
-    refreshToken: {
-      type: [String],
-      default: [],
-    },
+    // refreshToken: {
+    //   type: [String],
+    //   default: [],
+    // },
     isOnline: {
       type: {
         status: {

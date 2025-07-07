@@ -1,8 +1,6 @@
 // src/components/landing/Header.tsx
 import React from "react";
-import { Moon, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { ThemeConfig } from "flowbite-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -82,7 +80,7 @@ const Header: React.FC = () => {
             {pages.map((page) => (
               <Link
                 key={page}
-                to={`/${page.toLowerCase()}`}
+                to={`/`}
                 className="text-black dark:text-white hover:text-blue-600 font-medium transition-colors"
               >
                 {page}
