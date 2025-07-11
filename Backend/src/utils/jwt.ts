@@ -5,7 +5,7 @@ const accessTokenSecret = process.env.JWT_ACCESS_TOKEN_SECRET as string;
 const refreshTokenSecret = process.env.JWT_REFRESH_TOKEN_SECRET as string;
 
 // Use the expiration times from environment variables
-const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || "5m";
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || "1m";
 const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || "7d";
 
 export const generateAccessToken = (payload: object): string => {

@@ -1,4 +1,4 @@
-// frontend/src/utils/cookieUtils.ts
+// utils/cookieUtils.ts
 export const getCookie = (name: string): string | null => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -9,25 +9,21 @@ export const getCookie = (name: string): string | null => {
 };
 
 export const getAccessToken = (): string | null => {
-  return getCookie("accessToken");
+  const token = getCookie("accessToken");
+  console.log("getAccessToken called:", {
+    found: !!token,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : null,
+  });
+  return token;
 };
 
 export const getRefreshToken = (): string | null => {
-  return getCookie("refreshToken");
-};
-
-export const setCookie = (name: string, value: string, days?: number): void => {
-  let expires = "";
-  if (days) {
-    const date = new Date();
-    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-    expires = "; expires=" + date.toUTCString();
-  }
-  document.cookie = name + "=" + (value || "") + expires + "; path=/";
-};
-
-export const deleteCookie = (name: string): void => {
-  document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  const token = getCookie("refreshToken");
+  console.log("getRefreshToken called:", {
+    found: !!token,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : null,
+  });
+  return token;
 };
 
 export const debugCookies = () => {
@@ -44,4 +40,18 @@ export const debugCookies = () => {
   }, {});
   console.log("Parsed cookies:", cookies);
   console.log("===============================");
+};
+
+export const setCookie = (name: string, value: string, days?: number): void => {
+  let expires = "";
+  if (days) {
+    const date = new Date();
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
+};
+
+export const deleteCookie = (name: string): void => {
+  document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
 };

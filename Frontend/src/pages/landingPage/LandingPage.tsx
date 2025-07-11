@@ -23,7 +23,7 @@ import {
 import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effect";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDashboardData } from "@/services/menteeService";
+// import { getDashboardData } from "@/services/menteeService";
 import SreeImg from "@/assets/Sree.jpeg";
 import JasnaImg from "@/assets/Jasna.jpeg";
 import JithinImg from "@/assets/Jithin.jpeg";
@@ -726,6 +726,7 @@ const LandingPage: React.FC = () => {
         const data = await getDashboardData();
         setDashboardData(data);
       } catch (err: any) {
+        console.log("Error is ", err);
       } finally {
         setIsLoading(false);
       }

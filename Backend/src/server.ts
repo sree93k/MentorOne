@@ -15,7 +15,6 @@ import { Server } from "socket.io";
 import { createClient } from "@redis/client";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { setIO } from "./utils/socket/chat";
-// import { TransferJob } from "./services/implementations/TransferJobService";
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
   "REFRESH_TOKEN_SECRET",

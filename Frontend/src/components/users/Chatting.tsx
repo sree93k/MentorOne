@@ -155,17 +155,85 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
   const userId = user?._id;
   const role = user?.role;
-  useEffect(() => {
-    debugCookies(); // Add this line for debugging
+  // useEffect(() => {
+  //   debugCookies(); // Add this line for debugging
 
+  //   const token = getAccessToken();
+
+  //   if (!token) {
+  //     setError("Authentication token not found");
+  //     return;
+  //   }
+  //   // ... rest of your socket code
+  // }, [userId, shouldScrollToBottom]);
+  useEffect(() => {
     const token = getAccessToken();
 
     if (!token) {
       setError("Authentication token not found");
       return;
     }
-    // ... rest of your socket code
-  }, [userId, shouldScrollToBottom]);
+
+    console.log(
+      "Connecting to chat socket with token:",
+      token ? "present" : "missing"
+    );
+
+    const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000, // Add timeout
+      auth: {
+        token: token,
+      },
+    });
+
+    setSocket(socketInstance);
+
+    // Connection events
+    socketInstance.on("connect", () => {
+      console.log("Connected to Socket.IO server", socketInstance.id);
+      setError(null);
+    });
+
+    socketInstance.on("connected", (data) => {
+      console.log("Server confirmed connection:", data);
+    });
+
+    socketInstance.on("connect_error", (error) => {
+      console.error("Socket.IO connection error:", error.message);
+      setError(`Failed to connect to chat server: ${error.message}`);
+    });
+
+    socketInstance.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+      if (reason === "io server disconnect") {
+        // Server disconnected us, try to reconnect
+        socketInstance.connect();
+      }
+    });
+
+    socketInstance.on("error", (error) => {
+      console.error("Socket error:", error);
+      setError(`Chat server error: ${error.message || error}`);
+    });
+
+    // Chat message handlers (keep your existing ones)
+    socketInstance.on("receiveMessage", async (message) => {
+      console.log("Received message:", message);
+      // ... your existing receiveMessage handler
+    });
+
+    // ... rest of your socket event handlers
+
+    return () => {
+      console.log("Cleaning up socket connection");
+      socketInstance.disconnect();
+    };
+  }, [userId]);
   const scrollToBottom = debounce(
     (retryCount = 0, maxRetries = 5, messageCount = 0) => {
       if (scrollAreaRef.current) {
@@ -597,13 +665,93 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     }
   }, [searchQuery, chatUsers]);
 
+  // useEffect(() => {
+  //   if (socket && activeChatId && socket.connected) {
+  //     setIsMessagesLoaded(false);
+  //     socket.emit(
+  //       "getChatHistory",
+  //       { chatId: activeChatId },
+  //       async (response: any) => {
+  //         if (response.success) {
+  //           const messages =
+  //             response.messages?.map((msg: any) => ({
+  //               _id: msg._id,
+  //               content: msg.content,
+  //               timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+  //                 hour: "2-digit",
+  //                 minute: "2-digit",
+  //               }),
+  //               sender: msg.sender._id === userId ? "user" : "other",
+  //               senderId: msg.sender._id,
+  //               type: msg.type,
+  //               status:
+  //                 msg.status ||
+  //                 (msg.sender._id === userId ? "sent" : "delivered"),
+  //             })) || [];
+
+  //           if (messages.length === 0) {
+  //             setError(`No messages found for chat ${activeChatId}`);
+  //           }
+
+  //           const mediaMessages = messages.filter(
+  //             (msg: ChatMessage) => msg.type === "image" || msg.type === "audio"
+  //           );
+  //           const newMediaUrls: { [key: string]: string } = {};
+  //           for (const msg of mediaMessages) {
+  //             try {
+  //               const s3Key = getS3Key(msg.content);
+  //               const presignedUrl = await getMediaUrl(s3Key);
+  //               newMediaUrls[msg._id] = presignedUrl;
+  //             } catch (err: any) {
+  //               console.error(
+  //                 `Failed to get presigned URL for ${msg._id}:`,
+  //                 err
+  //               );
+  //               setError(`Failed to load media for message ${msg._id}`);
+  //             }
+  //           }
+
+  //           setMediaUrls((prev) => ({ ...prev, ...newMediaUrls }));
+  //           setChatHistories((prev) => ({
+  //             ...prev,
+  //             [activeChatId]: messages,
+  //           }));
+  //           setIsMessagesLoaded(true);
+  //           socket.emit(
+  //             "markAsRead",
+  //             { chatId: activeChatId },
+  //             (response: any) => {
+  //               if (!response.success) {
+  //                 setError(response.error || "Failed to mark messages as read");
+  //               }
+  //             }
+  //           );
+  //           if (messages.length > 0 && shouldScrollToBottom) {
+  //             scrollToBottom(0, 5, messages.length);
+  //           }
+  //         } else {
+  //           setError(response.error || "Failed to load chat messages");
+  //           setIsMessagesLoaded(true);
+  //         }
+  //       }
+  //     );
+  //   } else if (socket && !socket.connected) {
+  //     setError("Chat server disconnected, please try again later");
+  //     setIsMessagesLoaded(true);
+  //   }
+  // }, [socket, activeChatId, userId, shouldScrollToBottom]);
   useEffect(() => {
     if (socket && activeChatId && socket.connected) {
+      console.log("Fetching chat history for:", activeChatId);
       setIsMessagesLoaded(false);
+      setError(null); // Clear previous errors
+
       socket.emit(
         "getChatHistory",
         { chatId: activeChatId },
         async (response: any) => {
+          console.log("getChatHistory response:", response);
+
           if (response.success) {
             const messages =
               response.messages?.map((msg: any) => ({
@@ -621,13 +769,13 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                   (msg.sender._id === userId ? "sent" : "delivered"),
               })) || [];
 
-            if (messages.length === 0) {
-              setError(`No messages found for chat ${activeChatId}`);
-            }
+            console.log("Processed messages:", messages.length);
 
+            // Handle media messages
             const mediaMessages = messages.filter(
               (msg: ChatMessage) => msg.type === "image" || msg.type === "audio"
             );
+
             const newMediaUrls: { [key: string]: string } = {};
             for (const msg of mediaMessages) {
               try {
@@ -639,7 +787,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                   `Failed to get presigned URL for ${msg._id}:`,
                   err
                 );
-                setError(`Failed to load media for message ${msg._id}`);
+                // Don't set error for individual media failures
               }
             }
 
@@ -649,19 +797,26 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
               [activeChatId]: messages,
             }));
             setIsMessagesLoaded(true);
+
+            // Mark messages as read
             socket.emit(
               "markAsRead",
               { chatId: activeChatId },
               (response: any) => {
                 if (!response.success) {
-                  setError(response.error || "Failed to mark messages as read");
+                  console.warn(
+                    "Failed to mark messages as read:",
+                    response.error
+                  );
                 }
               }
             );
+
             if (messages.length > 0 && shouldScrollToBottom) {
               scrollToBottom(0, 5, messages.length);
             }
           } else {
+            console.error("getChatHistory failed:", response.error);
             setError(response.error || "Failed to load chat messages");
             setIsMessagesLoaded(true);
           }
@@ -669,6 +824,12 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       );
     } else if (socket && !socket.connected) {
       setError("Chat server disconnected, please try again later");
+      setIsMessagesLoaded(true);
+    } else if (!socket) {
+      setError("Chat connection not established");
+      setIsMessagesLoaded(true);
+    } else if (!activeChatId) {
+      console.log("No active chat selected");
       setIsMessagesLoaded(true);
     }
   }, [socket, activeChatId, userId, shouldScrollToBottom]);
@@ -1682,6 +1843,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
               </div>
             )}
           </div>
+
           <ConfirmationModal
             open={isConfirmModalOpen}
             onOpenChange={(open) => {
