@@ -591,6 +591,21 @@ import { userAxiosInstance } from "./instances/userInstance";
 import SocketService from "./socketService";
 import toast from "react-hot-toast";
 const api = userAxiosInstance;
+import { getAccessToken } from "../utils/cookieUtils";
+export const validateUserSession = async () => {
+  try {
+    const response = await userAxiosInstance.get("/user/validate_session", {
+      withCredentials: true, // Include cookies
+    });
+    return response;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      return error.response;
+    } else {
+      return null;
+    }
+  }
+};
 
 // Reset Password
 export const updateUserPassword = async (

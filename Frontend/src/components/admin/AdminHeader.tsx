@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Input } from "../../components/ui/input";
-import { Send } from "lucide-react";
 import LogoImg from "@/assets/logo3.png";
 import LogoName from "@/assets/logoname3.png";
-import MentorChat from "../users/Chatting";
 import { RootState } from "@/redux/store/store";
 import { useSelector } from "react-redux";
 import ThemeToggle from "../users/ThemeToggle";

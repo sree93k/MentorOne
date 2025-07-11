@@ -122,7 +122,6 @@ export default function MentorServicePage() {
   };
 
   const handleRetry = () => {
-    // Retry logic — maybe take from localStorage or re-initiate booking
     searchParams.delete("status");
     searchParams.delete("session_id");
     setSearchParams(searchParams);

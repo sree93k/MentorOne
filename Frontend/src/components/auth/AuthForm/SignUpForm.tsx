@@ -881,10 +881,9 @@ export function SignupForm({
 
             dispatch(setUser(userFound));
             dispatch(setIsAuthenticated(true));
-            // REMOVED: dispatch(setAccessToken(accessToken)) - no longer storing in Redux
+
             dispatch(setCurrentTab(tab));
 
-            // REMOVED: localStorage.setItem("accessToken", accessToken) - now using cookies
             toast.success(`Welcome, ${userFound.firstName || "User"}!`);
 
             const redirectPath =

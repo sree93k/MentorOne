@@ -1,5 +1,4 @@
 import { EUsers } from "../../entities/userEntity";
-import { EOTP } from "../../entities/OTPEntity";
 
 export interface IUserService {
   findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null>;

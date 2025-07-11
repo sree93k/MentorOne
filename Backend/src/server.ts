@@ -14,6 +14,7 @@ import multer from "multer";
 import { Server } from "socket.io";
 import { createClient } from "@redis/client";
 import { createAdapter } from "@socket.io/redis-adapter";
+import { setIO } from "./utils/socket/chat";
 // import { TransferJob } from "./services/implementations/TransferJobService";
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
@@ -48,7 +49,7 @@ const io = new Server(httpServer, {
   },
   path: "/socket.io/",
 });
-
+setIO(io);
 // Redis Setup for Socket.IO
 export const pubClient = createClient({ url: process.env.REDIS_URL });
 export const subClient = pubClient.duplicate();
@@ -65,19 +66,19 @@ pubClient.on("connect", () => console.log("Redis Pub Client connected"));
 subClient.on("connect", () => console.log("Redis Sub Client connected"));
 tokenClient.on("connect", () => console.log("Redis Token Client connected"));
 
-(async () => {
-  try {
-    await Promise.all([
-      pubClient.connect(),
-      subClient.connect(),
-      tokenClient.connect(),
-    ]);
-    io.adapter(createAdapter(pubClient, subClient));
-    console.log("Redis adapter connected for Socket.IO");
-  } catch (err) {
-    console.error("Failed to connect Redis adapter:", err);
-  }
-})();
+// (async () => {
+//   try {
+//     await Promise.all([
+//       pubClient.connect(),
+//       subClient.connect(),
+//       tokenClient.connect(),
+//     ]);
+//     io.adapter(createAdapter(pubClient, subClient));
+//     console.log("Redis adapter connected for Socket.IO");
+//   } catch (err) {
+//     console.error("Failed to connect Redis adapter:", err);
+//   }
+// })();
 
 // Define namespaces
 const chatNamespace = io.of("/chat");
@@ -89,22 +90,44 @@ import { initializeChatSocket } from "./utils/socket/chat";
 import { initializeVideoSocket } from "./utils/socket/videoCall";
 import { initializeNotificationSocket } from "./utils/socket/notification";
 
-initializeChatSocket(chatNamespace)
-  .then(() => console.log("Socket.IO /chat namespace initialized"))
-  .catch((err) => console.error("Socket.IO /chat initialization failed:", err));
+// initializeChatSocket(chatNamespace)
+//   .then(() => console.log("Socket.IO /chat namespace initialized"))
+//   .catch((err) => console.error("Socket.IO /chat initialization failed:", err));
 
-initializeVideoSocket(videoNamespace)
-  .then(() => console.log("Socket.IO /video namespace initialized"))
-  .catch((err) =>
-    console.error("Socket.IO /video initialization failed:", err)
-  );
+// initializeVideoSocket(videoNamespace)
+//   .then(() => console.log("Socket.IO /video namespace initialized"))
+//   .catch((err) =>
+//     console.error("Socket.IO /video initialization failed:", err)
+//   );
 
-initializeNotificationSocket(notificationNamespace)
-  .then(() => console.log("Socket.IO /notifications namespace initialized"))
-  .catch((err) =>
-    console.error("Socket.IO /notifications initialization failed:", err)
-  );
+// initializeNotificationSocket(notificationNamespace)
+//   .then(() => console.log("Socket.IO /notifications namespace initialized"))
+//   .catch((err) =>
+//     console.error("Socket.IO /notifications initialization failed:", err)
+//   );
+(async () => {
+  try {
+    await Promise.all([
+      pubClient.connect(),
+      subClient.connect(),
+      tokenClient.connect(),
+    ]);
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("Redis adapter connected for Socket.IO");
 
+    // Initialize sockets after Redis is connected
+    await initializeChatSocket(chatNamespace);
+    console.log("Socket.IO /chat namespace initialized");
+
+    await initializeVideoSocket(videoNamespace);
+    console.log("Socket.IO /video namespace initialized");
+
+    await initializeNotificationSocket(notificationNamespace);
+    console.log("Socket.IO /notifications namespace initialized");
+  } catch (err) {
+    console.error("Failed to initialize Socket.IO:", err);
+  }
+})();
 // Middleware
 app.use(
   cors({

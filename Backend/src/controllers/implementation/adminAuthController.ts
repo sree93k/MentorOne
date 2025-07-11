@@ -91,6 +91,8 @@ export class AdminAuthController {
 
   async refreshToken(req: Request, res: Response): Promise<void> {
     try {
+      console.log("admin auth controller refreshtojken styep 1");
+
       const adminAuthService = DIContainer.getAdminAuthService();
       const refreshToken = req.cookies?.refreshToken;
       const userId = req.user?.id;

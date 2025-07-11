@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
-import UserAuthService from "../../services/implementations/UserAuthService";
-import { IUserAuthService } from "../../services/interface/IUserAuthService";
+
 import OTPServices from "../../services/implementations/OTPService";
 import { IOTPService } from "../../services/interface/IOTPService";
 import { IUserService } from "../../services/interface/IUserService";
@@ -24,7 +23,6 @@ import stripe from "../../config/stripe";
 import { HttpStatus } from "../../constants/HttpStatus";
 
 class menteeController {
-  private userAuthService: IUserAuthService;
   private OTPServices: IOTPService;
   private userService: IUserService;
   private uploadService: IUploadService;
@@ -41,7 +39,6 @@ class menteeController {
   };
 
   constructor() {
-    this.userAuthService = new UserAuthService();
     this.OTPServices = new OTPServices();
     this.userService = new UserService();
     this.uploadService = new UploadService();

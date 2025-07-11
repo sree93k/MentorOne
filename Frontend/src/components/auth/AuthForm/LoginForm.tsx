@@ -11,7 +11,6 @@ import Logo from "../../../assets/logo.png";
 import LogoName from "../../../assets/brandlogo.png";
 import { Link } from "react-router-dom";
 import GoogleAuthButton from "../GoogleAuthButton";
-
 import { TUserLogin, TUserLoginError } from "@/types/user";
 import { validateEmail, validatePassword } from "@/utils/UserValidator";
 import { login } from "../../../services/userAuthService";
@@ -101,7 +100,7 @@ export function LoginForm({
 
       dispatch(setUser(userFound));
       dispatch(setIsAuthenticated(true));
-      // REMOVED: dispatch(setAccessToken(accessToken)) - no longer storing in Redux
+
       dispatch(setCurrentTab(tab));
       console.log(
         "Login page userFound.mentorActivated:",
@@ -110,7 +109,6 @@ export function LoginForm({
 
       dispatch(setMentorActivated(userFound.mentorActivated));
 
-      // REMOVED: localStorage.setItem("accessToken", accessToken) - now using cookies
       toast.success(`Welcome, ${userFound.firstName || "User"}!`);
       console.log("Login successful, mentorActivated:", mentorActivated);
 

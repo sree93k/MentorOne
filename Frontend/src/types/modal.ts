@@ -10,7 +10,7 @@ export interface EmailVerificationModalProps {
 
 export interface WelcomeModalForm1Props {
   open: boolean;
-  email: String;
+  email: string;
   onOpenChange: (open: boolean) => void;
   onSubmit?: boolean; // Add this
 }

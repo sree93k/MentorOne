@@ -8,7 +8,7 @@ import BookingsPage from "./subPages/MenteeBookings";
 import MentorProfilePage from "./subPages/MentorProfilePage";
 import MentorServicePage from "./subPages/MentorServicePage";
 import MentorsList from "./subPages/MentorsList";
-import MenteeCourses from "./subPages/MenteeCourses";
+// import MenteeCourses from "./subPages/MenteeCourses";
 import VideoTutorialPage from "./subPages/VideoTutorial";
 import DigitalProducts from "./subPages/DigitalProduct";
 import StripeCheckoutPage from "@/pages/menteePages/subPages/StripeCheckoutPage";
@@ -20,7 +20,7 @@ import ServicesListing from "./subPages/ServicesListedPage";
 import NotFoundPage from "../usersPage/NotFoundPage";
 import PaymentStatusPage from "@/components/modal/PaymentStatusModal";
 // Import the new ChatbotWidget
-import ChatbotWidget from "@/components/users/ChatBotWidget"; // Adjust path if different
+// import ChatbotWidget from "@/components/users/ChatBotWidget"; // Adjust path if different
 
 // Lazy loaded components (existing)
 const Footer = lazy(() => import("@/components/landing/Footer"));
@@ -30,8 +30,8 @@ const MenteeDashboard = lazy(() => import("./subPages/MenteeDashboard"));
 const MenteeProfile = lazy(() => import("./subPages/MenteeProfile"));
 const MentorsPage = lazy(() => import("./subPages/MentorsPage"));
 const CoursePage = lazy(() => import("./subPages/CoursePage"));
-const BlogPage = lazy(() => import("../usersPage/BlogPage"));
-const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
+// const BlogPage = lazy(() => import("../usersPage/BlogPage"));
+// const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
 
 const MenteePage = () => {
   return (
@@ -47,7 +47,7 @@ const MenteePage = () => {
             <Route path="/dashboard" element={<MenteeDashboard />} />
             <Route path="/profile" element={<MenteeProfile />} />
             <Route path="/mentor" element={<MentorsPage />} />
-            <Route path="/menteecourses" element={<MenteeCourses />} />
+            {/* <Route path="/menteecourses" element={<MenteeCourses />} /> */}
             <Route path="/payment" element={<MenteeBillingPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/mentorprofile/:id" element={<MentorProfilePage />} />
@@ -60,7 +60,18 @@ const MenteePage = () => {
             <Route path="/meetinghome" element={<VideoCallHome />} />
             <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
             <Route path="/allservices" element={<ServicesListing />} />
-            <Route path="/payment-status" element={<PaymentStatusPage />} />
+            <Route
+              path="/payment-status"
+              element={
+                <PaymentStatusPage
+                  isOpen={false}
+                  status={null}
+                  onCancel={function (): void {
+                    throw new Error("Function not implemented.");
+                  }}
+                />
+              }
+            />
             <Route
               path="/meeting-end/:meetingId"
               element={<VideoCallEndPage />}

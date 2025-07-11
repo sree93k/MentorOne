@@ -173,6 +173,12 @@ const userPrivateRoute = Router();
 // Configure multer to save files to an 'uploads' folder
 const upload = multer({ dest: "uploads/" });
 
+userPrivateRoute.get(
+  "/validate_session",
+  authenticate,
+  userController.validateSuccessResponse
+);
+
 // Add multer middleware to the route, expecting a single file with the field name "image"
 userPrivateRoute.post(
   "/upload_image",

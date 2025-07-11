@@ -15,6 +15,18 @@ interface CustomSocket extends Socket {
     user?: UserPayload;
   };
 }
+let io: Server | null = null;
+
+export const setIO = (socketIO: Server) => {
+  io = socketIO;
+};
+
+export const getIO = (): Server => {
+  if (!io) {
+    throw new Error("Socket.IO not initialized. Call setIO first.");
+  }
+  return io;
+};
 
 export const initializeChatSocket = async (chatNamespace: Server) => {
   console.log("ChatSocket: Initializing Socket.IO /chat namespace");

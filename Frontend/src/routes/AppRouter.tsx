@@ -1,6 +1,5 @@
 import React, { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import LoadingModal from "@/components/modal/LoadingModal";
 
 const AuthRouter = lazy(() => import("./AuthRouter"));
 const AdminRoute = lazy(() => import("./AdminRouter"));

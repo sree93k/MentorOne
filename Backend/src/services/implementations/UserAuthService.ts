@@ -441,7 +441,12 @@ export default class UserAuthService implements IUserAuthService {
           "Signin With Google Account"
         );
       }
-
+      console.log("Password from request:", user.password);
+      console.log("Stored hash:", userFound?.password);
+      console.log(
+        "Password comparison result:",
+        await bcrypt.compare(user.password, userFound?.password)
+      );
       if (
         userFound &&
         user.password &&

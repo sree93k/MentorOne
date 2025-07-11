@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
 import {
   GraduationCap,
   Users,

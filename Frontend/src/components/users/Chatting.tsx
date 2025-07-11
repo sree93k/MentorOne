@@ -1,10 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  useLayoutEffect,
-  useCallback,
-} from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,12 +43,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  updateBookingStatus,
-  getBookingData,
-} from "../../services/bookingService";
+import { updateBookingStatus } from "../../services/bookingService";
 import ConfirmationModal from "../modal/ConfirmationModal";
-
+import { getAccessToken } from "../../utils/cookieUtils";
+import { debugCookies } from "../../utils/cookieUtils";
 interface ChatProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -163,6 +155,17 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
   const userId = user?._id;
   const role = user?.role;
+  useEffect(() => {
+    debugCookies(); // Add this line for debugging
+
+    const token = getAccessToken();
+
+    if (!token) {
+      setError("Authentication token not found");
+      return;
+    }
+    // ... rest of your socket code
+  }, [userId, shouldScrollToBottom]);
   const scrollToBottom = debounce(
     (retryCount = 0, maxRetries = 5, messageCount = 0) => {
       if (scrollAreaRef.current) {
@@ -293,14 +296,35 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   }, [chatUsers, selectedUser]);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
+
+    if (!token) {
+      setError("Authentication token not found");
+      return;
+    }
+
+    console.log(
+      "Connecting to chat socket with token:",
+      token ? "present" : "missing"
+    );
+
     const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
-      auth: { token },
+      withCredentials: true,
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      auth: {
+        token: token, // ✅ Send token in auth
+      },
     });
+    // const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
+    //   withCredentials: true,
+    //   transports: ["websocket", "polling"],
+    //   reconnection: true,
+    //   reconnectionAttempts: 5,
+    //   reconnectionDelay: 1000,
+    // });
 
     setSocket(socketInstance);
 

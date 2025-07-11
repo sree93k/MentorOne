@@ -229,7 +229,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
         "getAllMentors service step 2: Mentors fetched",
         mentors.length
       );
-
+      console.log("getAllMentors service step 2.5: Mentors fetched", mentors);
       // Filter by isBlocked and isApproved
       mentors = mentors.filter(
         (mentor) => !mentor.isBlocked && mentor?.isApproved === "Approved"

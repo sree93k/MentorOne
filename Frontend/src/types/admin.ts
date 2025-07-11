@@ -40,7 +40,6 @@ export interface TAdminLoginResponse {
   success: boolean;
   data?: {
     adminFound: Admin; // Use the updated Admin type
-    accessToken: string;
   };
   error?: string;
 }
