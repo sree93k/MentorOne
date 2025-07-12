@@ -20,8 +20,8 @@ import { IPaymentRepository } from "../../repositories/interface/IPaymentReposit
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
-import CalendarRepository from "../../repositories/implementations/CalenderRepository";
-import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import BlockedRepository from "../../repositories/implementations/BlockedRepository";
+import { IBlockedRepository } from "../../repositories/interface/IBlockedRepository";
 import { EBooking } from "../../entities/bookingEntity";
 import { toASCII } from "punycode";
 
@@ -64,7 +64,7 @@ export default class BookingService implements IBookingService {
   private notificationService: INotificationService;
   private walletRepository: IWalletRepository;
   private slotRepository: ISlotRepository;
-  private calendarRepository: ICalendarRepository;
+  private blockedRepository: IBlockedRepository;
   constructor() {
     this.bookingRepository = new BookingRepository();
     this.paymentRepository = new PaymentRepository();
@@ -74,7 +74,7 @@ export default class BookingService implements IBookingService {
     this.notificationService = new NotificationService();
     this.walletRepository = new WalletRepository();
     this.slotRepository = new SlotRepository();
-    this.calendarRepository = new CalendarRepository();
+    this.blockedRepository = new BlockedRepository();
   }
 
   async createBooking(params: BookingParams): Promise<any> {
@@ -111,7 +111,7 @@ export default class BookingService implements IBookingService {
         },
       ];
       console.log("++++++++++BOOKING SERVICE createBooking step 3", dates);
-      const blockedDate = await this.calendarRepository.addBlockedDates(
+      const blockedDate = await this.blockedRepository.addBlockedDates(
         mentorId,
         dates
       );
@@ -326,7 +326,7 @@ export default class BookingService implements IBookingService {
     const updatedBooking = await this.bookingRepository.update(bookingId, {
       status: "cancelled",
     });
-    await this.calendarRepository.deleteBlockedDate(
+    await this.blockedRepository.deleteBlockedDate(
       booking.mentorId,
       booking.bookingDate,
       booking.startTime
@@ -658,13 +658,13 @@ export default class BookingService implements IBookingService {
           updates.startTime !== booking.startTime)
       ) {
         // Remove old blocked date
-        await this.calendarRepository.removeBlockedDate(
+        await this.blockedRepository.removeBlockedDate(
           mentorId,
           booking.bookingDate.toISOString().split("T")[0],
           booking.startTime
         );
         // Add new blocked date
-        await this.calendarRepository.addBlockedDates(mentorId, [
+        await this.blockedRepository.addBlockedDates(mentorId, [
           {
             date: updates.bookingDate,
             day: new Date(updates.bookingDate)
@@ -988,12 +988,11 @@ export default class BookingService implements IBookingService {
       const bookings = await this.bookingRepository.findById(bookingId);
       console.log("BookingService updateResheduleBooking step 1.1", bookings);
 
-      const deletedBlockedDate =
-        await this.calendarRepository.deleteBlockedDate(
-          userId,
-          bookings.bookingDate,
-          bookings.startTime
-        );
+      const deletedBlockedDate = await this.blockedRepository.deleteBlockedDate(
+        userId,
+        bookings.bookingDate,
+        bookings.startTime
+      );
       console.log(
         "BookingService updateResheduleBooking step 1.4",
         deletedBlockedDate
@@ -1014,7 +1013,7 @@ export default class BookingService implements IBookingService {
       ];
       console.log("BookingService updateResheduleBooking step 1.3", booking);
 
-      const blockedDate = await this.calendarRepository.addBlockedDates(
+      const blockedDate = await this.blockedRepository.addBlockedDates(
         userId,
         dates
       );
@@ -1122,6 +1121,16 @@ export default class BookingService implements IBookingService {
       return bookingData;
     } catch (error) {
       throw new Error(`Failed to fetch bookings: ${error}`);
+    }
+  }
+  async update(bookingId: string, meetingId: object): Promise<EBooking> {
+    try {
+      const bookingData = await this.bookingRepository.update(bookingId, {
+        meetingId,
+      });
+      return bookingData;
+    } catch (error) {
+      throw new Error("Failed to send notification: " + error);
     }
   }
 }

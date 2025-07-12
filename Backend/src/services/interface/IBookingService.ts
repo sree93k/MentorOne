@@ -144,4 +144,5 @@ export interface IBookingService {
     bookingId: string,
     status: Partial<EBooking>
   ): Promise<EBooking[]>;
+  update(bookingId: string, meetingId: object): Promise<EBooking>;
 }

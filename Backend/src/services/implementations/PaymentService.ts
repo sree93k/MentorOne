@@ -7,20 +7,17 @@ import {
 } from "../interface/IPaymentService";
 import Stripe from "stripe";
 import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 export default class PaymentService implements IPaymentService {
   private paymentRepository: PaymentRepository;
-  private bookingRepository: BookingRepository;
   private userRepository: UserRepository;
   private serviceRepository: ServiceRepository;
   private walletRepository: WalletRepository;
 
   constructor() {
     this.paymentRepository = new PaymentRepository();
-    this.bookingRepository = new BookingRepository();
     this.userRepository = new UserRepository();
     this.serviceRepository = new ServiceRepository();
     this.walletRepository = new WalletRepository();

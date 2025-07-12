@@ -23,11 +23,6 @@ export interface ScheduleData {
   }[];
 }
 
-// export interface BlockedDateData {
-//   date: Date;
-//   day: string;
-//   slotTime: number;
-// }
 export interface BlockedDateData {
   date: Date;
   day: string;

@@ -1,19 +1,20 @@
 import { v4 as uuidv4 } from "uuid";
 import VideoCallRepository from "../../repositories/implementations/VideoCallRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IVideoCallService } from "../interface/IVideoCallService";
 import NotificationService from "../../services/implementations/NotificationService";
 import mongoose from "mongoose";
+import BookingService from "./Bookingservice";
+import { IBookingService } from "../interface/IBookingService";
 
 class VideoCallService implements IVideoCallService {
   private videoCallRepository: VideoCallRepository;
   private notificationService: NotificationService;
-  private bookingRepository: BookingRepository;
+  private bookingService: IBookingService;
 
   constructor() {
     this.videoCallRepository = new VideoCallRepository();
     this.notificationService = new NotificationService();
-    this.bookingRepository = new BookingRepository();
+    this.bookingService = new BookingService();
   }
 
   async createMeeting(
@@ -47,7 +48,7 @@ class VideoCallService implements IVideoCallService {
 
       // Update booking with meetingId if provided
       if (bookingId) {
-        await this.bookingRepository.update(bookingId, { meetingId });
+        await this.bookingService.update(bookingId, { meetingId });
         console.log(`Updated booking ${bookingId} with meetingId ${meetingId}`);
       }
 

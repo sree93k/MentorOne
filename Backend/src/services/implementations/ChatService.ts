@@ -3,8 +3,7 @@ import BookingRepository from "../../repositories/implementations/BookingReposit
 import { IChatService } from "../interface/IChatService";
 import { createClient } from "@redis/client";
 import { EChat } from "../../entities/chatEntity";
-import BookingService from "./Bookingservice";
-import { IBookingService } from "../interface/IBookingService";
+
 export default class ChatService implements IChatService {
   private chatRepository: ChatRepository;
   private bookingRepository: BookingRepository;
