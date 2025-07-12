@@ -19,8 +19,6 @@ import { EService } from "../../entities/serviceEntity";
 import BookingService from "./Bookingservice";
 import { IBookingService } from "../interface/IBookingService";
 import { EBooking } from "../../entities/bookingEntity";
-import { number } from "joi";
-import { query } from "winston";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements IAdminService {

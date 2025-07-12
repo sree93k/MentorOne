@@ -1,5 +1,3 @@
-import { response } from "express";
-import CalendarRepository from "../../repositories/implementations/CalenderRepository";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { ICalendarService } from "../interface/ICalenderService";
 import PolicyRepository from "../../repositories/implementations/PolicyRepository";

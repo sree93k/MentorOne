@@ -20,8 +20,8 @@ import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
-import CalendarRepository from "../../repositories/implementations/CalenderRepository";
-import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import ScheduleRepository from "../../repositories/implementations/ScheduleRepository";
+import { IScheduleRepository } from "../../repositories/interface/IScheduleRepository";
 import PolicyRepository from "../../repositories/implementations/PolicyRepository";
 import { IPolicyRepository } from "../../repositories/interface/IPolicyRepository";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
@@ -61,7 +61,7 @@ export default class MentorProfileService implements IMentorProfileService {
   private BaseRepository: IBaseRepository<EUsers>;
   private ServiceRepository: IServiceRepository;
   private SlotRepository: ISlotRepository;
-  private CalendarRepository: ICalendarRepository;
+  private ScheduleRepository: IScheduleRepository;
   private PolicyRepository: IPolicyRepository;
   private PriorityDMRepository: IPriorityDMRepository;
   private BookingService: IBookingService;
@@ -73,7 +73,7 @@ export default class MentorProfileService implements IMentorProfileService {
     this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.ServiceRepository = new ServiceRepository();
     this.SlotRepository = new SlotRepository();
-    this.CalendarRepository = new CalendarRepository();
+    this.ScheduleRepository = new ScheduleRepository();
     this.PolicyRepository = new PolicyRepository();
     this.PriorityDMRepository = new PriorityDMRepository();
     this.BookingService = new BookingService();
@@ -686,7 +686,7 @@ export default class MentorProfileService implements IMentorProfileService {
       }
 
       // Verify that the schedule exists
-      const schedule = await this.CalendarRepository.getSchedules(
+      const schedule = await this.ScheduleRepository.getSchedules(
         serviceId?.mentorId
       );
       // const schedule = await Schedule.findById(scheduleId).exec();
