@@ -1,22 +1,18 @@
 import { IUploadService } from "../interface/IUploadService";
-
-import * as fs from "fs";
-
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import Users from "../../models/userModel";
-import { EUsers } from "../../entities/userEntity";
 import { s3 } from "../../config/awsS3";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
 import { PassThrough } from "stream";
+import UserRepository from "../../repositories/implementations/UserRepository";
+import { IUserRepository } from "../../repositories/interface/IUserRepository";
+
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 
 export default class UploadService implements IUploadService {
-  private BaseRepository: IBaseRepository<EUsers>;
+  private UserRepository: IUserRepository;
 
   constructor() {
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
+    this.UserRepository = new UserRepository();
   }
 
   public async uploadProfileImage(
@@ -49,7 +45,7 @@ export default class UploadService implements IUploadService {
     id: string
   ): Promise<{ url: string; public_id?: string }> {
     try {
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       if (!user) throw new Error("User not found");
       const compressedImage = await sharp(file.buffer)
         .resize({ width: 1024 })
@@ -65,7 +61,7 @@ export default class UploadService implements IUploadService {
         })
         .promise();
       const url = `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-      await this.BaseRepository.update(id, { profilePicture: url });
+      await this.UserRepository.update(id, { profilePicture: url });
       if (user.profilePicture) {
         const oldKey = user.profilePicture.split("/").slice(-2).join("/");
         await s3.deleteObject({ Bucket: BUCKET_NAME!, Key: oldKey }).promise();

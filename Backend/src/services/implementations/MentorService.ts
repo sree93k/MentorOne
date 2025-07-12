@@ -7,13 +7,8 @@ import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
 import MentorRepository from "../../repositories/implementations/MentorRepository";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import Users from "../../models/userModel";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import Schedule from "../../models/scheduleModel";
-import BlockedDate from "../../models/blockedModel";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
@@ -60,7 +55,6 @@ interface GetAllServicesResponse {
 export default class MentorProfileService implements IMentorProfileService {
   private UserRepository: IUserRepository;
   private MentorRepository: IMentorRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
   private ServiceRepository: IServiceRepository;
   private SlotRepository: ISlotRepository;
   private ScheduleRepository: IScheduleRepository;
@@ -73,7 +67,6 @@ export default class MentorProfileService implements IMentorProfileService {
   constructor() {
     this.UserRepository = new UserRepository();
     this.MentorRepository = new MentorRepository();
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.ServiceRepository = new ServiceRepository();
     this.SlotRepository = new SlotRepository();
     this.ScheduleRepository = new ScheduleRepository();
@@ -129,7 +122,7 @@ export default class MentorProfileService implements IMentorProfileService {
 
       console.log("mentor data is>>>>>>>>>>>", mentorData, "and id :", id);
 
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       console.log(" mentor service, welcomeData step 5", user);
 
       if (!user) throw new Error("User not found");
@@ -151,8 +144,7 @@ export default class MentorProfileService implements IMentorProfileService {
       let userServerData = user;
       if (populateFields.length > 0) {
         console.log(" mentor service, welcomeData step 11");
-        userServerData = await this.BaseRepository.getModel()
-          .findById(id)
+        userServerData = await this.UserRepository.findById(id)
           .populate(populateFields) // Or use populateFields if that's your intent
           .exec();
       }

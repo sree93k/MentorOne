@@ -1,13 +1,11 @@
 import { IBookingService, BookingParams } from "../interface/IBookingService";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import ChatService from "./ChatService";
 import { IChatService } from "../interface/IChatService";
 import NotificationService from "./NotificationService";
 import { INotificationService } from "../interface/INotificationService";
-
 import { EService } from "../../entities/serviceEntity";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
@@ -15,7 +13,6 @@ import { getIO } from "../../utils/socket/notification";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-
 import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import SlotRepository from "../../repositories/implementations/SlotRepository";

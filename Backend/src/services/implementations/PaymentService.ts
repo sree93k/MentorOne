@@ -1,5 +1,4 @@
 import stripe from "../../config/stripe";
-import mongoose from "mongoose";
 import {
   IPaymentService,
   CreateCheckoutSessionParams,

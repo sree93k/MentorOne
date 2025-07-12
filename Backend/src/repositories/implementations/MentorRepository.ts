@@ -6,7 +6,15 @@ import DigitalProduct from "../../models/digitalProductsModel";
 import VideoTutorial from "../../models/videoTutorialModel";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
-export default class MentorRepository implements IMentorRepository {
+import BaseRepository from "./BaseRepository";
+
+export default class MentorRepository
+  extends BaseRepository<EMentor>
+  implements IMentorRepository
+{
+  constructor() {
+    super(Mentor);
+  }
   async createMentor(mentorData: EMentor): Promise<EMentor | null> {
     console.log("mentor repo statt 1", mentorData);
 

@@ -3,7 +3,6 @@ import NotificationRepository from "../../repositories/implementations/Notificat
 import { pubClient } from "../../server";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
-import mongoose from "mongoose";
 import { INotificationService } from "../../services/interface/INotificationService";
 
 interface NotificationData {

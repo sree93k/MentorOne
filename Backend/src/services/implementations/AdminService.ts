@@ -1,6 +1,5 @@
 import { IAdminService } from "../interface/IAdminService";
 import Users from "../../models/userModel";
-import Mentee from "../../models/menteeModel";
 import Mentor from "../../models/mentorModel";
 import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
 import MenteeRepository from "../../repositories/implementations/MenteeRepository";
@@ -10,7 +9,6 @@ import { EUsers } from "../../entities/userEntity";
 import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
 import { sendMail } from "../../utils/emailService";
-import { Model } from "mongoose";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 import { EService } from "../../entities/serviceEntity";

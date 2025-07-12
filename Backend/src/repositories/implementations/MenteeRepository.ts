@@ -1,7 +1,15 @@
 import { EMentee } from "../../entities/menteeEntiry";
 import Mentee from "../../models/menteeModel";
 import { IMenteeRepository } from "../interface/IMenteeRepository";
-export default class MenteeRepository implements IMenteeRepository {
+import BaseRepository from "./BaseRepository";
+
+export default class MenteeRepository
+  extends BaseRepository<EMentee>
+  implements IMenteeRepository
+{
+  constructor() {
+    super(Mentee);
+  }
   async createMentee(data: {
     joinPurpose: string[];
     careerGoals: string;

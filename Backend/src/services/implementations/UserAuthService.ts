@@ -11,7 +11,6 @@ import {
   decodeAndVerifyToken,
   generateAccessToken,
   generateRefreshToken,
-  verifyAccessToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
 import ApiResponse from "../../utils/apiResponse";

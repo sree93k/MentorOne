@@ -1,7 +1,6 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IMenteeProfileService } from "../interface/IMenteeService";
-
 import { EUsers } from "../../entities/userEntity";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
@@ -10,9 +9,6 @@ import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
 import MenteeRepository from "../../repositories/implementations/MenteeRepository";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepositotry from "../../repositories/implementations/BaseRepository";
-import Users from "../../models/userModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
@@ -31,6 +27,7 @@ import { EService } from "../../entities/serviceEntity";
 import { ETestimonial } from "../../entities/testimonialEntity";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
+
 interface WelcomeFormData {
   careerGoal: string;
   interestedCareer: string;
@@ -45,10 +42,7 @@ interface DashboardData {
 }
 
 export default class MenteeProfileService implements IMenteeProfileService {
-  private UserRepository: IUserRepository;
-
   private MenteeRepository: IMenteeRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
   private PriorityDMRepository: IPriorityDMRepository;
   private ServiceRepository: IServiceRepository;
   private BookingService: IBookingService;
@@ -57,12 +51,10 @@ export default class MenteeProfileService implements IMenteeProfileService {
   private CareerCollege: ICareerCollege;
   private CareerSchool: ICareerSchool;
   private CareerProfessional: ICareerProfessional;
+  private UserRepository: IUserRepository;
 
   constructor() {
-    this.UserRepository = new UserRepository();
-
     this.MenteeRepository = new MenteeRepository();
-    this.BaseRepository = new BaseRepositotry<EUsers>(Users);
     this.PriorityDMRepository = new PriorityDMRepository();
     this.ServiceRepository = new ServiceRepository();
     this.BookingService = new BookingService();
@@ -71,6 +63,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
     this.CareerCollege = new CareerCollege();
     this.CareerSchool = new CareerSchool();
     this.CareerProfessional = new CareerProfessional();
+    this.UserRepository = new UserRepository();
   }
   //welcomeData
   async welcomeData(
@@ -92,7 +85,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
         interestedNewcareer,
         joinPurpose: goals,
       };
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       if (!user) throw new Error("User not found");
 
       const populateFields: string[] = [];
@@ -105,8 +98,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
 
       let userServerData = user;
       if (populateFields.length > 0) {
-        userServerData = await this.BaseRepository?.getModel()
-          .findById(id)
+        userServerData = await this.UserRepository.findById(id)
           .populate(populateFields) // Or use populateFields if that's your intent
           .exec();
       }
@@ -200,13 +192,13 @@ export default class MenteeProfileService implements IMenteeProfileService {
   }
 
   //deleteAccount
-  public async deleteAccount(id: string): Promise<boolean> {
+  public async deleteAccount(id: string): Promise<EUsers> {
     try {
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       //   if (!user) return false;
 
       // Delete user
-      return await this.BaseRepository.delete(id);
+      return await this.UserRepository.deleteById(id);
     } catch (error) {
       console.error("Error deleting account:", error);
       throw error;

@@ -8,8 +8,6 @@ import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
 
-import Users from "../../models/userModel";
-
 export default class OTPServices implements IOTPService {
   private OTPRepository: IOTPRepository;
 

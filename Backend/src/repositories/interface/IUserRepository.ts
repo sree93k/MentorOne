@@ -102,4 +102,5 @@ export interface IUserRepository {
     page?: number,
     limit?: number
   ): Promise<EUsers[]>;
+  deleteById(id: string): Promise<EUsers | null>;
 }

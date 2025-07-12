@@ -2,9 +2,16 @@ import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import mongoose from "mongoose";
-
+import BaseRepository from "./BaseRepository";
 import Service from "../../models/serviceModel";
-export default class UserRepository implements IUserRepository {
+
+export default class UserRepository
+  extends BaseRepository<EUsers>
+  implements IUserRepository
+{
+  constructor() {
+    super(Users);
+  }
   //create user
   async createUser(user: Partial<EUsers>): Promise<EUsers | null> {
     try {

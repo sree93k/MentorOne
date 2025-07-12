@@ -11,7 +11,7 @@ interface DashboardData {
 
 export interface IMenteeProfileService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
-  deleteAccount(id: string): Promise<boolean>;
+  deleteAccount(id: string): Promise<EUsers>;
   userProfielData(
     id: string
   ): Promise<{ user: Omit<EUsers, "password">[] } | null>;
