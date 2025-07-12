@@ -1,10 +1,8 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IMenteeProfileService } from "../interface/IMenteeProfileService";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
-import CareerRepositiory from "../../repositories/implementations/CareerRepository";
+import { IMenteeProfileService } from "../interface/IMenteeService";
+
 import { EUsers } from "../../entities/userEntity";
-import { ObjectId } from "mongoose";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
 import { ECollegeExperience } from "../../entities/collegeEntity";
@@ -18,7 +16,12 @@ import Users from "../../models/userModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-
+import CareerCollege from "../../repositories/implementations/CareerCollege";
+import { ICareerCollege } from "../../repositories/interface/ICareerCollege";
+import CareerSchool from "../../repositories/implementations/CareerSchool";
+import { ICareerSchool } from "../../repositories/interface/ICareerSchool";
+import CareerProfessional from "../../repositories/implementations/CareerProfessional";
+import { ICareerProfessional } from "../../repositories/interface/ICareerProfessional";
 import mongoose from "mongoose";
 import { ITestimonialService } from "../interface/ITestimonialService";
 import { IBookingService } from "../interface/IBookingService";
@@ -43,18 +46,21 @@ interface DashboardData {
 
 export default class MenteeProfileService implements IMenteeProfileService {
   private UserRepository: IUserRepository;
-  private CareerRepository: ICareerRepository;
+
   private MenteeRepository: IMenteeRepository;
   private BaseRepository: IBaseRepository<EUsers>;
   private PriorityDMRepository: IPriorityDMRepository;
   private ServiceRepository: IServiceRepository;
-
   private BookingService: IBookingService;
   private Testimonial: ITestimonialService;
   private WalletRepository: IWalletRepository;
+  private CareerCollege: ICareerCollege;
+  private CareerSchool: ICareerSchool;
+  private CareerProfessional: ICareerProfessional;
+
   constructor() {
     this.UserRepository = new UserRepository();
-    this.CareerRepository = new CareerRepositiory();
+
     this.MenteeRepository = new MenteeRepository();
     this.BaseRepository = new BaseRepositotry<EUsers>(Users);
     this.PriorityDMRepository = new PriorityDMRepository();
@@ -62,6 +68,9 @@ export default class MenteeProfileService implements IMenteeProfileService {
     this.BookingService = new BookingService();
     this.Testimonial = new TestimonialService();
     this.WalletRepository = new WalletRepository();
+    this.CareerCollege = new CareerCollege();
+    this.CareerSchool = new CareerSchool();
+    this.CareerProfessional = new CareerProfessional();
   }
   //welcomeData
   async welcomeData(
@@ -111,21 +120,21 @@ export default class MenteeProfileService implements IMenteeProfileService {
           userData.userType === "college"
         ) {
           console.log("welcomedata service step 5....formdata");
-          experience = await this.CareerRepository.collegeStudentFormDataCreate(
+          experience = await this.CareerCollege.collegeStudentFormDataCreate(
             userData,
             id
           );
           userType = experience?.userType;
         } else if (userData.userType === "school") {
           console.log("welcomedata service step 6....formdata");
-          experience = await this.CareerRepository.schoolStudentFormDataCreate(
+          experience = await this.CareerSchool.schoolStudentFormDataCreate(
             userData,
             id
           );
           userType = experience?.userType;
         } else if (userData.userType === "professional") {
           console.log("welcomedata service step 7...formdata");
-          experience = await this.CareerRepository.professionalFormDataCreate(
+          experience = await this.CareerProfessional.professionalFormDataCreate(
             userData,
             id
           );

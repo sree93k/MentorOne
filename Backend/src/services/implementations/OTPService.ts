@@ -7,16 +7,14 @@ import { sendMail } from "../../utils/emailService";
 import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
+
 import Users from "../../models/userModel";
 
 export default class OTPServices implements IOTPService {
   private OTPRepository: IOTPRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
+
   constructor() {
     this.OTPRepository = new OTPRepository();
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
   }
 
   async sendOTP(user: EUsers): Promise<EOTP | null> {
@@ -25,7 +23,7 @@ export default class OTPServices implements IOTPService {
       if (!user?.email) {
         throw new Error("User email is null");
       }
-      const userData = await this.BaseRepository.findByEmail(user.email);
+      const userData = await this.OTPRepository.userData(user.email);
       if (userData?.isBlocked) {
         throw new Error("Account is Blocked");
       }

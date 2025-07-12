@@ -31,10 +31,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
       type: Number,
       required: false,
     },
-    dob: {
-      type: Date,
-      required: false,
-    },
     gender: {
       type: String,
       enum: ["male", "female"],
@@ -107,18 +103,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
       },
       required: false,
     },
-    previousSchools: {
-      type: [Schema.Types.ObjectId],
-      required: false,
-    },
-    previousColleges: {
-      type: [Schema.Types.ObjectId],
-      required: false,
-    },
-    workHistory: {
-      type: [Schema.Types.ObjectId],
-      required: false,
-    },
     bio: {
       type: String,
       required: function (this: EUsers) {
@@ -157,11 +141,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
       type: Schema.Types.Mixed,
       required: false,
     },
-    subscription: {
-      type: Schema.Types.ObjectId,
-      required: false,
-      ref: "Subscription",
-    },
     isBlocked: {
       type: Boolean,
       default: false,
@@ -185,10 +164,6 @@ const UsersSchema: Schema<EUsers> = new Schema(
         },
       },
       default: { status: false, role: null },
-      required: false,
-    },
-    contacts: {
-      type: [Schema.Types.ObjectId],
       required: false,
     },
   },

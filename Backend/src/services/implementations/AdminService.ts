@@ -2,8 +2,6 @@ import { IAdminService } from "../interface/IAdminService";
 import Users from "../../models/userModel";
 import Mentee from "../../models/menteeModel";
 import Mentor from "../../models/mentorModel";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
 import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
 import MenteeRepository from "../../repositories/implementations/MenteeRepository";
 import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
@@ -19,29 +17,23 @@ import { EService } from "../../entities/serviceEntity";
 import BookingService from "./Bookingservice";
 import { IBookingService } from "../interface/IBookingService";
 import { EBooking } from "../../entities/bookingEntity";
+import UserRepository from "../../repositories/implementations/UserRepository";
+import { IUserRepository } from "../../repositories/interface/IUserRepository";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements IAdminService {
-  private BaseRepository: IBaseRepository<EUsers>;
   private MenteeRepository: IMenteeRepository;
   private MentorRepository: IMentorRepository;
   private ServiceRepository: IServiceRepository;
   private BookingService: IBookingService;
+  private UserRepository: IUserRepository;
 
   constructor() {
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.MenteeRepository = new MenteeRepository();
     this.MentorRepository = new MentorRepository();
     this.ServiceRepository = new ServiceRepository();
     this.BookingService = new BookingService();
-  }
-
-  private getModel(): Model<EUsers> {
-    return require("../../models/userModel").default;
-  }
-
-  private getMentorModel(): Model<any> {
-    return require("../../models/mentorModel").default;
+    this.UserRepository = new UserRepository();
   }
 
   async fetchAllUsers(
@@ -59,8 +51,6 @@ export default class AdminService implements IAdminService {
   } | null> {
     try {
       console.log("all users service ************************************");
-      const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
-      const mentorModel = this.getMentorModel();
 
       // Build MongoDB query for users
       const query: any = {};
@@ -81,37 +71,35 @@ export default class AdminService implements IAdminService {
         query.isBlocked = status === "Blocked" ? true : false;
       }
 
-      // Fetch total counts for all categories
-      const total = await rawModel.countDocuments(query);
-      const totalMentors = await rawModel.countDocuments({
+      // Use Users model instead of rawModel
+      const total = await Users.countDocuments(query);
+      const totalMentors = await Users.countDocuments({
         ...query,
         role: { $eq: ["mentor"] },
       });
-      const totalMentees = await rawModel.countDocuments({
+      const totalMentees = await Users.countDocuments({
         ...query,
         role: { $eq: ["mentee"] },
       });
-      const totalBoth = await rawModel.countDocuments({
+      const totalBoth = await Users.countDocuments({
         ...query,
         role: { $all: ["mentor", "mentee"] },
       });
 
-      // Simply count pending mentors directly
-      const approvalPending = await mentorModel.countDocuments({
+      // Use Mentor model instead of mentorModel
+      const approvalPending = await Mentor.countDocuments({
         isApproved: "Pending",
       });
 
       // Log mentor data for debugging
-      const pendingMentors = await mentorModel
-        .find({ isApproved: "Pending" })
+      const pendingMentors = await Mentor.find({ isApproved: "Pending" })
         .select("_id isApproved")
         .exec();
       console.log("admin service pending mentors:", pendingMentors);
       console.log("admin service approvalPending count:", approvalPending);
 
       // Fetch paginated users with population
-      const allUsers = await rawModel
-        .find(query)
+      const allUsers = await Users.find(query)
         .populate("mentorId")
         .skip((page - 1) * limit)
         .limit(limit)
@@ -148,7 +136,7 @@ export default class AdminService implements IAdminService {
   } | null> {
     try {
       console.log("AdminService getUserDatas step 1:", id);
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       console.log("AdminService getUserDatas step 2:", user);
       if (!user) {
         console.log("AdminService getUserDatas: User not found");
@@ -163,7 +151,7 @@ export default class AdminService implements IAdminService {
       // Fetch mentee data if user has mentee role
       if (user.role?.includes("mentee") && user.menteeId) {
         menteeData = await this.MenteeRepository.getMentee(
-          user.menteeId.toString()
+          user.menteeId._id.toString()
         );
         console.log(
           "AdminService getUserDatas step 3 - menteeData:",
@@ -246,7 +234,7 @@ export default class AdminService implements IAdminService {
         "adminside service mentorStatusChange service is ",
         updateMentor
       );
-      const userData = await this.BaseRepository.findByField("mentorId", id);
+      const userData = await this.UserRepository.findByField("mentorId", id);
       console.log("user data is ", userData);
       const user = userData?.[0];
       if (!user) {
@@ -283,7 +271,7 @@ export default class AdminService implements IAdminService {
         console.log("Email sent:", OTPDetails);
         // If Rejected, deactivate mentor in user model
         if (status === "Rejected") {
-          await this.BaseRepository.update(user._id, {
+          await this.UserRepository.update(user._id, {
             mentorActivated: false,
             refreshToken: "",
           } as any);
@@ -304,7 +292,7 @@ export default class AdminService implements IAdminService {
     try {
       console.log("userStatusChange start ", id, status);
 
-      const updateUser = await this.BaseRepository.updateField(
+      const updateUser = await this.UserRepository.updateField(
         id,
         "isBlocked",
         status

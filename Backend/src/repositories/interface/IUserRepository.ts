@@ -85,4 +85,21 @@ export interface IUserRepository {
   ): Promise<void>;
   findUsersByNameOrEmail(searchQuery: string): Promise<any[]>;
   getTopMentors(limit: number): Promise<EUsers[]>;
+  findByField<K extends keyof EUsers>(
+    field: K,
+    value: string
+  ): Promise<EUsers[] | null>;
+  update(id: string, data: Partial<EUsers>): Promise<EUsers | null>;
+  updateField(
+    id: string,
+    field: keyof EUsers,
+    value: any
+  ): Promise<EUsers | null>;
+  countAllUsers(query?: any): Promise<number>;
+  countUsersByRole(role: string): Promise<number>;
+  getAllUsersWithPagination(
+    query?: any,
+    page?: number,
+    limit?: number
+  ): Promise<EUsers[]>;
 }

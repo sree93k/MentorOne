@@ -10,7 +10,6 @@ export interface EUsers extends Document {
   email: string | null;
   password: string | null;
   phone: Number | null;
-  dob: Date | null;
   gender: string | null;
   role: string[] | null;
   activated: boolean | null;
@@ -23,10 +22,6 @@ export interface EUsers extends Document {
   schoolDetails?: ESchoolExperience | null; // For school students
   collegeDetails?: ECollegeExperience | null; // For college students/freshers
   professionalDetails?: EWorkExperience | null; // For professionals
-  // Previous experiences
-  previousSchools?: ESchoolExperience[] | null;
-  previousColleges?: ECollegeExperience[] | null;
-  workHistory?: EWorkExperience[] | null;
   // Mentor-specific fields
   bio?: string | null;
   skills?: string | null;
@@ -36,14 +31,12 @@ export interface EUsers extends Document {
   mentorId?: ObjectId | null;
   menteeId?: ObjectId | null; // If a mentee, references their mentor
   bookings?: object | null; // To be defined later
-  subscription?: ObjectId | null;
   isBlocked?: boolean | null;
   refreshToken?: string[] | null;
   isOnline: {
     status: boolean;
     role: "mentor" | "mentee" | null;
   } | null;
-  contacts: ObjectId[] | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
 }

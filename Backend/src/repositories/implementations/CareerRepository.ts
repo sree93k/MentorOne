@@ -5,8 +5,8 @@ import CollegeExperience from "../../models/CollegeExperienceModel";
 import WorkExperience from "../../models/professionalExperienceModel";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import { ECollegeExperience } from "../../entities/collegeEntity";
-import { EGoals } from "../../entities/goalsEntity";
-import Goals from "../../models/goalModel";
+// import { EGoals } from "../../entities/goalsEntity";
+// import Goals from "../../models/goalModel";
 
 export default class CareerRepository implements ICareerRepository {
   async schoolStudentFormDataCreate(
@@ -153,47 +153,47 @@ export default class CareerRepository implements ICareerRepository {
     }
   }
 
-  async createGoalDatas(data: {
-    careerGoals: string;
-    interestedNewcareer: string;
-    goals: string[];
-  }): Promise<EGoals> {
-    try {
-      console.log("Repo create goal data step 1", data);
-      const newGoals = new Goals({
-        goals: data.goals,
-        careerGoals: data.careerGoals,
-        interestedNewcareer: data.interestedNewcareer,
-      });
-      console.log("Repo create goal data step 2", newGoals);
-      const result = await newGoals.save();
-      console.log("Repo create goal data step 3", result);
-      return result;
-    } catch (error) {
-      console.error("Error creating goal data:", error);
-      throw error;
-    }
-  }
+  // async createGoalDatas(data: {
+  //   careerGoals: string;
+  //   interestedNewcareer: string;
+  //   goals: string[];
+  // }): Promise<EGoals> {
+  //   try {
+  //     console.log("Repo create goal data step 1", data);
+  //     const newGoals = new Goals({
+  //       goals: data.goals,
+  //       careerGoals: data.careerGoals,
+  //       interestedNewcareer: data.interestedNewcareer,
+  //     });
+  //     console.log("Repo create goal data step 2", newGoals);
+  //     const result = await newGoals.save();
+  //     console.log("Repo create goal data step 3", result);
+  //     return result;
+  //   } catch (error) {
+  //     console.error("Error creating goal data:", error);
+  //     throw error;
+  //   }
+  // }
 
-  async createMentee(data: {
-    careerGoals: string;
-    interestedNewcareer: string;
-    goals: string[];
-  }): Promise<EGoals> {
-    try {
-      console.log("Repo create mentee data step 1", data);
-      const newGoals = new Goals({
-        goals: data.goals,
-        careerGoals: data.careerGoals,
-        interestedNewcareer: data.interestedNewcareer,
-      });
-      console.log("Repo create mentee data step 2", newGoals);
-      const result = await newGoals.save();
-      console.log("Repo create mentee data step 3", result);
-      return result;
-    } catch (error) {
-      console.error("Error creating mentee data:", error);
-      throw error;
-    }
-  }
+  // async createMentee(data: {
+  //   careerGoals: string;
+  //   interestedNewcareer: string;
+  //   goals: string[];
+  // }): Promise<EGoals> {
+  //   try {
+  //     console.log("Repo create mentee data step 1", data);
+  //     const newGoals = new Goals({
+  //       goals: data.goals,
+  //       careerGoals: data.careerGoals,
+  //       interestedNewcareer: data.interestedNewcareer,
+  //     });
+  //     console.log("Repo create mentee data step 2", newGoals);
+  //     const result = await newGoals.save();
+  //     console.log("Repo create mentee data step 3", result);
+  //     return result;
+  //   } catch (error) {
+  //     console.error("Error creating mentee data:", error);
+  //     throw error;
+  //   }
+  // }
 }

@@ -115,6 +115,12 @@ export const userProfileData = async () => {
         "Content-Type": "multipart/form-data",
       },
     });
+
+    console.log(
+      "mentee service userProfileData step2 ..... ",
+      response.data.data.user
+    );
+
     return response.data.data.user;
   } catch (error) {
     console.error("Error uuserProfileData service >>:", error);

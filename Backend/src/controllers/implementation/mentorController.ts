@@ -10,7 +10,7 @@ import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
 import UploadService from "../../services/implementations/UploadService";
-import { IMentorProfileService } from "../../services/interface/IMentorProfileService";
+import { IMentorProfileService } from "../../services/interface/IMentorService";
 import MentorProfileService from "../../services/implementations/MentorService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
 import CalendarService from "../../services/implementations/CalenderService";

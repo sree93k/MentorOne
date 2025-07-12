@@ -7,8 +7,6 @@ import UserRespository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
 import BaseRepositotry from "../../repositories/implementations/BaseRepository";
-import CareerRepository from "../../repositories/implementations/CareerRepository";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
 import Users from "../../models/userModel";
 import Mentees from "../../models/menteeModel";
 import Mentors from "../../models/mentorModel";
@@ -16,7 +14,12 @@ import bcrypt from "bcryptjs";
 import * as Yup from "yup";
 import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
 import MentorRepository from "../../repositories/implementations/MentorRepository";
-
+import CareerCollege from "../../repositories/implementations/CareerCollege";
+import { ICareerCollege } from "../../repositories/interface/ICareerCollege";
+import CareerSchool from "../../repositories/implementations/CareerSchool";
+import { ICareerSchool } from "../../repositories/interface/ICareerSchool";
+import CareerProfessional from "../../repositories/implementations/CareerProfessional";
+import { ICareerProfessional } from "../../repositories/interface/ICareerProfessional";
 // Define collection types
 type CollectionType = "user" | "mentee" | "mentor";
 
@@ -42,16 +45,19 @@ export default class UserService implements IUserService {
   private userBaseRepository: IBaseRepository<EUsers>;
   private menteeBaseRepository: IBaseRepository<EMentee>;
   private mentorBaseRepository: IBaseRepository<EMentor>;
-  private careerRepository: ICareerRepository;
   private mentorRepository: IMentorRepository;
-
+  private CareerCollege: ICareerCollege;
+  private CareerSchool: ICareerSchool;
+  private CareerProfessional: ICareerProfessional;
   constructor() {
     this.UserRepository = new UserRespository();
     this.userBaseRepository = new BaseRepositotry<EUsers>(Users);
     this.menteeBaseRepository = new BaseRepositotry<EMentee>(Mentees);
     this.mentorBaseRepository = new BaseRepositotry<EMentor>(Mentors);
-    this.careerRepository = new CareerRepository();
     this.mentorRepository = new MentorRepository();
+    this.CareerCollege = new CareerCollege();
+    this.CareerSchool = new CareerSchool();
+    this.CareerProfessional = new CareerProfessional();
   }
 
   async findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null> {
@@ -138,7 +144,7 @@ export default class UserService implements IUserService {
         console.log("Payload has schoolDetails:step 2", user);
 
         const updateSchoolDetails =
-          await this.careerRepository.updateSchoolExperience(
+          await this.CareerSchool.updateSchoolExperience(
             user?.schoolDetails, // this is ObjectId from User
             payload.schoolDetails // ✅ pass only the object inside
           );
@@ -154,7 +160,7 @@ export default class UserService implements IUserService {
         console.log("Payload has collegeDetails:step 2", user);
 
         const updateCollegeDetails =
-          await this.careerRepository.updateCollegeExperience(
+          await this.CareerCollege.updateCollegeExperience(
             user?.collegeDetails, // this is ObjectId from User
             payload.collegeDetails // ✅ pass only the object inside
           );
@@ -170,7 +176,7 @@ export default class UserService implements IUserService {
         console.log("Payload has professionalDetails:step 2", user);
 
         const updateProfessionalDetails =
-          await this.careerRepository.updateProfessionalExperience(
+          await this.CareerProfessional.updateProfessionalExperience(
             user?.professionalDetails, // this is ObjectId from User
             payload.professionalDetails // ✅ pass only the object inside
           );
@@ -199,16 +205,15 @@ export default class UserService implements IUserService {
             };
             let schoolDoc;
             if (user.schoolDetails) {
-              schoolDoc = await this.careerRepository.updateSchoolExperience(
+              schoolDoc = await this.CareerSchool.updateSchoolExperience(
                 user.schoolDetails.toString(), // Ensure ObjectId is passed as string
                 schoolPayload
               );
             } else {
-              schoolDoc =
-                await this.careerRepository.schoolStudentFormDataCreate(
-                  schoolPayload,
-                  id
-                );
+              schoolDoc = await this.CareerSchool.schoolStudentFormDataCreate(
+                schoolPayload,
+                id
+              );
               if (schoolDoc) {
                 userUpdatePayload.schoolDetails = schoolDoc._id;
               }
@@ -238,13 +243,13 @@ export default class UserService implements IUserService {
             };
             let collegeDoc;
             if (user.collegeDetails) {
-              collegeDoc = await this.careerRepository.updateCollegeExperience(
+              collegeDoc = await this.CareerCollege.updateCollegeExperience(
                 user.collegeDetails.toString(), // Ensure ObjectId is passed as string
                 collegePayload
               );
             } else {
               collegeDoc =
-                await this.careerRepository.collegeStudentFormDataCreate(
+                await this.CareerCollege.collegeStudentFormDataCreate(
                   collegePayload,
                   id
                 );
@@ -267,13 +272,13 @@ export default class UserService implements IUserService {
             let professionalDoc;
             if (user.professionalDetails) {
               professionalDoc =
-                await this.careerRepository.updateProfessionalExperience(
+                await this.CareerProfessional.updateProfessionalExperience(
                   user.professionalDetails.toString(),
                   professionalPayload
                 );
             } else {
               professionalDoc =
-                await this.careerRepository.professionalFormDataCreate(
+                await this.CareerProfessional.professionalFormDataCreate(
                   professionalPayload,
                   id
                 );
