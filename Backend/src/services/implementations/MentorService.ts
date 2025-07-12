@@ -22,6 +22,8 @@ import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 import CalendarRepository from "../../repositories/implementations/CalenderRepository";
 import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import PolicyRepository from "../../repositories/implementations/PolicyRepository";
+import { IPolicyRepository } from "../../repositories/interface/IPolicyRepository";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
 
@@ -60,6 +62,7 @@ export default class MentorProfileService implements IMentorProfileService {
   private ServiceRepository: IServiceRepository;
   private SlotRepository: ISlotRepository;
   private CalendarRepository: ICalendarRepository;
+  private PolicyRepository: IPolicyRepository;
   private PriorityDMRepository: IPriorityDMRepository;
   private BookingService: IBookingService;
 
@@ -71,6 +74,7 @@ export default class MentorProfileService implements IMentorProfileService {
     this.ServiceRepository = new ServiceRepository();
     this.SlotRepository = new SlotRepository();
     this.CalendarRepository = new CalendarRepository();
+    this.PolicyRepository = new PolicyRepository();
     this.PriorityDMRepository = new PriorityDMRepository();
     this.BookingService = new BookingService();
   }

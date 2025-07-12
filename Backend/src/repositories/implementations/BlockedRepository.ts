@@ -4,8 +4,17 @@ import {
   IBlockedRepository,
   BlockedDateData,
 } from "../interface/IBlockedRepository";
+import BaseRepository from "./BaseRepository";
+import { EBlockedDate } from "../../entities/blockedEntity";
+import { response } from "express";
 
-export default class BlockedRepository implements IBlockedRepository {
+export default class BlockedRepository
+  extends BaseRepository<EBlockedDate>
+  implements IBlockedRepository
+{
+  constructor() {
+    super(BlockedDate);
+  }
   async getBlockedDates(mentorId: string | mongoose.Types.ObjectId) {
     return await BlockedDate.find({
       mentorId: new mongoose.Types.ObjectId(mentorId),
@@ -46,7 +55,14 @@ export default class BlockedRepository implements IBlockedRepository {
       throw new Error("Failed to remove blocked date", error.message);
     }
   }
-
+  async deleteById(id: string): Promise<EBlockedDate | null> {
+    try {
+      const deletedDate = await BlockedDate.findByIdAndDelete(id);
+      return deletedDate as EBlockedDate | null;
+    } catch (error) {
+      throw new Error("Failed to remove blocked date", error);
+    }
+  }
   async deleteBlockedDate(
     mentorId: string,
     date: string,

@@ -23,7 +23,6 @@ import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 import BlockedRepository from "../../repositories/implementations/BlockedRepository";
 import { IBlockedRepository } from "../../repositories/interface/IBlockedRepository";
 import { EBooking } from "../../entities/bookingEntity";
-import { toASCII } from "punycode";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;

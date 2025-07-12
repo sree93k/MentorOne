@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { EBlockedDate } from "../../entities/blockedEntity";
 
 export interface BlockedDateData {
   date: Date;
@@ -14,6 +15,7 @@ export interface IBlockedRepository {
     dates: BlockedDateData[]
   ): Promise<any[]>;
   // removeBlockedDate(blockedDateId: string): Promise<any | null>;
+  deleteById(date: string): Promise<EBlockedDate | null>;
   removeBlockedDate(
     mentorId: string,
     date: string,
