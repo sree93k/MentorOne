@@ -1,9 +1,10 @@
 import ChatRepository from "../../repositories/implementations/ChatRepository";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
-
 import { IChatService } from "../interface/IChatService";
 import { createClient } from "@redis/client";
-
+import { EChat } from "../../entities/chatEntity";
+import BookingService from "./Bookingservice";
+import { IBookingService } from "../interface/IBookingService";
 export default class ChatService implements IChatService {
   private chatRepository: ChatRepository;
   private bookingRepository: BookingRepository;
@@ -119,6 +120,59 @@ export default class ChatService implements IChatService {
         error: error.message,
       });
       throw new Error("Failed to check online status", error.message);
+    }
+  }
+
+  async updateByBookingId(
+    bookingId: string,
+    isActive: boolean
+  ): Promise<EChat | null> {
+    try {
+      console.log("ChatService: updateByBookingId start 1");
+
+      const chatUpdate = await this.chatRepository.updateByBookingId(
+        bookingId,
+        isActive
+      );
+      console.log("ChatService: updateByBookingId start 1");
+      return chatUpdate;
+    } catch (error: any) {
+      console.error("ChatService: updateByBookingId error", {
+        error: error.message,
+      });
+      throw new Error("Failed to check updateByBookingId", error.message);
+    }
+  }
+
+  async findChatById(chatId: string): Promise<EChat | null> {
+    try {
+      console.log("ChatService: findChatById start 1");
+
+      const chat = await this.chatRepository.findById(chatId);
+      console.log("ChatService: findChatById start 1");
+      return chat;
+    } catch (error: any) {
+      console.error("ChatService: findChatById error", {
+        error: error.message,
+      });
+      throw new Error("Failed to check findChatById", error.message);
+    }
+  }
+  async findChatByIdAndUpdate(
+    chatId: string,
+    data: Partial<EChat>
+  ): Promise<EChat | null> {
+    try {
+      console.log("ChatService: findChatByIdAndUpdate start 1");
+
+      const chat = await this.chatRepository.findByIdAndUpdate(chatId, data);
+      console.log("ChatService: findChatByIdAndUpdate start 1");
+      return chat;
+    } catch (error: any) {
+      console.error("ChatService: findChatByIdAndUpdate error", {
+        error: error.message,
+      });
+      throw new Error("Failed to check findChatByIdAndUpdate", error.message);
     }
   }
 }

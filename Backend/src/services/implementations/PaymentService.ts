@@ -10,11 +10,7 @@ import PaymentRepository from "../../repositories/implementations/PaymentReposit
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
-import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
-import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 export default class PaymentService implements IPaymentService {
   private paymentRepository: PaymentRepository;
   private bookingRepository: BookingRepository;

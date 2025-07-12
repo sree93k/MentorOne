@@ -1,6 +1,7 @@
 import MessageRepository from "../../repositories/implementations/MessageRepository";
-import ChatRepository from "../../repositories/implementations/ChatRepository";
 
+import ChatService from "./ChatService";
+import { IChatService } from "../interface/IChatService";
 import mongoose from "mongoose";
 import sharp from "sharp";
 import ffmpeg from "fluent-ffmpeg";
@@ -9,11 +10,11 @@ import { IMessageService } from "../interface/IMessageService";
 
 export default class MessageService implements IMessageService {
   private messageRepository: MessageRepository;
-  private chatRepository: ChatRepository;
+  private chatService: IChatService;
 
   constructor() {
     this.messageRepository = new MessageRepository();
-    this.chatRepository = new ChatRepository();
+    this.chatService = new ChatService();
   }
 
   async sendMessage(
@@ -29,7 +30,7 @@ export default class MessageService implements IMessageService {
       content,
       type,
     });
-    const chat = await this.chatRepository.findById(chatId);
+    const chat = await this.chatService.findChatById(chatId);
     if (
       !chat ||
       !chat.users.some((user) =>
@@ -77,7 +78,7 @@ export default class MessageService implements IMessageService {
     console.log("Creating message with data:", messageData);
     const message = await this.messageRepository.create(messageData);
     console.log("Message created, updating latestMessage:", message._id);
-    await this.chatRepository.findByIdAndUpdate(chatId, {
+    await this.chatService.findChatByIdAndUpdate(chatId, {
       latestMessage: message._id,
     });
     console.log("latestMessage updated for chat:", chatId);

@@ -1,9 +1,16 @@
 import mongoose from "mongoose";
 import Chat from "../../models/chatModel";
-
+import BaseRepository from "./BaseRepository";
 import { EChat } from "../../entities/chatEntity";
+import { IChatRepository } from "../interface/IChatRepository";
 
-export default class ChatRepository {
+export default class ChatRepository
+  extends BaseRepository<EChat>
+  implements IChatRepository
+{
+  constructor() {
+    super(Chat);
+  }
   async create(data: Partial<EChat>): Promise<EChat> {
     try {
       console.log("=========ChatRepository create step 1", data);

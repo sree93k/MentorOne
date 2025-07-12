@@ -16,10 +16,11 @@ import { Model } from "mongoose";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 import { EService } from "../../entities/serviceEntity";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import BookingService from "./Bookingservice";
+import { IBookingService } from "../interface/IBookingService";
 import { EBooking } from "../../entities/bookingEntity";
 import { number } from "joi";
+import { query } from "winston";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements IAdminService {
@@ -27,14 +28,14 @@ export default class AdminService implements IAdminService {
   private MenteeRepository: IMenteeRepository;
   private MentorRepository: IMentorRepository;
   private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
+  private BookingService: IBookingService;
 
   constructor() {
     this.BaseRepository = new BaseRepository<EUsers>(Users);
     this.MenteeRepository = new MenteeRepository();
     this.MentorRepository = new MentorRepository();
     this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
+    this.BookingService = new BookingService();
   }
 
   private getModel(): Model<EUsers> {
@@ -174,7 +175,7 @@ export default class AdminService implements IAdminService {
 
       // Fetch booking data if user has mentee role
       if (user.role?.includes("mentee") && user.menteeId) {
-        bookingData = await this.BookingRepository.findByMentee(id);
+        bookingData = await this.BookingService.findByMentee(id);
         console.log(
           "AdminService getUserDatas step 4 - bookingData:",
           bookingData

@@ -725,9 +725,10 @@ const LandingPage: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setIsLoading(true);
-        const data = await getDashboardData();
+        // const data = await getDashboardData();
         setDashboardData(data);
       } catch (err: any) {
+        console.log("error");
       } finally {
         setIsLoading(false);
       }

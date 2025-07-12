@@ -272,7 +272,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
 
   async getTopTestimonials(limit: number): Promise<ETestimonial[]> {
     try {
-      console.log("BookingRepository getTopTestimonials step 1", { limit });
+      console.log("TestimonialRepository getTopTestimonials step 1", { limit });
       const testimonials = await Testimonial.find()
         .populate({
           path: "menteeId",
@@ -290,12 +290,12 @@ export default class TestimonialRepository implements ITestimonialRepository {
         .limit(limit)
         .lean();
       console.log(
-        "BookingRepository getTopTestimonials step 2",
+        "TestimonialRepository getTopTestimonials step 2",
         testimonials.length
       );
       return testimonials;
     } catch (error: any) {
-      console.error("BookingRepository getTopTestimonials error", error);
+      console.error("TestimonialRepository getTopTestimonials error", error);
       throw new Error("Failed to fetch top testimonials", error.message);
     }
   }

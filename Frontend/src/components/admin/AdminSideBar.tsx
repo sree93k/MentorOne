@@ -122,7 +122,7 @@ const AdminSidebar: React.FC = () => {
             text="Users"
             isExpanded={isExpanded}
             active={activeItem === "Users"}
-            onClick={() => handleItemClick("Users", "/admin/allUsers")}
+            onClick={() => handleItemClick("Users", "/admin/users")}
           />
           <SidebarItem
             icon={Calendar}

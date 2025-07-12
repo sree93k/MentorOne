@@ -18,8 +18,7 @@ import Users from "../../models/userModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+
 import mongoose from "mongoose";
 import { ITestimonialService } from "../interface/ITestimonialService";
 import { IBookingService } from "../interface/IBookingService";
@@ -49,7 +48,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
   private BaseRepository: IBaseRepository<EUsers>;
   private PriorityDMRepository: IPriorityDMRepository;
   private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
+
   private BookingService: IBookingService;
   private Testimonial: ITestimonialService;
   private WalletRepository: IWalletRepository;
@@ -60,7 +59,6 @@ export default class MenteeProfileService implements IMenteeProfileService {
     this.BaseRepository = new BaseRepositotry<EUsers>(Users);
     this.PriorityDMRepository = new PriorityDMRepository();
     this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
     this.BookingService = new BookingService();
     this.Testimonial = new TestimonialService();
     this.WalletRepository = new WalletRepository();
@@ -309,7 +307,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       }
 
       // Verify booking exists
-      const booking = await this.BookingRepository.findById(bookingId);
+      const booking = await this.BookingService.findById(bookingId);
       if (!booking) {
         throw new Error("Booking not found");
       }
@@ -332,7 +330,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       if (!priorityDM) {
         throw new Error("Failed to create Priority DM");
       }
-      const bookingStatusChange = await this.BookingRepository.update(
+      const bookingStatusChange = await this.BookingService.updateStatus(
         bookingId,
         { status: "pending" }
       );

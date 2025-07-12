@@ -180,7 +180,7 @@ export default class PaymentRepository implements IPaymentRepository {
         {
           $group: {
             _id: null,
-            totalAmount: { $sum: "$amount" },
+            totalAmount: { $sum: "$total" },
             totalCount: { $count: {} },
           },
         },

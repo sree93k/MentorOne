@@ -24,8 +24,9 @@ import CalendarRepository from "../../repositories/implementations/CalenderRepos
 import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+
+import BookingService from "./Bookingservice";
+import { IBookingService } from "../interface/IBookingService";
 import { EMentor } from "../../entities/mentorEntity";
 import mongoose from "mongoose";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
@@ -60,7 +61,7 @@ export default class MentorProfileService implements IMentorProfileService {
   private SlotRepository: ISlotRepository;
   private CalendarRepository: ICalendarRepository;
   private PriorityDMRepository: IPriorityDMRepository;
-  private BookingRepository: IBookingRepository;
+  private BookingService: IBookingService;
 
   constructor() {
     this.UserRepository = new UserRepository();
@@ -71,7 +72,7 @@ export default class MentorProfileService implements IMentorProfileService {
     this.SlotRepository = new SlotRepository();
     this.CalendarRepository = new CalendarRepository();
     this.PriorityDMRepository = new PriorityDMRepository();
-    this.BookingRepository = new BookingRepository();
+    this.BookingService = new BookingService();
   }
 
   async welcomeData(
@@ -775,9 +776,13 @@ export default class MentorProfileService implements IMentorProfileService {
         priorityDMId,
         updateData
       );
-
-      const bookingStatusChange = await this.BookingRepository.update(
-        priorityDM?.bookingId?._id,
+      const bookingId = priorityDM?.bookingId?._id?.toString();
+      console.log(
+        "@@@@@Mentor servcie replyToPriorityDM step 7.1",
+        typeof bookingId
+      );
+      const bookingStatusChange = await this.BookingService.updateStatus(
+        bookingId,
         { status: "completed" }
       );
       console.log(

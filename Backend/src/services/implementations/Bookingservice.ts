@@ -1,7 +1,7 @@
 import { IBookingService, BookingParams } from "../interface/IBookingService";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-import ChatRepository from "../../repositories/implementations/ChatRepository";
+
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import ChatService from "./ChatService";
 import { IChatService } from "../interface/IChatService";
@@ -15,7 +15,7 @@ import { getIO } from "../../utils/socket/notification";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import { IChatRepository } from "../../repositories/interface/IChatRepository";
+
 import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
@@ -58,7 +58,6 @@ interface RescheduleParams {
 export default class BookingService implements IBookingService {
   private bookingRepository: IBookingRepository;
   private paymentRepository: IPaymentRepository;
-  private chatRepository: IChatRepository;
   private serviceRepository: IServiceRepository;
   private chatService: IChatService;
   private userRepository: IUserRepository;
@@ -69,9 +68,8 @@ export default class BookingService implements IBookingService {
   constructor() {
     this.bookingRepository = new BookingRepository();
     this.paymentRepository = new PaymentRepository();
-    this.chatRepository = new ChatRepository();
-    this.serviceRepository = new ServiceRepository();
     this.chatService = new ChatService();
+    this.serviceRepository = new ServiceRepository();
     this.userRepository = new UserRepository();
     this.notificationService = new NotificationService();
     this.walletRepository = new WalletRepository();
@@ -882,7 +880,7 @@ export default class BookingService implements IBookingService {
         paymentTransfer
       );
       // Update chat isActive field
-      const chatUpdate = await this.chatRepository.updateByBookingId(
+      const chatUpdate = await this.chatService.updateByBookingId(
         bookingId,
         isActive
       );
@@ -903,30 +901,6 @@ export default class BookingService implements IBookingService {
     }
   }
 
-  // async updateResheduleBooking(
-  //   bookingId: string,
-  //   paylaod: object
-  // ): Promise<any> {
-  //   try {
-  //     console.log("BookingService updateBookingStatus step 1", {
-  //       bookingId,
-  //       paylaod,
-  //     });
-
-  //     // Update booking status
-  //     const booking = await this.bookingRepository.update(bookingId, paylaod);
-
-  //     console.log("BookingService updateBookingStatus step 3 booking", booking);
-  //     return booking;
-  //   } catch (error: any) {
-  //     console.error("BookingService updateBookingStatus error", error);
-  //     throw new Error(
-  //       process.env.NODE_ENV === "development"
-  //         ? error.message
-  //         : "Failed to update booking status"
-  //     );
-  //   }
-  // }
   async updateResheduleBooking(
     userId: string,
     bookingId: string,
@@ -1124,6 +1098,30 @@ export default class BookingService implements IBookingService {
       return { services, total };
     } catch (error: any) {
       throw new Error(`Failed to fetch services: ${error.message}`);
+    }
+  }
+
+  async findByMentee(menteeId: string): Promise<EBooking[]> {
+    try {
+      const bookingData = await this.bookingRepository.findByMentee(menteeId);
+      return bookingData;
+    } catch (error) {
+      throw new Error(`Failed to fetch bookings: ${error}`);
+    }
+  }
+
+  async updateStatus(
+    bookingId: string,
+    status: Partial<EBooking>
+  ): Promise<EBooking[]> {
+    try {
+      const bookingData = await this.bookingRepository.update(
+        bookingId,
+        status
+      );
+      return bookingData;
+    } catch (error) {
+      throw new Error(`Failed to fetch bookings: ${error}`);
     }
   }
 }

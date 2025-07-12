@@ -11,7 +11,7 @@ import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
 import UploadService from "../../services/implementations/UploadService";
 import { IMentorProfileService } from "../../services/interface/IMentorProfileService";
-import MentorProfileService from "../../services/implementations/MentorProfileService";
+import MentorProfileService from "../../services/implementations/MentorService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
 import CalendarService from "../../services/implementations/CalenderService";
 import { HttpStatus } from "../../constants/HttpStatus";
