@@ -3,17 +3,26 @@
 //   IPaymentService,
 //   CreateCheckoutSessionParams,
 //   Payment,
+//   CreatePaymentDTO,
+//   CreateSimplePaymentDTO,
+//   UpdatePaymentDTO,
 // } from "../interface/IPaymentService";
 // import Stripe from "stripe";
 // import PaymentRepository from "../../repositories/implementations/PaymentRepository";
 // import UserRepository from "../../repositories/implementations/UserRepository";
 // import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 // import WalletRepository from "../../repositories/implementations/WalletRepository";
+// import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
+// import { IUserRepository } from "../../repositories/interface/IUserRepository";
+// import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
+// import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
+// import { EPayment } from "../../entities/paymentEntity";
+
 // export default class PaymentService implements IPaymentService {
-//   private paymentRepository: PaymentRepository;
-//   private userRepository: UserRepository;
-//   private serviceRepository: ServiceRepository;
-//   private walletRepository: WalletRepository;
+//   private paymentRepository: IPaymentRepository;
+//   private userRepository: IUserRepository;
+//   private serviceRepository: IServiceRepository;
+//   private walletRepository: IWalletRepository;
 
 //   constructor() {
 //     this.paymentRepository = new PaymentRepository();
@@ -22,6 +31,157 @@
 //     this.walletRepository = new WalletRepository();
 //   }
 
+//   // Complete payment creation method (for saveBookingAndPayment)
+//   async createPayment(data: CreatePaymentDTO): Promise<EPayment> {
+//     try {
+//       console.log("PaymentService createPayment step 1", data);
+
+//       // Validate required fields for complete payment
+//       if (
+//         !data.bookingId ||
+//         !data.menteeId ||
+//         !data.mentorId ||
+//         !data.amount ||
+//         !data.transactionId ||
+//         data.platformPercentage === undefined ||
+//         data.platformCharge === undefined ||
+//         data.total === undefined
+//       ) {
+//         throw new Error(
+//           "Missing required payment fields for complete payment creation"
+//         );
+//       }
+
+//       if (data.amount <= 0 || data.total <= 0) {
+//         throw new Error("Payment amounts must be positive");
+//       }
+
+//       const payment = await this.paymentRepository.create(data);
+//       console.log("PaymentService createPayment step 2", payment._id);
+
+//       return payment;
+//     } catch (error: any) {
+//       console.error("Error in PaymentService createPayment:", error);
+//       throw new Error(`Failed to create payment: ${error.message}`);
+//     }
+//   }
+
+//   // Simplified payment creation method (for bookService)
+//   async createSimplePayment(data: CreateSimplePaymentDTO): Promise<EPayment> {
+//     try {
+//       console.log("PaymentService createSimplePayment step 1", data);
+
+//       // Validate required fields for simple payment
+//       if (
+//         !data.bookingId ||
+//         !data.menteeId ||
+//         !data.amount ||
+//         !data.transactionId
+//       ) {
+//         throw new Error(
+//           "Missing required payment fields for simple payment creation"
+//         );
+//       }
+
+//       if (data.amount <= 0) {
+//         throw new Error("Payment amount must be positive");
+//       }
+
+//       // Set default values for optional fields
+//       const paymentData = {
+//         ...data,
+//         mentorId: data.mentorId || data.menteeId, // Fallback if mentorId not provided
+//         platformPercentage: data.platformPercentage || 15, // Default 15%
+//         platformCharge: data.platformCharge || data.amount * 0.15, // Calculate if not provided
+//         total: data.total || data.amount, // Use amount if total not provided
+//       };
+
+//       const payment = await this.paymentRepository.create(paymentData);
+//       console.log("PaymentService createSimplePayment step 2", payment._id);
+
+//       return payment;
+//     } catch (error: any) {
+//       console.error("Error in PaymentService createSimplePayment:", error);
+//       throw new Error(`Failed to create simple payment: ${error.message}`);
+//     }
+//   }
+
+//   // Update payment by booking ID
+//   async updatePaymentByBookingId(
+//     bookingId: string,
+//     data: UpdatePaymentDTO
+//   ): Promise<EPayment | null> {
+//     try {
+//       console.log("PaymentService updatePaymentByBookingId step 1", {
+//         bookingId,
+//         data,
+//       });
+
+//       if (!bookingId) {
+//         throw new Error("Booking ID is required");
+//       }
+
+//       // Add updatedAt timestamp
+//       const updateData = {
+//         ...data,
+//         updatedAt: new Date(),
+//       };
+
+//       const updatedPayment = await this.paymentRepository.updateByBookingId(
+//         bookingId,
+//         updateData
+//       );
+//       console.log(
+//         "PaymentService updatePaymentByBookingId step 2",
+//         updatedPayment?._id
+//       );
+
+//       return updatedPayment;
+//     } catch (error: any) {
+//       console.error("Error in PaymentService updatePaymentByBookingId:", error);
+//       throw new Error(`Failed to update payment: ${error.message}`);
+//     }
+//   }
+
+//   // Find payment by ID
+//   async findPaymentById(id: string): Promise<EPayment | null> {
+//     try {
+//       console.log("PaymentService findPaymentById step 1", id);
+
+//       if (!id) {
+//         throw new Error("Payment ID is required");
+//       }
+
+//       const payment = await this.paymentRepository.findById(id);
+//       console.log("PaymentService findPaymentById step 2", payment?._id);
+
+//       return payment;
+//     } catch (error: any) {
+//       console.error("Error in PaymentService findPaymentById:", error);
+//       throw new Error(`Failed to find payment: ${error.message}`);
+//     }
+//   }
+
+//   // Find payment by booking ID
+//   async findPaymentByBookingId(bookingId: string): Promise<EPayment | null> {
+//     try {
+//       console.log("PaymentService findPaymentByBookingId step 1", bookingId);
+
+//       if (!bookingId) {
+//         throw new Error("Booking ID is required");
+//       }
+
+//       const payment = await this.paymentRepository.findByBookingId(bookingId);
+//       console.log("PaymentService findPaymentByBookingId step 2", payment?._id);
+
+//       return payment;
+//     } catch (error: any) {
+//       console.error("Error in PaymentService findPaymentByBookingId:", error);
+//       throw new Error(`Failed to find payment by booking ID: ${error.message}`);
+//     }
+//   }
+
+//   // All your existing methods remain the same...
 //   async createCheckoutSession(
 //     params: CreateCheckoutSessionParams
 //   ): Promise<Stripe.Checkout.Session> {
@@ -60,15 +220,11 @@
 //         console.error("Missing required fields:", params);
 //         throw new Error("Missing required fields");
 //       }
-//       console.log("payment service createCheckoutSession params: step 2");
 
 //       if (amount <= 0 || platformCharge < 0 || total <= 0) {
 //         console.error("Invalid amounts:", { amount, platformCharge, total });
 //         throw new Error("Amounts must be valid");
 //       }
-
-//       console.log("payment service createCheckoutSession params: step 3");
-//       console.log("Calling stripe.checkout.sessions.create");
 
 //       const session = await stripe.checkout.sessions.create({
 //         payment_method_types: ["card"],
@@ -80,7 +236,7 @@
 //                 name: "Mentorship Session",
 //                 metadata: { serviceId, mentorId, menteeId },
 //               },
-//               unit_amount: Math.round(total * 100), // Use total for Stripe
+//               unit_amount: Math.round(total * 100),
 //             },
 //             quantity: 1,
 //           },
@@ -108,6 +264,7 @@
 //           total: total.toString(),
 //         },
 //       });
+
 //       // Initialize mentor's wallet if it doesn't exist
 //       let wallet = await this.walletRepository.findByUserId(mentorId);
 //       if (!wallet) {
@@ -219,9 +376,10 @@
 //       return result;
 //     } catch (error: any) {
 //       console.error("Error in getAllMenteePayments service:", error);
-//       throw new Error("Failed to fetch mentee payments", error.message);
+//       throw new Error(`Failed to fetch mentee payments: ${error.message}`);
 //     }
 //   }
+
 //   async getAllMentorPayments(mentorId: string): Promise<{
 //     payments: Payment[];
 //     totalAmount: number;
@@ -237,9 +395,10 @@
 //       return result;
 //     } catch (error: any) {
 //       console.error("Error in getAllMentorPayments service:", error);
-//       throw new Error("Failed to fetch mentee payments", error.message);
+//       throw new Error(`Failed to fetch mentor payments: ${error.message}`);
 //     }
 //   }
+
 //   async getAllPayments(
 //     page: number,
 //     limit: number,
@@ -301,7 +460,7 @@
 //       return { payments, total };
 //     } catch (error: any) {
 //       console.error("Error in getAllPayments service:", error);
-//       throw new Error("Failed to fetch payments", error.message);
+//       throw new Error(`Failed to fetch payments: ${error.message}`);
 //     }
 //   }
 
@@ -333,7 +492,7 @@
 //         throw new Error("Mentor not found");
 //       }
 
-//       const transferAmount = payment.amount; // Excludes platformCharge
+//       const transferAmount = payment.amount;
 
 //       const wallet = await this.walletRepository.releasePendingBalance(
 //         mentorId,
@@ -349,7 +508,7 @@
 //       const transfer = await stripe.transfers.create({
 //         amount: Math.round(transferAmount * 100),
 //         currency: "inr",
-//         destination: mentor?.stripeAccountId, // Assumes mentor has a connected Stripe account
+//         destination: mentor?.stripeAccountId,
 //         transfer_group: paymentId,
 //       });
 
@@ -363,7 +522,7 @@
 //       console.error("Error in transferToMentor service:", error);
 //       throw error instanceof Error
 //         ? error
-//         : new Error("Failed to transfer payment to mentor", error.message);
+//         : new Error(`Failed to transfer payment to mentor: ${error.message}`);
 //     }
 //   }
 
@@ -392,24 +551,24 @@ import {
 import Stripe from "stripe";
 import PaymentRepository from "../../repositories/implementations/PaymentRepository";
 import UserRepository from "../../repositories/implementations/UserRepository";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import { IServiceService } from "../interface/IServiceServices"; // Changed import
+import ServiceService from "./ServiceServices"; // Changed import
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 import { EPayment } from "../../entities/paymentEntity";
 
 export default class PaymentService implements IPaymentService {
   private paymentRepository: IPaymentRepository;
   private userRepository: IUserRepository;
-  private serviceRepository: IServiceRepository;
+  private serviceService: IServiceService; // Changed from serviceRepository
   private walletRepository: IWalletRepository;
 
   constructor() {
     this.paymentRepository = new PaymentRepository();
     this.userRepository = new UserRepository();
-    this.serviceRepository = new ServiceRepository();
+    this.serviceService = new ServiceService(); // Changed to use ServiceService
     this.walletRepository = new WalletRepository();
   }
 
