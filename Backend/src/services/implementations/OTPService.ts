@@ -8,7 +8,7 @@ import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
 
-export default class OTPServices implements IOTPService {
+export default class OTPService implements IOTPService {
   private OTPRepository: IOTPRepository;
 
   constructor() {
@@ -129,6 +129,15 @@ export default class OTPServices implements IOTPService {
     } catch (error) {
       console.log("check OTP exists error", error);
       return null;
+    }
+  }
+
+  async getUserData(email: string): Promise<EUsers | null> {
+    try {
+      const OtpUser = await this.OTPRepository.userData(email);
+      return OtpUser;
+    } catch (error: any) {
+      throw new Error("Failed to create notification", error.message);
     }
   }
 }

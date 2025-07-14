@@ -14,9 +14,6 @@ export default class WalletRepository
   async createWallet(userId: string): Promise<EWallet> {
     console.log("WALLET REPOSITRORY");
     console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
 
     const wallet = new Wallet({ userId });
     return wallet.save();
@@ -33,10 +30,6 @@ export default class WalletRepository
     paymentId: string,
     description: string
   ): Promise<EWallet> {
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
     console.log("WALLET REPOSITRORY");
     console.log("WALLET REPOSITRORY");
     const wallet = await Wallet.findOne({ userId });
@@ -74,8 +67,6 @@ export default class WalletRepository
     console.log("WALLET REPOSITRORY", userId);
     console.log("WALLET REPOSITRORY", amount);
     console.log("WALLET REPOSITRORY", paymentId);
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
 
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {

@@ -3,8 +3,9 @@ import { EUsers } from "../../entities/userEntity";
 import { IUserAuthService } from "../interface/IUserAuthService";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import UserRepository from "../../repositories/implementations/UserRepository";
-import OTPRepository from "../../repositories/implementations/OTPRepository";
-import { IOTPRepository } from "../../repositories/interface/IOTPRepository";
+import OTPServices from "./OTPService";
+import { IOTPService } from "../interface/IOTPService";
+
 import UserModel from "../../models/userModel";
 import {
   accessTokenForReset,
@@ -17,11 +18,11 @@ import ApiResponse from "../../utils/apiResponse";
 
 export default class UserAuthService implements IUserAuthService {
   private UserRepository: IUserRepository;
-  private OTPRepository: IOTPRepository;
+  private OTPService: IOTPService;
 
   constructor() {
     this.UserRepository = new UserRepository();
-    this.OTPRepository = new OTPRepository();
+    this.OTPService = new OTPServices();
   }
 
   async createUser(email: Partial<EUsers>): Promise<{
@@ -31,8 +32,12 @@ export default class UserAuthService implements IUserAuthService {
   }> {
     try {
       console.log("im user auth servioce", email);
+      const emailString = email.email;
+      if (!emailString) {
+        throw new Error("Email is required");
+      }
 
-      const userData = await this.OTPRepository.userData(email);
+      const userData = await this.OTPService.getUserData(emailString);
       console.log("user data at cerate user service", userData);
 
       const newUser = new UserModel({ ...userData });
