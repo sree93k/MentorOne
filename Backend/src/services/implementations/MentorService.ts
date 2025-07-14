@@ -1,6 +1,11 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IMentorService } from "../interface/IMentorService";
+import {
+  UpdateMentorDTO,
+  UpdateMentorFieldDTO,
+  UpdateMentorProfileDTO,
+} from "../../dtos/mentorDTO";
 import { EUsers } from "../../entities/userEntity";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
@@ -610,6 +615,24 @@ export default class MentorService implements IMentorService {
     }
   }
 
+  async findMentorById(mentorId: string): Promise<EMentor | null> {
+    try {
+      console.log("getMentorById service step 1", { mentorId });
+      const mentor = await this.MentorRepository.findById(mentorId);
+      console.log("getMentorById service step 2: Mentor fetched", mentor);
+
+      return mentor;
+    } catch (error: any) {
+      console.log("getMentorById service step 3: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw error instanceof Error
+        ? error
+        : new Error(`Failed to fetch mentor: ${error.message}`);
+    }
+  }
+
   async isApprovalChecking(
     userId: string
   ): Promise<{ isApproved: string | null; approvalReason: string | null }> {
@@ -894,6 +917,72 @@ export default class MentorService implements IMentorService {
       return updatedMentor;
     } catch (error: any) {
       throw new Error(error.message || "Failed to update top testimonials");
+    }
+  }
+
+  async updateMentorField(
+    id: string,
+    data: UpdateMentorFieldDTO
+  ): Promise<EMentor | null> {
+    try {
+      const { field, status, reason } = data;
+
+      // Validate the field being updated
+      if (!field || !status) {
+        throw new Error("Field and status are required");
+      }
+
+      const mentor = await this.MentorRepository.updateField(
+        id,
+        field,
+        status,
+        reason
+      );
+
+      if (!mentor) {
+        throw new Error(`Mentor with id ${id} not found`);
+      }
+
+      return mentor;
+    } catch (error: any) {
+      console.error(`Error updating mentor field ${data.field}:`, error);
+      throw new Error(error.message || "Failed to update mentor field");
+    }
+  }
+  async updateMentor(
+    id: string,
+    data: UpdateMentorDTO
+  ): Promise<EMentor | null> {
+    try {
+      // Validate input
+      if (!id) {
+        throw new Error("Mentor ID is required");
+      }
+
+      if (!data || Object.keys(data).length === 0) {
+        throw new Error("Update data is required");
+      }
+
+      // Use the base repository update method
+      const updatedMentor = await this.MentorRepository.update(id, data);
+
+      if (!updatedMentor) {
+        throw new Error(`Mentor with id ${id} not found`);
+      }
+
+      return updatedMentor;
+    } catch (error: any) {
+      console.error("Error updating mentor:", error);
+      throw new Error(error.message || "Failed to update mentor");
+    }
+  }
+
+  async createMentor(data: EMentor): Promise<EMentor | null> {
+    try {
+      const mentor = await this.MentorRepository.create(data);
+      return mentor;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update mentor");
     }
   }
 }
