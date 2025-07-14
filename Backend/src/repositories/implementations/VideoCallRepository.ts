@@ -1,8 +1,15 @@
 import VideoCall from "../../models/VideoCall";
 import { EVideoCall } from "../../entities/videoCallEntity";
 import IVideoCallRepository from "../interface/IVideoCallRepository";
+import BaseRepository from "./BaseRepository";
 
-class VideoCallRepository implements IVideoCallRepository {
+export default class VideoCallRepository
+  extends BaseRepository<EVideoCall>
+  implements IVideoCallRepository
+{
+  constructor() {
+    super(VideoCall);
+  }
   async createMeeting(meetingData: Partial<EVideoCall>): Promise<EVideoCall> {
     const videoCall = new VideoCall(meetingData);
     return await videoCall.save();
@@ -52,5 +59,3 @@ class VideoCallRepository implements IVideoCallRepository {
     await VideoCall.updateOne({ meetingId }, { $set: { endedAt: new Date() } });
   }
 }
-
-export default VideoCallRepository;

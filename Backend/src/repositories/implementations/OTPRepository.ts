@@ -1,10 +1,16 @@
 import { EUsers } from "../../entities/userEntity";
 import { EOTP } from "../../entities/OTPEntity";
 import { IOTPRepository } from "../interface/IOTPRepository";
-
+import BaseRepository from "./BaseRepository";
 import OTPModel from "../../models/otpModel";
 
-export default class OTPRepository implements IOTPRepository {
+export default class OTPRepository
+  extends BaseRepository<EOTP>
+  implements IOTPRepository
+{
+  constructor() {
+    super(OTPModel);
+  }
   async saveOTP(otp: EOTP): Promise<EOTP | null> {
     try {
       console.log("repo save otp 1", otp);

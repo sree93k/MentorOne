@@ -1,8 +1,6 @@
 import { IAdminService } from "../interface/IAdminService";
 import Users from "../../models/userModel";
 import Mentor from "../../models/mentorModel";
-import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
-import MenteeRepository from "../../repositories/implementations/MenteeRepository";
 import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
 import MentorRepository from "../../repositories/implementations/MentorRepository";
 import { EUsers } from "../../entities/userEntity";
@@ -17,21 +15,23 @@ import { IBookingService } from "../interface/IBookingService";
 import { EBooking } from "../../entities/bookingEntity";
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
+import MenteeService from "./MenteeService";
+import { IMenteeService } from "../interface/IMenteeService";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements IAdminService {
-  private MenteeRepository: IMenteeRepository;
   private MentorRepository: IMentorRepository;
   private ServiceRepository: IServiceRepository;
   private BookingService: IBookingService;
   private UserRepository: IUserRepository;
+  private MenteeServcie: IMenteeService;
 
   constructor() {
-    this.MenteeRepository = new MenteeRepository();
     this.MentorRepository = new MentorRepository();
     this.ServiceRepository = new ServiceRepository();
     this.BookingService = new BookingService();
     this.UserRepository = new UserRepository();
+    this.MenteeServcie = new MenteeService();
   }
 
   async fetchAllUsers(
@@ -148,7 +148,7 @@ export default class AdminService implements IAdminService {
 
       // Fetch mentee data if user has mentee role
       if (user.role?.includes("mentee") && user.menteeId) {
-        menteeData = await this.MenteeRepository.getMentee(
+        menteeData = await this.MenteeServcie.findMenteeById(
           user.menteeId._id.toString()
         );
         console.log(
@@ -169,7 +169,7 @@ export default class AdminService implements IAdminService {
       // Fetch mentor data if user has mentor role
       if (user.role?.includes("mentor") && user.mentorId) {
         mentorData = await this.MentorRepository.getMentor(
-          user.mentorId.toString()
+          user.mentorId._id.toString()
         );
         console.log(
           "AdminService getUserDatas step 5 - mentorData:",

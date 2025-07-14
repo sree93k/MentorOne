@@ -10,6 +10,7 @@ export default class MenteeRepository
   constructor() {
     super(Mentee);
   }
+
   async createMentee(data: {
     joinPurpose: string[];
     careerGoals: string;

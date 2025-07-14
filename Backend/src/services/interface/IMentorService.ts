@@ -16,7 +16,7 @@ interface GetAllServicesResponse {
   totalPages: number;
   currentPage: number;
 }
-export interface IMentorProfileService {
+export interface IMentorService {
   welcomeData(formData: object, id: string): Promise<EUsers | null>;
   profileDatas(userId: string): Promise<EUsers | null>;
   createService(formData: Record<string, any>): Promise<EService | null>;

@@ -1,8 +1,15 @@
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import SchoolExperience from "../../models/schoolExperienceModel";
 import { ICareerSchool } from "../interface/ICareerSchool";
+import BaseRepository from "./BaseRepository";
 
-export default class CareerSchool implements ICareerSchool {
+export default class CareerSchool
+  extends BaseRepository<ESchoolExperience>
+  implements ICareerSchool
+{
+  constructor() {
+    super(SchoolExperience);
+  }
   async schoolStudentFormDataCreate(
     formData: ESchoolExperience,
     id: string

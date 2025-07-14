@@ -1,6 +1,6 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Document } from "mongoose";
 
-export interface IWallet {
+export interface EWallet extends Document {
   userId: mongoose.Types.ObjectId; // Mentor ID
   balance: number; // Available balance
   pendingBalance: number; // Pending transfers

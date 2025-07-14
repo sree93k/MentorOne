@@ -6,7 +6,6 @@ import {
 } from "../interface/IBlockedRepository";
 import BaseRepository from "./BaseRepository";
 import { EBlockedDate } from "../../entities/blockedEntity";
-import { response } from "express";
 
 export default class BlockedRepository
   extends BaseRepository<EBlockedDate>

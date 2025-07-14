@@ -86,7 +86,6 @@ import {
   IPaginatedResult,
   IUpdateResult,
   IDeleteResult,
-  IPopulateOptions,
 } from "../interface/IBaseRepository";
 
 export default class BaseRepository<T extends Document>

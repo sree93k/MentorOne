@@ -1,10 +1,17 @@
 import Testimonial from "../../models/testimonialsModel";
 import Booking from "../../models/bookingModel";
 import { ITestimonialRepository } from "../interface/ITestimonialRepository";
-
 import { ETestimonial } from "../../entities/testimonialEntity";
 import mongoose from "mongoose";
-export default class TestimonialRepository implements ITestimonialRepository {
+import BaseRepository from "./BaseRepository";
+
+export default class TestimonialRepository
+  extends BaseRepository<ETestimonial>
+  implements ITestimonialRepository
+{
+  constructor() {
+    super(Testimonial);
+  }
   async create(data: any): Promise<ETestimonial> {
     try {
       console.log("TestimonialRepository create step 1", data);

@@ -1,8 +1,15 @@
 import { IMessageRepository } from "../interface/IMessageRepository";
 import Message from "../../models/messageModel";
 import { EMessage } from "../../entities/messageEntity";
+import BaseRepository from "./BaseRepository";
 
-export default class MessageRepository implements IMessageRepository {
+export default class MessageRepository
+  extends BaseRepository<EMessage>
+  implements IMessageRepository
+{
+  constructor() {
+    super(Message);
+  }
   async create(data: any): Promise<EMessage> {
     try {
       const message = new Message(data);

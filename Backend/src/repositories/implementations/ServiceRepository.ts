@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import { IServiceRepository } from "../interface/IServiceRepository";
-
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
+import BaseRepository from "./BaseRepository";
+
 interface GetAllServicesParams {
   page: number;
   limit: number;
@@ -15,7 +16,13 @@ interface GetAllServicesResponse {
   totalCount: number;
 }
 
-export default class ServiceRepository implements IServiceRepository {
+export default class ServiceRepository
+  extends BaseRepository<EService>
+  implements IServiceRepository
+{
+  constructor() {
+    super(Service);
+  }
   async getAllServices(
     mentorId: string,
     params: GetAllServicesParams

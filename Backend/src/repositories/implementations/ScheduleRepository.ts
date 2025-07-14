@@ -1,12 +1,19 @@
 import mongoose from "mongoose";
 import Schedule from "../../models/scheduleModel";
-
+import { ESchedule } from "../../entities/scheduleEntity";
 import {
   IScheduleRepository,
   ScheduleData,
 } from "../interface/IScheduleRepository";
+import BaseRepository from "./BaseRepository";
 
-export default class ScheduleRepository implements IScheduleRepository {
+export default class ScheduleRepository
+  extends BaseRepository<ESchedule>
+  implements IScheduleRepository
+{
+  constructor() {
+    super(Schedule);
+  }
   async getSchedules(mentorId: string | mongoose.Types.ObjectId) {
     return await Schedule.find({
       mentorId: new mongoose.Types.ObjectId(mentorId),

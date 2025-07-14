@@ -1,8 +1,14 @@
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import WorkExperience from "../../models/professionalExperienceModel";
 import { ICareerProfessional } from "../interface/ICareerProfessional";
-
-export default class CareerProfessional implements ICareerProfessional {
+import BaseRepository from "./BaseRepository";
+export default class CareerProfessional
+  extends BaseRepository<EWorkExperience>
+  implements ICareerProfessional
+{
+  constructor() {
+    super(WorkExperience);
+  }
   async professionalFormDataCreate(
     formData: EWorkExperience & { userType: string },
     id: string

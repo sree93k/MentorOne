@@ -1,8 +1,16 @@
 import mongoose from "mongoose";
 import Policy from "../../models/policyModel";
 import { IPolicyRepository, PolicyData } from "../interface/IPolicyRepository";
+import { EPolicy } from "../../entities/policyEntity";
+import BaseRepository from "./BaseRepository";
 
-export default class PolicyRepository implements IPolicyRepository {
+export default class PolicyRepository
+  extends BaseRepository<EPolicy>
+  implements IPolicyRepository
+{
+  constructor() {
+    super(Policy);
+  }
   async getPolicy(mentorId: string | mongoose.Types.ObjectId) {
     return await Policy.findOne({
       userId: new mongoose.Types.ObjectId(mentorId),

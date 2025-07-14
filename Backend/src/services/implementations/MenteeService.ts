@@ -1,6 +1,6 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IMenteeProfileService } from "../interface/IMenteeService";
+import { IMenteeService } from "../interface/IMenteeService";
 import { EUsers } from "../../entities/userEntity";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
@@ -27,6 +27,7 @@ import { EService } from "../../entities/serviceEntity";
 import { ETestimonial } from "../../entities/testimonialEntity";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
+import { EMentee } from "../../entities/menteeEntiry";
 
 interface WelcomeFormData {
   careerGoal: string;
@@ -41,7 +42,7 @@ interface DashboardData {
   topTestimonials: ETestimonial[];
 }
 
-export default class MenteeProfileService implements IMenteeProfileService {
+export default class MenteeService implements IMenteeService {
   private MenteeRepository: IMenteeRepository;
   private PriorityDMRepository: IPriorityDMRepository;
   private ServiceRepository: IServiceRepository;
@@ -394,6 +395,27 @@ export default class MenteeProfileService implements IMenteeProfileService {
       return { topServices, topMentors, topTestimonials };
     } catch (error: any) {
       console.error("getDashboardData service error", error);
+      throw new Error(`Failed to fetch dashboard data: ${error.message}`);
+    }
+  }
+
+  async findMenteeById(id: string): Promise<EMentee | null> {
+    try {
+      const mentee = await this.MenteeRepository.findById(id);
+      return mentee;
+    } catch (error: any) {
+      throw new Error(`Failed to fetch dashboard data: ${error.message}`);
+    }
+  }
+
+  async updateMentee(
+    id: string,
+    payload: Partial<EMentee>
+  ): Promise<EMentee | null> {
+    try {
+      const mentee = await this.MenteeRepository.update(id, payload);
+      return mentee;
+    } catch (error: any) {
       throw new Error(`Failed to fetch dashboard data: ${error.message}`);
     }
   }

@@ -1,6 +1,6 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IMentorProfileService } from "../interface/IMentorService";
+import { IMentorService } from "../interface/IMentorService";
 import { EUsers } from "../../entities/userEntity";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
@@ -52,7 +52,7 @@ interface GetAllServicesResponse {
   totalPages: number;
   currentPage: number;
 }
-export default class MentorProfileService implements IMentorProfileService {
+export default class MentorService implements IMentorService {
   private UserRepository: IUserRepository;
   private MentorRepository: IMentorRepository;
   private ServiceRepository: IServiceRepository;

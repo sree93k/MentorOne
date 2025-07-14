@@ -1,8 +1,15 @@
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import CollegeExperience from "../../models/CollegeExperienceModel";
 import { ICareerCollege } from "../interface/ICareerCollege";
+import BaseRepository from "./BaseRepository";
 
-export default class CareerCollege implements ICareerCollege {
+export default class CareerCollege
+  extends BaseRepository<ECollegeExperience>
+  implements ICareerCollege
+{
+  constructor() {
+    super(CollegeExperience);
+  }
   async collegeStudentFormDataCreate(
     formData: ECollegeExperience,
     id: string
