@@ -1,6 +1,5 @@
 import { IBookingService, BookingParams } from "../interface/IBookingService";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
-import PaymentRepository from "../../repositories/implementations/PaymentRepository";
 import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import ChatService from "./ChatService";
 import { IChatService } from "../interface/IChatService";
@@ -13,13 +12,14 @@ import { getIO } from "../../utils/socket/notification";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
 import BlockedRepository from "../../repositories/implementations/BlockedRepository";
 import { IBlockedRepository } from "../../repositories/interface/IBlockedRepository";
 import { EBooking } from "../../entities/bookingEntity";
+import PaymentService from "./PaymentService";
+import { IPaymentService } from "../interface/IPaymentService";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -53,7 +53,7 @@ interface RescheduleParams {
 
 export default class BookingService implements IBookingService {
   private bookingRepository: IBookingRepository;
-  private paymentRepository: IPaymentRepository;
+  private PaymentService: IPaymentService;
   private serviceRepository: IServiceRepository;
   private chatService: IChatService;
   private userRepository: IUserRepository;
@@ -63,7 +63,7 @@ export default class BookingService implements IBookingService {
   private blockedRepository: IBlockedRepository;
   constructor() {
     this.bookingRepository = new BookingRepository();
-    this.paymentRepository = new PaymentRepository();
+    this.PaymentService = new PaymentService();
     this.chatService = new ChatService();
     this.serviceRepository = new ServiceRepository();
     this.userRepository = new UserRepository();
@@ -184,7 +184,7 @@ export default class BookingService implements IBookingService {
         slotIndex,
       });
 
-      const payment = await this.paymentRepository.create({
+      const payment = await this.PaymentService.createPayment({
         bookingId: booking._id,
         menteeId,
         mentorId,
@@ -195,17 +195,6 @@ export default class BookingService implements IBookingService {
         status: "completed",
         transactionId: sessionId,
       });
-
-      // Add to mentor's pending balance
-      // let wallet = await this.walletRepository.findByUserId(mentorId);
-      // if (!wallet) {
-      //   wallet = await this.walletRepository.createWallet(mentorId);
-      // }
-      // await this.walletRepository.addPendingBalance(
-      //   mentorId,
-      //   amount,
-      //   payment._id.toString()
-      // );
 
       let chat;
       if (service.oneToOneType === "chat") {
@@ -328,7 +317,7 @@ export default class BookingService implements IBookingService {
       booking.startTime
     );
     console.log("cancel Booking Booking servcie step 4", updatedBooking);
-    const updatePayment = await this.paymentRepository.updateByBookingId(
+    const updatePayment = await this.PaymentService.updatePaymentByBookingId(
       bookingId,
       {
         status: "refunded",
@@ -455,12 +444,24 @@ export default class BookingService implements IBookingService {
         menteeId,
         status: "confirmed",
       });
-      const payment = await this.paymentRepository.create({
-        bookingId: booking._id,
+      // const payment = await this.PaymentService.createPayment({
+      //   bookingId: booking._id,
+      //   menteeId,
+      //   amount: service.amount,
+      //   status: "completed",
+      //   transactionId: sessionId,
+      // });
+      const payment = await this.PaymentService.createSimplePayment({
+        bookingId: booking._id.toString(),
         menteeId,
+        mentorId: mentorId,
         amount: service.amount,
         status: "completed",
         transactionId: sessionId,
+        // Optional fields will be calculated automatically
+        platformPercentage: 15,
+        platformCharge: service.amount * 0.15,
+        total: service.amount,
       });
       console.log("bookingservice bookService step 2");
 
@@ -866,10 +867,10 @@ export default class BookingService implements IBookingService {
         isActive
       );
 
-      const paymentTransfer = await this.paymentRepository.updateByBookingId(
-        bookingId,
-        { status: "transferred" }
-      );
+      const paymentTransfer =
+        await this.PaymentService.updatePaymentByBookingId(bookingId, {
+          status: "transferred",
+        });
 
       console.log(
         "BookingService updateBookingServiceStatus step 1.6 paymentTransfer",
