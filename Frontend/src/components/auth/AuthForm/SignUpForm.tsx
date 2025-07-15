@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,7 @@ export function SignupForm({
     };
 
   const validateForm = () => {
-    let newErrors: TUserSignUpError = {};
+    const newErrors: TUserSignUpError = {};
 
     const fullNameError = validateFullName(username);
     if (fullNameError) newErrors.username = fullNameError;
@@ -270,25 +270,7 @@ export function SignupForm({
                     <p className="text-sm text-red-500">{errors.phone}</p>
                   )}
                 </div>
-                {/* <div className="grid gap-1">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input
-                      id="password"
-                      name="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={handleChange("password")}
-                      className="pl-10"
-                      placeholder="Enter your password"
-                    />
-                  </div>
-                  {errors.password && (
-                    <p className="text-sm text-red-500">{errors.password}</p>
-                  )}
-                </div> */}
+
                 <div className="grid gap-1">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
@@ -321,27 +303,7 @@ export function SignupForm({
                     <p className="text-sm text-red-500">{errors.password}</p>
                   )}
                 </div>
-                {/* <div className="grid gap-1">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input
-                      id="confirm-password"
-                      name="confirm-password"
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={handleChange("confirmPassword")}
-                      className="pl-10"
-                      placeholder="Confirm your password"
-                    />
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-500">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div> */}
+
                 <div className="grid gap-1">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
                   <div className="relative">
@@ -431,7 +393,10 @@ export function SignupForm({
           try {
             const verificationData = { email, otp };
             const response = await signUp(verificationData);
+            console.log("respomnse >>>>>r", response);
+
             const { userFound, accessToken } = response;
+            console.log("respomnse >>>>>r2", userFound, accessToken);
             if (!userFound || !accessToken) {
               throw new Error("Login response missing user or token");
             }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Youtube, Twitter } from "lucide-react";
+import { Youtube } from "lucide-react";
 import {
   ArrowLeft,
   Linkedin,

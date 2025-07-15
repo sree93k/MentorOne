@@ -2,7 +2,6 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { RootState } from "@/redux/store/store";
 import { useSelector } from "react-redux";
-import { RollerCoasterIcon } from "lucide-react";
 
 interface PublicRouteProps {
   element: React.ComponentType;

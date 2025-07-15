@@ -222,7 +222,7 @@ export default function PaymentModal({
           error.message || "Failed to redirect to Stripe Checkout"
         );
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Payment error:", error);
       toast.error(error.message || "Payment failed");
     } finally {

@@ -8,8 +8,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "react-hot-toast";
 import {
   getMentorSchedule,
@@ -452,23 +450,6 @@ const RescheduleModal = ({
                     )}
                   </div>
 
-                  {/* {(selectedDate || selectedTime) && (
-                    <div className="mb-6">
-                      <h3 className="font-semibold text-lg mb-2">
-                        Selected Schedule
-                      </h3>
-                      <div className="bg-white p-3 rounded-lg shadow-sm">
-                        <p className="text-sm">
-                          <span className="font-medium">Date:</span>{" "}
-                          {selectedDate || "Not selected"}
-                        </p>
-                        <p className="text-sm">
-                          <span className="font-medium">Time:</span>{" "}
-                          {selectedTime || "Not selected"}
-                        </p>
-                      </div>
-                    </div>
-                  )} */}
                   {(selectedDate || selectedTime) && (
                     <div className="mb-6">
                       <h3 className="font-semibold text-lg mb-2">

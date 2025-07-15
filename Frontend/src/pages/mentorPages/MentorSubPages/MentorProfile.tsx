@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
+import { setUser, setLoading } from "@/redux/slices/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { updateUserProfile, updateUserPassword } from "@/services/userServices";
 import { uploadProfileImage } from "@/services/uploadService";

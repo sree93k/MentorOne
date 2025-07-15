@@ -127,7 +127,7 @@ const BookingCard = ({
         const currentTime = new Date();
         console.log("bookedDateTime >>>>> STEP 1", bookedDateTime);
 
-        let rescheduleDeadline = new Date(bookedDateTime);
+        const rescheduleDeadline = new Date(bookedDateTime);
         console.log("rescheduleDeadline >>>>> STEP 2", rescheduleDeadline);
 
         const { unit, value } = policy.reschedulePeriod || {

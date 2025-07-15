@@ -6,7 +6,6 @@ import {
   Home,
   FileText,
   Phone,
-  Clock,
   Bell,
   LogOut,
   ChevronDown,
@@ -19,7 +18,6 @@ import {
   Video,
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { LogoutConfirmationModal } from "@/components/modal/Logout";
 import { logout } from "@/services/userAuthService";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +27,6 @@ import WelcomeModalForm1 from "./MentorWelcomeModal";
 import SuccessStep from "@/components/mentor/WelcomeComponents/SuccessStep";
 import {
   setError,
-  setLoading,
   setUser,
   resetUser,
   setMentorActivated,
@@ -169,7 +166,7 @@ const MentorSidebar: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { user, isAuthenticated, error, loading, isApproved } = useSelector(
+  const { user, isAuthenticated, isApproved } = useSelector(
     (state: RootState) => state.user
   );
   const isActivated = useSelector(

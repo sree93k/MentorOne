@@ -105,3 +105,41 @@ export interface TUserSignUpResponse {
   };
   message: string;
 }
+
+export interface ChatUser {
+  id: string;
+  name: string;
+  avatar: string;
+  bookingId: string;
+  lastMessage?: string;
+  timestamp?: string;
+  unread?: number;
+  isOnline?: boolean;
+  bookingStatus?: "pending" | "confirmed" | "completed";
+  isActive: boolean;
+  otherUserId?: string;
+}
+
+export interface ChatHistoryResponse {
+  data: ChatUser[];
+  message: string;
+  statusCode: number;
+  success: boolean;
+}
+
+export interface Notification {
+  _id: string;
+  recipient: string;
+  sender?: { firstName: string; lastName: string };
+  type: "payment" | "booking" | "chat";
+  content: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface OnlineStatusResponse {
+  statusCode: number;
+  data: { isOnline: boolean };
+  message: string;
+}

@@ -18,7 +18,6 @@ interface SuccessStepProps {
 const SuccessStep: React.FC<SuccessStepProps> = ({
   setLogoutModalOpen,
   loggingOut,
-  handleLogout,
 }) => {
   return (
     <motion.div

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { WelcomeFormData } from "../MentorWelcomeModal";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 interface AboutStepProps {
   formData: WelcomeFormData;

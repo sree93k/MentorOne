@@ -1,26 +1,15 @@
 // services/menteeService.ts
-import axios, { AxiosError, AxiosResponse } from "axios";
+
 import { userAxiosInstance } from "./instances/userInstance";
+import {
+  UpdateUserDataPayload,
+  Mentor,
+  ApiResponse,
+  Service,
+  DashboardData,
+} from "@/types/mentee";
 const api = userAxiosInstance;
 
-interface UpdateUserDataPayload {
-  userType: string;
-  schoolName?: string;
-  class?: string;
-  course?: string;
-  specializedIn?: string;
-  collegeName?: string;
-  startDate?: string;
-  endDate?: string;
-  experience?: string;
-  jobRole?: string;
-  company?: string;
-  currentlyWorking?: boolean;
-  city: string;
-  careerGoals?: string;
-  interestedNewcareer?: string[];
-  goals?: string[];
-}
 export const uploadMenteeWelcomeForm = async (
   formData: UpdateUserDataPayload,
   id: string,
@@ -128,42 +117,6 @@ export const userProfileData = async () => {
   }
 };
 
-interface Mentor {
-  _id: string;
-  name: string;
-  role: string;
-  company: string;
-  profileImage?: string;
-  companyBadge: string;
-  isBlocked: boolean;
-  isApproved: string;
-  bio?: string;
-  skills?: string[];
-  services?: {
-    type: string;
-    title: string;
-    description: string;
-    duration: string;
-    price: number;
-  }[];
-  education?: {
-    schoolName?: string;
-    collegeName?: string;
-    city?: string;
-  };
-  workExperience?: {
-    company: string;
-    jobRole: string;
-    city?: string;
-  };
-}
-
-interface ApiResponse {
-  status: number;
-  data: any;
-  message: string;
-  total?: number;
-}
 export const getAllMentors = async (
   page: number = 1,
   limit: number = 12,
@@ -489,74 +442,7 @@ export const getMentorPolicy = async (mentorId: string) => {
     throw new Error(error?.message || "Failed to fetch getMMentorPolicy");
   }
 };
-interface Service {
-  _id: string;
-  title: string;
-  shortDescription: string;
-  amount: number;
-  duration: number;
-  type: string;
-  technology?: string;
-  digitalProductType?: string;
-  oneToOneType?: string;
-  fileUrl?: string;
-  exclusiveContent?: any[];
-  stats?: {
-    views: number;
-    bookings: number;
-    earnings: number;
-    conversions: string;
-  };
-  mentorId: string;
-  mentorName: string;
-  mentorProfileImage: string;
-  bookingCount: number;
-  averageRating: number;
-}
 
-interface Mentor {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  profilePicture: string;
-  mentorId: {
-    _id: string;
-    bio: string;
-    skills: string[];
-  };
-  isBlocked: boolean;
-  isApproved: string;
-  bookingCount: number;
-  averageRating: number;
-}
-
-interface Testimonial {
-  _id: string;
-  menteeId: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    profilePicture: string;
-  };
-  mentorId: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  serviceId: {
-    _id: string;
-    title: string;
-  };
-  bookingId: string;
-  comment: string;
-  rating: number;
-  createdAt: Date;
-}
-interface DashboardData {
-  topServices: Service[];
-  topMentors: Mentor[];
-  topTestimonials: Testimonial[];
-}
 export const getDashboardData = async (): Promise<DashboardData> => {
   try {
     console.log("menteeService getDashboardData step 1");

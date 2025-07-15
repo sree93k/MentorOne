@@ -1,11 +1,8 @@
 import { useState } from "react";
 import {
   LayoutDashboard,
-  Bell,
   Users,
   Calendar,
-  Wallet,
-  Users2,
   LogOut,
   BadgeIndianRupee,
 } from "lucide-react";
@@ -18,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import Logo from "@/assets/logo3.png";
 import LogoName from "@/assets/logoname3.png";
 import { resetAdmin } from "@/redux/slices/adminSlice";
-import ThemeToggle from "../users/ThemeToggle";
 import AdminNotification from "../users/Notification";
 const SidebarItem = ({
   icon: Icon,
@@ -80,10 +76,6 @@ const AdminSidebar: React.FC = () => {
     if (path) {
       navigate(path);
     }
-  };
-
-  const openNotification = () => {
-    setIsNotification(true);
   };
 
   return (

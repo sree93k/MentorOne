@@ -69,7 +69,7 @@ export default function CoursesPage() {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
-          tutorial.title.toLowerCase().includes(query) ||
+          tutorial?.title?.toLowerCase().includes(query) ||
           tutorial.shortDescription.toLowerCase().includes(query) ||
           (tutorial.mentorId?.firstName &&
             tutorial.mentorId.firstName.toLowerCase().includes(query)) ||

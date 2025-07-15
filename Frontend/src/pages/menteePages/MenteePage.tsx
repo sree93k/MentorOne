@@ -18,8 +18,6 @@ import VideoCallEndPage from "@/pages/usersPage/VideoCallEndPage";
 import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
 import ServicesListing from "./subPages/ServicesListedPage";
 import NotFoundPage from "../usersPage/NotFoundPage";
-// Import the new ChatbotWidget
-import ChatbotWidget from "@/components/users/ChatBotWidget"; // Adjust path if different
 
 // Lazy loaded components (existing)
 const Footer = lazy(() => import("@/components/landing/Footer"));
@@ -29,8 +27,6 @@ const MenteeDashboard = lazy(() => import("./subPages/MenteeDashboard"));
 const MenteeProfile = lazy(() => import("./subPages/MenteeProfile"));
 const MentorsPage = lazy(() => import("./subPages/MentorsPage"));
 const CoursePage = lazy(() => import("./subPages/CoursePage"));
-const BlogPage = lazy(() => import("../usersPage/BlogPage"));
-const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
 
 const MenteePage = () => {
   return (

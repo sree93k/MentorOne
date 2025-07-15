@@ -1,5 +1,9 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
+import {
+  ChatHistoryResponse,
+  Notification,
+  OnlineStatusResponse,
+} from "@/types/user";
 import SocketService from "./socketService";
 import toast from "react-hot-toast";
 const api = userAxiosInstance;
@@ -76,28 +80,6 @@ export const updateUserProfile = async (payload: any) => {
     throw error;
   }
 };
-
-// Chat History
-interface ChatUser {
-  id: string;
-  name: string;
-  avatar: string;
-  bookingId: string;
-  lastMessage?: string;
-  timestamp?: string;
-  unread?: number;
-  isOnline?: boolean;
-  bookingStatus?: "pending" | "confirmed" | "completed";
-  isActive: boolean;
-  otherUserId?: string;
-}
-
-interface ChatHistoryResponse {
-  data: ChatUser[];
-  message: string;
-  statusCode: number;
-  success: boolean;
-}
 
 export const getChatHistory = async (
   dashboard: string
@@ -450,17 +432,6 @@ export const updateOnlineStatus = async (
   }
 };
 
-interface Notification {
-  _id: string;
-  recipient: string;
-  sender?: { firstName: string; lastName: string };
-  type: "payment" | "booking" | "chat";
-  content: string;
-  link?: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
 export const getUnreadNotifications = async (): Promise<Notification[]> => {
   try {
     const response = await api.get("/user/notifications/unread", {
@@ -549,12 +520,6 @@ export const sendMeetingNotification = async (
     );
   }
 };
-
-interface OnlineStatusResponse {
-  statusCode: number;
-  data: { isOnline: boolean };
-  message: string;
-}
 
 export const checkUserOnlineStatus = async (
   userId: string

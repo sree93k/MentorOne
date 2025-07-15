@@ -49,9 +49,7 @@ export function LoginForm({
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { mentorActivated, loading } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { mentorActivated } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     console.log("hi useeffect is", mentorActivated);
@@ -69,7 +67,7 @@ export function LoginForm({
     };
 
   const validateForm = () => {
-    let newErrors: TUserLoginError = {};
+    const newErrors: TUserLoginError = {};
     const emailError = validateEmail(email);
     if (emailError) newErrors.email = emailError;
     const passwordError = validatePassword(password);
@@ -347,6 +345,8 @@ export function LoginForm({
             await sendForgotPasswordOtp(email);
             toast.success("OTP resent successfully!");
           } catch (error) {
+            console.log("error", error);
+
             toast.error("Failed to resend OTP.");
           }
         }}

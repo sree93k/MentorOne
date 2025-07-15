@@ -1,8 +1,6 @@
 // src/components/landing/Header.tsx
 import React from "react";
-import { Moon, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { ThemeConfig } from "flowbite-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

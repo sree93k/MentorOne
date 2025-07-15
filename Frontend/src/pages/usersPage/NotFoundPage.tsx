@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPinOff, Compass, Home } from "lucide-react"; // Icons for the theme
+import { MapPinOff, Home } from "lucide-react"; // Icons for the theme
 
 const NotFoundPage: React.FC = () => {
   return (

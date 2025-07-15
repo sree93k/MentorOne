@@ -1,6 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 
 const MentorPage = lazy(() => import("../pages/mentorPages/MentorPage"));
 const MentorRouter: React.FC = () => {

@@ -7,7 +7,7 @@ import LogoNameImage from "@/assets/brandlogo.png";
 import SideImage from "@/assets/AdminLogin.jpg";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { adminLogin } from "@/services/adminAuth";
 import { TAdminLoginResponse, TAdminLogin } from "@/types/admin";
 import { loginValidate } from "@/utils/AdminValidator";
@@ -17,7 +17,6 @@ import {
   setIsAuthenticated,
   setAccessToken,
 } from "@/redux/slices/adminSlice";
-import { RootState } from "@/redux/store/store";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 interface LoginError {
   adminEmail?: string;
@@ -29,7 +28,6 @@ const AdminLoginForm: React.FC = () => {
   const [adminPassword, setPassword] = useState("");
   const [error, setError] = useState<LoginError>({});
   const [showPassword, setShowPassword] = useState(false);
-  const { loading } = useSelector((state: RootState) => state.admin);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
 import {
   GraduationCap,
   Users,
@@ -25,7 +23,6 @@ import {
 import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effect";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDashboardData } from "@/services/menteeService";
 import SreeImg from "@/assets/Sree.jpeg";
 import JasnaImg from "@/assets/Jasna.jpeg";
 import JithinImg from "@/assets/Jithin.jpeg";
@@ -270,28 +267,6 @@ const features = [
     description: "Monitor your growth with detailed progress analytics",
   },
 ];
-
-// AceternityLogo Component
-const AceternityLogo = () => {
-  return (
-    <svg
-      width="66"
-      height="65"
-      viewBox="0 0 66 65"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-3 w-3 text-black dark:text-white"
-    >
-      <path
-        d="M8 8.05571C8 8.05571 54.9009 18.1782 57.8687 30.062C60.8365 41.9458 9.05432 57.4696 9.05432 57.4696"
-        stroke="currentColor"
-        strokeWidth="15"
-        strokeMiterlimit="3.86874"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-};
 
 // Grid Pattern Component
 export function GridPattern({ width, height, x, y, squares, ...props }: any) {
@@ -607,8 +582,6 @@ const StylishInfiniteMovingCards = ({
   direction = "right",
   speed = "normal",
 }) => {
-  const containerRef = useId();
-
   const containerStyles = {
     "--animation-duration":
       speed === "fast" ? "10s" : speed === "slow" ? "20s" : "30s",

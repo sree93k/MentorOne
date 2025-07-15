@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { getAllServices } from "@/services/mentorService";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import { setError, setLoading } from "@/redux/slices/userSlice";
+import { setLoading } from "@/redux/slices/userSlice";
 import SlotManagementDrawer from "@/components/mentor/SlotManagementDrawer";
 import { Badge } from "@/components/ui/badge";
 

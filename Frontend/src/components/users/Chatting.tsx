@@ -1,10 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  useLayoutEffect,
-  useCallback,
-} from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -49,10 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  updateBookingStatus,
-  getBookingData,
-} from "../../services/bookingService";
+import { updateBookingStatus } from "../../services/bookingService";
 import ConfirmationModal from "../modal/ConfirmationModal";
 
 interface ChatProps {

@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import {
   Home,
   FileText,
   Phone,
-  Clock,
   Bell,
   LogOut,
   ChevronDown,
@@ -128,6 +127,8 @@ const MenteeSidebar: React.FC = () => {
           }
         })
         .catch((error) => {
+          console.log("err", error);
+
           toast.error("Failed to update online status");
         });
     }
@@ -187,6 +188,8 @@ const MenteeSidebar: React.FC = () => {
       dispatch(setOnlineStatus({ status: false, role: null }));
       navigate("/");
     } catch (error) {
+      console.log("err", error);
+
       toast.error("Failed to logout. Please try again.");
     } finally {
       setLoggingOut(false);
@@ -238,6 +241,8 @@ const MenteeSidebar: React.FC = () => {
         setDropdownOpen(false);
       })
       .catch((error) => {
+        console.log("err", error);
+
         toast.error("Failed to update online status");
       });
   };

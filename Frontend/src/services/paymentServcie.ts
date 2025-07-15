@@ -1,21 +1,6 @@
-import axios from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
+import { CreatePaymentIntentParams } from "@/types/payment";
 const api = userAxiosInstance;
-
-interface CreatePaymentIntentParams {
-  amount: number;
-  serviceId: string;
-  mentorId: string;
-  menteeId: string;
-  bookingDate: string;
-  startTime: string;
-  endTime: string;
-  day: string;
-  slotIndex: number;
-  customerEmail?: string;
-  customerName?: string;
-  customerPhone?: string | number;
-}
 
 export const createPaymentIntent = async (
   params: CreatePaymentIntentParams
@@ -97,19 +82,6 @@ export const verifySession = async (sessionId: string) => {
     throw new Error(error.response?.data?.error || "Failed to verify session");
   }
 };
-
-interface Payment {
-  _id: string;
-  bookingId: string;
-  menteeId: string;
-  amount: number;
-  status: string;
-  transactionId: string;
-  createdAt: string;
-  serviceName: string;
-  mentorName: string;
-  paymentMode: string;
-}
 
 export const getAllMenteePayments = async (page: number, limit: number) => {
   try {
