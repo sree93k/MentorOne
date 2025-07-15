@@ -130,6 +130,36 @@ export default class MentorService implements IMentorService {
       const user = await this.UserRepository.findById(id);
       console.log(" mentor service, welcomeData step 5", user);
 
+      if (user?.mentorId) {
+        const mentorIdString =
+          typeof user.mentorId === "string"
+            ? user.mentorId
+            : user.mentorId._id.toString();
+
+        await (this.MentorRepository as any).deleteById(mentorIdString);
+      }
+      if (user?.schoolDetails) {
+        const schoolDetailsId =
+          typeof user.schoolDetails === "string"
+            ? user.schoolDetails
+            : user.schoolDetails._id.toString();
+        await (this.CareerSchool as any).deleteById(schoolDetailsId);
+      } else if (user?.collegeDetails) {
+        const collegeDetailsId =
+          typeof user.collegeDetails === "string"
+            ? user.collegeDetails
+            : user.collegeDetails._id.toString();
+        await (this.CareerCollege as any).deleteById(collegeDetailsId);
+      } else if (user?.professionalDetails) {
+        const professionalDetailsId =
+          typeof user.professionalDetails === "string"
+            ? user.professionalDetails
+            : user.professionalDetails._id.toString();
+        await (this.CareerProfessional as any).deleteById(
+          professionalDetailsId
+        );
+      }
+
       if (!user) throw new Error("User not found");
       console.log(" mentor service, welcomeData step 6");
       const populateFields: string[] = [];

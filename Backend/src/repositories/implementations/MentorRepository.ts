@@ -144,4 +144,13 @@ export default class MentorRepository
       throw new Error("Failed to update mentor", error.message);
     }
   }
+
+  async deleteMentor(id: string): Promise<void> {
+    try {
+      await super.deleteById(id);
+      // Simply don't return anything to match Promise<void>
+    } catch (error: any) {
+      throw new Error("Failed to delete mentor: " + error.message);
+    }
+  }
 }
