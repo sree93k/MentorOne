@@ -20,9 +20,6 @@ import { IMentorService } from "../interface/IMentorService";
 // Define collection types
 type CollectionType = "user" | "mentee" | "mentor";
 
-// Union type for all repository interfaces
-
-// Yup validation schema for collegeDetails
 const collegeDetailsSchema = Yup.object().shape({
   collegeName: Yup.string().required("College name is required"),
   course: Yup.string().required("Course is required"),

@@ -1,4 +1,4 @@
-import { mongoose } from "mongoose";
+import mongoose from "mongoose";
 
 // DTO for updating mentor fields via admin or specific field updates
 interface UpdateMentorFieldDTO {

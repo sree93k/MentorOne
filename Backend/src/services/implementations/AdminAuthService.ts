@@ -44,22 +44,6 @@ export default class AdminAuthService implements IAdminAuthService {
           adminFound.adminPassword.toString()
         ))
       ) {
-        // const id = adminFound._id?.toString();
-        // if (!id) {
-        //   throw new Error(
-        //     `${HttpStatus.INTERNAL_SERVER_ERROR}: Admin ID not found`
-        //   );
-        // }
-        // const accessToken = generateAccessToken({
-        //   id,
-        //   role: adminFound.role,
-        // });
-
-        // const refreshToken = generateRefreshToken({
-        //   id,
-        //   role: adminFound.role,
-        // });
-
         const id = adminFound._id.toString();
         const role = Array.isArray(adminFound.role)
           ? adminFound.role[0]

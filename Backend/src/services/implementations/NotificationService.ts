@@ -1,5 +1,4 @@
 import NotificationRepository from "../../repositories/implementations/NotificationRepository";
-
 import { pubClient } from "../../server";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";

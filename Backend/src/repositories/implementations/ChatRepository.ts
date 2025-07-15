@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import Chat from "../../models/chatModel";
 import BaseRepository from "./BaseRepository";
 import { EChat } from "../../entities/chatEntity";

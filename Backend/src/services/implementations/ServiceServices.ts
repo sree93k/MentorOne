@@ -157,7 +157,7 @@ export default class ServiceService implements IServiceService {
       }
 
       // Validate pagination parameters
-      if (params.page < 1 || params.limit < 1 || params.limit > 100) {
+      if (params.page < 1 || params.limit < 1 || params.limit > 1000) {
         throw new Error("Invalid pagination parameters");
       }
 
