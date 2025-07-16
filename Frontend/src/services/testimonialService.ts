@@ -1,5 +1,5 @@
 import { userAxiosInstance } from "./instances/userInstance";
-import {ETestimonial,TestimonialResponse} from '@/types/testimonial'
+import { TestimonialResponse } from "@/types/testimonial";
 
 const api = userAxiosInstance;
 export const getTestimonialsByMentor = async (
@@ -58,7 +58,6 @@ export const updateTopTestimonials = async (
     );
   }
 };
-\
 
 export const getMentorServiceTestimonials = async (
   mentorId: string,

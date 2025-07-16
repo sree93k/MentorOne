@@ -43,23 +43,23 @@ class UserAuthController {
   ): Promise<void> => {
     try {
       console.log("sendOTP controller/......", req.body);
-
+      console.log("Controller - OTP sent step 1:");
       const user = req.body;
       console.log("Controller - sendOTP request received:", user);
       if (!user) {
         throw new ApiError(HttpStatus.BAD_REQUEST, "User is required");
       }
-
+      console.log("Controller - OTP sent step 2");
       const otpExists = await this.OTPServices.checkOTPExists(user);
       console.log("otp exists >>>", otpExists);
-
+      console.log("Controller - OTP sent step 3");
       if (otpExists) {
         throw new ApiError(
           HttpStatus.BAD_REQUEST,
           "Please wait 60 seconds before requesting another OTP"
         );
       }
-
+      console.log("Controller - OTP sent step 4");
       const isUserExists = await this.userService.findUserWithEmail(user);
       if (isUserExists) {
         throw new ApiError(
@@ -67,10 +67,10 @@ class UserAuthController {
           "A user with this email already exists"
         );
       }
-
+      console.log("Controller - OTP sent step 5");
       const createOTP = await this.OTPServices.sendOTP(user);
       console.log("Controller - OTP sent successfully:", createOTP);
-
+      console.log("Controller - OTP sent step 6");
       res
         .status(HttpStatus.OK)
         .json(

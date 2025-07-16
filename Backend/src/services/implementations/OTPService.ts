@@ -119,7 +119,7 @@ export default class OTPService implements IOTPService {
     try {
       console.log("otp exists service step", user);
 
-      const OTPExists = await this.OTPRepository.findOTP(user);
+      const OTPExists = await this.OTPRepository.findOTP(user?.email);
       console.log("otp exists service step 2", OTPExists);
       if (!OTPExists) {
         return null;

@@ -65,6 +65,8 @@ const AdminSidebar: React.FC = () => {
       dispatch(resetAdmin());
       navigate("/admin/login");
     } catch (error) {
+      console.log("err", error);
+
       toast.error("Failed to logout. Please try again.");
     } finally {
       setLoggingOut(false);
