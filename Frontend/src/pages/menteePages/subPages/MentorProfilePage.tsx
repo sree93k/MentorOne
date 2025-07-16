@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Youtube } from "lucide-react";
 import {
@@ -32,6 +32,7 @@ import { toast } from "react-hot-toast";
 import { getMentorById } from "@/services/menteeService";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import { ProfilePicture } from "@/components/users/SecureMedia";
 
 interface Testimonial {
   _id: string;
@@ -90,9 +91,7 @@ export default function MentorProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, error, loading, isAuthenticated } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { user, loading } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     if (loading) return;
@@ -144,12 +143,28 @@ export default function MentorProfile() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-black text-white p-6 flex flex-col">
             <div className="flex flex-col items-center mb-6">
-              <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
+              {/* <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
                 <img
                   src={mentor.profileImage || DummyImage}
                   alt={mentor.name}
                   className="w-full h-full object-cover"
                 />
+              </div> */}
+              <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
+                {mentor.profileImage ? (
+                  <ProfilePicture
+                    profilePicture={mentor.profileImage}
+                    userName={mentor.name}
+                    size="lg"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <img
+                    src={DummyImage}
+                    alt={mentor.name}
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
               <h2 className="text-2xl font-bold">{mentor.name}</h2>
               <p className="text-white">

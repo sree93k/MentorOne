@@ -358,7 +358,7 @@ const MenteeSidebar: React.FC = () => {
                   <ProfilePicture
                     profilePicture={user?.profilePicture}
                     userName={`${user.firstName} ${user.lastName || ""}`}
-                    size="xs"
+                    size="sm"
                   />
                 );
               }}
