@@ -147,7 +147,7 @@ const AdminSidebar: React.FC = () => {
               )}
               text={
                 <div className="flex flex-col">
-                  <span className="font-medium">{user.adminName}</span>
+                  <span className="text-sm  font-medium">{user.adminName}</span>
                   <span className="text-xs text-gray-500">
                     {user.adminEmail}
                   </span>

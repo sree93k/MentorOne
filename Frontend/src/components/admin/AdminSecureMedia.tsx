@@ -1,29 +1,29 @@
 import React from "react";
-import { useProfilePicture } from "@/hooks/useSecureUrl";
+import { useAdminProfilePicture } from "@/hooks/useAdminSecureUrl";
 
-// Profile Picture Component with Enhanced Debugging
-interface ProfilePictureProps {
+// Profile Picture Component for Admin with Enhanced Debugging
+interface AdminProfilePictureProps {
   profilePicture: string | null | undefined;
   userName: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
-export const ProfilePicture: React.FC<ProfilePictureProps> = ({
+export const AdminProfilePicture: React.FC<AdminProfilePictureProps> = ({
   profilePicture,
   userName,
   size = "md",
   className,
 }) => {
-  console.log("🔍 ProfilePicture Component Debug:");
+  console.log("🔍 AdminProfilePicture Component Debug:");
   console.log("- Raw profilePicture prop:", profilePicture);
   console.log("- userName:", userName);
   console.log("- size:", size);
 
   const { profilePictureUrl, loading, error } =
-    useProfilePicture(profilePicture);
+    useAdminProfilePicture(profilePicture);
 
-  console.log("🔍 useProfilePicture Hook Results:");
+  console.log("🔍 useAdminProfilePicture Hook Results:");
   console.log("- profilePictureUrl:", profilePictureUrl);
   console.log("- loading:", loading);
   console.log("- error:", error);
@@ -40,7 +40,7 @@ export const ProfilePicture: React.FC<ProfilePictureProps> = ({
   const finalClasses = className ? `${baseClasses} ${className}` : baseClasses;
 
   if (loading) {
-    console.log("📸 ProfilePicture: Loading state");
+    console.log("📸 AdminProfilePicture: Loading state");
     return (
       <div
         className={`${sizeClasses[size]} bg-gray-200 rounded-full animate-pulse border-2 border-gray-200`}
@@ -49,12 +49,12 @@ export const ProfilePicture: React.FC<ProfilePictureProps> = ({
   }
 
   if (error) {
-    console.error("❌ ProfilePicture error:", error);
-    console.log("📸 ProfilePicture: Using fallback due to error");
+    console.error("❌ AdminProfilePicture error:", error);
+    console.log("📸 AdminProfilePicture: Using fallback due to error");
   }
 
   const finalUrl = profilePictureUrl || "/default-avatar.png";
-  console.log("📸 ProfilePicture: Final URL to render:", finalUrl);
+  console.log("📸 AdminProfilePicture: Final URL to render:", finalUrl);
 
   return (
     <img
@@ -63,13 +63,13 @@ export const ProfilePicture: React.FC<ProfilePictureProps> = ({
       className={finalClasses}
       onLoad={() => {
         console.log(
-          "✅ ProfilePicture: Image loaded successfully from:",
+          "✅ AdminProfilePicture: Image loaded successfully from:",
           finalUrl
         );
       }}
       onError={(e) => {
         console.error(
-          "💥 ProfilePicture: Image failed to load from:",
+          "💥 AdminProfilePicture: Image failed to load from:",
           finalUrl
         );
         console.error("💥 Image error event:", e);

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { getSignedUrl } from "@/services/userServices";
+import { getAdminSignedUrl } from "@/services/adminMediaService";
 
-export const useSecureUrl = (originalUrl: string | null | undefined) => {
-  console.log("🔧 useSecureUrl Hook Called:");
+export const useAdminSecureUrl = (originalUrl: string | null | undefined) => {
+  console.log("🔧 useAdminSecureUrl Hook Called:");
   console.log("- originalUrl:", originalUrl);
 
   const [secureUrl, setSecureUrl] = useState<string | null>(null);
@@ -11,7 +11,7 @@ export const useSecureUrl = (originalUrl: string | null | undefined) => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    console.log("🔧 useSecureUrl Effect Running:");
+    console.log("🔧 useAdminSecureUrl Effect Running:");
     console.log("- originalUrl:", originalUrl);
 
     // Cleanup previous request
@@ -51,14 +51,14 @@ export const useSecureUrl = (originalUrl: string | null | undefined) => {
     // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
 
-    console.log("🔧 Starting signed URL request for S3 URL");
+    console.log("🔧 Starting admin signed URL request for S3 URL");
     setLoading(true);
     setError(null);
 
-    getSignedUrl(originalUrl)
+    getAdminSignedUrl(originalUrl)
       .then((url) => {
         if (!abortControllerRef.current?.signal.aborted) {
-          console.log("✅ useSecureUrl: Successfully got signed URL");
+          console.log("✅ useAdminSecureUrl: Successfully got signed URL");
           console.log("- Original URL:", originalUrl);
           console.log("- Signed URL:", url);
           setSecureUrl(url);
@@ -69,7 +69,7 @@ export const useSecureUrl = (originalUrl: string | null | undefined) => {
       })
       .catch((err) => {
         if (!abortControllerRef.current?.signal.aborted) {
-          console.error("❌ useSecureUrl: Error getting signed URL:", err);
+          console.error("❌ useAdminSecureUrl: Error getting signed URL:", err);
           console.error("- Original URL:", originalUrl);
           console.error("- Error message:", err.message);
           setError(err.message || "Failed to load media");
@@ -80,7 +80,7 @@ export const useSecureUrl = (originalUrl: string | null | undefined) => {
       })
       .finally(() => {
         if (!abortControllerRef.current?.signal.aborted) {
-          console.log("🔧 useSecureUrl: Request completed");
+          console.log("🔧 useAdminSecureUrl: Request completed");
           setLoading(false);
         }
       });
@@ -93,7 +93,7 @@ export const useSecureUrl = (originalUrl: string | null | undefined) => {
     };
   }, [originalUrl]);
 
-  console.log("🔧 useSecureUrl Hook State:");
+  console.log("🔧 useAdminSecureUrl Hook State:");
   console.log("- secureUrl:", secureUrl);
   console.log("- loading:", loading);
   console.log("- error:", error);
@@ -101,19 +101,19 @@ export const useSecureUrl = (originalUrl: string | null | undefined) => {
   return { secureUrl, loading, error };
 };
 
-// Hook for profile pictures with fallback
-export const useProfilePicture = (
+// Hook for profile pictures with fallback for admin
+export const useAdminProfilePicture = (
   profilePictureUrl: string | null | undefined
 ) => {
-  console.log("🖼️ useProfilePicture Hook Called:");
+  console.log("🖼️ useAdminProfilePicture Hook Called:");
   console.log("- profilePictureUrl:", profilePictureUrl);
 
-  const { secureUrl, loading, error } = useSecureUrl(profilePictureUrl);
+  const { secureUrl, loading, error } = useAdminSecureUrl(profilePictureUrl);
 
   const finalUrl = secureUrl || "/default-avatar.png";
 
-  console.log("🖼️ useProfilePicture Results:");
-  console.log("- secureUrl from useSecureUrl:", secureUrl);
+  console.log("🖼️ useAdminProfilePicture Results:");
+  console.log("- secureUrl from useAdminSecureUrl:", secureUrl);
   console.log("- finalUrl (with fallback):", finalUrl);
   console.log("- loading:", loading);
   console.log("- error:", error);
