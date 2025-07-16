@@ -1,8 +1,237 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
+import {
+  ChatHistoryResponse,
+  Notification,
+  OnlineStatusResponse,
+} from "@/types/user";
 import SocketService from "./socketService";
 import toast from "react-hot-toast";
 const api = userAxiosInstance;
+
+// Cache for signed URLs to avoid repeated requests
+const urlCache = new Map<string, { url: string; expiry: number }>();
+
+export const getSignedUrl = async (s3KeyOrUrl: string): Promise<string> => {
+  console.log("🌐 getSignedUrl Service Called:");
+  console.log("- Input s3KeyOrUrl:", s3KeyOrUrl);
+
+  if (!s3KeyOrUrl) {
+    const error = new Error("S3 key or URL is required");
+    console.error("❌ getSignedUrl: No input provided");
+    throw error;
+  }
+
+  // If it's already a regular HTTP URL (not S3), return as is
+  if (s3KeyOrUrl.startsWith("http") && !s3KeyOrUrl.includes("amazonaws.com")) {
+    console.log("🌐 Not an S3 URL, returning as is:", s3KeyOrUrl);
+    return s3KeyOrUrl;
+  }
+
+  // Check cache first
+  const cached = urlCache.get(s3KeyOrUrl);
+  if (cached && cached.expiry > Date.now()) {
+    console.log("💾 getSignedUrl: Using cached URL");
+    return cached.url;
+  }
+
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      const error = new Error("No access token found. Please log in again.");
+      console.error("❌ getSignedUrl: No access token");
+      throw error;
+    }
+
+    console.log("🌐 Making request to backend:");
+    console.log("- Endpoint: /media/signed-url");
+    console.log("- s3Key parameter:", s3KeyOrUrl);
+    console.log("- Has access token:", !!accessToken);
+
+    const response = await api.get("/media/signed-url", {
+      params: { s3Key: s3KeyOrUrl },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log("🌐 Backend Response:");
+    console.log("- Status:", response.status);
+    console.log("- Status Text:", response.statusText);
+    console.log("- Response data:", response.data);
+
+    if (!response.data || !response.data.data || !response.data.data.url) {
+      const error = new Error("Invalid response format from backend");
+      console.error("❌ getSignedUrl: Invalid response format:", response.data);
+      throw error;
+    }
+
+    const signedUrl = response.data.data.url;
+    const expiresIn = response.data.data.expiresIn || 3600;
+
+    console.log("✅ getSignedUrl: Success");
+    console.log("- Original URL/Key:", s3KeyOrUrl);
+    console.log("- Signed URL:", signedUrl);
+    console.log("- Expires in:", expiresIn, "seconds");
+
+    // Cache the URL (expire 5 minutes before actual expiry for safety)
+    urlCache.set(s3KeyOrUrl, {
+      url: signedUrl,
+      expiry: Date.now() + (expiresIn - 300) * 1000,
+    });
+
+    return signedUrl;
+  } catch (error: any) {
+    console.error("❌ getSignedUrl: Error occurred");
+    console.error("- Original URL/Key:", s3KeyOrUrl);
+    console.error("- Error type:", error.constructor.name);
+    console.error("- Error message:", error.message);
+    console.error("- Error response:", error.response?.data);
+    console.error("- Error status:", error.response?.status);
+
+    // Fallback to original URL if it's a full S3 URL
+    if (s3KeyOrUrl.includes("amazonaws.com")) {
+      console.warn("🔧 getSignedUrl: Falling back to original S3 URL");
+      return s3KeyOrUrl;
+    }
+
+    throw new Error(`Failed to get signed URL: ${error.message}`);
+  }
+};
+
+// Helper function to get multiple signed URLs at once
+export const getBatchSignedUrls = async (
+  s3KeysOrUrls: string[]
+): Promise<Record<string, string>> => {
+  if (!s3KeysOrUrls || s3KeysOrUrls.length === 0) {
+    return {};
+  }
+
+  // Filter out non-S3 URLs and already cached URLs
+  const s3Urls = s3KeysOrUrls.filter(
+    (url) => url && (url.includes("amazonaws.com") || !url.startsWith("http"))
+  );
+
+  const uncachedUrls = s3Urls.filter((url) => {
+    const cached = urlCache.get(url);
+    return !cached || cached.expiry <= Date.now();
+  });
+
+  // Get cached URLs
+  const result: Record<string, string> = {};
+  s3KeysOrUrls.forEach((url) => {
+    if (!url) return;
+
+    // If it's not an S3 URL, return as is
+    if (url.startsWith("http") && !url.includes("amazonaws.com")) {
+      result[url] = url;
+      return;
+    }
+
+    const cached = urlCache.get(url);
+    if (cached && cached.expiry > Date.now()) {
+      result[url] = cached.url;
+    }
+  });
+
+  // Fetch uncached URLs
+  if (uncachedUrls.length > 0) {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("No access token found. Please log in again.");
+      }
+
+      console.log("Making batch request for URLs:", uncachedUrls);
+
+      const response = await api.post(
+        "/media/batch-signed-urls",
+        {
+          s3Keys: uncachedUrls,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      console.log("Batch signed URLs response:", response.data);
+
+      response.data.data.forEach((item: any) => {
+        if (item.success) {
+          result[item.s3Key] = item.url;
+          // Cache the URL
+          urlCache.set(item.s3Key, {
+            url: item.url,
+            expiry: Date.now() + 3300 * 1000, // 55 minutes
+          });
+        } else {
+          // Fallback to original URL if it's a full S3 URL
+          if (item.s3Key.includes("amazonaws.com")) {
+            result[item.s3Key] = item.s3Key;
+          }
+        }
+      });
+    } catch (error: any) {
+      console.error("Error getting batch signed URLs:", error);
+      // Fallback to original URLs for S3 URLs
+      uncachedUrls.forEach((url) => {
+        if (url.includes("amazonaws.com")) {
+          result[url] = url;
+        }
+      });
+    }
+  }
+
+  return result;
+};
+
+// Helper function to process data with S3 keys and add signed URLs
+export const processDataWithSignedUrls = async <T extends Record<string, any>>(
+  data: T[],
+  s3KeyFields: string[]
+): Promise<T[]> => {
+  // Collect all S3 keys
+  const allS3Keys = new Set<string>();
+  data.forEach((item) => {
+    s3KeyFields.forEach((field) => {
+      const value = getNestedValue(item, field);
+      if (value && typeof value === "string") {
+        allS3Keys.add(value);
+      }
+    });
+  });
+
+  // Get signed URLs for all keys
+  const signedUrls = await getBatchSignedUrls(Array.from(allS3Keys));
+
+  // Add signed URLs to data
+  return data.map((item) => {
+    const processedItem = { ...item };
+    s3KeyFields.forEach((field) => {
+      const s3Key = getNestedValue(item, field);
+      if (s3Key && signedUrls[s3Key]) {
+        setNestedValue(processedItem, `${field}SignedUrl`, signedUrls[s3Key]);
+      }
+    });
+    return processedItem;
+  });
+};
+
+// Helper functions for nested object access
+const getNestedValue = (obj: any, path: string): any => {
+  return path.split(".").reduce((current, key) => current?.[key], obj);
+};
+
+const setNestedValue = (obj: any, path: string, value: any): void => {
+  const keys = path.split(".");
+  const lastKey = keys.pop()!;
+  const target = keys.reduce((current, key) => {
+    if (!current[key]) current[key] = {};
+    return current[key];
+  }, obj);
+  target[lastKey] = value;
+};
 
 // Reset Password
 export const updateUserPassword = async (
@@ -77,28 +306,6 @@ export const updateUserProfile = async (payload: any) => {
   }
 };
 
-// Chat History
-interface ChatUser {
-  id: string;
-  name: string;
-  avatar: string;
-  bookingId: string;
-  lastMessage?: string;
-  timestamp?: string;
-  unread?: number;
-  isOnline?: boolean;
-  bookingStatus?: "pending" | "confirmed" | "completed";
-  isActive: boolean;
-  otherUserId?: string;
-}
-
-interface ChatHistoryResponse {
-  data: ChatUser[];
-  message: string;
-  statusCode: number;
-  success: boolean;
-}
-
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
@@ -134,17 +341,16 @@ export const getChatHistory = async (
       throw new Error("Invalid chat history response format");
     }
 
-    // Ensure isOnline is boolean
-    const updatedData = response.data.data.map((user) => ({
-      ...user,
-      isOnline: user.isOnline ?? false,
-    }));
+    // Process data to add signed URLs for profile pictures
+    const processedData = await processDataWithSignedUrls(response.data.data, [
+      "profilePicture",
+    ]);
 
     console.log("userServices: getChatHistory - Data processed", {
-      userCount: updatedData.length,
+      userCount: processedData.length,
     });
 
-    return { ...response.data, data: updatedData };
+    return { ...response.data, data: processedData };
   } catch (error: any) {
     console.error("userServices: getChatHistory error", {
       dashboard,
@@ -231,62 +437,13 @@ export const uploadToS3WithPresignedUrl = async (
   }
 };
 
+// Update your existing functions to use signed URLs
 export const getMediaUrl = async (s3Key: string): Promise<string> => {
-  try {
-    console.log("getMediaUrl: Starting", { s3Key });
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-    const response = await api.get("/user/get-presigned-url", {
-      params: { key: s3Key },
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    console.log("getMediaUrl response:", response.data);
-    const url = response.data.data?.url;
-    if (!url) {
-      throw new Error("Invalid presigned URL response: Missing url");
-    }
-    return url;
-  } catch (error: any) {
-    console.error("getMediaUrl: Error", {
-      message: error.message,
-      response: error.response?.data,
-    });
-    toast.error(error.message || "Failed to fetch media URL");
-    throw new Error(`Failed to fetch presigned URL: ${error.message}`);
-  }
+  return getSignedUrl(s3Key);
 };
 
 export const getPresignedUrlForView = async (key: string): Promise<string> => {
-  try {
-    console.log("getPresignedUrlForView: Starting", { key });
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-    const response = await api.get("/user/get-presigned-url", {
-      params: { key },
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    console.log("getPresignedUrlForView response:", response.data);
-    const url = response.data.data?.url;
-    if (!url) {
-      throw new Error("Invalid presigned URL response: Missing url");
-    }
-    return url;
-  } catch (error: any) {
-    console.error("getPresignedUrlForView: Error", {
-      message: error.message,
-      response: error.response?.data,
-    });
-    toast.error(error.message || "Failed to fetch media URL");
-    throw new Error(`Failed to fetch presigned URL: ${error.message}`);
-  }
+  return getSignedUrl(key);
 };
 
 export const startVideoCall = async (
@@ -450,17 +607,6 @@ export const updateOnlineStatus = async (
   }
 };
 
-interface Notification {
-  _id: string;
-  recipient: string;
-  sender?: { firstName: string; lastName: string };
-  type: "payment" | "booking" | "chat";
-  content: string;
-  link?: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
 export const getUnreadNotifications = async (): Promise<Notification[]> => {
   try {
     const response = await api.get("/user/notifications/unread", {
@@ -549,12 +695,6 @@ export const sendMeetingNotification = async (
     );
   }
 };
-
-interface OnlineStatusResponse {
-  statusCode: number;
-  data: { isOnline: boolean };
-  message: string;
-}
 
 export const checkUserOnlineStatus = async (
   userId: string

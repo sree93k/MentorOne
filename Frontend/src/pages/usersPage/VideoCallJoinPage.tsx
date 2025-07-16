@@ -1,15 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Video, Mic, MicOff, VideoOff, ChevronDown, Users } from "lucide-react";
+import { Video, Mic, MicOff, VideoOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "react-hot-toast";
@@ -24,7 +18,6 @@ export default function MeetingJoinPage() {
   const socketRef = useRef<Socket | null>(null);
   const [isMicOn, setIsMicOn] = useState(true);
   const [isVideoOn, setIsVideoOn] = useState(true);
-  const [userEmail] = useState("user@example.com");
   const [userName] = useState("User");
   const [isReady] = useState(true);
   const [permissionError, setPermissionError] = useState<string | null>(null);

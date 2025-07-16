@@ -1,34 +1,41 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IMentorProfileService } from "../interface/IMentorProfileService";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty"; // Fixed typo
-import CareerRepositiory from "../../repositories/implementations/CareerRepository";
+import { IMentorService } from "../interface/IMentorService";
+import {
+  UpdateMentorDTO,
+  UpdateMentorFieldDTO,
+  UpdateMentorProfileDTO,
+} from "../../dtos/mentorDTO";
 import { EUsers } from "../../entities/userEntity";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
 import MentorRepository from "../../repositories/implementations/MentorRepository";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import Users from "../../models/userModel";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import Schedule from "../../models/scheduleModel";
-import BlockedDate from "../../models/blockedModel";
+import { IServiceService } from "../interface/IServiceServices"; // Changed import
+import ServiceService from "./ServiceServices"; // Changed import
 import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import SlotRepository from "../../repositories/implementations/SlotRepository";
 import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
-import CalendarRepository from "../../repositories/implementations/CalenderRepository";
-import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import ScheduleRepository from "../../repositories/implementations/ScheduleRepository";
+import { IScheduleRepository } from "../../repositories/interface/IScheduleRepository";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import CareerCollege from "../../repositories/implementations/CareerCollege";
+import { ICareerCollege } from "../../repositories/interface/ICareerCollege";
+import CareerSchool from "../../repositories/implementations/CareerSchool";
+import { ICareerSchool } from "../../repositories/interface/ICareerSchool";
+import CareerProfessional from "../../repositories/implementations/CareerProfessional";
+import { ICareerProfessional } from "../../repositories/interface/ICareerProfessional";
+import BookingService from "./Bookingservice";
+import { IBookingService } from "../interface/IBookingService";
 import { EMentor } from "../../entities/mentorEntity";
 import mongoose from "mongoose";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
+import { EService } from "../../entities/serviceEntity";
+import { CreateServiceDTO, UpdateServiceDTO } from "../../dtos/serviceDTO";
+
 // Define interfaces
 interface WelcomeFormData {
   careerGoal: string;
@@ -37,7 +44,6 @@ interface WelcomeFormData {
   userType: string;
   [key: string]: any;
 }
-import { EService } from "../../entities/serviceEntity";
 
 interface GetAllServicesParams {
   page: number;
@@ -51,27 +57,30 @@ interface GetAllServicesResponse {
   totalPages: number;
   currentPage: number;
 }
-export default class MentorProfileService implements IMentorProfileService {
+
+export default class MentorService implements IMentorService {
   private UserRepository: IUserRepository;
-  private CareerRepository: ICareerRepository;
   private MentorRepository: IMentorRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
-  private ServiceRepository: IServiceRepository;
+  private ServiceService: IServiceService; // Changed from ServiceRepository
   private SlotRepository: ISlotRepository;
-  private CalendarRepository: ICalendarRepository;
+  private ScheduleRepository: IScheduleRepository;
   private PriorityDMRepository: IPriorityDMRepository;
-  private BookingRepository: IBookingRepository;
+  private BookingService: IBookingService;
+  private CareerCollege: ICareerCollege;
+  private CareerSchool: ICareerSchool;
+  private CareerProfessional: ICareerProfessional;
 
   constructor() {
     this.UserRepository = new UserRepository();
-    this.CareerRepository = new CareerRepositiory();
     this.MentorRepository = new MentorRepository();
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
-    this.ServiceRepository = new ServiceRepository();
+    this.ServiceService = new ServiceService(); // Changed to use ServiceService
     this.SlotRepository = new SlotRepository();
-    this.CalendarRepository = new CalendarRepository();
+    this.ScheduleRepository = new ScheduleRepository();
     this.PriorityDMRepository = new PriorityDMRepository();
-    this.BookingRepository = new BookingRepository();
+    this.BookingService = new BookingService();
+    this.CareerCollege = new CareerCollege();
+    this.CareerSchool = new CareerSchool();
+    this.CareerProfessional = new CareerProfessional();
   }
 
   async welcomeData(
@@ -118,8 +127,38 @@ export default class MentorProfileService implements IMentorProfileService {
 
       console.log("mentor data is>>>>>>>>>>>", mentorData, "and id :", id);
 
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       console.log(" mentor service, welcomeData step 5", user);
+
+      if (user?.mentorId) {
+        const mentorIdString =
+          typeof user.mentorId === "string"
+            ? user.mentorId
+            : user.mentorId._id.toString();
+
+        await (this.MentorRepository as any).deleteById(mentorIdString);
+      }
+      if (user?.schoolDetails) {
+        const schoolDetailsId =
+          typeof user.schoolDetails === "string"
+            ? user.schoolDetails
+            : user.schoolDetails._id.toString();
+        await (this.CareerSchool as any).deleteById(schoolDetailsId);
+      } else if (user?.collegeDetails) {
+        const collegeDetailsId =
+          typeof user.collegeDetails === "string"
+            ? user.collegeDetails
+            : user.collegeDetails._id.toString();
+        await (this.CareerCollege as any).deleteById(collegeDetailsId);
+      } else if (user?.professionalDetails) {
+        const professionalDetailsId =
+          typeof user.professionalDetails === "string"
+            ? user.professionalDetails
+            : user.professionalDetails._id.toString();
+        await (this.CareerProfessional as any).deleteById(
+          professionalDetailsId
+        );
+      }
 
       if (!user) throw new Error("User not found");
       console.log(" mentor service, welcomeData step 6");
@@ -140,10 +179,7 @@ export default class MentorProfileService implements IMentorProfileService {
       let userServerData = user;
       if (populateFields.length > 0) {
         console.log(" mentor service, welcomeData step 11");
-        userServerData = await this.BaseRepository.getModel()
-          .findById(id)
-          .populate(populateFields) // Or use populateFields if that's your intent
-          .exec();
+        userServerData = await this.UserRepository.findById(id);
       }
       console.log(" mentor service, welcomeData step 12");
       let userType;
@@ -160,21 +196,21 @@ export default class MentorProfileService implements IMentorProfileService {
           formData.userType === "college"
         ) {
           console.log("welcomedata service step 5....formdata");
-          experience = await this.CareerRepository.collegeStudentFormDataCreate(
+          experience = await this.CareerCollege.collegeStudentFormDataCreate(
             userData,
             id
           );
           userType = experience?.userType;
         } else if (formData.userType === "school") {
           console.log("welcomedata service step 6....formdata");
-          experience = await this.CareerRepository.schoolStudentFormDataCreate(
+          experience = await this.CareerSchool.schoolStudentFormDataCreate(
             userData,
             id
           );
           userType = experience?.userType;
         } else if (formData.userType === "professional") {
           console.log("welcomedata service step 7...formdata");
-          experience = await this.CareerRepository.professionalFormDataCreate(
+          experience = await this.CareerProfessional.professionalFormDataCreate(
             userData,
             id
           );
@@ -262,7 +298,8 @@ export default class MentorProfileService implements IMentorProfileService {
         throw new Error("Missing required fields");
       }
 
-      const service: Partial<EService> = {
+      // Prepare service data using DTO
+      const serviceData: CreateServiceDTO = {
         mentorId,
         type,
         title,
@@ -278,7 +315,7 @@ export default class MentorProfileService implements IMentorProfileService {
           console.log("createService service step 5");
           throw new Error("Long description is required");
         }
-        service.longDescription = longDescription;
+        serviceData.longDescription = longDescription;
 
         if (type === "1-1Call") {
           if (!duration) {
@@ -289,8 +326,8 @@ export default class MentorProfileService implements IMentorProfileService {
             console.log("createService service step 7");
             throw new Error("One-to-one type is required");
           }
-          service.duration = parseInt(duration);
-          service.oneToOneType = oneToOneType;
+          serviceData.duration = parseInt(duration);
+          serviceData.oneToOneType = oneToOneType;
         }
       } else if (type === "DigitalProducts") {
         console.log("createService service step 8");
@@ -298,14 +335,14 @@ export default class MentorProfileService implements IMentorProfileService {
           console.log("createService service step 9");
           throw new Error("Digital product type is required");
         }
-        service.digitalProductType = digitalProductType;
+        serviceData.digitalProductType = digitalProductType;
         if (digitalProductType === "documents") {
           console.log("createService service step 10");
           if (!fileUrl) {
             console.log("createService service step 11");
             throw new Error("File URL is required for documents");
           }
-          service.fileUrl = fileUrl;
+          serviceData.fileUrl = fileUrl;
         } else if (digitalProductType === "videoTutorials") {
           console.log("createService service step 12");
           const parsedExclusiveContent = Array.isArray(exclusiveContent)
@@ -317,15 +354,16 @@ export default class MentorProfileService implements IMentorProfileService {
               "Exclusive content is required for video tutorials"
             );
           }
-          service.exclusiveContent = parsedExclusiveContent;
+          serviceData.exclusiveContent = parsedExclusiveContent;
         }
       } else {
         console.log("createService service step 14");
         throw new Error("Invalid service type");
       }
 
-      console.log("createService service step 15", service);
-      const newService = await this.MentorRepository.createService(service);
+      console.log("createService service step 15", serviceData);
+      // Use ServiceService instead of repository directly
+      const newService = await this.ServiceService.createService(serviceData);
       console.log("createService service step 16");
       if (!newService) {
         console.log("createService service step 17");
@@ -353,14 +391,17 @@ export default class MentorProfileService implements IMentorProfileService {
         userId,
         params
       );
-      const { services, totalCount } =
-        await this.ServiceRepository.getAllServices(userId, params);
+      // Use ServiceService instead of repository directly
+      const response = await this.ServiceService.getAllServicesByMentor(
+        userId,
+        params
+      );
       console.log("getAllServices service step 3: Services fetched");
 
-      const totalPages = Math.ceil(totalCount / params.limit);
+      const totalPages = Math.ceil(response.totalCount / params.limit);
 
       return {
-        services,
+        services: response.services,
         totalPages,
         currentPage: params.page,
       };
@@ -377,7 +418,8 @@ export default class MentorProfileService implements IMentorProfileService {
   async getServiceById(serviceId: string): Promise<EService | null> {
     try {
       console.log("getServiceById service step 1: Fetching service", serviceId);
-      const service = await this.ServiceRepository.getServiceById(serviceId);
+      // Use ServiceService instead of repository directly
+      const service = await this.ServiceService.getServiceById(serviceId);
       console.log("getServiceById service step 2: Service fetched", service);
       return service;
     } catch (error: any) {
@@ -428,8 +470,8 @@ export default class MentorProfileService implements IMentorProfileService {
         );
       }
 
-      const service: Partial<EService> = {
-        mentorId,
+      // Prepare update data using DTO
+      const serviceData: UpdateServiceDTO = {
         title,
         shortDescription,
         amount: parseFloat(amount),
@@ -437,7 +479,8 @@ export default class MentorProfileService implements IMentorProfileService {
 
       console.log("updateService service step 4");
 
-      const existingService = await this.ServiceRepository.getServiceById(
+      // Get existing service to check type
+      const existingService = await this.ServiceService.getServiceById(
         serviceId
       );
       if (!existingService) {
@@ -451,13 +494,13 @@ export default class MentorProfileService implements IMentorProfileService {
       ) {
         console.log("updateService service step 6");
         if (duration) {
-          service.duration = parseInt(duration);
+          serviceData.duration = parseInt(duration);
         }
         if (longDescription) {
-          service.longDescription = longDescription;
+          serviceData.longDescription = longDescription;
         }
         if (existingService.type === "1-1Call" && oneToOneType) {
-          service.oneToOneType = oneToOneType;
+          serviceData.oneToOneType = oneToOneType;
         }
       } else if (existingService.type === "DigitalProducts") {
         console.log("updateService service step 7");
@@ -465,12 +508,12 @@ export default class MentorProfileService implements IMentorProfileService {
           console.log("updateService service step 8");
           throw new Error("Digital product type is required");
         }
-        service.digitalProductType = digitalProductType;
+        serviceData.digitalProductType = digitalProductType;
         if (digitalProductType === "documents") {
           console.log("updateService service step 9");
           if (pdfFile && pdfFile_url) {
             console.log("updateService service step 10");
-            service.fileUrl = pdfFile_url; // Use S3 URL
+            serviceData.fileUrl = pdfFile_url; // Use S3 URL
           }
         } else if (digitalProductType === "videoTutorials") {
           console.log("updateService service step 11");
@@ -529,7 +572,7 @@ export default class MentorProfileService implements IMentorProfileService {
             );
           }
           if (exclusiveContent.length > 0) {
-            service.exclusiveContent = exclusiveContent;
+            serviceData.exclusiveContent = exclusiveContent;
           }
         }
       } else {
@@ -538,9 +581,10 @@ export default class MentorProfileService implements IMentorProfileService {
       }
 
       console.log("updateService service step 14");
-      const updatedService = await this.ServiceRepository.updateService(
+      // Use ServiceService instead of repository directly
+      const updatedService = await this.ServiceService.updateService(
         serviceId,
-        service
+        serviceData
       );
       console.log("updateService service step 15");
       if (!updatedService) {
@@ -607,6 +651,24 @@ export default class MentorProfileService implements IMentorProfileService {
     }
   }
 
+  async findMentorById(mentorId: string): Promise<EMentor | null> {
+    try {
+      console.log("getMentorById service step 1", { mentorId });
+      const mentor = await this.MentorRepository.findById(mentorId);
+      console.log("getMentorById service step 2: Mentor fetched", mentor);
+
+      return mentor;
+    } catch (error: any) {
+      console.log("getMentorById service step 3: Error", {
+        message: error.message,
+        stack: error.stack,
+      });
+      throw error instanceof Error
+        ? error
+        : new Error(`Failed to fetch mentor: ${error.message}`);
+    }
+  }
+
   async isApprovalChecking(
     userId: string
   ): Promise<{ isApproved: string | null; approvalReason: string | null }> {
@@ -634,8 +696,6 @@ export default class MentorProfileService implements IMentorProfileService {
     try {
       console.log("getMentorSchedule service step 1", { serviceId });
       const response = await this.SlotRepository.findAvailableSlots(serviceId);
-      // const schedule = await Schedule.findOne({ mentorId }).exec();
-
       console.log("getMentorSchedule service step 2", response);
       return response;
     } catch (error: any) {
@@ -655,7 +715,7 @@ export default class MentorProfileService implements IMentorProfileService {
       throw new Error(`Failed to fetch mentor blocked dates: ${error.message}`);
     }
   }
-  // MentorProfileService.ts
+
   async assignScheduleToService(
     serviceId: string,
     scheduleId: string
@@ -681,10 +741,9 @@ export default class MentorProfileService implements IMentorProfileService {
       }
 
       // Verify that the schedule exists
-      const schedule = await this.CalendarRepository.getSchedules(
+      const schedule = await this.ScheduleRepository.getSchedules(
         serviceId?.mentorId
       );
-      // const schedule = await Schedule.findById(scheduleId).exec();
       if (!schedule) {
         console.log(
           "assignScheduleToService service step 4: Schedule not found"
@@ -692,13 +751,13 @@ export default class MentorProfileService implements IMentorProfileService {
         throw new Error("Schedule not found");
       }
 
-      // Update the service with the scheduleId
-      const serviceData: Partial<EService> = {
+      // Update the service with the scheduleId using ServiceService
+      const serviceData: UpdateServiceDTO = {
         slot: new mongoose.Types.ObjectId(scheduleId),
       };
 
       console.log("assignScheduleToService service step 5: Updating service");
-      const updatedService = await this.ServiceRepository.updateService(
+      const updatedService = await this.ServiceService.updateService(
         serviceId,
         serviceData
       );
@@ -775,9 +834,13 @@ export default class MentorProfileService implements IMentorProfileService {
         priorityDMId,
         updateData
       );
-
-      const bookingStatusChange = await this.BookingRepository.update(
-        priorityDM?.bookingId?._id,
+      const bookingId = priorityDM?.bookingId?._id?.toString();
+      console.log(
+        "@@@@@Mentor servcie replyToPriorityDM step 7.1",
+        typeof bookingId
+      );
+      const bookingStatusChange = await this.BookingService.updateStatus(
+        bookingId,
         { status: "completed" }
       );
       console.log(
@@ -846,6 +909,7 @@ export default class MentorProfileService implements IMentorProfileService {
       throw error;
     }
   }
+
   async updateTopTestimonials(
     mentorId: string,
     testimonialIds: string[]
@@ -887,6 +951,127 @@ export default class MentorProfileService implements IMentorProfileService {
       return updatedMentor;
     } catch (error: any) {
       throw new Error(error.message || "Failed to update top testimonials");
+    }
+  }
+
+  async updateMentorField(
+    id: string,
+    data: UpdateMentorFieldDTO
+  ): Promise<EMentor | null> {
+    try {
+      const { field, status, reason } = data;
+
+      // Validate the field being updated
+      if (!field || !status) {
+        throw new Error("Field and status are required");
+      }
+
+      const mentor = await this.MentorRepository.updateField(
+        id,
+        field,
+        status,
+        reason
+      );
+
+      if (!mentor) {
+        throw new Error(`Mentor with id ${id} not found`);
+      }
+
+      return mentor;
+    } catch (error: any) {
+      console.error(`Error updating mentor field ${data.field}:`, error);
+      throw new Error(error.message || "Failed to update mentor field");
+    }
+  }
+
+  // async updateMentor(
+  //   id: string,
+  //   data: UpdateMentorDTO
+  // ): Promise<EMentor | null> {
+  //   try {
+  //     // Validate input
+  //     console.log("menotr service updateMentor step 1");
+
+  //     if (!id) {
+  //       throw new Error("Mentor ID is required");
+  //     }
+
+  //     if (!data || Object.keys(data).length === 0) {
+  //       throw new Error("Update data is required");
+  //     }
+  //     console.log("menotr service updateMentor step 2", data);
+
+  //     // Use the base repository update method
+  //     const updatedMentor = await this.MentorRepository.update(id, data);
+
+  //     if (!updatedMentor) {
+  //       throw new Error(`Mentor with id ${id} not found`);
+  //     }
+  //     console.log("menotr service updateMentor step 3");
+
+  //     return updatedMentor;
+  //   } catch (error: any) {
+  //     console.error("Error updating mentor:", error);
+  //     throw new Error(error.message || "Failed to update mentor");
+  //   }
+  // }
+  async updateMentor(
+    id: string,
+    data: UpdateMentorDTO
+  ): Promise<EMentor | null> {
+    try {
+      console.log("mentor service updateMentor step 1");
+
+      if (!id) {
+        throw new Error("Mentor ID is required");
+      }
+
+      if (!data || Object.keys(data).length === 0) {
+        throw new Error("Update data is required");
+      }
+
+      console.log("mentor service updateMentor step 2", data);
+
+      // Check if this is a field-based update (for status changes)
+      let updateObject;
+      if (data.field && data.status) {
+        updateObject = { [data.field]: data.status };
+        if (data.reason) {
+          updateObject.approvalReason = data.reason;
+        }
+      } else {
+        // Regular update
+        updateObject = data;
+      }
+
+      console.log(
+        "mentor service updateMentor - final update object:",
+        updateObject
+      );
+
+      const updatedMentor = await this.MentorRepository.update(
+        id,
+        updateObject
+      );
+
+      if (!updatedMentor) {
+        throw new Error(`Mentor with id ${id} not found`);
+      }
+
+      console.log("mentor service updateMentor step 3");
+      return updatedMentor;
+    } catch (error: any) {
+      console.error("Error updating mentor:", error);
+      throw new Error(error.message || "Failed to update mentor");
+    }
+  }
+
+  async createMentor(data: EMentor): Promise<EMentor | null> {
+    try {
+      const mentor = await this.MentorRepository.create(data);
+      return mentor;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create mentor");
     }
   }
 }

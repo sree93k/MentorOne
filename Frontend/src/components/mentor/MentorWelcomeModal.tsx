@@ -94,7 +94,7 @@ function WelcomeModal({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mentorActivated, user, isApproved, activated } = useSelector(
+  const { mentorActivated, user } = useSelector(
     (state: RootState) => state.user
   );
 
@@ -224,7 +224,17 @@ function WelcomeModal({
             {step === "experience" && (
               <ExperienceStep formData={formData} setFormData={setFormData} />
             )}
-            {step === "success" && <SuccessStep />}
+            {step === "success" && (
+              <SuccessStep
+                setLogoutModalOpen={function (open: boolean): void {
+                  throw new Error("Function not implemented.");
+                }}
+                loggingOut={false}
+                handleLogout={function (): Promise<void> {
+                  throw new Error("Function not implemented.");
+                }}
+              />
+            )}
             {step !== "success" && (
               <div className="mt-8 flex justify-between">
                 {step !== "about" && (

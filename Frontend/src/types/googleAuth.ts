@@ -6,6 +6,10 @@ export interface DecodedGoogleToken {
 }
 
 interface UserData {
+  mentorActivated(mentorActivated: any): {
+    payload: any;
+    type: "user/setMentorActivated";
+  };
   _id: string;
   firstName: string;
   lastName: string;

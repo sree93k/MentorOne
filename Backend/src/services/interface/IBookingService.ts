@@ -139,4 +139,10 @@ export interface IBookingService {
     oneToOneType?: string,
     digitalProductType?: string
   ): Promise<{ services: any[]; total: number }>;
+  findByMentee(menteeId: string): Promise<EBooking[]>;
+  updateStatus(
+    bookingId: string,
+    status: Partial<EBooking>
+  ): Promise<EBooking[]>;
+  update(bookingId: string, meetingId: object): Promise<EBooking>;
 }

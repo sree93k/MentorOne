@@ -1,48 +1,38 @@
 import { IAdminService } from "../interface/IAdminService";
 import Users from "../../models/userModel";
-import Mentee from "../../models/menteeModel";
 import Mentor from "../../models/mentorModel";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
-import MenteeRepository from "../../repositories/implementations/MenteeRepository";
-import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
-import MentorRepository from "../../repositories/implementations/MentorRepository";
 import { EUsers } from "../../entities/userEntity";
 import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
 import { sendMail } from "../../utils/emailService";
-import { Model } from "mongoose";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import { EService } from "../../entities/serviceEntity";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { IServiceService } from "../interface/IServiceServices";
+import ServiceService from "./ServiceServices";
+import BookingService from "./Bookingservice";
+import { IBookingService } from "../interface/IBookingService";
 import { EBooking } from "../../entities/bookingEntity";
-import { number } from "joi";
+import UserRepository from "../../repositories/implementations/UserRepository";
+import { IUserRepository } from "../../repositories/interface/IUserRepository";
+import MenteeService from "./MenteeService";
+import { IMenteeService } from "../interface/IMenteeService";
+import MentorService from "./MentorService";
+import { IMentorService } from "../interface/IMentorService";
+import { EService } from "../../entities/serviceEntity";
+
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export default class AdminService implements IAdminService {
-  private BaseRepository: IBaseRepository<EUsers>;
-  private MenteeRepository: IMenteeRepository;
-  private MentorRepository: IMentorRepository;
-  private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
+  private ServiceService: IServiceService;
+  private BookingService: IBookingService;
+  private UserRepository: IUserRepository;
+  private MenteeServcie: IMenteeService;
+  private MentorService: IMentorService;
 
   constructor() {
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
-    this.MenteeRepository = new MenteeRepository();
-    this.MentorRepository = new MentorRepository();
-    this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
-  }
-
-  private getModel(): Model<EUsers> {
-    return require("../../models/userModel").default;
-  }
-
-  private getMentorModel(): Model<any> {
-    return require("../../models/mentorModel").default;
+    this.ServiceService = new ServiceService();
+    this.BookingService = new BookingService();
+    this.UserRepository = new UserRepository();
+    this.MenteeServcie = new MenteeService();
+    this.MentorService = new MentorService();
   }
 
   async fetchAllUsers(
@@ -60,8 +50,6 @@ export default class AdminService implements IAdminService {
   } | null> {
     try {
       console.log("all users service ************************************");
-      const rawModel = (this.BaseRepository as BaseRepository<EUsers>).model;
-      const mentorModel = this.getMentorModel();
 
       // Build MongoDB query for users
       const query: any = {};
@@ -82,37 +70,35 @@ export default class AdminService implements IAdminService {
         query.isBlocked = status === "Blocked" ? true : false;
       }
 
-      // Fetch total counts for all categories
-      const total = await rawModel.countDocuments(query);
-      const totalMentors = await rawModel.countDocuments({
+      // Use Users model instead of rawModel
+      const total = await Users.countDocuments(query);
+      const totalMentors = await Users.countDocuments({
         ...query,
         role: { $eq: ["mentor"] },
       });
-      const totalMentees = await rawModel.countDocuments({
+      const totalMentees = await Users.countDocuments({
         ...query,
         role: { $eq: ["mentee"] },
       });
-      const totalBoth = await rawModel.countDocuments({
+      const totalBoth = await Users.countDocuments({
         ...query,
         role: { $all: ["mentor", "mentee"] },
       });
 
-      // Simply count pending mentors directly
-      const approvalPending = await mentorModel.countDocuments({
+      // Use Mentor model instead of mentorModel
+      const approvalPending = await Mentor.countDocuments({
         isApproved: "Pending",
       });
 
       // Log mentor data for debugging
-      const pendingMentors = await mentorModel
-        .find({ isApproved: "Pending" })
+      const pendingMentors = await Mentor.find({ isApproved: "Pending" })
         .select("_id isApproved")
         .exec();
       console.log("admin service pending mentors:", pendingMentors);
       console.log("admin service approvalPending count:", approvalPending);
 
       // Fetch paginated users with population
-      const allUsers = await rawModel
-        .find(query)
+      const allUsers = await Users.find(query)
         .populate("mentorId")
         .skip((page - 1) * limit)
         .limit(limit)
@@ -149,7 +135,7 @@ export default class AdminService implements IAdminService {
   } | null> {
     try {
       console.log("AdminService getUserDatas step 1:", id);
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       console.log("AdminService getUserDatas step 2:", user);
       if (!user) {
         console.log("AdminService getUserDatas: User not found");
@@ -163,8 +149,8 @@ export default class AdminService implements IAdminService {
 
       // Fetch mentee data if user has mentee role
       if (user.role?.includes("mentee") && user.menteeId) {
-        menteeData = await this.MenteeRepository.getMentee(
-          user.menteeId.toString()
+        menteeData = await this.MenteeServcie.findMenteeById(
+          user.menteeId._id.toString()
         );
         console.log(
           "AdminService getUserDatas step 3 - menteeData:",
@@ -174,7 +160,7 @@ export default class AdminService implements IAdminService {
 
       // Fetch booking data if user has mentee role
       if (user.role?.includes("mentee") && user.menteeId) {
-        bookingData = await this.BookingRepository.findByMentee(id);
+        bookingData = await this.BookingService.findByMentee(id);
         console.log(
           "AdminService getUserDatas step 4 - bookingData:",
           bookingData
@@ -183,8 +169,8 @@ export default class AdminService implements IAdminService {
 
       // Fetch mentor data if user has mentor role
       if (user.role?.includes("mentor") && user.mentorId) {
-        mentorData = await this.MentorRepository.getMentor(
-          user.mentorId.toString()
+        mentorData = await this.MentorService.findMentorById(
+          user.mentorId._id.toString()
         );
         console.log(
           "AdminService getUserDatas step 5 - mentorData:",
@@ -194,20 +180,21 @@ export default class AdminService implements IAdminService {
 
       // Fetch service data if user has mentor role
       if (user.role?.includes("mentor") && user.mentorId) {
-        // Provide default pagination parameters to avoid TypeError
+        // Use ServiceService instead of directly accessing repository
         const params = {
           page: 1,
-          limit: 10,
+          limit: 100, // Get all services for admin view
           search: "",
           type: "all",
         };
-        serviceData = await this.ServiceRepository.getAllServices(id, params);
+        const serviceResponse =
+          await this.ServiceService.getAllServicesByMentor(id, params);
         console.log(
           "AdminService getUserDatas step 6 - serviceData:",
-          serviceData
+          serviceResponse
         );
         // Extract services array from response
-        serviceData = serviceData ? serviceData.services : null;
+        serviceData = serviceResponse ? serviceResponse.services : null;
       }
 
       console.log("AdminService getUserDatas final response:", {
@@ -224,6 +211,7 @@ export default class AdminService implements IAdminService {
       return null;
     }
   }
+
   async mentorStatusChange(
     id: string,
     status: string,
@@ -231,23 +219,25 @@ export default class AdminService implements IAdminService {
   ): Promise<{ mentorData: EMentor | null } | null> {
     try {
       console.log(
-        "mentor service ....mentorStatusChange step 1",
+        "mentor service ....mentorStatusChange step 1...",
         id,
         status,
         reason
       );
-
-      const updateMentor = await this.MentorRepository.updateField(
-        id,
-        "isApproved",
+      const updateData = {
+        field: "isApproved",
         status,
-        reason
+        reason,
+      };
+      const updateMentor = await this.MentorService.updateMentor(
+        id,
+        updateData
       );
       console.log(
         "adminside service mentorStatusChange service is ",
         updateMentor
       );
-      const userData = await this.BaseRepository.findByField("mentorId", id);
+      const userData = await this.UserRepository.findByField("mentorId", id);
       console.log("user data is ", userData);
       const user = userData?.[0];
       if (!user) {
@@ -256,9 +246,6 @@ export default class AdminService implements IAdminService {
       }
       // Send email notification if status is updated
       if (updateMentor && (status === "Approved" || status === "Rejected")) {
-        // const message = `Your mentor status has been updated to "${status}" and the reason: ${
-        //   reason || "No reason provided"
-        // }`;
         const message =
           status === "Approved"
             ? `Your mentor status has been updated to "${status}".`
@@ -284,7 +271,7 @@ export default class AdminService implements IAdminService {
         console.log("Email sent:", OTPDetails);
         // If Rejected, deactivate mentor in user model
         if (status === "Rejected") {
-          await this.BaseRepository.update(user._id, {
+          await this.UserRepository.update(user._id, {
             mentorActivated: false,
             refreshToken: "",
           } as any);
@@ -298,6 +285,7 @@ export default class AdminService implements IAdminService {
       return null;
     }
   }
+
   async userStatusChange(
     id: string,
     status: string
@@ -305,7 +293,7 @@ export default class AdminService implements IAdminService {
     try {
       console.log("userStatusChange start ", id, status);
 
-      const updateUser = await this.BaseRepository.updateField(
+      const updateUser = await this.UserRepository.updateField(
         id,
         "isBlocked",
         status

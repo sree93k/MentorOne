@@ -1,26 +1,25 @@
 import { EUsers } from "../../entities/userEntity";
 import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
-import { EOTP } from "../../entities/OTPEntity";
 import { IUserService } from "../interface/IUserService";
 import UserRespository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepositotry from "../../repositories/implementations/BaseRepository";
-import CareerRepository from "../../repositories/implementations/CareerRepository";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
-import Users from "../../models/userModel";
-import Mentees from "../../models/menteeModel";
-import Mentors from "../../models/mentorModel";
 import bcrypt from "bcryptjs";
 import * as Yup from "yup";
-import { IMentorRepository } from "../../repositories/interface/IMentorRepository";
-import MentorRepository from "../../repositories/implementations/MentorRepository";
+import CareerCollege from "../../repositories/implementations/CareerCollege";
+import { ICareerCollege } from "../../repositories/interface/ICareerCollege";
+import CareerSchool from "../../repositories/implementations/CareerSchool";
+import { ICareerSchool } from "../../repositories/interface/ICareerSchool";
+import CareerProfessional from "../../repositories/implementations/CareerProfessional";
+import { ICareerProfessional } from "../../repositories/interface/ICareerProfessional";
+import MenteeService from "./MenteeService";
+import { IMenteeService } from "../interface/IMenteeService";
+import MentorService from "./MentorService";
+import { IMentorService } from "../interface/IMentorService";
 
 // Define collection types
 type CollectionType = "user" | "mentee" | "mentor";
 
-// Yup validation schema for collegeDetails
 const collegeDetailsSchema = Yup.object().shape({
   collegeName: Yup.string().required("College name is required"),
   course: Yup.string().required("Course is required"),
@@ -39,19 +38,18 @@ const collegeDetailsSchema = Yup.object().shape({
 
 export default class UserService implements IUserService {
   private UserRepository: IUserRepository;
-  private userBaseRepository: IBaseRepository<EUsers>;
-  private menteeBaseRepository: IBaseRepository<EMentee>;
-  private mentorBaseRepository: IBaseRepository<EMentor>;
-  private careerRepository: ICareerRepository;
-  private mentorRepository: IMentorRepository;
-
+  private CareerCollege: ICareerCollege;
+  private CareerSchool: ICareerSchool;
+  private CareerProfessional: ICareerProfessional;
+  private MenteeService: IMenteeService;
+  private MentorService: IMentorService;
   constructor() {
     this.UserRepository = new UserRespository();
-    this.userBaseRepository = new BaseRepositotry<EUsers>(Users);
-    this.menteeBaseRepository = new BaseRepositotry<EMentee>(Mentees);
-    this.mentorBaseRepository = new BaseRepositotry<EMentor>(Mentors);
-    this.careerRepository = new CareerRepository();
-    this.mentorRepository = new MentorRepository();
+    this.CareerCollege = new CareerCollege();
+    this.CareerSchool = new CareerSchool();
+    this.CareerProfessional = new CareerProfessional();
+    this.MenteeService = new MenteeService();
+    this.MentorService = new MentorService();
   }
 
   async findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null> {
@@ -94,22 +92,20 @@ export default class UserService implements IUserService {
         payload
       );
       let updateData: T | null = null;
-
       const editableFields = [
         "featuredArticle",
-        "portfolioURL",
-        "youTubeURL",
+        "portfolio",
+        "youtubeURL",
         "linkedinURL",
         "achievements",
         "portfolio",
         "bio",
       ];
-
       if (editableFields.some((key) => key in payload)) {
         console.log(
           "Updating portfolio-related or achievements-related fields.step 1 "
         );
-        const user = await this.userBaseRepository.findById(id);
+        const user = await this.UserRepository.findById(id);
         console.log(
           "Updating portfolio-related or achievements-related fields.step 2 ",
           user
@@ -122,7 +118,7 @@ export default class UserService implements IUserService {
         if (!mentorId) {
           throw new Error("Mentor ID is undefined for this user.");
         }
-        const updateMentor = await this.mentorRepository.update(
+        const updateMentor = await this.MentorService.updateMentor(
           mentorId,
           payload
         );
@@ -134,11 +130,11 @@ export default class UserService implements IUserService {
       if ("schoolDetails" in payload) {
         console.log("Payload has schoolDetails:step 1", payload.schoolDetails);
 
-        const user = await this.userBaseRepository.findById(id);
+        const user = await this.UserRepository.findById(id);
         console.log("Payload has schoolDetails:step 2", user);
 
         const updateSchoolDetails =
-          await this.careerRepository.updateSchoolExperience(
+          await this.CareerSchool.updateSchoolExperience(
             user?.schoolDetails, // this is ObjectId from User
             payload.schoolDetails // ✅ pass only the object inside
           );
@@ -150,11 +146,11 @@ export default class UserService implements IUserService {
           payload.collegeDetails
         );
 
-        const user = await this.userBaseRepository.findById(id);
+        const user = await this.UserRepository.findById(id);
         console.log("Payload has collegeDetails:step 2", user);
 
         const updateCollegeDetails =
-          await this.careerRepository.updateCollegeExperience(
+          await this.CareerCollege.updateCollegeExperience(
             user?.collegeDetails, // this is ObjectId from User
             payload.collegeDetails // ✅ pass only the object inside
           );
@@ -166,11 +162,11 @@ export default class UserService implements IUserService {
           payload.professionalDetails
         );
 
-        const user = await this.userBaseRepository.findById(id);
+        const user = await this.UserRepository.findById(id);
         console.log("Payload has professionalDetails:step 2", user);
 
         const updateProfessionalDetails =
-          await this.careerRepository.updateProfessionalExperience(
+          await this.CareerProfessional.updateProfessionalExperience(
             user?.professionalDetails, // this is ObjectId from User
             payload.professionalDetails // ✅ pass only the object inside
           );
@@ -181,7 +177,7 @@ export default class UserService implements IUserService {
         );
       } else {
         if (collectionType === "user") {
-          const user = await this.userBaseRepository.findById(id);
+          const user = await this.UserRepository.findById(id);
 
           if (!user) {
             console.error("User not found:", id);
@@ -199,16 +195,15 @@ export default class UserService implements IUserService {
             };
             let schoolDoc;
             if (user.schoolDetails) {
-              schoolDoc = await this.careerRepository.updateSchoolExperience(
+              schoolDoc = await this.CareerSchool.updateSchoolExperience(
                 user.schoolDetails.toString(), // Ensure ObjectId is passed as string
                 schoolPayload
               );
             } else {
-              schoolDoc =
-                await this.careerRepository.schoolStudentFormDataCreate(
-                  schoolPayload,
-                  id
-                );
+              schoolDoc = await this.CareerSchool.schoolStudentFormDataCreate(
+                schoolPayload,
+                id
+              );
               if (schoolDoc) {
                 userUpdatePayload.schoolDetails = schoolDoc._id;
               }
@@ -238,13 +233,13 @@ export default class UserService implements IUserService {
             };
             let collegeDoc;
             if (user.collegeDetails) {
-              collegeDoc = await this.careerRepository.updateCollegeExperience(
+              collegeDoc = await this.CareerCollege.updateCollegeExperience(
                 user.collegeDetails.toString(), // Ensure ObjectId is passed as string
                 collegePayload
               );
             } else {
               collegeDoc =
-                await this.careerRepository.collegeStudentFormDataCreate(
+                await this.CareerCollege.collegeStudentFormDataCreate(
                   collegePayload,
                   id
                 );
@@ -267,13 +262,13 @@ export default class UserService implements IUserService {
             let professionalDoc;
             if (user.professionalDetails) {
               professionalDoc =
-                await this.careerRepository.updateProfessionalExperience(
+                await this.CareerProfessional.updateProfessionalExperience(
                   user.professionalDetails.toString(),
                   professionalPayload
                 );
             } else {
               professionalDoc =
-                await this.careerRepository.professionalFormDataCreate(
+                await this.CareerProfessional.professionalFormDataCreate(
                   professionalPayload,
                   id
                 );
@@ -289,7 +284,7 @@ export default class UserService implements IUserService {
           }
 
           // Update user document with references or other fields
-          updateData = (await this.userBaseRepository.update(
+          updateData = (await this.UserRepository.update(
             id,
             userUpdatePayload
           )) as T;
@@ -297,13 +292,13 @@ export default class UserService implements IUserService {
           // Handle mentee or mentor updates
           switch (collectionType) {
             case "mentee":
-              updateData = (await this.menteeBaseRepository.update(
+              updateData = (await this.MenteeService.updateMentee(
                 id,
                 payload
               )) as T;
               break;
             case "mentor":
-              updateData = (await this.mentorBaseRepository.update(
+              updateData = (await this.MentorService.updateMentor(
                 id,
                 payload
               )) as T;
@@ -314,7 +309,7 @@ export default class UserService implements IUserService {
         }
       }
 
-      updateData = await this.userBaseRepository.findById(id);
+      updateData = await this.UserRepository.findById(id);
 
       console.log(
         `service editProfile for ${collectionType} step 2`,
@@ -348,14 +343,14 @@ export default class UserService implements IUserService {
     return this.editProfile<EMentor>(id, payload, "mentor");
   }
 
-  private getRepository(collectionType: CollectionType): IBaseRepository<any> {
+  private getRepository(collectionType: CollectionType): RepositoryType {
     switch (collectionType) {
       case "user":
-        return this.userBaseRepository;
+        return this.UserRepository;
       case "mentee":
-        return this.menteeBaseRepository;
+        return this.MenteeService;
       case "mentor":
-        return this.mentorBaseRepository;
+        return this.MentorService;
       default:
         throw new Error(`Unsupported collection type: ${collectionType}`);
     }
@@ -367,8 +362,25 @@ export default class UserService implements IUserService {
   ): Promise<T | null> {
     try {
       console.log(`Finding ${collectionType} by ID:`, id);
-      const repository = this.getRepository(collectionType);
-      const result = (await repository.findById(id)) as T;
+
+      let result: T | null = null;
+
+      // Handle each collection type specifically
+      switch (collectionType) {
+        case "user":
+          // For Users collection, just use findById with single argument
+          result = (await this.UserRepository.findById(id)) as T;
+          break;
+        case "mentee":
+          result = (await this.MenteeService.findMenteeById(id)) as T;
+          break;
+        case "mentor":
+          result = (await this.MentorService.getMentorById(id)) as T;
+          break;
+        default:
+          throw new Error(`Unsupported collection type: ${collectionType}`);
+      }
+
       console.log(`Found ${collectionType}:`, result);
       return result;
     } catch (error) {
@@ -390,20 +402,57 @@ export default class UserService implements IUserService {
         password,
         newPassword
       );
-      const repository = this.getRepository(collectionType);
-      const user = await repository.findById(id);
-      if (!user || !(user as any).password) {
+
+      let user: any = null;
+
+      // Get user from appropriate repository
+      switch (collectionType) {
+        case "user":
+          user = await this.UserRepository.findById(id);
+          break;
+        case "mentee":
+          user = await this.MenteeService.findMenteeById(id);
+          break;
+        case "mentor":
+          user = await this.MentorService.getMentorById(id);
+          break;
+        default:
+          throw new Error(`Unsupported collection type: ${collectionType}`);
+      }
+
+      if (!user || !user.password) {
         return {
           success: false,
           message: "User not found or password missing",
         };
       }
-      const isMatch = await bcrypt.compare(password, (user as any).password);
+
+      const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return { success: false, message: "Current password is incorrect" };
       }
+
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await repository.update(id, { password: hashedPassword } as any);
+
+      // Update password in appropriate repository
+      switch (collectionType) {
+        case "user":
+          await this.UserRepository.update(id, {
+            password: hashedPassword,
+          } as any);
+          break;
+        case "mentee":
+          await this.MenteeService.updateMentee(id, {
+            password: hashedPassword,
+          } as any);
+          break;
+        case "mentor":
+          await this.MentorService.updateMentor(id, {
+            password: hashedPassword,
+          } as any);
+          break;
+      }
+
       return { success: true, message: "Password updated successfully" };
     } catch (error) {
       console.error(
@@ -428,15 +477,39 @@ export default class UserService implements IUserService {
         `UserService updateOnlineStatus step 1 for ${collectionType}`,
         { userId, isOnline, role }
       );
+
       const updateData = {
         isOnline: { status: isOnline, role },
       };
-      const repository = this.getRepository(collectionType);
-      const updatedUser = await repository.update(userId, updateData);
+
+      let updatedUser: any = null;
+
+      // Update in appropriate repository
+      switch (collectionType) {
+        case "user":
+          updatedUser = await this.UserRepository.update(userId, updateData);
+          break;
+        case "mentee":
+          updatedUser = await this.MenteeService.updateMentee(
+            userId,
+            updateData
+          );
+          break;
+        case "mentor":
+          updatedUser = await this.MentorService.updateMentor(
+            userId,
+            updateData
+          );
+          break;
+        default:
+          throw new Error(`Unsupported collection type: ${collectionType}`);
+      }
+
       console.log(
         `UserService updateOnlineStatus step 2 for ${collectionType}`,
         updatedUser
       );
+
       if (!updatedUser) {
         console.error(
           `UserService: Failed to update ${collectionType}`,
@@ -444,6 +517,7 @@ export default class UserService implements IUserService {
         );
         return null;
       }
+
       return updatedUser;
     } catch (error: any) {
       console.error(
@@ -460,10 +534,22 @@ export default class UserService implements IUserService {
   ): Promise<Array<T | null>> {
     try {
       console.log(`Bulk updating ${collectionType} profiles`, updates);
-      const repository = this.getRepository(collectionType);
+
       const results = await Promise.allSettled(
-        updates.map(({ id, payload }) => repository.update(id, payload))
+        updates.map(async ({ id, payload }) => {
+          switch (collectionType) {
+            case "user":
+              return await this.UserRepository.update(id, payload);
+            case "mentee":
+              return await this.MenteeService.updateMentee(id, payload);
+            case "mentor":
+              return await this.MentorService.updateMentor(id, payload);
+            default:
+              throw new Error(`Unsupported collection type: ${collectionType}`);
+          }
+        })
       );
+
       return results.map((result) =>
         result.status === "fulfilled" ? (result.value as T) : null
       );

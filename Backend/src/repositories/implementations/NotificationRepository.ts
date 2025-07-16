@@ -1,11 +1,16 @@
+import { ENotification } from "../../entities/notificationEntity";
 import Notification from "../../models/notificationModel";
+import { INotificationRepository } from "../../repositories/interface/INotifictaionRepository";
+import BaseRepository from "./BaseRepository";
 
-import {
-  INotificationRepository,
-  ICreateNotificationDTO,
-} from "../../repositories/interface/INotifictaionRepository";
-export default class NotificationRepository implements INotificationRepository {
-  async create(data: ICreateNotificationDTO) {
+export default class NotificationRepository
+  extends BaseRepository<ENotification>
+  implements INotificationRepository
+{
+  constructor() {
+    super(Notification);
+  }
+  async create(data: ENotification): Promise<ENotification> {
     try {
       const notification = new Notification(data);
       const savedNotification = await notification.save();

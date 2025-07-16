@@ -1,9 +1,16 @@
 import Payment from "../../models/paymentModel";
-
 import mongoose from "mongoose";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
+import BaseRepository from "./BaseRepository";
+import { EPayment } from "../../entities/paymentEntity";
 
-export default class PaymentRepository implements IPaymentRepository {
+export default class PaymentRepository
+  extends BaseRepository<EPayment>
+  implements IPaymentRepository
+{
+  constructor() {
+    super(Payment);
+  }
   async create(data: any) {
     try {
       const payment = new Payment(data);
@@ -180,7 +187,7 @@ export default class PaymentRepository implements IPaymentRepository {
         {
           $group: {
             _id: null,
-            totalAmount: { $sum: "$amount" },
+            totalAmount: { $sum: "$total" },
             totalCount: { $count: {} },
           },
         },

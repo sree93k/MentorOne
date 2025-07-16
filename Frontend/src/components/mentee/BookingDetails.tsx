@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import DummyImage from "@/assets/DummyProfile.jpg";
-import { useEffect } from "react";
 
 interface Service {
   _id: string; // Added _id
@@ -10,6 +9,7 @@ interface Service {
   longDescription: string;
   duration: string;
   price: number;
+  amount: number;
 }
 
 interface Mentor {
@@ -34,10 +34,7 @@ export default function BookingDetails({
   if (!service || !mentor) {
     return <div>Service or mentor data is missing.</div>;
   }
-  useEffect(() => {
-    console.log("......        Booking details step 1 service", service);
-    console.log(".......        Booking details step 1 mentor", mentor);
-  });
+
   return (
     <div className="rounded-3xl overflow-hidden bg-gray-100">
       <div className="flex flex-row items-center justify-center gap-10 p-8">
@@ -64,7 +61,7 @@ export default function BookingDetails({
           className="rounded-full border-green-400 flex items-center gap-2"
           onClick={onConfirmClick}
         >
-          ₹{service.amount}
+          ₹{service?.amount}
           <svg
             width="16"
             height="16"

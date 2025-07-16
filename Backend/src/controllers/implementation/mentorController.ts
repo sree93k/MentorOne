@@ -10,8 +10,8 @@ import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
 import UploadService from "../../services/implementations/UploadService";
-import { IMentorProfileService } from "../../services/interface/IMentorProfileService";
-import MentorProfileService from "../../services/implementations/MentorProfileService";
+import { IMentorService } from "../../services/interface/IMentorService";
+import MentorService from "../../services/implementations/MentorService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
 import CalendarService from "../../services/implementations/CalenderService";
 import { HttpStatus } from "../../constants/HttpStatus";
@@ -21,7 +21,7 @@ class mentorController {
   private OTPServices: IOTPService;
   private userService: IUserService;
   private uploadService: IUploadService;
-  private MentorProfileService: IMentorProfileService;
+  private MentorService: IMentorService;
   private calendarService: ICalendarService;
 
   private options = {
@@ -36,7 +36,7 @@ class mentorController {
     this.OTPServices = new OTPServices();
     this.userService = new UserService();
     this.uploadService = new UploadService();
-    this.MentorProfileService = new MentorProfileService();
+    this.MentorService = new MentorService();
     this.calendarService = new CalendarService();
   }
 
@@ -55,10 +55,7 @@ class mentorController {
         throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
       }
 
-      const response = await this.MentorProfileService.welcomeData(
-        req.body,
-        userId
-      );
+      const response = await this.MentorService.welcomeData(req.body, userId);
 
       res
         .status(HttpStatus.OK)
@@ -86,7 +83,7 @@ class mentorController {
       if (!userId) {
         throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
       }
-      const response = await this.MentorProfileService.profileDatas(userId);
+      const response = await this.MentorService.profileDatas(userId);
       if (!response) {
         throw new ApiError(HttpStatus.NOT_FOUND, "Profile not found");
       }
@@ -117,9 +114,7 @@ class mentorController {
         throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
       const formData = { ...req.body, mentorId: userId };
-      const newService = await this.MentorProfileService.createService(
-        formData
-      );
+      const newService = await this.MentorService.createService(formData);
       console.log("MentorController createService step 2", { newService });
 
       res
@@ -227,15 +222,12 @@ class mentorController {
       }
 
       const { page = "1", limit = "8", search = "", type } = req.query;
-      const servicesData = await this.MentorProfileService.getAllServices(
-        userId,
-        {
-          page: parseInt(page as string, 10),
-          limit: parseInt(limit as string, 10),
-          search: search as string,
-          type: type as string,
-        }
-      );
+      const servicesData = await this.MentorService.getAllServices(userId, {
+        page: parseInt(page as string, 10),
+        limit: parseInt(limit as string, 10),
+        search: search as string,
+        type: type as string,
+      });
       console.log("MentorController getAllServices step 2", { servicesData });
 
       res
@@ -267,7 +259,7 @@ class mentorController {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
       }
 
-      const service = await this.MentorProfileService.getServiceById(serviceId);
+      const service = await this.MentorService.getServiceById(serviceId);
       if (!service) {
         throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
@@ -313,7 +305,7 @@ class mentorController {
         });
       }
 
-      const updatedService = await this.MentorProfileService.updateService(
+      const updatedService = await this.MentorService.updateService(
         serviceId,
         formData
       );
@@ -597,9 +589,7 @@ class mentorController {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
 
-      const response = await this.MentorProfileService.isApprovalChecking(
-        mentorId
-      );
+      const response = await this.MentorService.isApprovalChecking(mentorId);
       console.log("MentorController isApprovalChecking step 2", { response });
 
       res
@@ -636,11 +626,10 @@ class mentorController {
         );
       }
 
-      const updatedService =
-        await this.MentorProfileService.assignScheduleToService(
-          serviceId,
-          scheduleId
-        );
+      const updatedService = await this.MentorService.assignScheduleToService(
+        serviceId,
+        scheduleId
+      );
       if (!updatedService) {
         throw new ApiError(HttpStatus.NOT_FOUND, "Service not found");
       }
@@ -687,7 +676,7 @@ class mentorController {
         );
       }
 
-      const updatedDM = await this.MentorProfileService.replyToPriorityDM(
+      const updatedDM = await this.MentorService.replyToPriorityDM(
         priorityDMId,
         mentorId,
         { content, pdfFiles }
@@ -724,7 +713,7 @@ class mentorController {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Service ID is required");
       }
 
-      const priorityDMs = await this.MentorProfileService.getPriorityDMs(
+      const priorityDMs = await this.MentorService.getPriorityDMs(
         serviceId,
         mentorId
       );
@@ -764,7 +753,7 @@ class mentorController {
       const sort = (req.query.sort as "asc" | "desc") || undefined;
 
       const { priorityDMs, total } =
-        await this.MentorProfileService.getAllPriorityDMsByMentor(
+        await this.MentorService.getAllPriorityDMsByMentor(
           mentorId,
           page,
           limit,
@@ -806,11 +795,10 @@ class mentorController {
       if (!mentorId) {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
-      const updatedMentor =
-        await this.MentorProfileService.updateTopTestimonials(
-          mentorId,
-          testimonialIds
-        );
+      const updatedMentor = await this.MentorService.updateTopTestimonials(
+        mentorId,
+        testimonialIds
+      );
       console.log(
         "Mentor controller updateTopTestimonials step 2 updatedMentor",
         updatedMentor

@@ -1,10 +1,7 @@
 import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import { IMenteeProfileService } from "../interface/IMenteeProfileService";
-import { ICareerRepository } from "../../repositories/interface/ICareerRepositoty";
-import CareerRepositiory from "../../repositories/implementations/CareerRepository";
+import { IMenteeService } from "../interface/IMenteeService";
 import { EUsers } from "../../entities/userEntity";
-import { ObjectId } from "mongoose";
 import PriorityDMRepository from "../../repositories/implementations/PriorityDMRepository";
 import { IPriorityDMRepository } from "../../repositories/interface/IPriorityDmRepository";
 import { ECollegeExperience } from "../../entities/collegeEntity";
@@ -12,14 +9,15 @@ import { ESchoolExperience } from "../../entities/schoolEntity";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import { IMenteeRepository } from "../../repositories/interface/IMenteeRepository";
 import MenteeRepository from "../../repositories/implementations/MenteeRepository";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepositotry from "../../repositories/implementations/BaseRepository";
-import Users from "../../models/userModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { IServiceService } from "../interface/IServiceServices"; // Changed import
+import ServiceService from "./ServiceServices"; // Changed import
+import CareerCollege from "../../repositories/implementations/CareerCollege";
+import { ICareerCollege } from "../../repositories/interface/ICareerCollege";
+import CareerSchool from "../../repositories/implementations/CareerSchool";
+import { ICareerSchool } from "../../repositories/interface/ICareerSchool";
+import CareerProfessional from "../../repositories/implementations/CareerProfessional";
+import { ICareerProfessional } from "../../repositories/interface/ICareerProfessional";
 import mongoose from "mongoose";
 import { ITestimonialService } from "../interface/ITestimonialService";
 import { IBookingService } from "../interface/IBookingService";
@@ -29,6 +27,8 @@ import { EService } from "../../entities/serviceEntity";
 import { ETestimonial } from "../../entities/testimonialEntity";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
+import { EMentee } from "../../entities/menteeEntiry";
+
 interface WelcomeFormData {
   careerGoal: string;
   interestedCareer: string;
@@ -42,29 +42,31 @@ interface DashboardData {
   topTestimonials: ETestimonial[];
 }
 
-export default class MenteeProfileService implements IMenteeProfileService {
-  private UserRepository: IUserRepository;
-  private CareerRepository: ICareerRepository;
+export default class MenteeService implements IMenteeService {
   private MenteeRepository: IMenteeRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
   private PriorityDMRepository: IPriorityDMRepository;
-  private ServiceRepository: IServiceRepository;
-  private BookingRepository: IBookingRepository;
+  private ServiceService: IServiceService; // Changed from ServiceRepository
   private BookingService: IBookingService;
   private Testimonial: ITestimonialService;
   private WalletRepository: IWalletRepository;
+  private CareerCollege: ICareerCollege;
+  private CareerSchool: ICareerSchool;
+  private CareerProfessional: ICareerProfessional;
+  private UserRepository: IUserRepository;
+
   constructor() {
-    this.UserRepository = new UserRepository();
-    this.CareerRepository = new CareerRepositiory();
     this.MenteeRepository = new MenteeRepository();
-    this.BaseRepository = new BaseRepositotry<EUsers>(Users);
     this.PriorityDMRepository = new PriorityDMRepository();
-    this.ServiceRepository = new ServiceRepository();
-    this.BookingRepository = new BookingRepository();
+    this.ServiceService = new ServiceService(); // Changed to use ServiceService
     this.BookingService = new BookingService();
     this.Testimonial = new TestimonialService();
     this.WalletRepository = new WalletRepository();
+    this.CareerCollege = new CareerCollege();
+    this.CareerSchool = new CareerSchool();
+    this.CareerProfessional = new CareerProfessional();
+    this.UserRepository = new UserRepository();
   }
+
   //welcomeData
   async welcomeData(
     formData: WelcomeFormData,
@@ -85,7 +87,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
         interestedNewcareer,
         joinPurpose: goals,
       };
-      const user = await this.BaseRepository.findById(id);
+      const user = await this.UserRepository.findById(id);
       if (!user) throw new Error("User not found");
 
       const populateFields: string[] = [];
@@ -98,10 +100,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
 
       let userServerData = user;
       if (populateFields.length > 0) {
-        userServerData = await this.BaseRepository?.getModel()
-          .findById(id)
-          .populate(populateFields) // Or use populateFields if that's your intent
-          .exec();
+        userServerData = await this.UserRepository.findById(id);
       }
       console.log("userserverdata is >>>>", userServerData);
       const createMentee = await this.MenteeRepository.createMentee(menteeData);
@@ -113,21 +112,21 @@ export default class MenteeProfileService implements IMenteeProfileService {
           userData.userType === "college"
         ) {
           console.log("welcomedata service step 5....formdata");
-          experience = await this.CareerRepository.collegeStudentFormDataCreate(
+          experience = await this.CareerCollege.collegeStudentFormDataCreate(
             userData,
             id
           );
           userType = experience?.userType;
         } else if (userData.userType === "school") {
           console.log("welcomedata service step 6....formdata");
-          experience = await this.CareerRepository.schoolStudentFormDataCreate(
+          experience = await this.CareerSchool.schoolStudentFormDataCreate(
             userData,
             id
           );
           userType = experience?.userType;
         } else if (userData.userType === "professional") {
           console.log("welcomedata service step 7...formdata");
-          experience = await this.CareerRepository.professionalFormDataCreate(
+          experience = await this.CareerProfessional.professionalFormDataCreate(
             userData,
             id
           );
@@ -159,9 +158,9 @@ export default class MenteeProfileService implements IMenteeProfileService {
         const userUpdate = await this.UserRepository.updateUser({
           id,
           userType: experience.userType,
-          experienceId: experience?._id.toString(), // Convert ObjectId to string
+          experienceId: experience?._id.toString(),
           menteeId: createMentee?._id?.toString(),
-          role: updatedRoles, // Convert ObjectId to string
+          role: updatedRoles,
         });
         await this.WalletRepository.createWallet(id);
         console.log(
@@ -176,7 +175,6 @@ export default class MenteeProfileService implements IMenteeProfileService {
       return null;
     }
   }
-  //
 
   public async userProfielData(
     id: string
@@ -192,14 +190,10 @@ export default class MenteeProfileService implements IMenteeProfileService {
     }
   }
 
-  //deleteAccount
-  public async deleteAccount(id: string): Promise<boolean> {
+  public async deleteAccount(id: string): Promise<EUsers> {
     try {
-      const user = await this.BaseRepository.findById(id);
-      //   if (!user) return false;
-
-      // Delete user
-      return await this.BaseRepository.delete(id);
+      const user = await this.UserRepository.findById(id);
+      return await this.UserRepository.deleteById(id);
     } catch (error) {
       console.error("Error deleting account:", error);
       throw error;
@@ -251,6 +245,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       throw new Error(`Failed to fetch mentors: ${error.message}`);
     }
   }
+
   async getMentorById(mentorId: string): Promise<EUsers> {
     try {
       console.log("getMentorById service step 1", { mentorId });
@@ -275,7 +270,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
 
   async createPriorityDM(data: {
     serviceId: string;
-    bookingId: string; // Not optional since it's required
+    bookingId: string;
     menteeId: string;
     content: string;
     pdfFiles: Array<{ fileName: string; s3Key: string; url: string }>;
@@ -288,8 +283,8 @@ export default class MenteeProfileService implements IMenteeProfileService {
         throw new Error("Invalid serviceId format");
       }
 
-      // Fetch service to get mentorId
-      const service = await this.ServiceRepository.getServiceById(serviceId);
+      // Fetch service to get mentorId using ServiceService
+      const service = await this.ServiceService.getServiceById(serviceId);
       if (!service) {
         throw new Error("Service not found");
       }
@@ -309,7 +304,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       }
 
       // Verify booking exists
-      const booking = await this.BookingRepository.findById(bookingId);
+      const booking = await this.BookingService.findById(bookingId);
       if (!booking) {
         throw new Error("Booking not found");
       }
@@ -332,7 +327,7 @@ export default class MenteeProfileService implements IMenteeProfileService {
       if (!priorityDM) {
         throw new Error("Failed to create Priority DM");
       }
-      const bookingStatusChange = await this.BookingRepository.update(
+      const bookingStatusChange = await this.BookingService.updateStatus(
         bookingId,
         { status: "pending" }
       );
@@ -370,9 +365,10 @@ export default class MenteeProfileService implements IMenteeProfileService {
   async getTopServices(limit: number = 8): Promise<EService[]> {
     try {
       console.log("getTopServices service step 1", { limit });
-      const services = await this.ServiceRepository.getTopServices(limit);
-      console.log("getTopServices service step 2", services.length);
-      return services;
+      // Use ServiceService instead of directly accessing repository
+      const response = await this.ServiceService.getTopServices(limit);
+      console.log("getTopServices service step 2", response.services.length);
+      return response.services;
     } catch (error: any) {
       console.error("getTopServices service error", error);
       throw new Error(`Failed to fetch top services: ${error.message}`);
@@ -395,6 +391,27 @@ export default class MenteeProfileService implements IMenteeProfileService {
       return { topServices, topMentors, topTestimonials };
     } catch (error: any) {
       console.error("getDashboardData service error", error);
+      throw new Error(`Failed to fetch dashboard data: ${error.message}`);
+    }
+  }
+
+  async findMenteeById(id: string): Promise<EMentee | null> {
+    try {
+      const mentee = await this.MenteeRepository.findById(id);
+      return mentee;
+    } catch (error: any) {
+      throw new Error(`Failed to fetch dashboard data: ${error.message}`);
+    }
+  }
+
+  async updateMentee(
+    id: string,
+    payload: Partial<EMentee>
+  ): Promise<EMentee | null> {
+    try {
+      const mentee = await this.MenteeRepository.update(id, payload);
+      return mentee;
+    } catch (error: any) {
       throw new Error(`Failed to fetch dashboard data: ${error.message}`);
     }
   }

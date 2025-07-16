@@ -139,6 +139,7 @@ class UserController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("UserController updateOnlineStatus step 1.0");
       console.log("UserController updateOnlineStatus step 1", {
         user: req.user,
         body: req.body,
@@ -180,6 +181,7 @@ class UserController {
           "Failed to update Redis online status"
         );
       }
+      console.log("any sample codes.....");
 
       // Emit Socket.IO event
       try {

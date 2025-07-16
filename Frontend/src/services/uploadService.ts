@@ -1,4 +1,3 @@
-import axios from "axios";
 import { userAxiosInstance } from "./instances/userInstance";
 const api = userAxiosInstance;
 

@@ -126,19 +126,7 @@ export default function BlockDatesModal({
               }
             `}
           </style>
-          {/* <Datepicker
-            inline
-            showClearButton={false}
-            showTodayButton={false}
-            onChange={handleDateChange}
-            className="flowbite-datepicker"
-            selected={null}
-            calendarClassName="flowbite-datepicker"
-            dayClassName={(date) =>
-              isDateSelected(date) ? "react-datepicker__day--selected" : ""
-            }
-            minDate={today} // Disable dates before today
-          /> */}
+
           <Datepicker
             inline
             showClearButton={false}

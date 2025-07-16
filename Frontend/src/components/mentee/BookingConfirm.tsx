@@ -252,7 +252,7 @@ export default function BookingConfirm({
         setAvailableDates(dates);
         console.log("BookingConfirm STEP 13: ");
         console.log("AVIALBLE DATES", availableDates);
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load mentor availability or policy.");
       } finally {
@@ -265,6 +265,7 @@ export default function BookingConfirm({
 
   const convertTo24Hour = (time: string): string => {
     const [timePart, period] = time.split(" ");
+    // eslint-disable-next-line prefer-const
     let [hours, minutes] = timePart.split(":").map(Number);
     if (period === "PM" && hours !== 12) hours += 12;
     if (period === "AM" && hours === 12) hours = 0;

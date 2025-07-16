@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import LogoImg from "@/assets/logo.png";
 import LogoName from "@/assets/brandlogo.png";

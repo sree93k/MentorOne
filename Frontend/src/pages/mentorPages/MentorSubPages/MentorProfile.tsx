@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
+import { setUser, setLoading } from "@/redux/slices/userSlice";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { updateUserProfile, updateUserPassword } from "@/services/userServices";
 import { uploadProfileImage } from "@/services/uploadService";
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProfilePicture } from "@/components/users/SecureMedia";
 
 // Validation Schemas
 const profileSchema = Yup.object().shape({
@@ -302,6 +303,7 @@ const MentorProfile: React.FC = () => {
   const [originalValues, setOriginalValues] = useState<{
     [key: string]: any;
   }>({});
+  const [isUploading, setIsUploading] = useState(false);
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
@@ -718,7 +720,7 @@ const MentorProfile: React.FC = () => {
     <div className="flex-1 mx-36 border rounded-xl">
       <div className="bg-red-500 text-white p-8 rounded-t-xl relative">
         <div className="flex items-end gap-6">
-          <div className="relative">
+          {/* <div className="relative">
             <div className="flex flex-row justify-center items-center gap-4 mb-3">
               <Avatar className="h-24 w-24">
                 {isImageLoading ? (
@@ -763,6 +765,70 @@ const MentorProfile: React.FC = () => {
                     disabled={isImageLoading}
                   >
                     Save
+                  </button>
+                )}
+              </div>
+            </div>
+          </div> */}
+          <div className="relative">
+            <div className="flex flex-row justify-center items-center gap-4 mb-3">
+              {/* Replace the Avatar component with ProfilePicture */}
+              <div className="h-20 w-32 relative mb-6">
+                {isImageLoading ? (
+                  <div className="h-24 w-24 bg-gray-200 rounded-full animate-pulse flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
+                  </div>
+                ) : previewUrl ? (
+                  // Use ProfilePicture for existing/preview images
+                  <ProfilePicture
+                    profilePicture={previewUrl}
+                    userName={`${user?.firstName} ${user?.lastName || ""}`}
+                    size="xl"
+                    className="h-24 w-24"
+                  />
+                ) : user?.profilePicture ? (
+                  // Use ProfilePicture for user's current profile picture
+                  <ProfilePicture
+                    profilePicture={user.profilePicture}
+                    userName={`${user?.firstName} ${user?.lastName || ""}`}
+                    size="xl"
+                    className="h-24 w-24"
+                  />
+                ) : (
+                  // Fallback when no image
+                  <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200">
+                    <UploadIcon className="h-8 w-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <button
+                  className="bg-green-500 p-1 rounded-full"
+                  onClick={() =>
+                    document.getElementById("image-upload")?.click()
+                  }
+                  disabled={isImageLoading}
+                >
+                  {isImageLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Pencil size={16} />
+                  )}
+                </button>
+                {selectedFile && (
+                  <button
+                    className="bg-blue-500 text-white px-2 py-1 rounded-full text-sm"
+                    onClick={handleImageSave}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? "Uploading..." : "Save"}
                   </button>
                 )}
               </div>

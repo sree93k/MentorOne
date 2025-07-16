@@ -56,7 +56,7 @@ const SlotManagementDrawer: React.FC<SlotManagementDrawerProps> = ({
             setSelectedSchedule(response.schedules[0]._id);
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Failed to fetch mentor calendar:", error);
         toast.error(
           "Failed to load schedules: " + (error.message || "Unknown error")
@@ -76,7 +76,7 @@ const SlotManagementDrawer: React.FC<SlotManagementDrawerProps> = ({
         console.log("selected selectedSchedule", selectedSchedule);
         onSlotAssigned(serviceId, selectedSchedule); // Notify parent component
         toast.success(`Schedule confirmed for service.`);
-      } catch (error: any) {
+      } catch (error) {
         console.error("Failed to assign schedule:", error);
         toast.error(
           `Failed to assign schedule: ${error.message || "Unknown error"}`

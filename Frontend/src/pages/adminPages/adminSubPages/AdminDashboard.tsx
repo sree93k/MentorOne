@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import {
   Chart as ChartJS,
@@ -20,7 +19,7 @@ import {
   getAllusers,
   getAllPayments,
 } from "@/services/adminService";
-import { ChevronDown, CalendarX, Check } from "lucide-react";
+import { CalendarX } from "lucide-react";
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,

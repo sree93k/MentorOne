@@ -74,7 +74,7 @@ const VideoGrid: React.FC<VideoGridProps> = ({
   const getGridConfig = (count: number) => {
     let columns: number;
     let tileStyle: string;
-    let isThreeUsers: boolean = false;
+    const isThreeUsers: boolean = false;
 
     if (count <= 1) {
       columns = 1;

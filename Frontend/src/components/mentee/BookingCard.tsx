@@ -27,6 +27,7 @@ import RescheduleModal from "@/components/modal/ResheduleModal";
 import { getMentorPolicy, getPriorityDMs } from "@/services/menteeService";
 import { cancelBooking } from "@/services/bookingService";
 import { toast } from "react-hot-toast";
+import { ProfilePicture } from "@/components/users/SecureMedia";
 
 interface MentorPolicy {
   bookingPeriod: { unit: string; value: number };
@@ -127,7 +128,7 @@ const BookingCard = ({
         const currentTime = new Date();
         console.log("bookedDateTime >>>>> STEP 1", bookedDateTime);
 
-        let rescheduleDeadline = new Date(bookedDateTime);
+        const rescheduleDeadline = new Date(bookedDateTime);
         console.log("rescheduleDeadline >>>>> STEP 2", rescheduleDeadline);
 
         const { unit, value } = policy.reschedulePeriod || {
@@ -366,11 +367,20 @@ const BookingCard = ({
       >
         <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-gray-50">
           <div className="relative">
-            <img
-              src={booking.mentorImage || "/api/placeholder/40/40"}
-              alt={booking.mentorName}
-              className="w-12 h-12 rounded-full object-cover border-2 border-black"
-            />
+            {booking.mentorImage ? (
+              <ProfilePicture
+                profilePicture={booking.mentorImage}
+                userName={booking.mentorName}
+                size="md"
+                className="w-14 h-14 rounded-full object-cover border-2 border-black"
+              />
+            ) : (
+              <img
+                src="/api/placeholder/40/40"
+                alt={booking.mentorName}
+                className="w-12 h-12 rounded-full object-cover border-2 border-black"
+              />
+            )}
             <div className="absolute -top-3 -left-3">
               {getServiceTypeIcon()}
             </div>

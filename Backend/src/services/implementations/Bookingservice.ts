@@ -1,8 +1,7 @@
 import { IBookingService, BookingParams } from "../interface/IBookingService";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
-import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-import ChatRepository from "../../repositories/implementations/ChatRepository";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
+import { IServiceService } from "../interface/IServiceServices";
+import ServiceService from "./ServiceServices";
 import ChatService from "./ChatService";
 import { IChatService } from "../interface/IChatService";
 import NotificationService from "./NotificationService";
@@ -13,16 +12,12 @@ import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { getIO } from "../../utils/socket/notification";
 import WalletRepository from "../../repositories/implementations/WalletRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
-import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import { IChatRepository } from "../../repositories/interface/IChatRepository";
-import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
-import SlotRepository from "../../repositories/implementations/SlotRepository";
-import { ISlotRepository } from "../../repositories/interface/ISlotRepository";
-import CalendarRepository from "../../repositories/implementations/CalenderRepository";
-import { ICalendarRepository } from "../../repositories/interface/ICalenderRepository";
+import BlockedRepository from "../../repositories/implementations/BlockedRepository";
+import { IBlockedRepository } from "../../repositories/interface/IBlockedRepository";
 import { EBooking } from "../../entities/bookingEntity";
-import { toASCII } from "punycode";
+import PaymentService from "./PaymentService";
+import { IPaymentService } from "../interface/IPaymentService";
 
 interface SaveBookingAndPaymentParams {
   sessionId: string;
@@ -56,26 +51,23 @@ interface RescheduleParams {
 
 export default class BookingService implements IBookingService {
   private bookingRepository: IBookingRepository;
-  private paymentRepository: IPaymentRepository;
-  private chatRepository: IChatRepository;
-  private serviceRepository: IServiceRepository;
+  private PaymentService: IPaymentService;
+  private serviceService: IServiceService; // Changed from serviceRepository
   private chatService: IChatService;
   private userRepository: IUserRepository;
   private notificationService: INotificationService;
   private walletRepository: IWalletRepository;
-  private slotRepository: ISlotRepository;
-  private calendarRepository: ICalendarRepository;
+  private blockedRepository: IBlockedRepository;
+
   constructor() {
     this.bookingRepository = new BookingRepository();
-    this.paymentRepository = new PaymentRepository();
-    this.chatRepository = new ChatRepository();
-    this.serviceRepository = new ServiceRepository();
+    this.PaymentService = new PaymentService();
     this.chatService = new ChatService();
+    this.serviceService = new ServiceService(); // Changed to use ServiceService
     this.userRepository = new UserRepository();
     this.notificationService = new NotificationService();
     this.walletRepository = new WalletRepository();
-    this.slotRepository = new SlotRepository();
-    this.calendarRepository = new CalendarRepository();
+    this.blockedRepository = new BlockedRepository();
   }
 
   async createBooking(params: BookingParams): Promise<any> {
@@ -91,7 +83,7 @@ export default class BookingService implements IBookingService {
     } = params;
 
     let status;
-    const response = await this.serviceRepository.getServiceById(serviceId);
+    const response = await this.serviceService.getServiceById(serviceId);
     if (response?.type === "DigitalProducts") {
       status = "completed";
     } else {
@@ -112,7 +104,7 @@ export default class BookingService implements IBookingService {
         },
       ];
       console.log("++++++++++BOOKING SERVICE createBooking step 3", dates);
-      const blockedDate = await this.calendarRepository.addBlockedDates(
+      const blockedDate = await this.blockedRepository.addBlockedDates(
         mentorId,
         dates
       );
@@ -165,7 +157,7 @@ export default class BookingService implements IBookingService {
         throw new Error("Invalid amount");
       }
 
-      const service = await this.serviceRepository.getServiceById(serviceId);
+      const service = await this.serviceService.getServiceById(serviceId);
       if (!service) {
         throw new Error("Service not found");
       }
@@ -189,7 +181,7 @@ export default class BookingService implements IBookingService {
         slotIndex,
       });
 
-      const payment = await this.paymentRepository.create({
+      const payment = await this.PaymentService.createPayment({
         bookingId: booking._id,
         menteeId,
         mentorId,
@@ -200,17 +192,6 @@ export default class BookingService implements IBookingService {
         status: "completed",
         transactionId: sessionId,
       });
-
-      // Add to mentor's pending balance
-      // let wallet = await this.walletRepository.findByUserId(mentorId);
-      // if (!wallet) {
-      //   wallet = await this.walletRepository.createWallet(mentorId);
-      // }
-      // await this.walletRepository.addPendingBalance(
-      //   mentorId,
-      //   amount,
-      //   payment._id.toString()
-      // );
 
       let chat;
       if (service.oneToOneType === "chat") {
@@ -260,6 +241,7 @@ export default class BookingService implements IBookingService {
       throw new Error(error.message || "Failed to save booking and payment");
     }
   }
+
   async getBookingsByMentee(
     menteeId: string,
     page: number = 1,
@@ -327,13 +309,13 @@ export default class BookingService implements IBookingService {
     const updatedBooking = await this.bookingRepository.update(bookingId, {
       status: "cancelled",
     });
-    await this.calendarRepository.deleteBlockedDate(
+    await this.blockedRepository.deleteBlockedDate(
       booking.mentorId,
       booking.bookingDate,
       booking.startTime
     );
     console.log("cancel Booking Booking servcie step 4", updatedBooking);
-    const updatePayment = await this.paymentRepository.updateByBookingId(
+    const updatePayment = await this.PaymentService.updatePaymentByBookingId(
       bookingId,
       {
         status: "refunded",
@@ -382,12 +364,12 @@ export default class BookingService implements IBookingService {
         limit,
       });
       const { tutorials, total } =
-        await this.serviceRepository.getAllVideoTutorials(
+        await this.serviceService.getAllVideoTutorials({
           type,
           searchQuery,
           page,
-          limit
-        );
+          limit,
+        });
       console.log(
         "bookingservice getAllVideoTutorials step 2: Tutorials fetched",
         tutorials.length
@@ -402,7 +384,7 @@ export default class BookingService implements IBookingService {
   async getTutorialById(tutorialId: string): Promise<any> {
     try {
       console.log("bookingservice getTutorialById step 1", tutorialId);
-      const tutorial = await this.serviceRepository.getTutorialById(tutorialId);
+      const tutorial = await this.serviceService.getTutorialById(tutorialId);
       console.log("bookingservice getTutorialById step 2", tutorial);
       if (!tutorial) {
         throw new Error("Tutorial not found");
@@ -440,7 +422,7 @@ export default class BookingService implements IBookingService {
     try {
       console.log("bookingservice bookService step 1", params);
       const { serviceId, mentorId, menteeId, sessionId } = params;
-      const service = await this.serviceRepository.getServiceById(serviceId);
+      const service = await this.serviceService.getServiceById(serviceId);
       if (!service) {
         throw new Error("Service not found");
       }
@@ -460,12 +442,17 @@ export default class BookingService implements IBookingService {
         menteeId,
         status: "confirmed",
       });
-      const payment = await this.paymentRepository.create({
-        bookingId: booking._id,
+
+      const payment = await this.PaymentService.createSimplePayment({
+        bookingId: booking._id.toString(),
         menteeId,
+        mentorId: mentorId,
         amount: service.amount,
         status: "completed",
         transactionId: sessionId,
+        platformPercentage: 15,
+        platformCharge: service.amount * 0.15,
+        total: service.amount,
       });
       console.log("bookingservice bookService step 2");
 
@@ -503,7 +490,7 @@ export default class BookingService implements IBookingService {
   async getServiceById(serviceId: string): Promise<EService | null> {
     try {
       console.log("bookingservice getServiceById step 1", serviceId);
-      const service = await this.serviceRepository.getServiceById(serviceId);
+      const service = await this.serviceService.getServiceById(serviceId);
       console.log("bookingservice getServiceById step 2");
       return service;
     } catch (error: any) {
@@ -535,7 +522,7 @@ export default class BookingService implements IBookingService {
           searchQuery
         );
         const userIds = users.map((user: any) => user._id);
-        const services = await this.serviceRepository.findServicesByTitle(
+        const services = await this.serviceService.findServicesByTitle(
           searchQuery
         );
         const serviceIds = services.map((service: any) => service._id);
@@ -593,9 +580,50 @@ export default class BookingService implements IBookingService {
     }
   }
 
+  async getAllServices(
+    page: number,
+    limit: number,
+    type?: string,
+    searchQuery?: string,
+    oneToOneType?: string,
+    digitalProductType?: string
+  ): Promise<{ services: any[]; total: number }> {
+    try {
+      console.log("BookingService getAllServices", {
+        page,
+        limit,
+        type,
+        searchQuery,
+        oneToOneType,
+        digitalProductType,
+      });
+      const { services, total } =
+        await this.serviceService.getAllServicesForMentee({
+          page,
+          limit,
+          search: searchQuery || "",
+          type,
+          oneToOneType,
+          digitalProductType,
+        });
+      console.log(
+        "BOOKING SERVICE ......getAllServices step 1",
+        services.length,
+        total
+      );
+
+      return { services, total };
+    } catch (error: any) {
+      throw new Error(`Failed to fetch services: ${error.message}`);
+    }
+  }
+
+  // ... rest of the methods remain the same but continue to use the existing repository pattern
+  // for booking-specific operations since they don't need to go through ServiceService
+
   async getAllVideoCalls(
     mentorId: string,
-    status?: string[], // Changed from string to string[]
+    status?: string[],
     limit?: number
   ): Promise<EBooking[]> {
     try {
@@ -607,7 +635,7 @@ export default class BookingService implements IBookingService {
       const allVideoCallBookings =
         await this.bookingRepository.findAllVideoCalls(
           mentorId,
-          status || ["confirmed", "rescheduled"], // Default to ["confirmed", "rescheduled"]
+          status || ["confirmed", "rescheduled"],
           limit
         );
       console.log(
@@ -649,7 +677,6 @@ export default class BookingService implements IBookingService {
         throw new Error("Not authorized to update this booking");
       }
 
-      // Update calendar if status is confirmed and date/time changes
       if (
         updates.status === "confirmed" &&
         updates.bookingDate &&
@@ -658,14 +685,12 @@ export default class BookingService implements IBookingService {
           booking.bookingDate.toISOString().split("T")[0] ||
           updates.startTime !== booking.startTime)
       ) {
-        // Remove old blocked date
-        await this.calendarRepository.removeBlockedDate(
+        await this.blockedRepository.removeBlockedDate(
           mentorId,
           booking.bookingDate.toISOString().split("T")[0],
           booking.startTime
         );
-        // Add new blocked date
-        await this.calendarRepository.addBlockedDates(mentorId, [
+        await this.blockedRepository.addBlockedDates(mentorId, [
           {
             date: updates.bookingDate,
             day: new Date(updates.bookingDate)
@@ -686,7 +711,6 @@ export default class BookingService implements IBookingService {
         throw new Error("Failed to update booking status");
       }
 
-      // Notify mentee
       try {
         const io = getIO();
         const notificationMessage =
@@ -714,6 +738,7 @@ export default class BookingService implements IBookingService {
       throw new Error(error.message || "Failed to update booking status");
     }
   }
+
   async requestReschedule(
     bookingId: string,
     menteeId: string,
@@ -730,7 +755,6 @@ export default class BookingService implements IBookingService {
       console.log("BookingService requestReschedule step 1.1");
       if (!booking) {
         console.log("ERRROr 1");
-
         throw new Error("Booking not found");
       }
 
@@ -763,11 +787,11 @@ export default class BookingService implements IBookingService {
         const io = getIO();
         const notificationMessage = `A reschedule request has been submitted for booking ${bookingId}`;
         await this.notificationService.createNotification(
-          booking.mentorId.toString(), // recipientId
-          "booking", // type
-          notificationMessage, // message (string)
-          bookingId, // relatedId
-          io // optional io
+          booking.mentorId.toString(),
+          "booking",
+          notificationMessage,
+          bookingId,
+          io
         );
       } catch (notificationError: any) {
         console.error(
@@ -783,6 +807,7 @@ export default class BookingService implements IBookingService {
       throw new Error(error.message || "Failed to submit reschedule request");
     }
   }
+
   async getBookingsWithTestimonialsByMentee(
     menteeId: string,
     page: number = 1,
@@ -833,6 +858,7 @@ export default class BookingService implements IBookingService {
       throw new Error("Failed to fetch bookings");
     }
   }
+
   async findById(bookingId: string): Promise<any> {
     try {
       console.log("BookingService findById step 1 bookingId", bookingId);
@@ -858,10 +884,8 @@ export default class BookingService implements IBookingService {
         status,
       });
 
-      // Compute isActive based on status
       const isActive = status === "confirmed";
 
-      // Update booking status
       const booking = await this.bookingRepository.updateBookingStatus(
         bookingId,
         status
@@ -871,17 +895,17 @@ export default class BookingService implements IBookingService {
         isActive
       );
 
-      const paymentTransfer = await this.paymentRepository.updateByBookingId(
-        bookingId,
-        { status: "transferred" }
-      );
+      const paymentTransfer =
+        await this.PaymentService.updatePaymentByBookingId(bookingId, {
+          status: "transferred",
+        });
 
       console.log(
         "BookingService updateBookingServiceStatus step 1.6 paymentTransfer",
         paymentTransfer
       );
-      // Update chat isActive field
-      const chatUpdate = await this.chatRepository.updateByBookingId(
+
+      const chatUpdate = await this.chatService.updateByBookingId(
         bookingId,
         isActive
       );
@@ -902,30 +926,6 @@ export default class BookingService implements IBookingService {
     }
   }
 
-  // async updateResheduleBooking(
-  //   bookingId: string,
-  //   paylaod: object
-  // ): Promise<any> {
-  //   try {
-  //     console.log("BookingService updateBookingStatus step 1", {
-  //       bookingId,
-  //       paylaod,
-  //     });
-
-  //     // Update booking status
-  //     const booking = await this.bookingRepository.update(bookingId, paylaod);
-
-  //     console.log("BookingService updateBookingStatus step 3 booking", booking);
-  //     return booking;
-  //   } catch (error: any) {
-  //     console.error("BookingService updateBookingStatus error", error);
-  //     throw new Error(
-  //       process.env.NODE_ENV === "development"
-  //         ? error.message
-  //         : "Failed to update booking status"
-  //     );
-  //   }
-  // }
   async updateResheduleBooking(
     userId: string,
     bookingId: string,
@@ -966,7 +966,6 @@ export default class BookingService implements IBookingService {
         throw new Error("Invalid reschedule status");
       }
 
-      // Prepare update data
       const updateData: any = {
         status: payload.status,
         rescheduleRequest: {
@@ -977,7 +976,6 @@ export default class BookingService implements IBookingService {
         },
       };
 
-      // If reschedule is approved, update booking date, time, and slot
       if (payload.rescheduleRequest.rescheduleStatus === "accepted") {
         if (
           !payload.bookingDate ||
@@ -993,7 +991,6 @@ export default class BookingService implements IBookingService {
         updateData.startTime = payload.startTime;
         updateData.slotIndex = payload.slotIndex;
 
-        // Validate date and time formats
         if (isNaN(updateData.bookingDate.getTime())) {
           throw new Error("Invalid bookingDate format");
         }
@@ -1013,17 +1010,16 @@ export default class BookingService implements IBookingService {
       const bookings = await this.bookingRepository.findById(bookingId);
       console.log("BookingService updateResheduleBooking step 1.1", bookings);
 
-      const deletedBlockedDate =
-        await this.calendarRepository.deleteBlockedDate(
-          userId,
-          bookings.bookingDate,
-          bookings.startTime
-        );
+      const deletedBlockedDate = await this.blockedRepository.deleteBlockedDate(
+        userId,
+        bookings.bookingDate,
+        bookings.startTime
+      );
       console.log(
         "BookingService updateResheduleBooking step 1.4",
         deletedBlockedDate
       );
-      // Update booking
+
       const booking = await this.bookingRepository.update(
         bookingId,
         updateData
@@ -1039,7 +1035,7 @@ export default class BookingService implements IBookingService {
       ];
       console.log("BookingService updateResheduleBooking step 1.3", booking);
 
-      const blockedDate = await this.calendarRepository.addBlockedDates(
+      const blockedDate = await this.blockedRepository.addBlockedDates(
         userId,
         dates
       );
@@ -1088,41 +1084,38 @@ export default class BookingService implements IBookingService {
     }
   }
 
-  async getAllServices(
-    page: number,
-    limit: number,
-    type?: string,
-    searchQuery?: string,
-    oneToOneType?: string,
-    digitalProductType?: string
-  ): Promise<{ services: any[]; total: number }> {
+  async findByMentee(menteeId: string): Promise<EBooking[]> {
     try {
-      console.log("MenteeProfileService getAllServices", {
-        page,
-        limit,
-        type,
-        searchQuery,
-        oneToOneType,
-        digitalProductType,
-      });
-      const { services, total } =
-        await this.serviceRepository.getAllServicesForMentee({
-          page,
-          limit,
-          search: searchQuery || "",
-          type,
-          oneToOneType,
-          digitalProductType,
-        });
-      console.log(
-        "BOOKING SERVICE ......getAllServices step 1",
-        services.length,
-        total
-      );
+      const bookingData = await this.bookingRepository.findByMentee(menteeId);
+      return bookingData;
+    } catch (error) {
+      throw new Error(`Failed to fetch bookings: ${error}`);
+    }
+  }
 
-      return { services, total };
-    } catch (error: any) {
-      throw new Error(`Failed to fetch services: ${error.message}`);
+  async updateStatus(
+    bookingId: string,
+    status: Partial<EBooking>
+  ): Promise<EBooking[]> {
+    try {
+      const bookingData = await this.bookingRepository.update(
+        bookingId,
+        status
+      );
+      return bookingData;
+    } catch (error) {
+      throw new Error(`Failed to fetch bookings: ${error}`);
+    }
+  }
+
+  async update(bookingId: string, meetingId: object): Promise<EBooking> {
+    try {
+      const bookingData = await this.bookingRepository.update(bookingId, {
+        meetingId,
+      });
+      return bookingData;
+    } catch (error) {
+      throw new Error("Failed to send notification: " + error);
     }
   }
 }

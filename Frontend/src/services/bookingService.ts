@@ -1,23 +1,10 @@
 import { userAxiosInstance } from "./instances/userInstance";
 const api = userAxiosInstance;
-
-interface SaveBookingParams {
-  serviceId: string;
-  mentorId: string;
-  menteeId: string;
-  bookingDate: string;
-  startTime: string;
-  endTime: string;
-  day: string;
-  slotIndex: number;
-  sessionId: string;
-  amount: number;
-}
-
-interface UpdateSlotPayload {
-  isAvailable?: boolean;
-  menteeId?: string;
-}
+import {
+  SaveBookingParams,
+  UpdateSlotPayload,
+  RescheduleRequestParams,
+} from "@/types/booking";
 
 export const saveBooking = async (params: SaveBookingParams) => {
   try {
@@ -228,13 +215,6 @@ export const updateStatus = async (bookingId: string, payload: any) => {
     }
   }
 };
-
-interface RescheduleRequestParams {
-  requestedDate?: string;
-  requestedTime?: string;
-  requestedSlotIndex?: number;
-  mentorDecides: boolean;
-}
 
 export const requestReschedule = async (
   bookingId: string,

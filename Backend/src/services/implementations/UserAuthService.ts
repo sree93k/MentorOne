@@ -3,43 +3,97 @@ import { EUsers } from "../../entities/userEntity";
 import { IUserAuthService } from "../interface/IUserAuthService";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import UserRepository from "../../repositories/implementations/UserRepository";
-import OTPRepository from "../../repositories/implementations/OTPRepository";
-import { IOTPRepository } from "../../repositories/interface/IOTPRepository";
+import OTPServices from "./OTPService";
+import { IOTPService } from "../interface/IOTPService";
+
 import UserModel from "../../models/userModel";
 import {
   accessTokenForReset,
   decodeAndVerifyToken,
   generateAccessToken,
   generateRefreshToken,
-  verifyAccessToken,
   verifyRefreshToken,
 } from "../../utils/jwt";
 import ApiResponse from "../../utils/apiResponse";
 
 export default class UserAuthService implements IUserAuthService {
   private UserRepository: IUserRepository;
-  private OTPRepository: IOTPRepository;
+  private OTPService: IOTPService;
 
   constructor() {
     this.UserRepository = new UserRepository();
-    this.OTPRepository = new OTPRepository();
+    this.OTPService = new OTPServices();
   }
 
-  async createUser(email: Partial<EUsers>): Promise<{
+  // async createUser(email: ): Promise<{
+  //   user: EUsers;
+  //   accessToken: string;
+  //   refreshToken: string | null;
+  // }> {
+  //   try {
+  //     console.log("im user auth servioce1", email);
+  //     const emailString = email.email;
+  //     console.log("im user auth servioce2", email.email);
+  //     console.log("im user auth servioce3", emailString);
+  //     if (!emailString) {
+  //       throw new Error("Email is required");
+  //     }
+
+  //     const userData = await this.OTPService.getUserData(email);
+  //     console.log("user data at cerate user service", userData);
+
+  //     const newUser = new UserModel({ ...userData });
+  //     console.log("new usermodel at cerate user service", newUser);
+  //     const createdUser = await this.UserRepository.createUser(newUser);
+  //     console.log("ctreated successfully service thaa");
+
+  //     if (createdUser) {
+  //       const accessToken = generateAccessToken({
+  //         id: createdUser.id,
+  //         role: createdUser.role,
+  //       });
+  //       const refreshToken = generateRefreshToken({
+  //         id: createdUser.id,
+  //         role: createdUser.role,
+  //       });
+  //       const userAfterSavedToken = await this.UserRepository.saveRefreshToken(
+  //         createdUser.id,
+  //         refreshToken
+  //       );
+  //       if (userAfterSavedToken) {
+  //         return {
+  //           user: userAfterSavedToken,
+  //           accessToken,
+  //           refreshToken,
+  //         };
+  //       }
+  //     }
+
+  //     throw new Error("Failed to create user");
+  //   } catch (error) {
+  //     console.log("error at UserAuthService", error);
+  //     throw error;
+  //   }
+  // }
+  async createUser(email: string): Promise<{
     user: EUsers;
     accessToken: string;
     refreshToken: string | null;
   }> {
     try {
-      console.log("im user auth servioce", email);
+      console.log("im user auth service1", email);
 
-      const userData = await this.OTPRepository.userData(email);
-      console.log("user data at cerate user service", userData);
+      if (!email) {
+        throw new Error("Email is required");
+      }
+
+      const userData = await this.OTPService.getUserData(email);
+      console.log("user data at create user service", userData);
 
       const newUser = new UserModel({ ...userData });
-      console.log("new usermodel at cerate user service", newUser);
+      console.log("new usermodel at create user service", newUser);
       const createdUser = await this.UserRepository.createUser(newUser);
-      console.log("ctreated successfully service thaa");
+      console.log("created successfully service thaa");
 
       if (createdUser) {
         const accessToken = generateAccessToken({

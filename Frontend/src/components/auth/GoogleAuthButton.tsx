@@ -1,25 +1,19 @@
-import React, { use } from "react";
 import {
   GoogleOAuthProvider,
   CredentialResponse,
   GoogleLogin,
 } from "@react-oauth/google";
-
-import { jwtDecode } from "jwt-decode";
 import { signInWithGoogle } from "@/services/userAuthService";
-import { GoogleSignInData } from "@/types/googleAuth";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import {
   setUser,
   setIsAuthenticated,
   setAccessToken,
   setMentorActivated,
   setLoading,
-  setCurrentTab,
 } from "@/redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/redux/store/store";
+import { useDispatch } from "react-redux";
 
 const GoogleAuthButton = () => {
   const dispatch = useDispatch();
