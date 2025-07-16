@@ -1,4 +1,3 @@
-// src/components/login-form.tsx
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,9 +48,7 @@ export function LoginForm({
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { mentorActivated, loading } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { mentorActivated } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     console.log("hi useeffect is", mentorActivated);
@@ -69,7 +66,7 @@ export function LoginForm({
     };
 
   const validateForm = () => {
-    let newErrors: TUserLoginError = {};
+    const newErrors: TUserLoginError = {};
     const emailError = validateEmail(email);
     if (emailError) newErrors.email = emailError;
     const passwordError = validatePassword(password);
@@ -137,6 +134,7 @@ export function LoginForm({
           <div className="relative hidden bg-muted md:flex md:flex-col md:items-center md:justify-center md:p-8">
             <div className="flex flex-col items-center gap-1 pt-4 mb-4">
               <Link to="/">
+                {/* Use regular img tag for static assets */}
                 <img
                   src={Logo}
                   alt="Logo"
@@ -239,7 +237,7 @@ export function LoginForm({
                     placeholder="Enter your password"
                   />
                   <Button
-                    type="button" // Explicitly set type to "button" to prevent form submission
+                    type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowPassword(!showPassword)}
@@ -270,7 +268,7 @@ export function LoginForm({
                 <GoogleAuthButton />
               </div>
               <div className="text-center text-sm">
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <Link to="/signup" className="text-indigo-600 hover:underline">
                   Sign up
                 </Link>
@@ -304,7 +302,6 @@ export function LoginForm({
           setVerifying(true);
           try {
             const response = await verifyForgotPasswordOtp({ email, otp });
-            // Check the response to determine if OTP is valid
             if (response?.status === 200 && response.data.success) {
               console.log("OTP verified successfully");
               toast.success("OTP verified!");
@@ -318,7 +315,7 @@ export function LoginForm({
                 ? error.message
                 : "OTP verification failed. Please try again."
             );
-            throw error; // Re-throw to be caught in ForgotPasswordModal
+            throw error;
           } finally {
             setVerifying(false);
           }
@@ -347,6 +344,7 @@ export function LoginForm({
             await sendForgotPasswordOtp(email);
             toast.success("OTP resent successfully!");
           } catch (error) {
+            console.log("error", error);
             toast.error("Failed to resend OTP.");
           }
         }}

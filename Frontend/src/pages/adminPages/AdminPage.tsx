@@ -20,7 +20,7 @@ const AdminPage: React.FC = () => {
         <Suspense fallback={<h1>Loading...</h1>}>
           <Routes>
             <Route path="/dashboard" element={<AdminDashboard />} />
-            <Route path="/allUsers" element={<AllUsers />} />
+            <Route path="/users" element={<AllUsers />} />
             <Route path="/userProfile/:id" element={<UserProfile />} />
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />

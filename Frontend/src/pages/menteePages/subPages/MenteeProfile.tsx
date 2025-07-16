@@ -15,7 +15,6 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { setError, setUser, setLoading } from "@/redux/slices/userSlice";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { updateUserProfile, updateUserPassword } from "@/services/userServices";
 import { uploadProfileImage } from "@/services/uploadService";
 import { toast } from "react-hot-toast";
@@ -32,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProfilePicture } from "@/components/users/SecureMedia";
 
 const profileSchema = Yup.object().shape({
   firstName: Yup.string()
@@ -590,21 +590,35 @@ const MenteeProfile: React.FC = () => {
         <div className="flex items-end gap-6">
           <div className="relative">
             <div className="flex flex-row justify-center items-center gap-4 mb-3">
-              <Avatar className="h-24 w-24">
+              {/* Replace the Avatar component with ProfilePicture */}
+              <div className="h-20 w-32 relative mb-6">
                 {isImageLoading ? (
-                  <AvatarFallback className="bg-gray-100 flex items-center justify-center">
+                  <div className="h-24 w-24 bg-gray-200 rounded-full animate-pulse flex items-center justify-center">
                     <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
-                  </AvatarFallback>
+                  </div>
                 ) : previewUrl ? (
-                  <AvatarImage src={previewUrl} />
+                  // Use ProfilePicture for existing/preview images
+                  <ProfilePicture
+                    profilePicture={previewUrl}
+                    userName={`${user?.firstName} ${user?.lastName || ""}`}
+                    size="xl"
+                    className="h-24 w-24"
+                  />
                 ) : user?.profilePicture ? (
-                  <AvatarImage src={user.profilePicture} />
+                  // Use ProfilePicture for user's current profile picture
+                  <ProfilePicture
+                    profilePicture={user.profilePicture}
+                    userName={`${user?.firstName} ${user?.lastName || ""}`}
+                    size="xl"
+                    className="h-24 w-24"
+                  />
                 ) : (
-                  <AvatarFallback className="bg-gray-100">
+                  // Fallback when no image
+                  <div className="h-24 w-24 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200">
                     <UploadIcon className="h-8 w-8 text-gray-400" />
-                  </AvatarFallback>
+                  </div>
                 )}
-              </Avatar>
+              </div>
               <div className="flex gap-2">
                 <input
                   type="file"

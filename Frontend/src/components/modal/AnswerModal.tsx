@@ -5,8 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { X, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Rating, RatingStar } from "flowbite-react";
 import { getPresignedUrlForView } from "@/services/userServices";
@@ -101,7 +100,7 @@ export default function AnswerModal({
                     {[...Array(5)].map((_, i) => (
                       <RatingStar
                         key={i}
-                        filled={i < question.menteeTestimonial.rating}
+                        filled={i < question?.menteeTestimonial?.rating}
                       />
                     ))}
                   </Rating>

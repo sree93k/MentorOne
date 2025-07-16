@@ -3,10 +3,18 @@ import { IMentorRepository } from "../interface/IMentorRepository";
 import Mentor from "../../models/mentorModel";
 import OnlineService from "../../models/onlineServiceModel";
 import DigitalProduct from "../../models/digitalProductsModel";
-import VideoTutorial from "../../models/videoTutorialModel";
+// import VideoTutorial from "../../models/videoTutorialModel";
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
-export default class MentorRepository implements IMentorRepository {
+import BaseRepository from "./BaseRepository";
+
+export default class MentorRepository
+  extends BaseRepository<EMentor>
+  implements IMentorRepository
+{
+  constructor() {
+    super(Mentor);
+  }
   async createMentor(mentorData: EMentor): Promise<EMentor | null> {
     console.log("mentor repo statt 1", mentorData);
 
@@ -97,22 +105,22 @@ export default class MentorRepository implements IMentorRepository {
     }
   }
 
-  async createVideoTutorial(
-    videoTutorial: Record<string, any>
-  ): Promise<string> {
-    try {
-      console.log("createVideoTutorial repo step 1");
-      const newVideoTutorial = new VideoTutorial(videoTutorial);
-      console.log("createVideoTutorial repo step 2");
-      await newVideoTutorial.save();
-      console.log("createVideoTutorial repo step 3");
-      return newVideoTutorial._id.toString();
-    } catch (error) {
-      console.log("createVideoTutorial repo step 4");
-      console.error("Error creating video tutorial:", error);
-      throw new Error("Failed to create video tutorial");
-    }
-  }
+  // async createVideoTutorial(
+  //   videoTutorial: Record<string, any>
+  // ): Promise<string> {
+  //   try {
+  //     console.log("createVideoTutorial repo step 1");
+  //     const newVideoTutorial = new VideoTutorial(videoTutorial);
+  //     console.log("createVideoTutorial repo step 2");
+  //     await newVideoTutorial.save();
+  //     console.log("createVideoTutorial repo step 3");
+  //     return newVideoTutorial._id.toString();
+  //   } catch (error) {
+  //     console.log("createVideoTutorial repo step 4");
+  //     console.error("Error creating video tutorial:", error);
+  //     throw new Error("Failed to create video tutorial");
+  //   }
+  // }
 
   async findById(id: string): Promise<EMentor | null> {
     try {
@@ -134,6 +142,15 @@ export default class MentorRepository implements IMentorRepository {
       return mentor;
     } catch (error: any) {
       throw new Error("Failed to update mentor", error.message);
+    }
+  }
+
+  async deleteMentor(id: string): Promise<void> {
+    try {
+      await super.deleteById(id);
+      // Simply don't return anything to match Promise<void>
+    } catch (error: any) {
+      throw new Error("Failed to delete mentor: " + error.message);
     }
   }
 }

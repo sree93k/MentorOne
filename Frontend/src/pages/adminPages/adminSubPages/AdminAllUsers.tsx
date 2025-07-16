@@ -69,7 +69,10 @@ const AllUsers: React.FC = () => {
           statusFilter ?? undefined
         );
         if (response && response.status === 200) {
+          console.log("Users response", response.data.data);
+
           const fetchedUsers = response.data.data.users;
+
           setUsers(fetchedUsers);
           setTotal(response.data.data.total);
           setTotalMentors(response.data.data.totalMentors);

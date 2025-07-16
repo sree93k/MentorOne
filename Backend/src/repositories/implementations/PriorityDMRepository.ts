@@ -1,10 +1,17 @@
 import mongoose from "mongoose";
-import { IPriorityDMRepository } from "../interface/IPriorityDmRepository";
-
 import PriorityDMModel from "../../models/priorityDmModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
+import BaseRepository from "./BaseRepository";
+import { IPriorityDMRepository } from "../interface/IPriorityDmRepository";
+import { extend } from "joi";
 
-export default class PriorityDMRepository implements IPriorityDMRepository {
+export default class PriorityDMRepository
+  extends BaseRepository<EPriorityDM>
+  implements IPriorityDMRepository
+{
+  constructor() {
+    super(PriorityDMModel);
+  }
   async create(data: Partial<EPriorityDM>): Promise<EPriorityDM> {
     try {
       const priorityDM = await PriorityDMModel.create(data);

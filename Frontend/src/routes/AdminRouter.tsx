@@ -4,7 +4,7 @@ import { lazy, Suspense } from "react";
 // import LoadingSpinner from "../common/LoadingSpinner";
 import PrivateRoute from "@/components/auth/AdminPrivateRoute";
 import PublicRoute from "@/components/auth/AdminPublicRoute";
-import LoadingModal from "@/components/modal/LoadingModal";
+
 const AdminSigninPage = lazy(() => import("../pages/adminAuth/AdminLogin"));
 // const AdminDashboard = lazy(() => import("../pages/adminPages/AdminDashboard"));
 const AdminPage = lazy(() => import("@/pages/adminPages/AdminPage"));

@@ -9,10 +9,10 @@ import { IUserService } from "../../services/interface/IUserService";
 import UserService from "../../services/implementations/UserService";
 import { IUploadService } from "../../services/interface/IUploadService";
 import UploadService from "../../services/implementations/UploadService";
-import { IMenteeProfileService } from "../../services/interface/IMenteeProfileService";
-import MenteeProfileService from "../../services/implementations/MenteeProfileService";
-import { IMentorProfileService } from "../../services/interface/IMentorProfileService";
-import MentorProfileService from "../../services/implementations/MentorProfileService";
+import { IMenteeService } from "../../services/interface/IMenteeService";
+import MenteeService from "../../services/implementations/MenteeService";
+import { IMentorService } from "../../services/interface/IMentorService";
+import MentorService from "../../services/implementations/MentorService";
 import BookingService from "../../services/implementations/Bookingservice";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { IPaymentService } from "../../services/interface/IPaymentService";
@@ -28,8 +28,8 @@ class menteeController {
   private OTPServices: IOTPService;
   private userService: IUserService;
   private uploadService: IUploadService;
-  private MenteeProfileService: IMenteeProfileService;
-  private MentorProfileService: IMentorProfileService;
+  private MenteeService: IMenteeService;
+  private MentorService: IMentorService;
   private bookingService: IBookingService;
   private PaymentService: IPaymentService;
   private CalendarService: ICalendarService;
@@ -45,8 +45,8 @@ class menteeController {
     this.OTPServices = new OTPServices();
     this.userService = new UserService();
     this.uploadService = new UploadService();
-    this.MenteeProfileService = new MenteeProfileService();
-    this.MentorProfileService = new MentorProfileService();
+    this.MenteeService = new MenteeService();
+    this.MentorService = new MentorService();
     this.bookingService = new BookingService();
     this.PaymentService = new PaymentService();
     this.CalendarService = new CalendarService();
@@ -89,10 +89,7 @@ class menteeController {
       if (!userId) {
         throw new ApiError(HttpStatus.BAD_REQUEST, "User ID is required");
       }
-      const response = await this.MenteeProfileService.welcomeData(
-        req.body,
-        userId
-      );
+      const response = await this.MenteeService.welcomeData(req.body, userId);
       console.log("MenteeController uploadWelcomeForm step 2", { response });
       res
         .status(HttpStatus.OK)
@@ -161,7 +158,7 @@ class menteeController {
         throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
       }
 
-      const deleted = await this.MenteeProfileService.deleteAccount(id);
+      const deleted = await this.MenteeService.deleteAccount(id);
       if (!deleted) {
         throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
       }
@@ -189,7 +186,7 @@ class menteeController {
       }
       console.log("MenteeController profileData step 1", { id });
 
-      const response = await this.MenteeProfileService.userProfielData(id);
+      const response = await this.MenteeService.userProfielData(id);
       if (!response) {
         throw new ApiError(HttpStatus.NOT_FOUND, "User not found");
       }
@@ -226,7 +223,7 @@ class menteeController {
         searchQuery,
       });
 
-      const mentorsData = await this.MenteeProfileService.getAllMentors(
+      const mentorsData = await this.MenteeService.getAllMentors(
         pageNum,
         limitNum,
         role as string,
@@ -261,7 +258,7 @@ class menteeController {
       }
       console.log("MenteeController getMentorById step 1", { id });
 
-      const mentor = await this.MenteeProfileService.getMentorById(id);
+      const mentor = await this.MenteeService.getMentorById(id);
       if (!mentor) {
         throw new ApiError(HttpStatus.NOT_FOUND, "Mentor not found");
       }
@@ -644,7 +641,7 @@ class menteeController {
       }
       console.log("Mnetee contoller getMentorSchedule step 1", id);
 
-      const schedule = await this.MentorProfileService.getMentorSchedule(id);
+      const schedule = await this.MentorService.getMentorSchedule(id);
       if (!schedule) {
         throw new ApiError(404, "Schedule not found for this mentor");
       }
@@ -672,8 +669,7 @@ class menteeController {
       if (!id) {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Mentor ID is required");
       }
-      const blockedDates =
-        await this.MentorProfileService.getMentorBlockedDates(id);
+      const blockedDates = await this.MentorService.getMentorBlockedDates(id);
       res
         .status(HttpStatus.OK)
         .json(
@@ -712,7 +708,7 @@ class menteeController {
         serviceId,
         bookingId,
       });
-      const priorityDM = await this.MenteeProfileService.createPriorityDM({
+      const priorityDM = await this.MenteeService.createPriorityDM({
         serviceId,
         bookingId,
         menteeId,
@@ -749,7 +745,7 @@ class menteeController {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Booking ID is required");
       }
       console.log("Mentee controller getPriorityDMs step 2", bookingId);
-      const priorityDMs = await this.MenteeProfileService.getPriorityDMs(
+      const priorityDMs = await this.MenteeService.getPriorityDMs(
         bookingId,
         menteeId
       );
@@ -805,7 +801,7 @@ class menteeController {
   ): Promise<void> => {
     try {
       console.log("MenteeController getDashboardData step 1");
-      const dashboardData = await this.MenteeProfileService.getDashboardData();
+      const dashboardData = await this.MenteeService.getDashboardData();
       console.log("MenteeController getDashboardData step 2", {
         dashboardData,
       });

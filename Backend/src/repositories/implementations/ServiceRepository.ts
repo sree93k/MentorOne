@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import { IServiceRepository } from "../interface/IServiceRepository";
-
 import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
+import BaseRepository from "./BaseRepository";
+
 interface GetAllServicesParams {
   page: number;
   limit: number;
@@ -15,7 +16,13 @@ interface GetAllServicesResponse {
   totalCount: number;
 }
 
-export default class ServiceRepository implements IServiceRepository {
+export default class ServiceRepository
+  extends BaseRepository<EService>
+  implements IServiceRepository
+{
+  constructor() {
+    super(Service);
+  }
   async getAllServices(
     mentorId: string,
     params: GetAllServicesParams
@@ -195,88 +202,6 @@ export default class ServiceRepository implements IServiceRepository {
     return await Service.findOne({ _id: id }).exec();
   }
 
-  // async getTopServices(limit: number): Promise<EService[]> {
-  //   try {
-  //     console.log("ServiceRepository getTopServices step 1", { limit });
-  //     const services = await Service.aggregate([
-  //       {
-  //         $lookup: {
-  //           from: "bookings",
-  //           localField: "_id",
-  //           foreignField: "serviceId",
-  //           as: "bookings",
-  //         },
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: "testimonials",
-  //           localField: "_id",
-  //           foreignField: "serviceId",
-  //           as: "testimonials",
-  //         },
-  //       },
-  //       {
-  //         $addFields: {
-  //           bookingCount: { $size: "$bookings" },
-  //           averageRating: { $avg: "$testimonials.rating" },
-  //         },
-  //       },
-  //       {
-  //         $match: {
-  //           bookingCount: { $gt: 0 },
-  //         },
-  //       },
-  //       {
-  //         $sort: {
-  //           bookingCount: -1,
-  //           averageRating: -1,
-  //         },
-  //       },
-  //       {
-  //         $limit: limit,
-  //       },
-  //       {
-  //         $lookup: {
-  //           from: "users",
-  //           localField: "mentorId",
-  //           foreignField: "_id",
-  //           as: "mentor",
-  //         },
-  //       },
-  //       {
-  //         $unwind: "$mentor",
-  //       },
-  //       {
-  //         $project: {
-  //           _id: 1,
-  //           title: 1,
-  //           shortDescription: 1,
-  //           amount: 1,
-  //           duration: 1,
-  //           type: 1,
-  //           technology: 1,
-  //           digitalProductType: 1,
-  //           oneToOneType: 1,
-  //           fileUrl: 1,
-  //           exclusiveContent: 1,
-  //           stats: 1,
-  //           mentorId: 1,
-  //           mentorName: {
-  //             $concat: ["$mentor.firstName", " ", "$mentor.lastName"],
-  //           },
-  //           mentorProfileImage: "$mentor.profilePicture",
-  //           bookingCount: 1,
-  //           averageRating: 1,
-  //         },
-  //       },
-  //     ]).exec();
-  //     console.log("ServiceRepository getTopServices step 2", services.length);
-  //     return services;
-  //   } catch (error: any) {
-  //     console.error("ServiceRepository getTopServices error", error);
-  //     throw new Error("Failed to fetch top services", error.message);
-  //   }
-  // }
   async getTopServices(limit: number): Promise<EService[]> {
     try {
       console.log("ServiceRepository getTopServices step 1", { limit });

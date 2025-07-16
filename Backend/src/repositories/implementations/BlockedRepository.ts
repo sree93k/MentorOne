@@ -1,101 +1,19 @@
 import mongoose from "mongoose";
-import Policy from "../../models/policyModel";
-import Schedule from "../../models/scheduleModel";
 import BlockedDate from "../../models/blockedModel";
-
 import {
-  ICalendarRepository,
-  PolicyData,
-  ScheduleData,
+  IBlockedRepository,
   BlockedDateData,
-} from "../interface/ICalenderRepository";
+} from "../interface/IBlockedRepository";
+import BaseRepository from "./BaseRepository";
+import { EBlockedDate } from "../../entities/blockedEntity";
 
-export default class CalendarRepository implements ICalendarRepository {
-  async getPolicy(mentorId: string | mongoose.Types.ObjectId) {
-    return await Policy.findOne({
-      userId: new mongoose.Types.ObjectId(mentorId),
-    });
+export default class BlockedRepository
+  extends BaseRepository<EBlockedDate>
+  implements IBlockedRepository
+{
+  constructor() {
+    super(BlockedDate);
   }
-
-  async updatePolicy(
-    mentorId: string | mongoose.Types.ObjectId,
-    data: PolicyData
-  ) {
-    return await Policy.findOneAndUpdate(
-      { userId: new mongoose.Types.ObjectId(mentorId) },
-      { $set: data, updatedAt: new Date() },
-      { new: true, upsert: true }
-    );
-  }
-
-  async getSchedules(mentorId: string | mongoose.Types.ObjectId) {
-    return await Schedule.find({
-      mentorId: new mongoose.Types.ObjectId(mentorId),
-    });
-  }
-
-  async createSchedule(
-    mentorId: string | mongoose.Types.ObjectId,
-    data: ScheduleData
-  ) {
-    console.log("calendar repo createSchedule step1", mentorId, data);
-
-    const validDays = [
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-    ];
-
-    let weeklySchedule;
-
-    if (data.weeklySchedule) {
-      const providedDays = data.weeklySchedule.reduce((acc, d) => {
-        acc[d.day] = d;
-        return acc;
-      }, {} as Record<string, NonNullable<ScheduleData["weeklySchedule"]>[0]>);
-
-      weeklySchedule = validDays.map((day) => ({
-        day,
-        slots: providedDays[day]?.slots || [],
-      }));
-    } else {
-      throw new Error("weeklySchedule must be provided");
-    }
-
-    const schedule = await Schedule.create({
-      mentorId: new mongoose.Types.ObjectId(mentorId),
-      scheduleName: data.scheduleName || "Default Schedule",
-      weeklySchedule,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    console.log("calendar repo createSchedule step2", schedule);
-    return schedule;
-  }
-
-  async updateSchedule(scheduleId: string, data: ScheduleData) {
-    console.log("calendar repo updateSchedule step1", scheduleId, data);
-    const updatedSchedule = await Schedule.findByIdAndUpdate(
-      scheduleId,
-      { $set: { weeklySchedule: data?.weeklySchedule, updatedAt: new Date() } },
-      { new: true }
-    );
-    console.log("calendar repo updateSchedule step2", updatedSchedule);
-    return updatedSchedule;
-  }
-
-  async deleteSchedule(scheduleId: string) {
-    console.log("calendar repo deleteSchedule step1", scheduleId);
-    const result = await Schedule.findByIdAndDelete(scheduleId);
-    console.log("calendar repo deleteSchedule step2", result);
-    return result;
-  }
-
   async getBlockedDates(mentorId: string | mongoose.Types.ObjectId) {
     return await BlockedDate.find({
       mentorId: new mongoose.Types.ObjectId(mentorId),
@@ -136,25 +54,14 @@ export default class CalendarRepository implements ICalendarRepository {
       throw new Error("Failed to remove blocked date", error.message);
     }
   }
-  // async deleteBlockedDate(
-  //   mentorId: string,
-  //   date: string,
-  //   slotTime: string
-  // ): Promise<void> {
-  //   try {
-  //     console.log("deleteDate >>>>> step1", mentorId);
-  //     console.log("deleteDate >>>>> step2", date);
-  //     console.log("deleteDate >>>>> step3", slotTime);
-  //     const deleteDate = await BlockedDate.deleteOne({
-  //       mentorId,
-  //       slotTime,
-  //       date,
-  //     });
-  //     console.log("deleteDate >>>>> 4", deleteDate);
-  //   } catch (error: any) {
-  //     throw new Error("Failed to remove blocked date", error.message);
-  //   }
-  // }
+  async deleteById(id: string): Promise<EBlockedDate | null> {
+    try {
+      const deletedDate = await BlockedDate.findByIdAndDelete(id);
+      return deletedDate as EBlockedDate | null;
+    } catch (error) {
+      throw new Error("Failed to remove blocked date", error);
+    }
+  }
   async deleteBlockedDate(
     mentorId: string,
     date: string,

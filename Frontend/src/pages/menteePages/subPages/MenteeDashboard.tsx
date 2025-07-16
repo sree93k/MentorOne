@@ -1,21 +1,18 @@
 import React, { useState, useEffect, useId } from "react";
 import { Star, Clock, Users, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SparklesCore } from "@/components/ui/sparkles";
-import { motion } from "framer-motion";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
-import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { getDashboardData } from "@/services/menteeService";
 import SreeImg from "@/assets/Sree.jpeg";
 import JasnaImg from "@/assets/Jasna.jpeg";
 import JithinImg from "@/assets/Jithin.jpeg";
 import AnotaImg from "@/assets/Anita.jpeg";
 import GradientBackgroundText from "@/components/mentee/AnimatedGradientText";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import { setError, setLoading } from "@/redux/slices/userSlice";
+import { setError } from "@/redux/slices/userSlice";
 // Mock data for mentors
 const mockMentors = [
   {

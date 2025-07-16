@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-import { IWallet } from "../entities/WalletEntity";
+import { EWallet } from "../entities/WalletEntity";
 
-const WalletSchema = new Schema<IWallet>({
+const WalletSchema = new Schema<EWallet>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -56,6 +56,6 @@ const WalletSchema = new Schema<IWallet>({
   updatedAt: { type: Date, default: Date.now },
 });
 
-const Wallet = mongoose.model<IWallet>("Wallet", WalletSchema);
+const Wallet = mongoose.model<EWallet>("Wallet", WalletSchema);
 
 export default Wallet;

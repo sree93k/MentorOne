@@ -2,9 +2,16 @@ import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import mongoose from "mongoose";
-
+import BaseRepository from "./BaseRepository";
 import Service from "../../models/serviceModel";
-export default class UserRepository implements IUserRepository {
+
+export default class UserRepository
+  extends BaseRepository<EUsers>
+  implements IUserRepository
+{
+  constructor() {
+    super(Users);
+  }
   //create user
   async createUser(user: Partial<EUsers>): Promise<EUsers | null> {
     try {
@@ -695,6 +702,128 @@ export default class UserRepository implements IUserRepository {
     } catch (error: any) {
       console.error("UserRepository getTopMentors error", error);
       throw new Error("Failed to fetch top mentors", error.message);
+    }
+  }
+
+  async findByField<K extends keyof EUsers>(
+    field: K,
+    value: string
+  ): Promise<EUsers[] | null> {
+    try {
+      const query = { [field]: value } as any;
+      const users = await Users.find(query)
+        .select("-refreshToken")
+        .populate("mentorId")
+        .populate("menteeId")
+        .populate("schoolDetails")
+        .populate("collegeDetails")
+        .populate("professionalDetails")
+        .exec();
+
+      return users.length > 0 ? users : null;
+    } catch (error) {
+      console.error("Error in findByField:", error);
+      return null;
+    }
+  }
+
+  async update(id: string, data: Partial<EUsers>): Promise<EUsers | null> {
+    try {
+      const updatedUser = await Users.findByIdAndUpdate(
+        id,
+        { $set: data },
+        { new: true }
+      )
+        .select("-refreshToken")
+        .populate("mentorId")
+        .populate("menteeId")
+        .populate("schoolDetails")
+        .populate("collegeDetails")
+        .populate("professionalDetails")
+        .exec();
+
+      return updatedUser;
+    } catch (error) {
+      console.error("Error in update:", error);
+      return null;
+    }
+  }
+
+  async updateField(
+    id: string,
+    field: keyof EUsers,
+    value: any
+  ): Promise<EUsers | null> {
+    try {
+      console.log("UserRepository updateField:", id, field, value);
+
+      const updateData = { [field]: value };
+      const updatedUser = await Users.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true }
+      )
+        .select("-refreshToken")
+        .populate("mentorId")
+        .populate("menteeId")
+        .populate("schoolDetails")
+        .populate("collegeDetails")
+        .populate("professionalDetails")
+        .exec();
+
+      return updatedUser;
+    } catch (error) {
+      console.error("Error in updateField:", error);
+      return null;
+    }
+  }
+
+  async countAllUsers(query: any = {}): Promise<number> {
+    try {
+      return await Users.countDocuments(query);
+    } catch (error) {
+      console.error("Error in countAllUsers:", error);
+      return 0;
+    }
+  }
+
+  async countUsersByRole(role: string): Promise<number> {
+    try {
+      let query: any = {};
+
+      if (role === "mentee") {
+        query.role = { $eq: ["mentee"] };
+      } else if (role === "mentor") {
+        query.role = { $eq: ["mentor"] };
+      } else if (role === "both") {
+        query.role = { $all: ["mentor", "mentee"] };
+      }
+
+      return await Users.countDocuments(query);
+    } catch (error) {
+      console.error("Error in countUsersByRole:", error);
+      return 0;
+    }
+  }
+
+  async getAllUsersWithPagination(
+    query: any = {},
+    page: number = 1,
+    limit: number = 10
+  ): Promise<EUsers[]> {
+    try {
+      return await Users.find(query)
+        .populate("mentorId")
+        .populate("menteeId")
+        .populate("schoolDetails")
+        .populate("collegeDetails")
+        .populate("professionalDetails")
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec();
+    } catch (error) {
+      console.error("Error in getAllUsersWithPagination:", error);
+      return [];
     }
   }
 }

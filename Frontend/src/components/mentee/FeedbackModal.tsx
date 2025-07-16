@@ -54,7 +54,7 @@ export default function FeedbackModal({
           setRating(0);
           setFeedback("");
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching testimonial:", error);
         toast.error("Failed to load feedback");
       } finally {
@@ -105,7 +105,7 @@ export default function FeedbackModal({
       setFeedback("");
       setTestimonial(null);
       onClose(); // Close modal after submission
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Failed to submit feedback");
       console.error("Error submitting/updating testimonial:", error);
     } finally {

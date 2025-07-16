@@ -1,12 +1,17 @@
 import mongoose from "mongoose";
-import { IWallet } from "../../entities/WalletEntity";
+import { EWallet } from "../../entities/WalletEntity";
 import Wallet from "../../models/WalletSchema";
+import BaseRepository from "./BaseRepository";
+import { IWalletRepository } from "../interface/IWalletRepository";
 
-export default class WalletRepository {
-  async createWallet(userId: string): Promise<IWallet> {
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
+export default class WalletRepository
+  extends BaseRepository<EWallet>
+  implements IWalletRepository
+{
+  constructor() {
+    super(Wallet);
+  }
+  async createWallet(userId: string): Promise<EWallet> {
     console.log("WALLET REPOSITRORY");
     console.log("WALLET REPOSITRORY");
 
@@ -14,7 +19,7 @@ export default class WalletRepository {
     return wallet.save();
   }
 
-  async findByUserId(userId: string): Promise<IWallet | null> {
+  async findByUserId(userId: string): Promise<EWallet | null> {
     return Wallet.findOne({ userId }).exec();
   }
 
@@ -24,11 +29,7 @@ export default class WalletRepository {
     type: "credit" | "debit",
     paymentId: string,
     description: string
-  ): Promise<IWallet> {
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
+  ): Promise<EWallet> {
     console.log("WALLET REPOSITRORY");
     console.log("WALLET REPOSITRORY");
     const wallet = await Wallet.findOne({ userId });
@@ -61,13 +62,11 @@ export default class WalletRepository {
     userId: string,
     amount: number,
     paymentId: string
-  ): Promise<IWallet> {
+  ): Promise<EWallet> {
     console.log("WALLET REPOSITRORY addPendingBalance step1");
     console.log("WALLET REPOSITRORY", userId);
     console.log("WALLET REPOSITRORY", amount);
     console.log("WALLET REPOSITRORY", paymentId);
-    console.log("WALLET REPOSITRORY");
-    console.log("WALLET REPOSITRORY");
 
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
@@ -101,7 +100,7 @@ export default class WalletRepository {
     userId: string,
     amount: number,
     paymentId: string
-  ): Promise<IWallet> {
+  ): Promise<EWallet> {
     const wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       throw new Error("Wallet not found");

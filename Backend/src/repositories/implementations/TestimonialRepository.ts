@@ -1,10 +1,17 @@
 import Testimonial from "../../models/testimonialsModel";
 import Booking from "../../models/bookingModel";
 import { ITestimonialRepository } from "../interface/ITestimonialRepository";
-
 import { ETestimonial } from "../../entities/testimonialEntity";
 import mongoose from "mongoose";
-export default class TestimonialRepository implements ITestimonialRepository {
+import BaseRepository from "./BaseRepository";
+
+export default class TestimonialRepository
+  extends BaseRepository<ETestimonial>
+  implements ITestimonialRepository
+{
+  constructor() {
+    super(Testimonial);
+  }
   async create(data: any): Promise<ETestimonial> {
     try {
       console.log("TestimonialRepository create step 1", data);
@@ -272,7 +279,7 @@ export default class TestimonialRepository implements ITestimonialRepository {
 
   async getTopTestimonials(limit: number): Promise<ETestimonial[]> {
     try {
-      console.log("BookingRepository getTopTestimonials step 1", { limit });
+      console.log("TestimonialRepository getTopTestimonials step 1", { limit });
       const testimonials = await Testimonial.find()
         .populate({
           path: "menteeId",
@@ -290,12 +297,12 @@ export default class TestimonialRepository implements ITestimonialRepository {
         .limit(limit)
         .lean();
       console.log(
-        "BookingRepository getTopTestimonials step 2",
+        "TestimonialRepository getTopTestimonials step 2",
         testimonials.length
       );
       return testimonials;
     } catch (error: any) {
-      console.error("BookingRepository getTopTestimonials error", error);
+      console.error("TestimonialRepository getTopTestimonials error", error);
       throw new Error("Failed to fetch top testimonials", error.message);
     }
   }

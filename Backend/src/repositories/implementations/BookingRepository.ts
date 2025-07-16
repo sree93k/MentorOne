@@ -2,11 +2,16 @@ import Booking from "../../models/bookingModel";
 
 import { IBookingRepository } from "../interface/IBookingRepository";
 import { EBooking } from "../../entities/bookingEntity";
-import { response } from "express";
+import BaseRepository from "./BaseRepository";
 import mongoose from "mongoose";
-import { ErrorReply } from "redis";
 
-export default class BookingRepository implements IBookingRepository {
+export default class BookingRepository
+  extends BaseRepository<EBooking>
+  implements IBookingRepository
+{
+  constructor() {
+    super(Booking);
+  }
   async create(data: any) {
     try {
       const booking = new Booking(data);

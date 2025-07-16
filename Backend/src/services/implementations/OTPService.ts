@@ -7,16 +7,12 @@ import { sendMail } from "../../utils/emailService";
 import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
-import { IBaseRepository } from "../../repositories/interface/IBaseRepository";
-import BaseRepository from "../../repositories/implementations/BaseRepository";
-import Users from "../../models/userModel";
 
-export default class OTPServices implements IOTPService {
+export default class OTPService implements IOTPService {
   private OTPRepository: IOTPRepository;
-  private BaseRepository: IBaseRepository<EUsers>;
+
   constructor() {
     this.OTPRepository = new OTPRepository();
-    this.BaseRepository = new BaseRepository<EUsers>(Users);
   }
 
   async sendOTP(user: EUsers): Promise<EOTP | null> {
@@ -25,7 +21,7 @@ export default class OTPServices implements IOTPService {
       if (!user?.email) {
         throw new Error("User email is null");
       }
-      const userData = await this.BaseRepository.findByEmail(user.email);
+      const userData = await this.OTPRepository.userData(user.email);
       if (userData?.isBlocked) {
         throw new Error("Account is Blocked");
       }
@@ -123,7 +119,7 @@ export default class OTPServices implements IOTPService {
     try {
       console.log("otp exists service step", user);
 
-      const OTPExists = await this.OTPRepository.findOTP(user);
+      const OTPExists = await this.OTPRepository.findOTP(user?.email);
       console.log("otp exists service step 2", OTPExists);
       if (!OTPExists) {
         return null;
@@ -133,6 +129,15 @@ export default class OTPServices implements IOTPService {
     } catch (error) {
       console.log("check OTP exists error", error);
       return null;
+    }
+  }
+
+  async getUserData(email: string): Promise<EUsers | null> {
+    try {
+      const OtpUser = await this.OTPRepository.userData(email);
+      return OtpUser;
+    } catch (error: any) {
+      throw new Error("Failed to create notification", error.message);
     }
   }
 }

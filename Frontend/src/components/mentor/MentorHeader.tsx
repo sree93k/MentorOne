@@ -1,16 +1,13 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Send } from "lucide-react";
 import LogoImg from "@/assets/Logo2.png";
 import LogoName from "@/assets/LogoName2.png";
 import Chatting from "../users/Chatting";
-import { RootState } from "@/redux/store/store";
-import { useSelector } from "react-redux";
 import ThemeToggle from "../users/ThemeToggle";
 
 const MentorHeader: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { user } = useSelector((state: RootState) => state.user);
+
   const openChat = () => {
     setIsChatOpen(true);
   };

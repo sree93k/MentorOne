@@ -23,7 +23,7 @@ export function EmailVerificationModal({
 }: EmailVerificationModalProps) {
   const [otp, setOtp] = useState("");
   const [resendTimer, setResendTimer] = useState(60); // Start at 60
-  const [verifying, setVerifying] = useState(false);
+  const [verifying] = useState(false);
 
   // Timer logic
   useEffect(() => {

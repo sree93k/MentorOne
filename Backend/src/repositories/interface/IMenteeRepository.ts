@@ -8,4 +8,6 @@ export interface IMenteeRepository {
   }): Promise<EMentee>;
 
   getMentee(id: string): Promise<EMentee | null>;
+  update(id: string, data: any): Promise<EMentee | null>;
+  findById(id: string): Promise<EMentee | null>;
 }

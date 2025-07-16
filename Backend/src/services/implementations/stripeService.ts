@@ -1,4 +1,3 @@
-import { Request } from "express";
 import stripe from "../../config/stripe";
 
 export class StripeService {

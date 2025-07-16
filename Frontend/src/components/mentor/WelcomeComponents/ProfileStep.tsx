@@ -2,10 +2,7 @@ import { useState } from "react";
 import Select from "react-select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { X } from "lucide-react";
 import { WelcomeFormData } from "../MentorWelcomeModal"; // Updated import
 
 interface ProfileStepProps {
@@ -82,23 +79,7 @@ const ProfileStep: React.FC<ProfileStepProps> = ({ formData, setFormData }) => {
             className="basic-multi-select"
             classNamePrefix="select"
           />
-          {/* <div className="flex flex-wrap gap-2 ">
-            {selectedSkills.map((skill) => (
-              <Badge
-                key={skill}
-                variant="secondary"
-                className="px-3 py-1 border border-gray-300"
-              >
-                {skill}
-                <button
-                  onClick={() => removeSkill(skill)}
-                  className="ml-2 hover:text-red-500"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div> */}
+
           <p className="text-sm text-gray-500">
             Describe your expertise (keep it below 10 skills).
           </p>
