@@ -9,10 +9,14 @@ export interface IAdminAuthService {
   } | null>;
 
   logout(token: string, id: string): Promise<boolean | null>;
+  // refreshAccessToken(
+  //   userId: string,
+  //   refreshToken: string
+  // ): Promise<string | null>;
   refreshAccessToken(
     userId: string,
     refreshToken: string
-  ): Promise<string | null>;
+  ): Promise<{ newAccessToken: string; newRefreshToken: string } | null>;
   logoutFromAllDevices(userId: string): Promise<boolean>;
   // findById(id: string): Promise<EAdmin | null>;
 }

@@ -216,9 +216,7 @@ const initialMenteeData = {
 
 const MenteeProfile: React.FC = () => {
   const dispatch = useDispatch();
-  const { user, error, loading } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { user } = useSelector((state: RootState) => state.user);
   const [activeTab, setActiveTab] = useState("overview");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
