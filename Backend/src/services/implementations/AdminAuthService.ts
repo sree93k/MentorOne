@@ -1,24 +1,24 @@
+// // // src/services/implementations/AdminAuthService.ts
 // // import bcrypt from "bcryptjs";
 // // import { EAdmin } from "../../entities/adminEntity";
 // // import { IAdminAuthService } from "../interface/IAdminAuthservice";
 // // import { IAdminRepository } from "../../repositories/interface/IAdminRespository";
-// // import AdminRepository from "../../repositories/implementations/AdminRepository";
-// // import {
-// //   generateAccessToken,
-// //   generateRefreshToken,
-// //   verifyRefreshToken,
-// // } from "../../utils/jwt";
-
+// // import { generateAccessToken, generateRefreshToken } from "../../utils/jwt";
 // // import { HttpStatus } from "../../constants/HttpStatus";
+// // import { RedisTokenService } from "./RedisTokenService";
 
 // // export default class AdminAuthService implements IAdminAuthService {
-// //   private AdminRepository: IAdminRepository;
+// //   private adminRepository: IAdminRepository;
+// //   private redisTokenService: RedisTokenService;
 
-// //   constructor() {
-// //     this.AdminRepository = new AdminRepository();
+// //   constructor(
+// //     redisTokenService: RedisTokenService,
+// //     adminRepository: IAdminRepository
+// //   ) {
+// //     this.adminRepository = adminRepository;
+// //     this.redisTokenService = redisTokenService;
 // //   }
 
-// //   //login
 // //   async login(user: { adminEmail: string; adminPassword: string }): Promise<{
 // //     accessToken: string;
 // //     refreshToken: string;
@@ -26,36 +26,36 @@
 // //   } | null> {
 // //     console.log("Service - Login attempt for email:", user.adminEmail);
 // //     try {
-// //       if (!user.adminEmail) {
-// //         console.log("Service - Error: adminEmail is required");
-// //         throw new Error(`${HttpStatus.BAD_REQUEST}: adminEmail is required`);
+// //       if (!user.adminEmail || !user.adminPassword) {
+// //         throw new Error(
+// //           `${HttpStatus.BAD_REQUEST}: Email and password are required`
+// //         );
 // //       }
-// //       const adminFound = await this.AdminRepository.findByEmail(
+
+// //       const adminFound = await this.adminRepository.findByEmail(
 // //         user.adminEmail
 // //       );
 // //       console.log("Service - Admin found:", adminFound ? "Yes" : "No");
-// //       console.log("Service - Admin found:", adminFound);
+
 // //       if (
 // //         adminFound &&
-// //         user.adminPassword &&
 // //         adminFound.adminPassword &&
-// //         (await bcrypt.compare(
-// //           user.adminPassword.toString(),
-// //           adminFound.adminPassword.toString()
-// //         ))
+// //         (await bcrypt.compare(user.adminPassword, adminFound.adminPassword))
 // //       ) {
-
 // //         const id = adminFound._id.toString();
 // //         const role = Array.isArray(adminFound.role)
 // //           ? adminFound.role[0]
 // //           : adminFound.role || "admin";
+
 // //         const accessToken = generateAccessToken({ id, role });
 // //         const refreshToken = generateRefreshToken({ id, role });
 
-// //         await this.AdminRepository.saveRefreshToken(id, refreshToken);
+// //         // Store refresh token in Redis only
+// //         await this.redisTokenService.saveRefreshToken(id, refreshToken, 7);
+// //         console.log("Access token:", accessToken);
+// //         console.log("Refresh token:", refreshToken);
 
 // //         const adminObject = adminFound.toObject();
-
 // //         const { adminPassword, ...adminWithoutPassword } = adminObject;
 
 // //         return { accessToken, refreshToken, adminFound: adminWithoutPassword };
@@ -70,12 +70,23 @@
 // //     }
 // //   }
 
-// //   async logout(token: string, id: string): Promise<EAdmin | null> {
+// //   async logout(userId: string, refreshToken: string): Promise<boolean> {
 // //     try {
-// //       console.log("service admin logout step 1 ", token, id);
-// //       const admin = await this.AdminRepository.removeRefreshToken(id, token);
-// //       console.log("service admin logout step 2 ", admin);
-// //       return admin ? admin : null;
+// //       console.log("Service - Logout attempt for user:", userId);
+
+// //       const isValidToken = await this.redisTokenService.verifyRefreshToken(
+// //         userId,
+// //         refreshToken
+// //       );
+// //       if (!isValidToken) {
+// //         console.log("Service - Invalid or expired refresh token");
+// //         return false;
+// //       }
+
+// //       const removed = await this.redisTokenService.removeRefreshToken(userId);
+// //       console.log("Service - Refresh token removed from Redis:", removed);
+
+// //       return removed;
 // //     } catch (error) {
 // //       throw new Error(
 // //         `${HttpStatus.INTERNAL_SERVER_ERROR}: Failed to logout - ${error}`
@@ -83,25 +94,49 @@
 // //     }
 // //   }
 
-// //   async refreshAccessToken(userId: string): Promise<string | null> {
+// //   async refreshAccessToken(
+// //     userId: string,
+// //     refreshToken: string
+// //   ): Promise<string | null> {
 // //     try {
-// //       const adminFound = await this.AdminRepository.findByEmail(userId);
+// //       const isValidToken = await this.redisTokenService.verifyRefreshToken(
+// //         userId,
+// //         refreshToken
+// //       );
+// //       if (!isValidToken) {
+// //         console.log("Service - Invalid refresh token for user:", userId);
+// //         return null;
+// //       }
 
+// //       const adminFound = await this.adminRepository.findById(userId);
 // //       if (adminFound) {
-// //         const id = adminFound._id?.toString();
+// //         const id = adminFound._id.toString();
+// //         const role = Array.isArray(adminFound.role)
+// //           ? adminFound.role[0]
+// //           : adminFound.role || "admin";
 
-// //         const accessToken = generateAccessToken({
-// //           id,
-// //           role: adminFound.role,
-// //         });
+// //         const accessToken = generateAccessToken({ id, role });
+
+// //         // Optionally rotate refresh token
+// //         const newRefreshToken = generateRefreshToken({ id, role });
+// //         await this.redisTokenService.saveRefreshToken(id, newRefreshToken, 7);
 
 // //         return accessToken;
 // //       }
-
 // //       return null;
 // //     } catch (error) {
 // //       throw new Error(
 // //         `${HttpStatus.UNAUTHORIZED}: Failed to refresh token - ${error}`
+// //       );
+// //     }
+// //   }
+
+// //   async logoutFromAllDevices(userId: string): Promise<boolean> {
+// //     try {
+// //       return await this.redisTokenService.removeAllUserTokens(userId);
+// //     } catch (error) {
+// //       throw new Error(
+// //         `${HttpStatus.INTERNAL_SERVER_ERROR}: Failed to logout from all devices - ${error}`
 // //       );
 // //     }
 // //   }
@@ -133,8 +168,10 @@
 //   } | null> {
 //     console.log("Service - Login attempt for email:", user.adminEmail);
 //     try {
-//       if (!user.adminEmail) {
-//         throw new Error(`${HttpStatus.BAD_REQUEST}: adminEmail is required`);
+//       if (!user.adminEmail || !user.adminPassword) {
+//         throw new Error(
+//           `${HttpStatus.BAD_REQUEST}: Email and password are required`
+//         );
 //       }
 
 //       const adminFound = await this.adminRepository.findByEmail(
@@ -144,12 +181,8 @@
 
 //       if (
 //         adminFound &&
-//         user.adminPassword &&
 //         adminFound.adminPassword &&
-//         (await bcrypt.compare(
-//           user.adminPassword.toString(),
-//           adminFound.adminPassword.toString()
-//         ))
+//         (await bcrypt.compare(user.adminPassword, adminFound.adminPassword))
 //       ) {
 //         const id = adminFound._id.toString();
 //         const role = Array.isArray(adminFound.role)
@@ -159,10 +192,9 @@
 //         const accessToken = generateAccessToken({ id, role });
 //         const refreshToken = generateRefreshToken({ id, role });
 
-//         // Save to Redis using existing connection
-//         await this.redisTokenService.saveRefreshToken(id, refreshToken, 7);
-//         console.log("Accees token admin", accessToken);
-//         console.log("Refresh token admin", refreshToken);
+//         // Store refresh token in Redis only
+//         await this.redisTokenService.saveRefreshToken(id, refreshToken, 5); // 5 minutes in minutes
+//         console.log("Tokens generated and refresh token stored in Redis");
 
 //         const adminObject = adminFound.toObject();
 //         const { adminPassword, ...adminWithoutPassword } = adminObject;
@@ -179,21 +211,21 @@
 //     }
 //   }
 
-//   async logout(token: string, id: string): Promise<boolean> {
+//   async logout(userId: string, refreshToken: string): Promise<boolean> {
 //     try {
-//       console.log("service admin logout step 1 ", token, id);
+//       console.log("Service - Logout attempt for user:", userId);
 
 //       const isValidToken = await this.redisTokenService.verifyRefreshToken(
-//         id,
-//         token
+//         userId,
+//         refreshToken
 //       );
 //       if (!isValidToken) {
-//         console.log("Invalid or expired token for logout");
+//         console.log("Service - Invalid or expired refresh token");
 //         return false;
 //       }
 
-//       const removed = await this.redisTokenService.removeRefreshToken(id);
-//       console.log("service admin logout step 2 ", removed);
+//       const removed = await this.redisTokenService.removeRefreshToken(userId);
+//       console.log("Service - Refresh token removed from Redis:", removed);
 
 //       return removed;
 //     } catch (error) {
@@ -206,35 +238,38 @@
 //   async refreshAccessToken(
 //     userId: string,
 //     refreshToken: string
-//   ): Promise<string | null> {
+//   ): Promise<{ newAccessToken: string; newRefreshToken?: string } | null> {
 //     try {
+//       console.log("Service - Refresh token attempt for user:", userId);
+
 //       const isValidToken = await this.redisTokenService.verifyRefreshToken(
 //         userId,
 //         refreshToken
 //       );
 //       if (!isValidToken) {
-//         console.log("Invalid refresh token for user:", userId);
+//         console.log("Service - Invalid refresh token for user:", userId);
 //         return null;
 //       }
 
 //       const adminFound = await this.adminRepository.findById(userId);
 //       if (adminFound) {
-//         const id = adminFound._id?.toString();
+//         const id = adminFound._id.toString();
 //         const role = Array.isArray(adminFound.role)
 //           ? adminFound.role[0]
 //           : adminFound.role || "admin";
 
-//         // Generate new access token
-//         const accessToken = generateAccessToken({ id, role });
+//         const newAccessToken = generateAccessToken({ id, role });
 
-//         // Optional: Rotate refresh token for better security
+//         // Generate new refresh token for security (token rotation)
 //         const newRefreshToken = generateRefreshToken({ id, role });
-//         await this.redisTokenService.saveRefreshToken(id, newRefreshToken, 7);
+//         await this.redisTokenService.saveRefreshToken(id, newRefreshToken, 5); // 5 minutes
 
-//         return accessToken;
+//         console.log("Service - New tokens generated");
+//         return { newAccessToken, newRefreshToken };
 //       }
 //       return null;
 //     } catch (error) {
+//       console.error("Service - Refresh token error:", error);
 //       throw new Error(
 //         `${HttpStatus.UNAUTHORIZED}: Failed to refresh token - ${error}`
 //       );
@@ -251,7 +286,6 @@
 //     }
 //   }
 // }
-// src/services/implementations/AdminAuthService.ts
 import bcrypt from "bcryptjs";
 import { EAdmin } from "../../entities/adminEntity";
 import { IAdminAuthService } from "../interface/IAdminAuthservice";
@@ -277,7 +311,7 @@ export default class AdminAuthService implements IAdminAuthService {
     refreshToken: string;
     adminFound: Omit<EAdmin, "adminPassword">;
   } | null> {
-    console.log("Service - Login attempt for email:", user.adminEmail);
+    console.log("🔐 Service - Login attempt for email:", user.adminEmail);
     try {
       if (!user.adminEmail || !user.adminPassword) {
         throw new Error(
@@ -288,7 +322,7 @@ export default class AdminAuthService implements IAdminAuthService {
       const adminFound = await this.adminRepository.findByEmail(
         user.adminEmail
       );
-      console.log("Service - Admin found:", adminFound ? "Yes" : "No");
+      console.log("👤 Service - Admin found:", adminFound ? "Yes" : "No");
 
       if (
         adminFound &&
@@ -303,10 +337,9 @@ export default class AdminAuthService implements IAdminAuthService {
         const accessToken = generateAccessToken({ id, role });
         const refreshToken = generateRefreshToken({ id, role });
 
-        // Store refresh token in Redis only
-        await this.redisTokenService.saveRefreshToken(id, refreshToken, 7);
-        console.log("Access token:", accessToken);
-        console.log("Refresh token:", refreshToken);
+        // Store refresh token in Redis (2 minutes for testing)
+        await this.redisTokenService.saveRefreshToken(id, refreshToken, 2); // 2 minutes
+        console.log("🔑 Tokens generated and refresh token stored in Redis");
 
         const adminObject = adminFound.toObject();
         const { adminPassword, ...adminWithoutPassword } = adminObject;
@@ -314,9 +347,10 @@ export default class AdminAuthService implements IAdminAuthService {
         return { accessToken, refreshToken, adminFound: adminWithoutPassword };
       }
 
-      console.log("Service - Login failed");
+      console.log("❌ Service - Login failed");
       return null;
     } catch (error) {
+      console.error("🚨 Service - Login error:", error);
       throw new Error(
         `${HttpStatus.UNAUTHORIZED}: Invalid credentials - ${error}`
       );
@@ -325,22 +359,23 @@ export default class AdminAuthService implements IAdminAuthService {
 
   async logout(userId: string, refreshToken: string): Promise<boolean> {
     try {
-      console.log("Service - Logout attempt for user:", userId);
+      console.log("🚪 Service - Logout attempt for user:", userId);
 
       const isValidToken = await this.redisTokenService.verifyRefreshToken(
         userId,
         refreshToken
       );
       if (!isValidToken) {
-        console.log("Service - Invalid or expired refresh token");
+        console.log("❌ Service - Invalid or expired refresh token");
         return false;
       }
 
       const removed = await this.redisTokenService.removeRefreshToken(userId);
-      console.log("Service - Refresh token removed from Redis:", removed);
+      console.log("🗑️ Service - Refresh token removed from Redis:", removed);
 
       return removed;
     } catch (error) {
+      console.error("🚨 Service - Logout error:", error);
       throw new Error(
         `${HttpStatus.INTERNAL_SERVER_ERROR}: Failed to logout - ${error}`
       );
@@ -350,14 +385,16 @@ export default class AdminAuthService implements IAdminAuthService {
   async refreshAccessToken(
     userId: string,
     refreshToken: string
-  ): Promise<string | null> {
+  ): Promise<{ newAccessToken: string; newRefreshToken: string } | null> {
     try {
+      console.log("🔄 Service - Refresh token attempt for user:", userId);
+
       const isValidToken = await this.redisTokenService.verifyRefreshToken(
         userId,
         refreshToken
       );
       if (!isValidToken) {
-        console.log("Service - Invalid refresh token for user:", userId);
+        console.log("❌ Service - Invalid refresh token for user:", userId);
         return null;
       }
 
@@ -368,16 +405,22 @@ export default class AdminAuthService implements IAdminAuthService {
           ? adminFound.role[0]
           : adminFound.role || "admin";
 
-        const accessToken = generateAccessToken({ id, role });
+        const newAccessToken = generateAccessToken({ id, role });
 
-        // Optionally rotate refresh token
+        // ALWAYS generate new refresh token for proper token rotation
         const newRefreshToken = generateRefreshToken({ id, role });
-        await this.redisTokenService.saveRefreshToken(id, newRefreshToken, 7);
 
-        return accessToken;
+        // Remove old refresh token and save new one
+        await this.redisTokenService.removeRefreshToken(id);
+        await this.redisTokenService.saveRefreshToken(id, newRefreshToken, 2); // 2 minutes
+
+        console.log("✅ Service - New tokens generated with token rotation");
+        return { newAccessToken, newRefreshToken };
       }
+      console.log("❌ Service - Admin not found");
       return null;
     } catch (error) {
+      console.error("🚨 Service - Refresh token error:", error);
       throw new Error(
         `${HttpStatus.UNAUTHORIZED}: Failed to refresh token - ${error}`
       );

@@ -204,6 +204,7 @@ import { useNavigate } from "react-router-dom";
 import Logo from "@/assets/logo3.png";
 import LogoName from "@/assets/logoname3.png";
 import { resetAdmin } from "@/redux/slices/adminSlice";
+import { AdminProfilePicture } from "@/components/admin/AdminSecureMedia";
 
 const SidebarItem = ({
   icon: Icon,
@@ -324,15 +325,16 @@ const AdminSidebar: React.FC = () => {
           {user?.adminName && (
             <SidebarItem
               icon={() => (
-                <img
-                  src={user?.profilePicture || "https://via.placeholder.com/24"}
-                  alt="Profile"
-                  className="w-6 h-6 rounded-full object-cover"
+                <AdminProfilePicture
+                  profilePicture={user.profilePicture}
+                  userName={`${user.firstName} ${user.lastName}`}
+                  size="sm"
+                  className="h-24 w-24"
                 />
               )}
               text={
                 <div className="flex flex-col">
-                  <span className="font-medium">{user.adminName}</span>
+                  <span className=" text-sm font-medium">{user.adminName}</span>
                   <span className="text-xs text-gray-500">
                     {user.adminEmail}
                   </span>
