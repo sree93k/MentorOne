@@ -14,7 +14,6 @@ import {
   DecodedGoogleToken,
   GoogleSignInRequest,
 } from "@/types/googleAuth";
-import { access } from "fs";
 
 const api = userAxiosInstance;
 

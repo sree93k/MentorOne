@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import DummyImage from "@/assets/DummyProfile.jpg";
+import { ProfilePicture } from "@/components/users/SecureMedia";
 
 interface Service {
   _id: string; // Added _id
@@ -40,10 +41,15 @@ export default function BookingDetails({
       <div className="flex flex-row items-center justify-center gap-10 p-8">
         <div className="flex flex-col items-start">
           <div className="w-32 h-32 rounded-full overflow-hidden mb-2">
-            <img
+            {/* <img
               src={mentor.profileImage || mentor.profilePicture || DummyImage}
               alt={mentor.name}
               className="w-full h-full object-cover"
+            /> */}
+            <ProfilePicture
+              profilePicture={mentor?.profilePicture || DummyImage}
+              userName={`${mentor.name}`}
+              size="xl"
             />
           </div>
           <h2 className="text-xl font-bold">{mentor.name}</h2>
