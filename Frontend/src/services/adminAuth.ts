@@ -52,3 +52,19 @@ export const logout = async () => {
     return false;
   }
 };
+
+export const debugCookies = async (): Promise<void> => {
+  try {
+    console.log("🍪 === FRONTEND COOKIE DEBUG ===");
+    console.log("🍪 Document cookies:", document.cookie);
+
+    const response = await adminAxiosInstance.get("/admin/test-cookies", {
+      withCredentials: true,
+    });
+
+    console.log("🍪 Test cookie response:", response.data);
+    console.log("🍪 Document cookies after test:", document.cookie);
+  } catch (error) {
+    console.error("🍪 Cookie test failed:", error);
+  }
+};

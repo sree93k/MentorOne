@@ -30,7 +30,37 @@ ChartJS.register(
   Tooltip,
   Legend
 );
+declare global {
+  interface Window {
+    testCookies: () => Promise<void>;
+  }
+}
+window.testCookies = async (): Promise<void> => {
+  try {
+    console.log("🍪 === FRONTEND COOKIE TEST ===");
+    console.log("🍪 Document cookies before:", document.cookie);
 
+    const response = await fetch("http://localhost:5002/admin/test-cookies", {
+      method: "GET",
+      credentials: "include", // This is equivalent to withCredentials: true
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+    console.log("🍪 Test response:", data);
+    console.log("🍪 Document cookies after:", document.cookie);
+
+    // Check response headers
+    console.log("🍪 Response headers:");
+    response.headers.forEach((value, key) => {
+      console.log(`🍪   ${key}: ${value}`);
+    });
+  } catch (error) {
+    console.error("🍪 Cookie test failed:", error);
+  }
+};
 interface Booking {
   _id: string;
   createdAt: string;

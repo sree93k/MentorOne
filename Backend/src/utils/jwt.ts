@@ -116,7 +116,7 @@ const accessTokenSecret = process.env.JWT_ACCESS_TOKEN_SECRET as string;
 const refreshTokenSecret = process.env.JWT_REFRESH_TOKEN_SECRET as string;
 
 export const generateAccessToken = (payload: object): string => {
-  return jwt.sign(payload, accessTokenSecret, { expiresIn: "2m" }); // 30 seconds for testing
+  return jwt.sign(payload, accessTokenSecret, { expiresIn: "30s" }); // 30 seconds for testing
 };
 
 export const accessTokenForReset = (payload: object): string => {
@@ -124,7 +124,7 @@ export const accessTokenForReset = (payload: object): string => {
 };
 
 export const generateRefreshToken = (payload: object): string => {
-  return jwt.sign(payload, refreshTokenSecret, { expiresIn: "5m" }); // 2 minutes for testing
+  return jwt.sign(payload, refreshTokenSecret, { expiresIn: "2m" }); // 2 minutes for testing
 };
 
 export const verifyAccessToken = (token: string): any => {

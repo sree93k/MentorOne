@@ -283,3 +283,25 @@ class AdminController {
   };
 }
 export default new AdminController();
+
+export const testCookies = (req: Request, res: Response): void => {
+  console.log("🧪 === COOKIE TEST ENDPOINT ===");
+  console.log("🧪 Request cookies:", req.cookies);
+  console.log("🧪 Request headers cookie:", req.headers.cookie);
+
+  // Set a test cookie
+  res.cookie("testCookie", "testValue", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 1000, // 1 minute
+    path: "/",
+  });
+
+  res.json({
+    message: "Cookie test endpoint",
+    cookiesReceived: req.cookies,
+    cookieHeader: req.headers.cookie,
+    testCookieSet: true,
+  });
+};
