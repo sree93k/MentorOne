@@ -66,11 +66,6 @@ export default function MenteeBillingPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) {
-          navigate("/login");
-          return;
-        }
 
         const [paymentData, walletResponse] = await Promise.all([
           getAllMenteePayments(paymentPage, paymentsPerPage),

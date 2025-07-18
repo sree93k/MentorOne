@@ -18,6 +18,8 @@ import { getAllMentorPayments } from "@/services/paymentServcie";
 import { getAllServices } from "@/services/mentorService";
 import { getTestimonialsByMentor } from "@/services/testimonialService";
 import { getChatHistory } from "@/services/userServices";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/redux/store/store";
 
 ChartJS.register(
   CategoryScale,
@@ -100,8 +102,9 @@ const MentorDashboard: React.FC = () => {
   const [currentMonthEarnings, setCurrentMonthEarnings] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const mentorId = localStorage.getItem("userId") || "unknown";
+  const { user } = useSelector((state: RootState) => state.user);
+  // const mentorId = localStorage.getItem("userId") || "unknown";
+  const mentorId = user?._id;
 
   useEffect(() => {
     const fetchData = async () => {

@@ -18,19 +18,63 @@ interface CustomSocket extends Socket {
 export const initializeVideoSocket = async (videoNamespace: Server) => {
   console.log("Initializing Socket.IO /video namespace");
 
+  // videoNamespace.use((socket: CustomSocket, next: (err?: Error) => void) => {
+  //   const token = socket.handshake.auth.token;
+  //   if (!token) {
+  //     console.error("Authentication error: No token provided");
+  //     return next(new Error("Authentication error: No token provided"));
+  //   }
+
+  //   try {
+  //     const decoded = verifyAccessToken(token) as UserPayload;
+  //     socket.data.user = decoded;
+  //     next();
+  //   } catch (error: any) {
+  //     console.error("Authentication error:", error.message);
+  //     return next(new Error("Authentication error: Invalid token"));
+  //   }
+  // });
   videoNamespace.use((socket: CustomSocket, next: (err?: Error) => void) => {
-    const token = socket.handshake.auth.token;
+    // ✅ FIXED: Read token from cookies instead of auth object
+    console.log("🔍 Socket middleware: Checking authentication");
+    console.log("🔍 Socket handshake headers:", socket.handshake.headers);
+
+    // Parse cookies from the Cookie header
+    const cookieHeader = socket.handshake.headers.cookie;
+    console.log("🔍 Cookie header:", cookieHeader);
+
+    if (!cookieHeader) {
+      console.error("❌ Authentication error: No cookies provided");
+      return next(new Error("Authentication error: No cookies provided"));
+    }
+
+    // Extract accessToken from cookies
+    const cookies = cookieHeader
+      .split(";")
+      .reduce((acc: Record<string, string>, cookie) => {
+        const [name, value] = cookie.trim().split("=");
+        acc[name] = value;
+        return acc;
+      }, {});
+
+    const token = cookies.accessToken;
+    console.log(
+      "🔍 Extracted token from cookies:",
+      token ? "Found" : "Not found"
+    );
+
     if (!token) {
-      console.error("Authentication error: No token provided");
-      return next(new Error("Authentication error: No token provided"));
+      console.error("❌ Authentication error: No accessToken in cookies");
+      return next(new Error("Authentication error: No accessToken provided"));
     }
 
     try {
       const decoded = verifyAccessToken(token) as UserPayload;
       socket.data.user = decoded;
+      console.log("✅ Socket authentication successful for user:", decoded.id);
       next();
     } catch (error: any) {
-      console.error("Authentication error:", error.message);
+      console.error("❌ Socket authentication error:", error.message);
       return next(new Error("Authentication error: Invalid token"));
     }
   });

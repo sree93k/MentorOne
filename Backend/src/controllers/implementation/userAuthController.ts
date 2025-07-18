@@ -24,9 +24,9 @@ class UserAuthController {
   public options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
+    sameSite: "lax" as const, // Changed from "strict" to "lax" for better compatibility
     path: "/",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 5 * 60 * 1000, // 5 minutes (longer than JWT 30s expiry)
   };
 
   constructor() {
@@ -86,7 +86,6 @@ class UserAuthController {
     }
   };
 
-  //create user
   public createUser = async (
     req: Request,
     res: Response,
@@ -129,16 +128,40 @@ class UserAuthController {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Failed to create user");
       }
 
-      console.log("Controller - Signup successful");
-      res
-        .status(HttpStatus.CREATED)
-        .json(
-          new ApiResponse(
-            HttpStatus.CREATED,
-            signUpData,
-            "User created successfully"
-          )
-        );
+      // ✅ CHANGED: Only set access token cookie (longer than JWT expiry)
+      // res.cookie("accessToken", signUpData.accessToken, this.options);
+
+      // console.log("Controller - Signup successful");
+      // res.status(HttpStatus.CREATED).json(
+      //   new ApiResponse(
+      //     HttpStatus.CREATED,
+      //     {
+      //       user: signUpData.user,
+      //       // ✅ REMOVED: Don't send tokens in response body
+      //     },
+      //     "User created successfully"
+      //   )
+      // );
+      res.cookie("accessToken", signUpData.accessToken, {
+        ...this.options,
+        httpOnly: true,
+      });
+
+      res.cookie("isAuthenticated", "true", {
+        ...this.options,
+        httpOnly: false,
+      });
+
+      res.status(HttpStatus.CREATED).json(
+        new ApiResponse(
+          HttpStatus.CREATED,
+          {
+            user: signUpData.user,
+            isAuthenticated: true,
+          },
+          "User created successfully"
+        )
+      );
     } catch (error) {
       console.error("Controller - Error during signup:", error);
       next(error);
@@ -151,18 +174,68 @@ class UserAuthController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("🔐 === USER LOGIN ATTEMPT DEBUG ===");
+      console.log("🔐 Request body:", req.body);
+      console.log("🔐 Request headers:", req.headers);
+      console.log("🔐 Existing cookies:", req.cookies);
+
       console.log("Controller - Login request received:", req.body);
       const loginData = await this.userAuthService.login(req.body);
       console.log("Controller - Login service response:", loginData);
+
       if (!loginData) {
         throw new ApiError(HttpStatus.BAD_REQUEST, "Invalid email or password");
       }
-      console.log("Controller - Login successful");
 
-      res
-        .status(HttpStatus.OK)
-        .cookie("refreshToken", loginData.refreshToken, cookieConfig)
-        .json(new ApiResponse(HttpStatus.OK, loginData, "Login successful"));
+      console.log("🔐 Login successful, setting cookies");
+      console.log("🔐 Access token length:", loginData.accessToken.length);
+      console.log("🔐 User found:", loginData.userFound._id);
+
+      // ✅ CHANGED: Only set access token cookie (longer than JWT expiry)
+      // res.cookie("accessToken", loginData.accessToken, this.options);
+      res.cookie("accessToken", loginData.accessToken, {
+        ...this.options,
+        httpOnly: true, // Keep secure
+      });
+
+      // 2. Readable authentication indicator (no sensitive data)
+      res.cookie("isAuthenticated", "true", {
+        ...this.options,
+        httpOnly: false, // Can be read by JavaScript
+        maxAge: this.options.maxAge, // Same expiry as access token
+      });
+
+      // ✅ REMOVED: No refresh token cookie - it's stored in Redis only
+
+      console.log("🔐 Cookies set with options:");
+      console.log("🔐 - httpOnly: true");
+      console.log("🔐 - secure:", process.env.NODE_ENV === "production");
+      console.log("🔐 - sameSite: lax");
+      console.log("🔐 - ONLY ACCESS TOKEN in cookie");
+
+      console.log("Controller - Login successful");
+      // res.status(HttpStatus.OK).json(
+      //   new ApiResponse(
+      //     HttpStatus.OK,
+      //     {
+      //       userFound: loginData.userFound,
+      //       // ✅ REMOVED: Don't send tokens in response body
+      //       userId: loginData.userFound._id, // Include user ID for frontend tracking
+      //     },
+      //     "Login successful"
+      //   )
+      // );
+      res.status(HttpStatus.OK).json(
+        new ApiResponse(
+          HttpStatus.OK,
+          {
+            userFound: loginData.userFound,
+            userId: loginData.userFound._id,
+            isAuthenticated: true, // Include in response
+          },
+          "Login successful"
+        )
+      );
     } catch (error) {
       console.error("Error in login:", error);
       next(error);
@@ -175,6 +248,7 @@ class UserAuthController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("🔐 === GOOGLE AUTH ATTEMPT DEBUG ===");
       console.log("auth step 1");
       const { firstName, lastName, email, profilePicture } = req.body;
 
@@ -188,23 +262,51 @@ class UserAuthController {
       console.log("auth step 2", profilePicture);
       const userExists = await this.userAuthService.googleSignIn({ email });
       console.log("auth step 3", userExists);
+
       if (userExists) {
         console.log("UserAuthController googleAuthentication step 2", {
           userExists,
         });
 
-        res
-          .status(HttpStatus.OK)
-          .cookie("refreshToken", userExists.refreshToken, cookieConfig)
-          .json(
-            new ApiResponse(
-              HttpStatus.OK,
-              userExists,
-              "Google authentication successful"
-            )
-          );
+        // ✅ CHANGED: Only set access token cookie
+        // res.cookie("accessToken", userExists.accessToken, this.options);
+
+        // res.status(HttpStatus.OK).json(
+        //   new ApiResponse(
+        //     HttpStatus.OK,
+        //     {
+        //       user: userExists.user,
+        //       // ✅ REMOVED: Don't send tokens in response body
+        //       userId: userExists.user._id,
+        //     },
+        //     "Google authentication successful"
+        //   )
+        // );
+        // return;
+        res.cookie("accessToken", userExists.accessToken, {
+          ...this.options,
+          httpOnly: true,
+        });
+
+        res.cookie("isAuthenticated", "true", {
+          ...this.options,
+          httpOnly: false,
+        });
+
+        res.status(HttpStatus.OK).json(
+          new ApiResponse(
+            HttpStatus.OK,
+            {
+              user: userExists.user,
+              userId: userExists.user._id,
+              isAuthenticated: true,
+            },
+            "Google authentication successful"
+          )
+        );
         return;
       }
+
       const response = await axios.get(profilePicture, {
         responseType: "arraybuffer",
       });
@@ -213,8 +315,8 @@ class UserAuthController {
       console.log("auth step 6", imageBuffer);
 
       const resizedImageBuffer = await sharp(imageBuffer)
-        .resize({ width: 1024 }) // Resize to max 1024px width
-        .jpeg({ quality: 80 }) // Optimize for smaller file size
+        .resize({ width: 1024 })
+        .jpeg({ quality: 80 })
         .toBuffer();
       console.log("auth step 7", resizedImageBuffer);
 
@@ -236,7 +338,6 @@ class UserAuthController {
       console.log(userAfterAuth);
       console.log("========");
 
-      // Check if userAfterAuth is null
       if (!userAfterAuth) {
         throw new ApiError(
           HttpStatus.BAD_REQUEST,
@@ -248,28 +349,51 @@ class UserAuthController {
         userAfterAuth,
       });
 
-      res
-        .status(HttpStatus.OK)
-        .cookie("refreshToken", userAfterAuth.refreshToken, cookieConfig)
-        .json(
-          new ApiResponse(
-            HttpStatus.OK,
-            userAfterAuth,
-            "Google authentication successful"
-          )
-        );
+      // ✅ CHANGED: Only set access token cookie
+      // res.cookie("accessToken", userAfterAuth.accessToken, this.options);
+
+      // res.status(HttpStatus.OK).json(
+      //   new ApiResponse(
+      //     HttpStatus.OK,
+      //     {
+      //       user: userAfterAuth.user,
+      //       // ✅ REMOVED: Don't send tokens in response body
+      //       userId: userAfterAuth.user._id,
+      //     },
+      //     "Google authentication successful"
+      //   )
+      // );
+      res.cookie("accessToken", userAfterAuth.accessToken, {
+        ...this.options,
+        httpOnly: true,
+      });
+
+      res.cookie("isAuthenticated", "true", {
+        ...this.options,
+        httpOnly: false,
+      });
+
+      res.status(HttpStatus.OK).json(
+        new ApiResponse(
+          HttpStatus.OK,
+          {
+            user: userAfterAuth.user,
+            userId: userAfterAuth.user._id,
+            isAuthenticated: true,
+          },
+          "Google authentication successful"
+        )
+      );
     } catch (error) {
       next(error);
     }
   };
 
-  //forgot passworrd otp sedning
   public forgotPasswordOTP = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
-    // Explicitly declare return type as Promise<void>
     try {
       console.log("forgot password otp auth controller 1");
       if (!req.body) {
@@ -411,28 +535,190 @@ class UserAuthController {
     next: NextFunction
   ): Promise<void> => {
     try {
+      console.log("🚪 === USER LOGOUT ATTEMPT DEBUG ===");
+      console.log("🚪 Request cookies:", req.cookies);
+
       console.log("user logout step 1 - req.user:", req.user);
 
-      if (!req.user?.id || !req.user?.rawToken) {
+      if (!req.user?.id) {
         throw new ApiError(HttpStatus.UNAUTHORIZED, "User not authenticated");
       }
 
-      const { rawToken, id } = req.user;
-      console.log("user logout step 2 - rawToken:", rawToken, "id:", id);
+      const { id } = req.user;
+      console.log("user logout step 2 - id:", id);
 
-      const logoutData = await this.userAuthService.logout(rawToken, id);
+      // ✅ CHANGED: Only need userId for logout (refresh token retrieved from Redis)
+      const logoutData = await this.userAuthService.logout(id);
       console.log("user logout step 3 - logoutData:", logoutData);
+
       await this.userService.updateOnlineStatus(id, false, null);
       console.log("UserAuthController logout step 2", { logoutData });
 
+      // // ✅ CHANGED: Only clear access token cookie
+      // res.clearCookie("accessToken", {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production",
+      //   sameSite: "lax",
+      //   path: "/",
+      // });
+      res.clearCookie("accessToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+
+      res.clearCookie("isAuthenticated", {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+      console.log("🚪 Logout successful, access token cookie cleared");
+      // res
+      //   .status(HttpStatus.OK)
+      //   .json(new ApiResponse(HttpStatus.OK, null, "Logout successful"));
       res
         .status(HttpStatus.OK)
-        .clearCookie("refreshToken", cookieConfig)
-        .json(new ApiResponse(HttpStatus.OK, null, "Logout successful"));
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { isAuthenticated: false },
+            "Logout successful"
+          )
+        );
     } catch (error) {
       console.error("Error in logout:", error);
       next(error);
     }
   };
+
+  // ✅ NEW: Add refresh token endpoint
+  public refreshToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("🔄 === USER REFRESH TOKEN ATTEMPT DEBUG ===");
+      console.log("🔄 Request cookies:", req.cookies);
+      console.log("🔄 Request headers:", req.headers);
+
+      const userId = req.user?.id;
+
+      console.log("🔄 Refresh token endpoint called");
+      console.log("🔄 User ID:", userId);
+
+      if (!userId) {
+        console.log("❌ Missing userId");
+        res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json(
+            new ApiResponse(HttpStatus.UNAUTHORIZED, null, "Missing user ID")
+          );
+        return;
+      }
+
+      // ✅ CHANGED: Only need userId (refresh token retrieved from Redis)
+      const result = await this.userAuthService.refreshAccessToken(userId);
+
+      //     if (result) {
+      //       console.log("✅ User token refresh successful");
+
+      //       // ✅ ONLY SET NEW ACCESS TOKEN COOKIE
+      //       res.cookie("accessToken", result.newAccessToken, this.options);
+
+      //       console.log(
+      //         "🔄 Response Set-Cookie headers:",
+      //         res.getHeaders()["set-cookie"]
+      //       );
+
+      //       res.status(HttpStatus.OK).json(
+      //         new ApiResponse(
+      //           HttpStatus.OK,
+      //           {
+      //             newAccessTokenSet: true,
+      //             refreshTokenInRedis: true,
+      //           },
+      //           "Token refreshed successfully"
+      //         )
+      //       );
+      //     } else {
+      //       console.log("❌ User token refresh failed - invalid refresh token");
+      //       res
+      //         .status(HttpStatus.UNAUTHORIZED)
+      //         .json(
+      //           new ApiResponse(
+      //             HttpStatus.UNAUTHORIZED,
+      //             null,
+      //             "Invalid refresh token"
+      //           )
+      //         );
+      //     }
+      //   } catch (error) {
+      //     console.error("🚨 User refresh token error:", error);
+      //     res
+      //       .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      //       .json(
+      //         new ApiResponse(
+      //           HttpStatus.INTERNAL_SERVER_ERROR,
+      //           null,
+      //           "Token refresh failed"
+      //         )
+      //       );
+      //   }
+      // };
+      if (result) {
+        // ✅ UPDATE BOTH COOKIES
+        res.cookie("accessToken", result.newAccessToken, {
+          ...this.options,
+          httpOnly: true,
+        });
+
+        res.cookie("isAuthenticated", "true", {
+          ...this.options,
+          httpOnly: false,
+        });
+
+        res.status(HttpStatus.OK).json(
+          new ApiResponse(
+            HttpStatus.OK,
+            {
+              newAccessTokenSet: true,
+              refreshTokenInRedis: true,
+              isAuthenticated: true,
+            },
+            "Token refreshed successfully"
+          )
+        );
+      } else {
+        // ✅ CLEAR BOTH COOKIES ON FAILURE
+        res.clearCookie("accessToken");
+        res.clearCookie("isAuthenticated");
+
+        res
+          .status(HttpStatus.UNAUTHORIZED)
+          .json(
+            new ApiResponse(
+              HttpStatus.UNAUTHORIZED,
+              { isAuthenticated: false },
+              "Invalid refresh token"
+            )
+          );
+      }
+    } catch (error) {
+      console.error("🚨 User refresh token error:", error);
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json(
+          new ApiResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            { isAuthenticated: false },
+            "Token refresh failed"
+          )
+        );
+    }
+  };
 }
+
 export default new UserAuthController();

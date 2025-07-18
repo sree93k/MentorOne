@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import {
   setUser,
   setIsAuthenticated,
-  setAccessToken,
   setMentorActivated,
   setLoading,
 } from "@/redux/slices/userSlice";
@@ -35,10 +34,8 @@ const GoogleAuthButton = () => {
         console.log("user:", user);
         console.log("access token:", accessToken);
 
-        localStorage.setItem("accessToken", accessToken);
         dispatch(setUser(user));
         dispatch(setIsAuthenticated(true));
-        dispatch(setAccessToken(accessToken));
         dispatch(setMentorActivated(user?.mentorActivated));
 
         console.log("google auth step4 tsx");

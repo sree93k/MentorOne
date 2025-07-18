@@ -282,9 +282,15 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       }
     }
   }, [chatUsers, selectedUser]);
-
+  const getCookie = (name: string): string | null => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
+    return null;
+  };
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    // const token = localStorage.getItem("accessToken");
+    const token = getCookie("accessToken");
     const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
       auth: { token },
       transports: ["websocket", "polling"],

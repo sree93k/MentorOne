@@ -1,50 +1,55 @@
 import { Request, Response, NextFunction } from "express";
 import ApiResponse from "../utils/apiResponse";
-// import { AuthRequest } from "../types/express";
 import {
   decodeToken,
   verifyAccessToken,
   verifyRefreshToken,
 } from "../utils/jwt";
 import jwt from "jsonwebtoken";
+import RedisTokenService from "../services/implementations/RedisTokenService";
 
-//====>>>>>>>>
+// ✅ UPDATED: Check for access token in cookies instead of Authorization header
 export const authenticate = (
   req: Request & Partial<{ user: string | jwt.JwtPayload }>,
   res: Response,
   next: NextFunction
 ): void => {
-  console.log("autheticte start 1");
-  // console.log("request  IS ", req);
+  console.log("authenticate start 1");
 
+  // ✅ CHANGED: Check cookies first, then fallback to Authorization header
   const token =
-    req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
-  console.log("autheticte start 2");
+    req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
+
+  console.log("authenticate start 2");
   if (!token) {
-    console.log("autheticte failed 3");
-    res.status(401).send("Access denied");
+    console.log("authenticate failed 3");
+    res
+      .status(401)
+      .json(new ApiResponse(401, null, "Access denied: No token provided"));
     return;
   }
-  console.log("autheticte start 4 token is ", token);
+
+  console.log("authenticate start 4 token is", token);
   try {
     const decoded = verifyAccessToken(token);
     req.user = decoded;
-    console.log("autheticte start 5", decoded);
-    console.log("autheticte start 5.5", req.user);
+    console.log("authenticate start 5", decoded);
+    console.log("authenticate start 5.5", req.user);
+
     if (decoded.role.includes("admin")) {
-      console.log("autheticte start7", decoded.role);
-      console.log("autheticte failed2");
+      console.log("authenticate start7", decoded.role);
+      console.log("authenticate failed2");
       res
         .status(401)
         .json(new ApiResponse(401, null, "you are not authorized"));
       return;
     }
 
-    console.log("autheticte start 6......");
-    console.log("autheticte success");
+    console.log("authenticate start 6......");
+    console.log("authenticate success");
     next();
   } catch (err) {
-    console.log("autheticte start 7 error", err);
+    console.log("authenticate start 7 error", err);
     res
       .status(401)
       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
@@ -52,149 +57,330 @@ export const authenticate = (
   }
 };
 
-//====>>>>>>>>
-export const decodedRefreshToken = (
+// ✅ UPDATED: No longer expects refresh token from cookies - gets it from Redis
+export const decodedRefreshToken = async (
   req: Request &
-    Partial<{ user: string | (jwt.JwtPayload & { rawToken: string }) }>,
+    Partial<{ user: string | (jwt.JwtPayload & { rawToken?: string }) }>,
   res: Response,
   next: NextFunction
-): void => {
-  console.log("decode refrsh token step 1");
-  console.log("decodedUserRefreshToken - Headers:", req.headers);
-  console.log("decodedUserRefreshToken - Cookies:", req.cookies);
-  const refreshToken =
-    (req.cookies && req.cookies["refreshToken"]) || // Check if cookies exist
-    (req.headers["refreshtoken"] as string);
-  console.log("decode refrsh token step 2", refreshToken);
-  if (!refreshToken) {
-    console.log("decodedUserRefreshToken - No refresh token found");
-    res
-      .status(401)
-      .json(
-        new ApiResponse(401, null, "Access Denied: No refresh token provided")
+): Promise<void> => {
+  console.log("decodedRefreshToken start");
+  console.log("decodedRefreshToken cookies:", req.cookies);
+  console.log("decodedRefreshToken headers:", req.headers.authorization);
+
+  try {
+    let userId: string;
+
+    // Try multiple sources for userId
+    const accessToken =
+      req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
+
+    if (accessToken) {
+      try {
+        // Try to decode even if expired to get userId
+        const decodedAccess = decodeToken(accessToken) as jwt.JwtPayload;
+        userId = decodedAccess.id;
+        console.log(
+          "decodedRefreshToken: Got userId from access token:",
+          userId
+        );
+      } catch (decodeError) {
+        console.error(
+          "decodedRefreshToken: Failed to decode access token:",
+          decodeError
+        );
+
+        // If token is completely invalid, try to verify it anyway to see if it's just expired
+        try {
+          const verified = verifyAccessToken(accessToken);
+          userId = verified.id;
+        } catch (verifyError) {
+          // Check if it's an expiry error vs invalid token
+          if (verifyError.message.includes("expired")) {
+            // Token is expired but valid structure - try to decode anyway
+            try {
+              const expiredDecoded = jwt.decode(accessToken) as jwt.JwtPayload;
+              userId = expiredDecoded.id;
+              console.log(
+                "decodedRefreshToken: Got userId from expired token:",
+                userId
+              );
+            } catch (finalDecodeError) {
+              console.error("decodedRefreshToken: Completely invalid token");
+              res
+                .status(401)
+                .json(
+                  new ApiResponse(401, null, "Invalid access token format")
+                );
+              return;
+            }
+          } else {
+            res
+              .status(401)
+              .json(new ApiResponse(401, null, "Invalid access token format"));
+            return;
+          }
+        }
+      }
+    } else {
+      console.log("decodedRefreshToken failed: No access token provided");
+      res
+        .status(401)
+        .json(
+          new ApiResponse(401, null, "Access denied: No access token provided")
+        );
+      return;
+    }
+
+    // ✅ CHANGED: Get refresh token from Redis instead of cookies
+    const refreshToken = await RedisTokenService.getRefreshToken(userId);
+
+    if (!refreshToken) {
+      console.log(
+        "decodedRefreshToken failed: No refresh token found in Redis"
       );
-    return;
-  }
-  console.log("decode refrsh token step 4");
-  try {
-    const verifyToken = verifyRefreshToken(refreshToken);
-    const decoded = decodeToken(refreshToken);
-    console.log(
-      "veridfy token",
-      verifyToken,
-      " and decode token ",
-      decodeToken
-    );
+      res
+        .status(401)
+        .json(
+          new ApiResponse(401, null, "Access denied: No refresh token found")
+        );
+      return;
+    }
 
-    console.log("decode refrsh token step 5", decoded);
-    req.user = { ...decoded, rawToken: refreshToken };
-    console.log("decode refrsh token step 6", req.user);
+    // ✅ Decode the refresh token from Redis
+    const decoded = jwt.decode(refreshToken) as jwt.JwtPayload;
+    if (!decoded || typeof decoded !== "object" || !decoded.id) {
+      console.error("decodedRefreshToken error: Missing id in token payload");
+      res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
+      return;
+    }
+
+    // ✅ Set user info (no rawToken since it's not from cookies)
+    req.user = { ...decoded, id: decoded.id };
+    console.log("decodedRefreshToken success, user:", req.user);
     next();
   } catch (err) {
-    console.log("decode refrsh token step 7 error");
-    res.status(401).json(new ApiResponse(401, null, "Invalid Token"));
-    return; // Just return without value
-  }
-};
-
-export const verifyRefreshTokenMiddleware = (
-  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-  res: Response,
-  next: NextFunction
-): void => {
-  console.log("verifyRefreshTokenMiddleware step 1");
-  const refreshToken =
-    req.cookies["refreshToken"] || req.header("refreshToken");
-
-  if (!refreshToken) {
-    res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-    return; // Just return without value
-  }
-
-  try {
-    const decoded = verifyRefreshToken(refreshToken);
-
-    req.user = { ...decoded, rawToken: refreshToken };
-
-    next();
-  } catch (err) {
-    res
-      .status(401)
-      .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-    return; // Just return without value
-  }
-};
-
-//====>>>>>>>>
-export const refreshAccessToken = (
-  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-  res: Response,
-  next: NextFunction
-) => {
-  const refreshToken =
-    req.cookies["refreshToken"] || req.header("refreshToken");
-
-  if (!refreshToken) {
-    return res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-  }
-
-  try {
-    const decoded = verifyRefreshToken(refreshToken);
-
-    req.user = { ...decoded, rawToken: refreshToken };
-
-    next();
-  } catch (err) {
-    res
-      .status(401)
-      .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-  }
-};
-
-//====>>>>>>>>
-
-export const decodedUserRefreshToken = (
-  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-  res: Response,
-  next: NextFunction
-): void => {
-  console.log("decode refresh token step 1 - Headers:", req.headers);
-  console.log("decode refresh token step 2 - Cookies:", req.cookies);
-
-  const refreshToken =
-    (req.cookies && req.cookies["adminRefreshToken"]) || // Check if cookies exist
-    (req.headers["adminrefreshtoken"] as string); // Lowercase header name
-
-  if (!refreshToken) {
-    console.log("decode refresh token step 3 - No token found");
-    res
-      .status(401)
-      .json(
-        new ApiResponse(401, null, "Access Denied: No refresh token provided")
-      );
-    return;
-  }
-  try {
-    const decoded = decodeToken(refreshToken);
-    // const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || "your-secret"); // Replace decodeToken with jwt.verify
-    console.log("decode refresh token step 5 - Decoded:", decoded);
-
-    req.user = { ...decoded, rawToken: refreshToken };
-    console.log("decode refresh token step 6 - req.user set");
-    next();
-  } catch (err) {
-    console.log("decode refresh token step 7 - Error:", err);
+    console.error("decodedRefreshToken error:", err);
     res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
   }
 };
-//====>>>>>>>>
+
+// ✅ UPDATED: No longer expects refresh token from cookies
+export const verifyRefreshTokenMiddleware = async (
+  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  console.log("verifyRefreshTokenMiddleware start");
+
+  try {
+    let userId: string;
+
+    // Extract userId from access token (even if expired)
+    const accessToken =
+      req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
+
+    if (accessToken) {
+      try {
+        // Decode without verification to get userId
+        const decodedAccess = decodeToken(accessToken) as jwt.JwtPayload;
+        userId = decodedAccess.id;
+        console.log(
+          "verifyRefreshTokenMiddleware: Got userId from access token:",
+          userId
+        );
+      } catch (decodeError) {
+        console.error(
+          "verifyRefreshTokenMiddleware: Failed to decode access token:",
+          decodeError
+        );
+
+        // Try to handle expired tokens
+        try {
+          const verified = verifyAccessToken(accessToken);
+          userId = verified.id;
+        } catch (verifyError) {
+          if (verifyError.message.includes("expired")) {
+            try {
+              const expiredDecoded = jwt.decode(accessToken) as jwt.JwtPayload;
+              userId = expiredDecoded.id;
+              console.log(
+                "verifyRefreshTokenMiddleware: Got userId from expired token:",
+                userId
+              );
+            } catch (finalDecodeError) {
+              res
+                .status(401)
+                .json(
+                  new ApiResponse(401, null, "Invalid access token format")
+                );
+              return;
+            }
+          } else {
+            res
+              .status(401)
+              .json(new ApiResponse(401, null, "Invalid access token format"));
+            return;
+          }
+        }
+      }
+    } else {
+      console.log(
+        "verifyRefreshTokenMiddleware failed: No access token provided"
+      );
+      res
+        .status(401)
+        .json(
+          new ApiResponse(401, null, "Access denied: No access token provided")
+        );
+      return;
+    }
+
+    // ✅ CHANGED: Get refresh token from Redis instead of cookies
+    const refreshToken = await RedisTokenService.getRefreshToken(userId);
+
+    if (!refreshToken) {
+      console.log(
+        "verifyRefreshTokenMiddleware failed: No refresh token found in Redis for user:",
+        userId
+      );
+      res
+        .status(401)
+        .json(
+          new ApiResponse(401, null, "Access denied: No refresh token found")
+        );
+      return;
+    }
+
+    // ✅ Verify the refresh token from Redis
+    try {
+      const decoded = verifyRefreshToken(refreshToken);
+      console.log("verifyRefreshTokenMiddleware decoded:", decoded);
+
+      // ✅ Verify token is still valid in Redis
+      const isValid = await RedisTokenService.verifyRefreshTokenDirect(
+        userId,
+        refreshToken
+      );
+
+      if (!isValid) {
+        console.log(
+          "verifyRefreshTokenMiddleware failed: Invalid refresh token for user:",
+          userId
+        );
+        res
+          .status(401)
+          .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+        return;
+      }
+
+      // ✅ Set user with decoded info
+      req.user = { ...decoded };
+      console.log("verifyRefreshTokenMiddleware success, user:", req.user);
+      next();
+    } catch (jwtError) {
+      console.error("verifyRefreshTokenMiddleware JWT error:", jwtError);
+      res
+        .status(401)
+        .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+    }
+  } catch (err) {
+    console.error("verifyRefreshTokenMiddleware Redis error:", err);
+    res
+      .status(401)
+      .json(new ApiResponse(401, null, "Failed to verify refresh token"));
+  }
+};
+
+// ✅ UPDATED: Use same pattern as other middlewares
+export const refreshAccessToken = async (
+  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  console.log("refreshAccessToken middleware start");
+
+  try {
+    let userId: string;
+
+    const accessToken =
+      req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
+
+    if (accessToken) {
+      try {
+        const decodedAccess = decodeToken(accessToken) as jwt.JwtPayload;
+        userId = decodedAccess.id;
+      } catch (decodeError) {
+        try {
+          const verified = verifyAccessToken(accessToken);
+          userId = verified.id;
+        } catch (verifyError) {
+          if (verifyError.message.includes("expired")) {
+            try {
+              const expiredDecoded = jwt.decode(accessToken) as jwt.JwtPayload;
+              userId = expiredDecoded.id;
+            } catch (finalDecodeError) {
+              res
+                .status(401)
+                .json(
+                  new ApiResponse(401, null, "Invalid access token format")
+                );
+              return;
+            }
+          } else {
+            res
+              .status(401)
+              .json(new ApiResponse(401, null, "Invalid access token format"));
+            return;
+          }
+        }
+      }
+    } else {
+      res
+        .status(401)
+        .json(
+          new ApiResponse(401, null, "Access denied: No access token provided")
+        );
+      return;
+    }
+
+    const refreshToken = await RedisTokenService.getRefreshToken(userId);
+
+    if (!refreshToken) {
+      res
+        .status(401)
+        .json(
+          new ApiResponse(401, null, "Access denied: No refresh token found")
+        );
+      return;
+    }
+
+    try {
+      const decoded = verifyRefreshToken(refreshToken);
+      req.user = { ...decoded };
+      next();
+    } catch (jwtError) {
+      res
+        .status(401)
+        .json(new ApiResponse(401, null, "Invalid or expired refresh token"));
+    }
+  } catch (err) {
+    res
+      .status(401)
+      .json(new ApiResponse(401, null, "Failed to verify refresh token"));
+  }
+};
+
+// ✅ KEEP THESE AS-IS (they're fine for their use cases)
+export const decodedUserRefreshToken = decodedRefreshToken; // Alias for compatibility
+
 export const authenticateUser = (
   req: Request & Partial<{ user: {} | jwt.JwtPayload }>,
   res: Response,
   next: NextFunction
 ) => {
   const token =
-    req.headers["authorization"]?.split(" ")[1] || req.header("authorization");
+    req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
 
   if (!token) {
     return res.status(401).send("Access denied");
@@ -217,29 +403,5 @@ export const authenticateUser = (
       .json(new ApiResponse(401, null, "Invalid Token or Expired"));
   }
 };
-//====>>>>>>>>
-export const verifyUserRefreshToken = (
-  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
-  res: Response,
-  next: NextFunction
-) => {
-  const refreshToken =
-    req.cookies["refreshToken"] || req.header("refreshToken");
 
-  if (!refreshToken) {
-    return res.status(401).json(new ApiResponse(401, null, "Access Denied"));
-  }
-
-  try {
-    const decoded = verifyRefreshToken(refreshToken);
-
-    req.user = { ...decoded, rawToken: refreshToken };
-
-    next();
-  } catch (err) {
-    res
-      .status(401)
-      .json(new ApiResponse(401, null, "Invalid Token or Expired"));
-  }
-};
-//====>>>>>>>>
+export const verifyUserRefreshToken = verifyRefreshTokenMiddleware; // Alias for compatibility
