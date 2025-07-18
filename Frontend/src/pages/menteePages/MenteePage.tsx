@@ -30,8 +30,8 @@ const MenteeDashboard = lazy(() => import("./subPages/MenteeDashboard"));
 const MenteeProfile = lazy(() => import("./subPages/MenteeProfile"));
 const MentorsPage = lazy(() => import("./subPages/MentorsPage"));
 const CoursePage = lazy(() => import("./subPages/CoursePage"));
-const BlogPage = lazy(() => import("../usersPage/BlogPage"));
-const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
+// const BlogPage = lazy(() => import("../usersPage/BlogPage"));
+// const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
 
 const MenteePage = () => {
   return (
@@ -77,7 +77,7 @@ const MenteePage = () => {
       <Footer />
 
       {/* Render the ChatbotWidget here, outside the main content flow but within the page's root div */}
-      {/* <ChatbotWidget /> */}
+      <ChatbotWidget />
     </div>
   );
 };

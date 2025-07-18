@@ -6,6 +6,7 @@ import {
 } from "@/types/user";
 import SocketService from "./socketService";
 import toast from "react-hot-toast";
+
 const api = userAxiosInstance;
 
 // Cache for signed URLs to avoid repeated requests
@@ -35,23 +36,15 @@ export const getSignedUrl = async (s3KeyOrUrl: string): Promise<string> => {
   }
 
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      const error = new Error("No access token found. Please log in again.");
-      console.error("❌ getSignedUrl: No access token");
-      throw error;
-    }
-
     console.log("🌐 Making request to backend:");
     console.log("- Endpoint: /media/signed-url");
     console.log("- s3Key parameter:", s3KeyOrUrl);
-    console.log("- Has access token:", !!accessToken);
+    console.log("- Using cookies for authentication");
 
+    // ✅ CHANGED: No Authorization header needed - cookies sent automatically
     const response = await api.get("/media/signed-url", {
       params: { s3Key: s3KeyOrUrl },
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      // No Authorization header needed
     });
 
     console.log("🌐 Backend Response:");
@@ -136,24 +129,12 @@ export const getBatchSignedUrls = async (
   // Fetch uncached URLs
   if (uncachedUrls.length > 0) {
     try {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("No access token found. Please log in again.");
-      }
-
       console.log("Making batch request for URLs:", uncachedUrls);
 
-      const response = await api.post(
-        "/media/batch-signed-urls",
-        {
-          s3Keys: uncachedUrls,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      // ✅ CHANGED: No Authorization header needed - cookies sent automatically
+      const response = await api.post("/media/batch-signed-urls", {
+        s3Keys: uncachedUrls,
+      });
 
       console.log("Batch signed URLs response:", response.data);
 
@@ -233,29 +214,26 @@ const setNestedValue = (obj: any, path: string, value: any): void => {
   target[lastKey] = value;
 };
 
-// Reset Password
+// ✅ CHANGED: Reset Password - Remove accessToken usage
 export const updateUserPassword = async (
   currentPassword: string,
   newPassword: string
 ) => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    console.log("updateUserPassword step 1 ", currentPassword, newPassword);
+    console.log("updateUserPassword step 1", currentPassword, newPassword);
 
     if (!newPassword || newPassword.length < 6) {
       console.log("Password must be at least 6 characters long");
       return;
     }
     console.log("updateUserPassword step 2 sending.....");
-    const response = await api.put(
-      `/user/resetPassword`,
-      { currentPassword, newPassword },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    const response = await api.put("/user/resetPassword", {
+      currentPassword,
+      newPassword,
+    });
+
     console.log("updateUserPassword step 2 response.....,response", response);
     return response;
   } catch (error: any) {
@@ -264,19 +242,18 @@ export const updateUserPassword = async (
   }
 };
 
-// Delete Profile
+// ✅ CHANGED: Delete Profile - Remove accessToken usage
 export const deleteUserAccount = async () => {
   try {
     console.log("delete account service start");
-    const accessToken = localStorage.getItem("accessToken");
 
-    const response = await api.delete(`/user/deleteAccount`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    const response = await api.delete("/user/deleteAccount");
+
+    // ✅ CHANGED: Don't remove accessToken from localStorage (it's not there)
     if (response.status === 200) {
-      localStorage.removeItem("accessToken");
+      // Clear any app-specific data if needed
+      localStorage.removeItem("user_preferences");
     }
     return response;
   } catch (error) {
@@ -285,17 +262,18 @@ export const deleteUserAccount = async () => {
   }
 };
 
-// Update Profile
+// ✅ CHANGED: Update Profile - Remove accessToken usage
 export const updateUserProfile = async (payload: any) => {
   try {
     console.log("user service updateUserProfile1?????", payload);
-    const accessToken = localStorage.getItem("accessToken");
+
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
     const response = await api.put("/user/profileEdit", payload, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
+
     console.log("user service updateUserProfile 2", response);
     const updateData = response.data.data;
     console.log("user service updateUserProfile 3", updateData);
@@ -306,23 +284,18 @@ export const updateUserProfile = async (payload: any) => {
   }
 };
 
+// ✅ CHANGED: Get Chat History - Remove accessToken usage
 export const getChatHistory = async (
   dashboard: string
 ): Promise<ChatHistoryResponse> => {
   try {
     console.log("userServices: getChatHistory start", { dashboard });
 
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      console.error("userServices: getChatHistory - No access token");
-      throw new Error("No access token found. Please log in again.");
-    }
-
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
     const response = await api.get<ChatHistoryResponse>(
       `/user/${dashboard}/chat-history`,
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }
@@ -363,6 +336,7 @@ export const getChatHistory = async (
   }
 };
 
+// ✅ CHANGED: Upload to S3 - Remove accessToken usage
 export const uploadToS3WithPresignedUrl = async (
   file: File,
   folder: "images" | "audio",
@@ -375,20 +349,12 @@ export const uploadToS3WithPresignedUrl = async (
       folder,
     });
 
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-
-    // Request presigned URL
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
     const response = await api.get("/user/generate-presigned-url", {
       params: {
         fileName: file.name,
         fileType: contentType,
         folder,
-      },
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -446,27 +412,19 @@ export const getPresignedUrlForView = async (key: string): Promise<string> => {
   return getSignedUrl(key);
 };
 
+// ✅ CHANGED: Start Video Call - Remove accessToken usage
 export const startVideoCall = async (
   menteeId?: string,
   bookingId?: string
 ): Promise<string> => {
   try {
     console.log("USERSERVICE startVideoCall step 1", { menteeId, bookingId });
-    const accessToken = localStorage.getItem("accessToken");
 
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-
-    const response = await api.post(
-      "/user/video-call/create",
-      { menteeId, bookingId },
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    const response = await api.post("/user/video-call/create", {
+      menteeId,
+      bookingId,
+    });
 
     console.log("USERSERVICE startVideoCall step 2", response);
 
@@ -483,20 +441,13 @@ export const startVideoCall = async (
   }
 };
 
+// ✅ CHANGED: Validate Meeting - Remove accessToken usage
 export const validateMeeting = async (meetingId: string): Promise<boolean> => {
   try {
     console.log("Validating meeting:", meetingId);
-    const accessToken = localStorage.getItem("accessToken");
 
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-
-    const response = await api.get(`/user/video-call/validate/${meetingId}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    const response = await api.get(`/user/video-call/validate/${meetingId}`);
 
     console.log("Validation response:", response.data);
 
@@ -520,22 +471,14 @@ export const validateMeeting = async (meetingId: string): Promise<boolean> => {
   }
 };
 
+// ✅ CHANGED: Join Meeting - Remove accessToken usage
 export const joinMeeting = async (meetingId: string): Promise<void> => {
   try {
     console.log("user service joinMeeting step 1");
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-    await api.post(
-      `/user/video-call/join/${meetingId}`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    await api.post(`/user/video-call/join/${meetingId}`, {});
+
     console.log("user service joinMeeting step 2");
   } catch (error: any) {
     console.error("Error joining meeting:", error);
@@ -543,49 +486,33 @@ export const joinMeeting = async (meetingId: string): Promise<void> => {
   }
 };
 
+// ✅ CHANGED: End Meeting - Remove accessToken usage
 export const endMeeting = async (meetingId: string): Promise<void> => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-
-    await api.post(
-      `/user/video-call/end/${meetingId}`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    await api.post(`/user/video-call/end/${meetingId}`, {});
   } catch (error: any) {
     console.error("Error ending meeting:", error);
     throw new Error(error.response?.data?.message || "Failed to end meeting");
   }
 };
 
-// Update Online Status
+// ✅ CHANGED: Update Online Status - Remove accessToken usage
 export const updateOnlineStatus = async (
   isOnline: boolean,
   role: string | null
 ): Promise<any> => {
   try {
     console.log("updateOnlineStatus step 1:", { isOnline, role });
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
 
     const payload = {
       isOnline,
       role, // Send role as null for logout, or "mentor"/"mentee"
     };
 
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
     const response = await api.put("/user/update-online-status", payload, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -607,13 +534,12 @@ export const updateOnlineStatus = async (
   }
 };
 
+// ✅ CHANGED: Get Unread Notifications - Remove accessToken usage
 export const getUnreadNotifications = async (): Promise<Notification[]> => {
   try {
-    const response = await api.get("/user/notifications/unread", {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    const response = await api.get("/user/notifications/unread");
+
     return response.data.data;
   } catch (error: any) {
     throw new Error(
@@ -622,19 +548,13 @@ export const getUnreadNotifications = async (): Promise<Notification[]> => {
   }
 };
 
+// ✅ CHANGED: Mark Notification as Read - Remove accessToken usage
 export const markNotificationAsRead = async (
   notificationId: string
 ): Promise<void> => {
   try {
-    await api.post(
-      `/user/notifications/${notificationId}/read`,
-      {},
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      }
-    );
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
+    await api.post(`/user/notifications/${notificationId}/read`, {});
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Failed to mark notification as read"
@@ -642,6 +562,7 @@ export const markNotificationAsRead = async (
   }
 };
 
+// ✅ CHANGED: Initialize Notifications - Updated for cookie auth
 export const initializeNotifications = (
   userId: string,
   callback: (notification: Notification) => void
@@ -660,6 +581,7 @@ export const cleanupNotifications = (): void => {
   SocketService.disconnect("/notifications");
 };
 
+// ✅ CHANGED: Send Meeting Notification - Remove accessToken usage
 export const sendMeetingNotification = async (
   menteeId: string,
   meetingId: string,
@@ -671,20 +593,22 @@ export const sendMeetingNotification = async (
       meetingId,
       bookingId,
     });
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
+
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
     await api.post(
       "/user/video-call/notify",
-      { menteeId, meetingId, bookingId },
+      {
+        menteeId,
+        meetingId,
+        bookingId,
+      },
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }
     );
+
     console.log(
       "sendMeetingNotification step 2: Notification sent successfully"
     );
@@ -696,20 +620,16 @@ export const sendMeetingNotification = async (
   }
 };
 
+// ✅ CHANGED: Check User Online Status - Remove accessToken usage
 export const checkUserOnlineStatus = async (
   userId: string
 ): Promise<boolean> => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      throw new Error("No access token found. Please log in again.");
-    }
-
+    // ✅ CHANGED: No Authorization header - cookies sent automatically
     const response = await api.get<OnlineStatusResponse>(
       `/user/${userId}/online-status`,
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }

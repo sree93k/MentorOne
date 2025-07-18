@@ -31,7 +31,7 @@ import Participants from "@/components/videoCall/Participants";
 import MeetingInfo from "@/components/videoCall/MeetingInfo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
-// import { userVideoCallAuthenticate } from "@/services/userServices";
+import { checkAuthStatus } from "@/utils/auth";
 
 interface Participant {
   id: string;
@@ -655,22 +655,30 @@ const VideoCallMeeting: React.FC = () => {
       navigate("/login");
       return;
     }
+    // ✅ FIXED: ONLY check authentication status once
+    console.log("🔍 VideoCallMeeting: Component mounted");
+    console.log("🔍 All cookies:", document.cookie);
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+    const isAuthenticated = checkAuthStatus();
+    console.log("🔍 Authentication check result:", isAuthenticated);
+
+    if (!isAuthenticated) {
+      console.log("❌ NOT AUTHENTICATED - Will redirect to login");
       toast.error("Please log in to join the meeting.");
       navigate("/login");
       return;
     }
 
+    console.log("✅ AUTHENTICATED - Proceeding with meeting setup");
+
     const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/video`, {
-      auth: { token },
       transports: ["websocket"],
       path: "/socket.io/",
       query: { meetingId },
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      withCredentials: true,
     });
     socketRef.current = socketInstance;
     setSocket(socketInstance);
@@ -713,10 +721,21 @@ const VideoCallMeeting: React.FC = () => {
       );
     });
 
+    // socketInstance.on("connect_error", (error) => {
+    //   toast.error("Failed to connect to the server.");
+    //   if (error.message.includes("Authentication error")) {
+    //     // localStorage.removeItem("accessToken");
+    //     document.cookie =
+    //       "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    //     navigate("/login");
+    //   }
+    // });
     socketInstance.on("connect_error", (error) => {
       toast.error("Failed to connect to the server.");
       if (error.message.includes("Authentication error")) {
-        localStorage.removeItem("accessToken");
+        // ✅ FIXED: Clear the readable cookie on auth error
+        document.cookie =
+          "isAuthenticated=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         navigate("/login");
       }
     });

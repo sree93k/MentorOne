@@ -1,10 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
-import {
-  TUsers,
-  TUserLogin,
-  TUserLoginResponse,
-  TUserSignUpResponse,
-} from "../types/user";
+import { TUsers, TUserLogin, TUserLoginResponse } from "../types/user";
 import { TOTP } from "../types/otp";
 import { userAxiosInstance } from "./instances/userInstance";
 import { CredentialResponse } from "@react-oauth/google";
@@ -17,18 +12,18 @@ import {
 
 const api = userAxiosInstance;
 
-//isnup otp send
+// Signup OTP send
 export const sentOTP = async (Credential: Partial<TUsers>) => {
   try {
-    console.log("otp senfing", api);
-    console.log("credentialsc >>", Credential);
+    console.log("otp sending", api);
+    console.log("credentials >>", Credential);
 
     const response = await api.post("/user/auth/sendOTP", Credential);
-    console.log("user auth sendt otp response", response);
+    console.log("user auth sent otp response", response);
 
     return response;
   } catch (error) {
-    console.log("errr is", error?.response?.data);
+    console.log("error is", error?.response?.data);
 
     if (error instanceof AxiosError) {
       return error?.response?.data;
@@ -40,6 +35,7 @@ export const sentOTP = async (Credential: Partial<TUsers>) => {
 
 export const validateUserSession = async () => {
   try {
+    // ✅ CHANGED: No localStorage usage - cookies sent automatically
     const response = await userAxiosInstance.get("/user/validate_session");
     return response;
   } catch (error: unknown) {
@@ -51,22 +47,23 @@ export const validateUserSession = async () => {
   }
 };
 
-//signup
+// Signup
 export const signUp = async (
   otpData: TOTP
-): Promise<{ response: TUserSignUpResponse["data"] }> => {
+): Promise<{ userFound: any; accessToken?: string; refreshToken?: string }> => {
   try {
-    console.log("otp data ");
+    console.log("otp data");
     console.log("otp data", otpData);
 
+    // ✅ CHANGED: No localStorage usage - cookies sent automatically
     const response = await api.post("/user/auth/signup", otpData);
-    console.log("sign up response in servuce iu s", response);
-    console.log("response.data.data.  ", response.data.data);
+    console.log("sign up response in service is", response);
+    console.log("response.data.data.", response.data.data);
 
+    // ✅ CHANGED: Don't store tokens in localStorage anymore - they're in cookies
     return {
       userFound: response.data.data.user,
-      accessToken: response.data.data.accessToken,
-      refreshToken: response.data.data.refreshToken,
+      // Don't return tokens since they're in cookies
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -84,6 +81,7 @@ export const login = async (
   try {
     console.log("login service/......start", userData);
 
+    // ✅ CHANGED: No localStorage usage - cookies sent automatically
     const response: AxiosResponse<TUserLoginResponse> = await api.post(
       "/user/auth/login",
       userData
@@ -92,16 +90,16 @@ export const login = async (
     console.log("login response/..2....", response.data);
     console.log("login response/..3....", response.data.data);
 
-    // Return the response matching the declared type
+    // ✅ CHANGED: Don't return tokens since they're in cookies now
     return {
       response: {
         userFound: response.data.data.userFound,
-        accessToken: response.data.data.accessToken,
-        refreshToken: response.data.data.refreshToken, // Include refreshToken
+        // Tokens are in cookies - don't include in response
+        userId: response.data.data.userId, // Include userId if provided by backend
       },
     };
   } catch (error) {
-    console.log("login service/......errror 1", error);
+    console.log("login service/......error 1", error);
 
     if (axios.isAxiosError(error)) {
       console.log("login service/......error 2", error);
@@ -138,11 +136,11 @@ export const signInWithGoogle = async (
     console.log("google auth step 4 service");
     console.log("Formatted Data for Backend:", formattedData);
 
-    // Send the formatted data to the backend
+    // ✅ CHANGED: No localStorage usage - cookies sent automatically
     const response = await api.post("/user/auth/google_signin", formattedData);
     console.log("google auth step 5 service", response);
 
-    // Return the backend response, typed as GoogleSignInData
+    // ✅ CHANGED: Don't store tokens in localStorage anymore
     return response.data as GoogleSignInData;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -154,22 +152,28 @@ export const signInWithGoogle = async (
 
 export const logout = async () => {
   try {
-    console.log("user logout servcie start1 ");
+    console.log("user logout service start1");
 
+    // ✅ CHANGED: No localStorage usage - cookies sent automatically
     const response = await api.patch("/user/auth/logout", null, {
       withCredentials: true,
     });
-    console.log("user logout servcie start2 response", response);
-    localStorage.removeItem("accessToken");
+    console.log("user logout service start2 response", response);
+
+    // ✅ CHANGED: Clear any remaining localStorage items but not tokens
+    // Remove any app-specific data but not auth tokens (they're in cookies)
+    localStorage.removeItem("user_preferences");
+    localStorage.removeItem("app_settings");
+    // Don't remove accessToken as it's not stored in localStorage anymore
 
     if (response.data.success) {
-      console.log("user logout servcie start3 finish success");
+      console.log("user logout service start3 finish success");
       return response.data;
     }
-    console.log("user logout servcie start3 finish null");
+    console.log("user logout service start3 finish null");
     return null;
   } catch (error: unknown) {
-    console.log("user logout servcie start4 ");
+    console.log("user logout service start4");
     if (error instanceof AxiosError) {
       return error.response;
     } else {
@@ -188,18 +192,17 @@ export const sendForgotPasswordOtp = async (email: string) => {
     console.log("forgot_password_otp step 2", response);
     return response.data;
   } catch (error: unknown) {
-    console.log("forgot_password_otp errro ", error);
+    console.log("forgot_password_otp error", error);
     if (error instanceof AxiosError) {
       console.log("forgot_password_otp error 1", error.response?.data);
       return error.response?.data;
     } else {
-      console.log("forgot_password_otp errro 2,");
+      console.log("forgot_password_otp error 2,");
       return null;
     }
   }
 };
 
-///==>>>>>>>>>>>>>>>>>>>>>>>>
 export const verifyForgotPasswordOtp = async ({
   email,
   otp,
@@ -234,16 +237,16 @@ export const resetPassword = async ({
   password: string;
 }) => {
   try {
-    console.log("reserpassword step 1", email, password);
+    console.log("resetpassword step 1", email, password);
 
     const response = await api.patch("/user/auth/forgot_password_reset", {
       password,
       email,
     });
-    console.log("reserpassword step 2", response);
+    console.log("resetpassword step 2", response);
     return response;
   } catch (error: unknown) {
-    console.log("reserpassword step 3 errro", error);
+    console.log("resetpassword step 3 error", error);
     if (error instanceof AxiosError) {
       return error.response;
     } else {

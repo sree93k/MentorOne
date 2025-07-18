@@ -104,7 +104,7 @@ const MenteeSidebar: React.FC = () => {
   const dispatch = useDispatch();
 
   // Access user data and authentication status from Redux store
-  const { user, isAuthenticated, accessToken } = useSelector(
+  const { user, isAuthenticated } = useSelector(
     (state: RootState) => state.user
   );
   const isActivated = useSelector((state: RootState) => state.user.activated);
@@ -154,13 +154,9 @@ const MenteeSidebar: React.FC = () => {
       if (!user || !user._id) {
         throw new Error("User ID not found. Please log in again.");
       }
-      console.log("access token >>", accessToken);
+      console.log("access token >>");
 
-      const updatedUser = await uploadMenteeWelcomeForm(
-        formData,
-        user._id,
-        accessToken
-      );
+      const updatedUser = await uploadMenteeWelcomeForm(formData, user._id);
       console.log("welcome sidebar 2 submit", updatedUser);
       if (updatedUser) {
         dispatch(setUser(updatedUser));

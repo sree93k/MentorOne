@@ -22,7 +22,6 @@ import { EyeIcon, EyeOffIcon, Mail, Lock } from "lucide-react";
 import {
   setUser,
   setIsAuthenticated,
-  setAccessToken,
   setCurrentTab,
   setMentorActivated,
   setLoading,
@@ -75,6 +74,58 @@ export function LoginForm({
     return Object.keys(newErrors).length === 0;
   };
 
+  // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   dispatch(setLoading(true));
+
+  //   try {
+  //     if (!validateForm()) {
+  //       toast.error("Invalid input. Please check your details.");
+  //       return;
+  //     }
+
+  //     const loginData: TUserLogin = { role: [tab], email, password };
+  //     console.log("Submitting login data:", loginData);
+
+  //     const result = await login(loginData);
+  //     console.log("result is ", result);
+
+  //     const { userFound, accessToken } = result.response;
+
+  //     if (!userFound || !accessToken) {
+  //       throw new Error("Login response missing user or token");
+  //     }
+
+  //     dispatch(setUser(userFound));
+  //     dispatch(setIsAuthenticated(true));
+  //     dispatch(setAccessToken(accessToken));
+  //     dispatch(setCurrentTab(tab));
+  //     console.log(
+  //       "logni page userFound.mentorActivated",
+  //       userFound.mentorActivated
+  //     );
+
+  //     dispatch(setMentorActivated(userFound.mentorActivated));
+  //     localStorage.setItem("accessToken", accessToken);
+  //     toast.success(`Welcome, ${userFound.firstName || "User"}!`);
+  //     console.log("step 1 response mentorstats,,....>>", mentorActivated);
+  //     const redirectPath =
+  //       tab === "mentee" ? "/seeker/dashboard" : "/expert/dashboard";
+  //     navigate(redirectPath);
+  //   } catch (error: unknown) {
+  //     console.error("Login error:", error);
+  //     const errorMessage =
+  //       error instanceof Error ? error.message : "An unexpected error occurred";
+  //     toast.error(
+  //       errorMessage === "Login failed"
+  //         ? "Invalid email or password"
+  //         : errorMessage
+  //     );
+  //   } finally {
+  //     dispatch(setLoading(false));
+  //   }
+  // };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     dispatch(setLoading(true));
@@ -89,27 +140,32 @@ export function LoginForm({
       console.log("Submitting login data:", loginData);
 
       const result = await login(loginData);
-      console.log("result is ", result);
+      console.log("result is", result);
 
-      const { userFound, accessToken } = result.response;
+      // ✅ CHANGED: Updated to match new response structure
+      const { userFound } = result.response;
 
-      if (!userFound || !accessToken) {
-        throw new Error("Login response missing user or token");
+      if (!userFound) {
+        throw new Error("Login response missing user data");
       }
 
       dispatch(setUser(userFound));
       dispatch(setIsAuthenticated(true));
-      dispatch(setAccessToken(accessToken));
+      // ✅ REMOVED: No longer setting access token in Redux (it's in cookies)
       dispatch(setCurrentTab(tab));
       console.log(
-        "logni page userFound.mentorActivated",
+        "login page userFound.mentorActivated",
         userFound.mentorActivated
       );
 
       dispatch(setMentorActivated(userFound.mentorActivated));
-      localStorage.setItem("accessToken", accessToken);
+
+      // ✅ REMOVED: No longer storing accessToken in localStorage
+      // localStorage.setItem("accessToken", accessToken);
+
       toast.success(`Welcome, ${userFound.firstName || "User"}!`);
       console.log("step 1 response mentorstats,,....>>", mentorActivated);
+
       const redirectPath =
         tab === "mentee" ? "/seeker/dashboard" : "/expert/dashboard";
       navigate(redirectPath);
@@ -126,7 +182,6 @@ export function LoginForm({
       dispatch(setLoading(false));
     }
   };
-
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden">
