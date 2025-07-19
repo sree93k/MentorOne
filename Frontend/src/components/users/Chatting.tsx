@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { updateBookingStatus } from "../../services/bookingService";
 import ConfirmationModal from "../modal/ConfirmationModal";
+import { checkAuthStatus } from "@/utils/auth";
 
 interface ChatProps {
   open: boolean;
@@ -282,21 +283,32 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       }
     }
   }, [chatUsers, selectedUser]);
-  const getCookie = (name: string): string | null => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
-    return null;
-  };
+  // const getCookie = (name: string): string | null => {
+  //   const value = `; ${document.cookie}`;
+  //   const parts = value.split(`; ${name}=`);
+  //   if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
+  //   return null;
+  // };
   useEffect(() => {
     // const token = localStorage.getItem("accessToken");
-    const token = getCookie("accessToken");
+    // const token = getCookie("accessToken");
+    console.log("🔍 Chat component: Checking authentication");
+    const isAuthenticated = checkAuthStatus();
+    console.log("🔍 Chat authentication result:", isAuthenticated);
+
+    if (!isAuthenticated) {
+      console.log("❌ Chat: Not authenticated, cannot connect to socket");
+      setError("Please log in to access chat");
+      return;
+    }
+
+    console.log("✅ Chat: Authenticated, connecting to socket");
     const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
-      auth: { token },
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      withCredentials: true,
     });
 
     setSocket(socketInstance);
