@@ -1,3 +1,280 @@
+// import NotificationRepository from "../../repositories/implementations/NotificationRepository";
+// import { pubClient } from "../../server";
+// import BookingRepository from "../../repositories/implementations/BookingRepository";
+// import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+// import { INotificationService } from "../../services/interface/INotificationService";
+
+// interface NotificationData {
+//   recipientId: string;
+//   type: "payment" | "booking" | "chat" | "meeting";
+//   message: string;
+//   relatedId?: string;
+//   sender?: { firstName: string; lastName: string; id: string };
+// }
+
+// export default class NotificationService implements INotificationService {
+//   private notificationRepository: NotificationRepository;
+//   private bookingRepository: IBookingRepository;
+
+//   constructor() {
+//     this.notificationRepository = new NotificationRepository();
+//     this.bookingRepository = new BookingRepository();
+//   }
+
+//   async createNotification(
+//     recipientId: string,
+//     type: "payment" | "booking" | "chat" | "meeting",
+//     message: string,
+//     relatedId?: string,
+//     io?: any,
+//     sender?: { firstName: string; lastName: string; id: string }
+//   ): Promise<void> {
+//     try {
+//       console.log("Notification service...>>>>>>>>>>>>>>creating");
+//       console.log("recipientId", recipientId);
+//       console.log("type", type);
+//       console.log("message ", message);
+//       console.log("relatedId", relatedId);
+//       console.log("sender", sender);
+
+//       const notification = await this.notificationRepository.create({
+//         recipientId,
+//         type,
+//         message,
+//         relatedId,
+//         isRead: false,
+//         createdAt: new Date(),
+//         senderId: sender?.id,
+//       });
+
+//       const payload = {
+//         _id: notification._id.toString(),
+//         recipient: recipientId,
+//         type,
+//         content: message,
+//         link:
+//           type === "payment"
+//             ? `/payment/${relatedId}`
+//             : type === "booking"
+//             ? `/bookings/${relatedId}`
+//             : type === "meeting"
+//             ? `/user/meeting-join/${relatedId}` // relatedId is meetingId
+//             : undefined,
+//         isRead: false,
+//         createdAt: notification.createdAt.toISOString(),
+//         sender: sender
+//           ? { firstName: sender.firstName, lastName: sender.lastName }
+//           : undefined,
+//       };
+
+//       console.log("Created notification payload:", payload);
+
+//       if (!pubClient.isOpen) await pubClient.connect();
+//       await pubClient.publish(`${type}-notifications`, JSON.stringify(payload));
+//     } catch (error: any) {
+//       console.error("Error creating notification:", error.message);
+//       throw new Error("Failed to create notification", error.message);
+//     }
+//   }
+
+//   async createPaymentAndBookingNotifications(
+//     paymentId: string,
+//     bookingId: string,
+//     menteeId: string,
+//     mentorId: string,
+//     amount: number,
+//     io?: any
+//   ): Promise<void> {
+//     try {
+//       const User = require("mongoose").model("Users");
+//       const Admin = require("mongoose").model("Admin");
+//       const mentee = await User.findById(menteeId).select("firstName lastName");
+//       const mentor = await User.findById(mentorId).select("firstName lastName");
+//       const admin = await Admin.findOne({
+//         role: { $regex: "^admin$", $options: "i" },
+//       }).select("adminName _id firstName lastName");
+//       console.log("Admin fetch result:", admin);
+
+//       const fallbackAdminId = "67db051192a2210b560467d4";
+//       if (!admin) {
+//         console.warn(
+//           "Admin not found. Using fallback admin ID:",
+//           fallbackAdminId
+//         );
+//       }
+
+//       console.log("Fetched users for notifications:", {
+//         mentee,
+//         mentor,
+//         admin,
+//       });
+//       const booking = await this.bookingRepository.findById(bookingId);
+//       console.log("Booking response:", booking);
+
+//       // Mentee notifications
+//       await this.createNotification(
+//         menteeId,
+//         "payment",
+//         `Payment of ₹${amount} confirmed for booking ${
+//           booking?.serviceId?.title || "Unknown Service"
+//         }`,
+//         paymentId,
+//         io,
+//         mentor
+//           ? {
+//               firstName: mentor.firstName,
+//               lastName: mentor.lastName,
+//               id: mentorId,
+//             }
+//           : undefined
+//       );
+//       await this.createNotification(
+//         menteeId,
+//         "booking",
+//         `Booking ${booking?.serviceId?.title || "Unknown Service"} confirmed`,
+//         bookingId,
+//         io,
+//         mentor
+//           ? {
+//               firstName: mentor.firstName,
+//               lastName: mentor.lastName,
+//               id: mentorId,
+//             }
+//           : undefined
+//       );
+
+//       // Mentor notifications
+//       await this.createNotification(
+//         mentorId,
+//         "payment",
+//         `Received payment of ₹${amount} for booking ${
+//           booking?.serviceId?.title || "Unknown Service"
+//         }`,
+//         paymentId,
+//         io,
+//         mentee
+//           ? {
+//               firstName: mentee.firstName,
+//               lastName: mentee.lastName,
+//               id: menteeId,
+//             }
+//           : undefined
+//       );
+//       await this.createNotification(
+//         mentorId,
+//         "booking",
+//         `New booking ${
+//           booking?.serviceId?.title || "Unknown Service"
+//         } confirmed`,
+//         bookingId,
+//         io,
+//         mentee
+//           ? {
+//               firstName: mentee.firstName,
+//               lastName: mentee.lastName,
+//               id: menteeId,
+//             }
+//           : undefined
+//       );
+
+//       // Admin notifications
+//       const adminId = admin?._id.toString() || fallbackAdminId;
+//       await this.createNotification(
+//         adminId,
+//         "payment",
+//         `Payment of ₹${amount} confirmed for booking ${
+//           booking?.serviceId?.title || "Unknown Service"
+//         } by ${mentee?.firstName || "Unknown"} ${mentee?.lastName || ""}`,
+//         paymentId,
+//         io,
+//         mentee
+//           ? {
+//               firstName: mentee.firstName,
+//               lastName: mentee.lastName,
+//               id: menteeId,
+//             }
+//           : undefined
+//       );
+//       await this.createNotification(
+//         adminId,
+//         "booking",
+//         `New booking ${
+//           booking?.serviceId?.title || "Unknown Service"
+//         } confirmed by ${mentee?.firstName || "Unknown"} ${
+//           mentee?.lastName || ""
+//         }`,
+//         bookingId,
+//         io,
+//         mentee
+//           ? {
+//               firstName: mentee.firstName,
+//               lastName: mentee.lastName,
+//               id: menteeId,
+//             }
+//           : undefined
+//       );
+//     } catch (error: any) {
+//       console.error(
+//         "Error creating payment and booking notifications:",
+//         error.message
+//       );
+//       throw new Error(
+//         "Failed to create payment and booking notifications",
+//         error
+//       );
+//     }
+//   }
+
+//   async getUnreadNotifications(recipientId: string): Promise<any[]> {
+//     try {
+//       const notifications =
+//         await this.notificationRepository.findUnreadByRecipient(recipientId);
+//       const mappedNotifications = notifications.map((n) => ({
+//         _id: n._id,
+//         recipient: n.recipient,
+//         type: n.type,
+//         content: n.content,
+//         link:
+//           n.type === "payment"
+//             ? `/payments/${n.relatedId}`
+//             : n.type === "booking"
+//             ? `/bookings/${n.relatedId}`
+//             : n.type === "meeting"
+//             ? `/user/meeting-join/${n.relatedId}` // relatedId is meetingId
+//             : undefined,
+//         isRead: n.isRead,
+//         createdAt: new Date(n.createdAt).toISOString(),
+//         sender: n.sender,
+//       }));
+//       console.log("Fetched notifications:", mappedNotifications);
+//       return mappedNotifications;
+//     } catch (error: any) {
+//       console.error("Error fetching unread notifications:", error.message);
+//       throw new Error("Failed to fetch notifications", error.message);
+//     }
+//   }
+
+//   async markNotificationAsRead(
+//     notificationId: string,
+//     userId: string
+//   ): Promise<void> {
+//     try {
+//       const notification = await this.notificationRepository.findById(
+//         notificationId
+//       );
+//       if (!notification) {
+//         throw new Error("Notification not found");
+//       }
+//       if (notification.recipientId !== userId) {
+//         throw new Error("Unauthorized to mark this notification as read");
+//       }
+//       await this.notificationRepository.markAsRead(notificationId);
+//     } catch (error: any) {
+//       console.error("Error marking notification as read:", error.message);
+//       throw new Error("Failed to mark notification as read", error.message);
+//     }
+//   }
+// }
 import NotificationRepository from "../../repositories/implementations/NotificationRepository";
 import { pubClient } from "../../server";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
@@ -6,6 +283,7 @@ import { INotificationService } from "../../services/interface/INotificationServ
 
 interface NotificationData {
   recipientId: string;
+  targetRole: "mentor" | "mentee" | "both";
   type: "payment" | "booking" | "chat" | "meeting";
   message: string;
   relatedId?: string;
@@ -27,18 +305,22 @@ export default class NotificationService implements INotificationService {
     message: string,
     relatedId?: string,
     io?: any,
-    sender?: { firstName: string; lastName: string; id: string }
+    sender?: { firstName: string; lastName: string; id: string },
+    targetRole: "mentor" | "mentee" | "both" = "both" // NEW PARAMETER
   ): Promise<void> {
     try {
-      console.log("Notification service...>>>>>>>>>>>>>>creating");
-      console.log("recipientId", recipientId);
-      console.log("type", type);
-      console.log("message ", message);
-      console.log("relatedId", relatedId);
-      console.log("sender", sender);
+      console.log("Notification service creating notification:", {
+        recipientId,
+        type,
+        message,
+        relatedId,
+        sender,
+        targetRole, // NEW LOG
+      });
 
       const notification = await this.notificationRepository.create({
         recipientId,
+        targetRole, // NEW FIELD
         type,
         message,
         relatedId,
@@ -50,6 +332,7 @@ export default class NotificationService implements INotificationService {
       const payload = {
         _id: notification._id.toString(),
         recipient: recipientId,
+        targetRole, // NEW FIELD
         type,
         content: message,
         link:
@@ -58,7 +341,7 @@ export default class NotificationService implements INotificationService {
             : type === "booking"
             ? `/bookings/${relatedId}`
             : type === "meeting"
-            ? `/user/meeting-join/${relatedId}` // relatedId is meetingId
+            ? `/user/meeting-join/${relatedId}`
             : undefined,
         isRead: false,
         createdAt: notification.createdAt.toISOString(),
@@ -69,11 +352,31 @@ export default class NotificationService implements INotificationService {
 
       console.log("Created notification payload:", payload);
 
+      // Publish to role-specific Redis channels
       if (!pubClient.isOpen) await pubClient.connect();
+
+      // Publish to general notification channel
       await pubClient.publish(`${type}-notifications`, JSON.stringify(payload));
+
+      // Publish to role-specific channels for real-time count updates
+      if (targetRole === "both") {
+        await pubClient.publish(
+          "mentor-notification-count",
+          JSON.stringify({ recipientId, increment: 1 })
+        );
+        await pubClient.publish(
+          "mentee-notification-count",
+          JSON.stringify({ recipientId, increment: 1 })
+        );
+      } else {
+        await pubClient.publish(
+          `${targetRole}-notification-count`,
+          JSON.stringify({ recipientId, increment: 1 })
+        );
+      }
     } catch (error: any) {
       console.error("Error creating notification:", error.message);
-      throw new Error("Failed to create notification", error.message);
+      throw new Error("Failed to create notification: " + error.message);
     }
   }
 
@@ -93,7 +396,6 @@ export default class NotificationService implements INotificationService {
       const admin = await Admin.findOne({
         role: { $regex: "^admin$", $options: "i" },
       }).select("adminName _id firstName lastName");
-      console.log("Admin fetch result:", admin);
 
       const fallbackAdminId = "67db051192a2210b560467d4";
       if (!admin) {
@@ -103,15 +405,10 @@ export default class NotificationService implements INotificationService {
         );
       }
 
-      console.log("Fetched users for notifications:", {
-        mentee,
-        mentor,
-        admin,
-      });
       const booking = await this.bookingRepository.findById(bookingId);
       console.log("Booking response:", booking);
 
-      // Mentee notifications
+      // Mentee notifications (role-specific)
       await this.createNotification(
         menteeId,
         "payment",
@@ -126,8 +423,10 @@ export default class NotificationService implements INotificationService {
               lastName: mentor.lastName,
               id: mentorId,
             }
-          : undefined
+          : undefined,
+        "mentee" // ROLE-SPECIFIC
       );
+
       await this.createNotification(
         menteeId,
         "booking",
@@ -140,10 +439,11 @@ export default class NotificationService implements INotificationService {
               lastName: mentor.lastName,
               id: mentorId,
             }
-          : undefined
+          : undefined,
+        "mentee" // ROLE-SPECIFIC
       );
 
-      // Mentor notifications
+      // Mentor notifications (role-specific)
       await this.createNotification(
         mentorId,
         "payment",
@@ -158,8 +458,10 @@ export default class NotificationService implements INotificationService {
               lastName: mentee.lastName,
               id: menteeId,
             }
-          : undefined
+          : undefined,
+        "mentor" // ROLE-SPECIFIC
       );
+
       await this.createNotification(
         mentorId,
         "booking",
@@ -174,10 +476,11 @@ export default class NotificationService implements INotificationService {
               lastName: mentee.lastName,
               id: menteeId,
             }
-          : undefined
+          : undefined,
+        "mentor" // ROLE-SPECIFIC
       );
 
-      // Admin notifications
+      // Admin notifications (both roles or create separate admin handling)
       const adminId = admin?._id.toString() || fallbackAdminId;
       await this.createNotification(
         adminId,
@@ -193,25 +496,8 @@ export default class NotificationService implements INotificationService {
               lastName: mentee.lastName,
               id: menteeId,
             }
-          : undefined
-      );
-      await this.createNotification(
-        adminId,
-        "booking",
-        `New booking ${
-          booking?.serviceId?.title || "Unknown Service"
-        } confirmed by ${mentee?.firstName || "Unknown"} ${
-          mentee?.lastName || ""
-        }`,
-        bookingId,
-        io,
-        mentee
-          ? {
-              firstName: mentee.firstName,
-              lastName: mentee.lastName,
-              id: menteeId,
-            }
-          : undefined
+          : undefined,
+        "both" // Admin sees both roles
       );
     } catch (error: any) {
       console.error(
@@ -219,19 +505,74 @@ export default class NotificationService implements INotificationService {
         error.message
       );
       throw new Error(
-        "Failed to create payment and booking notifications",
-        error
+        "Failed to create payment and booking notifications: " + error.message
       );
     }
   }
 
-  async getUnreadNotifications(recipientId: string): Promise<any[]> {
+  // NEW METHOD: Get role-specific unread count
+  async getUnreadNotificationCount(
+    recipientId: string,
+    role: "mentor" | "mentee"
+  ): Promise<number> {
     try {
-      const notifications =
-        await this.notificationRepository.findUnreadByRecipient(recipientId);
+      const count =
+        await this.notificationRepository.countUnreadByRecipientAndRole(
+          recipientId,
+          role
+        );
+      console.log(`Unread ${role} notifications for ${recipientId}:`, count);
+      return count;
+    } catch (error: any) {
+      console.error("Error fetching unread notification count:", error.message);
+      throw new Error("Failed to fetch notification count: " + error.message);
+    }
+  }
+
+  // NEW METHOD: Get both role counts
+  async getUnreadNotificationCounts(
+    recipientId: string
+  ): Promise<{ mentorCount: number; menteeCount: number }> {
+    try {
+      const [mentorCount, menteeCount] = await Promise.all([
+        this.notificationRepository.countUnreadByRecipientAndRole(
+          recipientId,
+          "mentor"
+        ),
+        this.notificationRepository.countUnreadByRecipientAndRole(
+          recipientId,
+          "mentee"
+        ),
+      ]);
+
+      console.log(`Notification counts for ${recipientId}:`, {
+        mentorCount,
+        menteeCount,
+      });
+      return { mentorCount, menteeCount };
+    } catch (error: any) {
+      console.error("Error fetching notification counts:", error.message);
+      throw new Error("Failed to fetch notification counts: " + error.message);
+    }
+  }
+
+  // UPDATED METHOD: Role-aware notification fetching
+  async getUnreadNotifications(
+    recipientId: string,
+    role?: "mentor" | "mentee"
+  ): Promise<any[]> {
+    try {
+      const notifications = role
+        ? await this.notificationRepository.findUnreadByRecipientAndRole(
+            recipientId,
+            role
+          )
+        : await this.notificationRepository.findUnreadByRecipient(recipientId);
+
       const mappedNotifications = notifications.map((n) => ({
         _id: n._id,
         recipient: n.recipient,
+        targetRole: n.targetRole, // NEW FIELD
         type: n.type,
         content: n.content,
         link:
@@ -240,17 +581,21 @@ export default class NotificationService implements INotificationService {
             : n.type === "booking"
             ? `/bookings/${n.relatedId}`
             : n.type === "meeting"
-            ? `/user/meeting-join/${n.relatedId}` // relatedId is meetingId
+            ? `/user/meeting-join/${n.relatedId}`
             : undefined,
         isRead: n.isRead,
         createdAt: new Date(n.createdAt).toISOString(),
         sender: n.sender,
       }));
-      console.log("Fetched notifications:", mappedNotifications);
+
+      console.log(
+        `Fetched ${role || "all"} notifications:`,
+        mappedNotifications.length
+      );
       return mappedNotifications;
     } catch (error: any) {
       console.error("Error fetching unread notifications:", error.message);
-      throw new Error("Failed to fetch notifications", error.message);
+      throw new Error("Failed to fetch notifications: " + error.message);
     }
   }
 
@@ -268,10 +613,31 @@ export default class NotificationService implements INotificationService {
       if (notification.recipientId !== userId) {
         throw new Error("Unauthorized to mark this notification as read");
       }
+
       await this.notificationRepository.markAsRead(notificationId);
+
+      // Publish count decrement to Redis
+      const { targetRole } = notification;
+      if (!pubClient.isOpen) await pubClient.connect();
+
+      if (targetRole === "both") {
+        await pubClient.publish(
+          "mentor-notification-count",
+          JSON.stringify({ recipientId: userId, increment: -1 })
+        );
+        await pubClient.publish(
+          "mentee-notification-count",
+          JSON.stringify({ recipientId: userId, increment: -1 })
+        );
+      } else {
+        await pubClient.publish(
+          `${targetRole}-notification-count`,
+          JSON.stringify({ recipientId: userId, increment: -1 })
+        );
+      }
     } catch (error: any) {
       console.error("Error marking notification as read:", error.message);
-      throw new Error("Failed to mark notification as read", error.message);
+      throw new Error("Failed to mark notification as read: " + error.message);
     }
   }
 }

@@ -244,7 +244,7 @@ export default class AdminService implements IAdminService {
         console.warn("No user found with mentorId:", id);
         return { mentorData: updateMentor };
       }
-      // Send email notification if status is updated
+      // Send email  if status is updated
       if (updateMentor && (status === "Approved" || status === "Rejected")) {
         const message =
           status === "Approved"

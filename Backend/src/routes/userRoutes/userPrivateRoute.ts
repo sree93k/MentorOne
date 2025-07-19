@@ -131,7 +131,24 @@ userPrivateRoute.post(
   authenticate,
   notificationController.markNotificationAsRead.bind(notificationController)
 );
+userPrivateRoute.get(
+  "/notifications/unread",
+  authenticate,
+  notificationController.getUnreadNotifications.bind(notificationController)
+);
 
+// NEW: Get notification counts route
+userPrivateRoute.get(
+  "/notifications/counts",
+  authenticate,
+  notificationController.getNotificationCounts.bind(notificationController)
+);
+
+userPrivateRoute.post(
+  "/notifications/:notificationId/read",
+  authenticate,
+  notificationController.markNotificationAsRead.bind(notificationController)
+);
 // New route for updating booking status
 userPrivateRoute.put(
   "/booking/:bookingId/updatestatus",
@@ -155,4 +172,5 @@ userPrivateRoute.get(
   authenticate,
   socketController.getUserOnlineStatus.bind(socketController) // Fixed typo
 );
+
 export default userPrivateRoute;

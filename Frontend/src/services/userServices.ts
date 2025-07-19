@@ -563,22 +563,61 @@ export const markNotificationAsRead = async (
 };
 
 // ✅ CHANGED: Initialize Notifications - Updated for cookie auth
+// export const initializeNotifications = (
+//   userId: string,
+//   callback: (notification: Notification) => void
+// ): void => {
+//   try {
+//     SocketService.connect("/notifications", userId);
+//     SocketService.onNewNotification(callback);
+//   } catch (error: any) {
+//     console.error("Failed to initialize notifications:", error.message);
+//     toast.error("Unable to connect to notifications service");
+//     throw error;
+//   }
+// };
 export const initializeNotifications = (
   userId: string,
   callback: (notification: Notification) => void
 ): void => {
   try {
+    console.log(
+      "🔔 userServices: Initializing basic notifications for user:",
+      userId
+    );
     SocketService.connect("/notifications", userId);
     SocketService.onNewNotification(callback);
+    console.log("✅ userServices: Basic notifications initialized");
   } catch (error: any) {
-    console.error("Failed to initialize notifications:", error.message);
+    console.error(
+      "❌ userServices: Failed to initialize basic notifications:",
+      error.message
+    );
     toast.error("Unable to connect to notifications service");
     throw error;
   }
 };
-
+export const isNotificationConnected = (): boolean => {
+  return SocketService.isNotificationSocketConnected();
+};
 export const cleanupNotifications = (): void => {
-  SocketService.disconnect("/notifications");
+  console.log("🧹 userServices: Cleaning up notifications");
+  try {
+    SocketService.offAllNotificationListeners();
+    SocketService.disconnect("/notifications");
+    console.log("✅ userServices: Notifications cleaned up successfully");
+  } catch (error: any) {
+    console.error("❌ userServices: Error during notification cleanup:", error);
+  }
+};
+export const reconnectNotifications = (userId: string): void => {
+  console.log("🔄 userServices: Reconnecting notifications for user:", userId);
+  try {
+    SocketService.reconnectNotifications(userId);
+    console.log("✅ userServices: Notifications reconnected successfully");
+  } catch (error: any) {
+    console.error("❌ userServices: Error reconnecting notifications:", error);
+  }
 };
 
 // ✅ CHANGED: Send Meeting Notification - Remove accessToken usage
@@ -644,5 +683,150 @@ export const checkUserOnlineStatus = async (
   } catch (error: any) {
     console.error("checkUserOnlineStatus: Error", error.message || error);
     throw error;
+  }
+};
+
+export const getNotificationCounts = async (): Promise<{
+  mentorCount: number;
+  menteeCount: number;
+}> => {
+  try {
+    console.log("📊 userServices: Fetching notification counts");
+    const response = await api.get("/user/notifications/counts");
+    console.log(
+      "📊 userServices: Notification counts response:",
+      response.data
+    );
+    return response.data.data;
+  } catch (error: any) {
+    console.error(
+      "📊 userServices: Error fetching notification counts:",
+      error
+    );
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch notification counts"
+    );
+  }
+};
+
+// NEW: Get role-specific notifications
+export const getRoleSpecificNotifications = async (
+  role: "mentor" | "mentee"
+): Promise<Notification[]> => {
+  try {
+    console.log(`🔔 userServices: Fetching ${role} notifications`);
+    const response = await api.get(`/user/notifications/unread?role=${role}`);
+    console.log(
+      `🔔 userServices: ${role} notifications response:`,
+      response.data
+    );
+    return response.data.data;
+  } catch (error: any) {
+    console.error(
+      `🔔 userServices: Error fetching ${role} notifications:`,
+      error
+    );
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch notifications"
+    );
+  }
+};
+
+// UPDATED: Initialize Notifications with count sync
+// export const initializeNotificationsWithCounts = (
+//   userId: string,
+//   onNewNotification: (notification: Notification) => void,
+//   onCountUpdate: (data: {
+//     role: "mentor" | "mentee";
+//     increment: number;
+//   }) => void
+// ): void => {
+//   try {
+//     SocketService.connect("/notifications", userId);
+//     SocketService.onNewNotification(onNewNotification);
+//     SocketService.onNotificationCountUpdate(onCountUpdate);
+
+//     // Get initial counts
+//     SocketService.getNotificationCounts((response: any) => {
+//       if (response.success) {
+//         // This will be handled in the component
+//         console.log("Initial notification counts:", response.counts);
+//       }
+//     });
+//   } catch (error: any) {
+//     console.error("Failed to initialize notifications:", error.message);
+//     toast.error("Unable to connect to notifications service");
+//     throw error;
+//   }
+// };
+export const initializeNotificationsWithCounts = (
+  userId: string,
+  onNewNotification: (notification: any) => void,
+  onCountUpdate: (data: {
+    role: "mentor" | "mentee";
+    increment: number;
+  }) => void
+): void => {
+  try {
+    console.log(
+      "🔔 userServices: Initializing notifications with counts for user:",
+      userId
+    );
+
+    // Connect to notification socket
+    SocketService.connect("/notifications", userId);
+
+    // Set up notification listeners
+    SocketService.onNewNotification(onNewNotification);
+    SocketService.onNotificationCountUpdate(onCountUpdate);
+
+    // Get initial counts
+    SocketService.getNotificationCounts((response: any) => {
+      if (response.success) {
+        console.log(
+          "📊 userServices: Initial notification counts received:",
+          response.counts
+        );
+        // The counts will be handled in the component via onCountUpdate if needed
+      } else {
+        console.error(
+          "📊 userServices: Failed to get initial counts:",
+          response.error
+        );
+      }
+    });
+
+    console.log("✅ userServices: Notifications initialized successfully");
+  } catch (error: any) {
+    console.error(
+      "❌ userServices: Failed to initialize notifications:",
+      error.message
+    );
+    // Don't throw here, just log the error to prevent app crashes
+  }
+};
+// NEW: Clear notification count for role
+export const clearNotificationCountForRole = (
+  role: "mentor" | "mentee"
+): void => {
+  console.log(`🧹 userServices: Clearing notification count for ${role}`);
+  try {
+    SocketService.clearNotificationCount(role, (response: any) => {
+      if (response?.success) {
+        console.log(
+          `✅ userServices: Successfully cleared ${role} notification count`
+        );
+      } else {
+        console.warn(
+          `⚠️ userServices: Failed to clear ${role} notification count:`,
+          response?.error
+        );
+      }
+    });
+  } catch (error: any) {
+    console.error(
+      `❌ userServices: Error clearing ${role} notification count:`,
+      error
+    );
   }
 };
