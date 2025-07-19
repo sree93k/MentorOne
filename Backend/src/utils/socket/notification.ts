@@ -48,20 +48,55 @@
 //     });
 //   }
 
+//   // ✅ FIXED: Notification socket middleware - Read token from cookies
 //   notificationNamespace.use(
 //     (socket: CustomSocket, next: (err?: Error) => void) => {
-//       const token = socket.handshake.auth.token;
+//       // ✅ FIXED: Read token from cookies instead of auth object
+//       console.log("🔍 Notification socket middleware: Checking authentication");
+//       console.log("🔍 Socket handshake headers:", socket.handshake.headers);
+
+//       // Parse cookies from the Cookie header
+//       const cookieHeader = socket.handshake.headers.cookie;
+//       console.log("🔍 Cookie header:", cookieHeader);
+
+//       if (!cookieHeader) {
+//         console.error("❌ Notification auth error: No cookies provided");
+//         return next(new Error("Authentication error: No cookies provided"));
+//       }
+
+//       // Extract accessToken from cookies
+//       const cookies = cookieHeader
+//         .split(";")
+//         .reduce((acc: Record<string, string>, cookie) => {
+//           const [name, value] = cookie.trim().split("=");
+//           acc[name] = value;
+//           return acc;
+//         }, {});
+
+//       const token = cookies.accessToken;
+//       console.log(
+//         "🔍 Extracted token from cookies:",
+//         token ? "Found" : "Not found"
+//       );
+
 //       if (!token) {
-//         console.error("Notification namespace auth error: No token provided");
-//         return next(new Error("Authentication error: No token provided"));
+//         console.error("❌ Notification auth error: No accessToken in cookies");
+//         return next(new Error("Authentication error: No accessToken provided"));
 //       }
 
 //       try {
 //         const decoded = verifyAccessToken(token) as UserPayload;
 //         socket.data.user = decoded;
+//         console.log(
+//           "✅ Notification socket authentication successful for user:",
+//           decoded.id
+//         );
 //         next();
 //       } catch (error: any) {
-//         console.error("Notification namespace auth error:", error.message);
+//         console.error(
+//           "❌ Notification socket authentication error:",
+//           error.message
+//         );
 //         next(new Error(`Authentication error: ${error.message}`));
 //       }
 //     }
@@ -154,26 +189,48 @@ let ioInstance: Server | null = null;
 export const initializeNotificationSocket = async (
   notificationNamespace: Server
 ) => {
-  console.log("Initializing Socket.IO /notifications namespace");
+  console.log(
+    "Initializing Socket.IO /notifications namespace with role support"
+  );
 
   ioInstance = notificationNamespace?.server;
 
   if (!pubClient.isOpen) await pubClient.connect();
   if (!subClient.isOpen) await subClient.connect();
 
+  // Subscribe to existing notification channels
   const channels = [
     "payment-notifications",
     "booking-notifications",
     "chat-notifications",
+    "meeting-notifications", // Added meeting notifications
+    // NEW: Role-specific count channels
+    "mentor-notification-count",
+    "mentee-notification-count",
   ];
+
   for (const channel of channels) {
     await subClient.subscribe(channel, (message) => {
       try {
-        const notification = JSON.parse(message);
-        console.log("Received Redis notification:", { channel, notification });
-        notificationNamespace
-          .to(`user_${notification.recipient}`)
-          .emit("new_notification", notification);
+        const data = JSON.parse(message);
+        console.log("Received Redis notification:", { channel, data });
+
+        if (channel.includes("-notification-count")) {
+          // Handle count updates
+          const role = channel.includes("mentor") ? "mentor" : "mentee";
+          notificationNamespace
+            .to(`user_${data.recipientId}`)
+            .emit("notification_count_update", {
+              role,
+              increment: data.increment,
+            });
+        } else {
+          // Handle regular notifications
+          const notification = data;
+          notificationNamespace
+            .to(`user_${notification.recipient}`)
+            .emit("new_notification", notification);
+        }
       } catch (err: any) {
         console.error(
           `Error processing Redis ${channel} notification:`,
@@ -183,14 +240,12 @@ export const initializeNotificationSocket = async (
     });
   }
 
-  // ✅ FIXED: Notification socket middleware - Read token from cookies
+  // Socket authentication middleware
   notificationNamespace.use(
     (socket: CustomSocket, next: (err?: Error) => void) => {
-      // ✅ FIXED: Read token from cookies instead of auth object
       console.log("🔍 Notification socket middleware: Checking authentication");
       console.log("🔍 Socket handshake headers:", socket.handshake.headers);
 
-      // Parse cookies from the Cookie header
       const cookieHeader = socket.handshake.headers.cookie;
       console.log("🔍 Cookie header:", cookieHeader);
 
@@ -199,7 +254,6 @@ export const initializeNotificationSocket = async (
         return next(new Error("Authentication error: No cookies provided"));
       }
 
-      // Extract accessToken from cookies
       const cookies = cookieHeader
         .split(";")
         .reduce((acc: Record<string, string>, cookie) => {
@@ -252,11 +306,30 @@ export const initializeNotificationSocket = async (
     );
     socket.join(`user_${userId}`);
 
-    socket.on("getUnreadNotifications", async (callback) => {
+    // NEW: Send initial notification counts when user connects
+    socket.on("getNotificationCounts", async (callback) => {
+      try {
+        const notificationService = new NotificationService();
+        const counts = await notificationService.getUnreadNotificationCounts(
+          userId
+        );
+        callback({ success: true, counts });
+      } catch (error: any) {
+        console.error("Error fetching notification counts:", error.message);
+        callback({
+          success: false,
+          error: "Failed to fetch notification counts",
+        });
+      }
+    });
+
+    // UPDATED: Role-aware notification fetching
+    socket.on("getUnreadNotifications", async ({ role }, callback) => {
       try {
         const notificationService = new NotificationService();
         const notifications = await notificationService.getUnreadNotifications(
-          userId
+          userId,
+          role // Pass role parameter
         );
         callback({ success: true, notifications });
       } catch (error: any) {
@@ -288,6 +361,21 @@ export const initializeNotificationSocket = async (
         }
       }
     );
+
+    // NEW: Clear notification count for specific role
+    socket.on("clearNotificationCount", async ({ role }, callback) => {
+      try {
+        // This will be handled by the frontend Redux state
+        // Just acknowledge the request
+        callback({ success: true });
+      } catch (error: any) {
+        console.error("Error clearing notification count:", error.message);
+        callback({
+          success: false,
+          error: "Failed to clear notification count",
+        });
+      }
+    });
 
     socket.on("disconnect", () => {
       console.log(`User disconnected from /notifications: ${userId}`);
