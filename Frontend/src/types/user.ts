@@ -143,3 +143,16 @@ export interface OnlineStatusResponse {
   data: { isOnline: boolean };
   message: string;
 }
+
+export interface ChatNotificationData {
+  userId: string;
+  role: "mentor" | "mentee";
+  count: number;
+  chatId: string;
+  senderId?: string;
+}
+
+export interface ChatUnreadCounts {
+  mentorUnreadChats: number;
+  menteeUnreadChats: number;
+}

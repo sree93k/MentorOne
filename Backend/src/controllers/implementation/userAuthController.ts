@@ -26,7 +26,7 @@ class UserAuthController {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const, // Changed from "strict" to "lax" for better compatibility
     path: "/",
-    maxAge: 5 * 60 * 1000, // 5 minutes (longer than JWT 30s expiry)
+    maxAge: 3 * 60 * 60 * 1000, // 3 hours (longer than JWT 30s expiry)
   };
 
   constructor() {

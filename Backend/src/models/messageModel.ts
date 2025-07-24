@@ -13,6 +13,12 @@ const MessageSchema = new Schema<EMessage>(
     },
     chat: { type: Schema.Types.ObjectId, ref: "Chat", required: true },
     readBy: [{ type: Schema.Types.ObjectId, ref: "Users" }],
+    // NEW: Added status field
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "read"],
+      default: "sent",
+    },
   },
   { timestamps: true }
 );

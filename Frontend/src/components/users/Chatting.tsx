@@ -33,7 +33,7 @@ import {
   getMediaUrl,
   checkUserOnlineStatus,
 } from "@/services/userServices";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import Logo from "@/assets/logo6.png";
@@ -46,6 +46,7 @@ import {
 import { updateBookingStatus } from "../../services/bookingService";
 import ConfirmationModal from "../modal/ConfirmationModal";
 import { checkAuthStatus } from "@/utils/auth";
+import { setChatUnreadCounts } from "@/redux/slices/userSlice";
 
 interface ChatProps {
   open: boolean;
@@ -62,6 +63,12 @@ interface ChatMessage {
   status?: "sent" | "delivered" | "read";
 }
 
+interface TypingUser {
+  userId: string;
+  userName: string;
+  timestamp: number;
+}
+
 interface ChatUser {
   id: string;
   name: string;
@@ -74,6 +81,8 @@ interface ChatUser {
   bookingStatus?: "pending" | "confirmed" | "completed";
   isActive: boolean;
   otherUserId?: string;
+  isTyping?: boolean;
+  typingUsers?: TypingUser[];
 }
 
 const debounce = <T extends (...args: any[]) => void>(
@@ -112,6 +121,7 @@ const formatTimestamp = (timestamp: string | undefined) => {
 };
 
 const Chatting = ({ open, onOpenChange }: ChatProps) => {
+  const dispatch = useDispatch();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [chatUsers, setChatUsers] = useState<ChatUser[]>([]);
   const [filteredChatUsers, setFilteredChatUsers] = useState<ChatUser[]>([]);
@@ -141,6 +151,16 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   const [audioProgress, setAudioProgress] = useState<{ [key: string]: number }>(
     {}
   );
+  const [isFirstUserAutoSelected, setIsFirstUserAutoSelected] = useState(false);
+  const [typingStates, setTypingStates] = useState<{
+    [chatId: string]: TypingUser[];
+  }>({});
+  const [isTyping, setIsTyping] = useState(false);
+  const [connectionState, setConnectionState] = useState<
+    "connected" | "disconnected" | "reconnecting"
+  >("disconnected");
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -152,9 +172,12 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   const { user, dashboard, isOnline } = useSelector(
     (state: RootState) => state.user
   );
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingTimeRef = useRef<number>(0);
   const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
   const userId = user?._id;
   const role = user?.role;
+
   const scrollToBottom = debounce(
     (retryCount = 0, maxRetries = 5, messageCount = 0) => {
       if (scrollAreaRef.current) {
@@ -231,13 +254,113 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     },
     100
   );
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     const scrollPosition = scrollHeight - scrollTop - clientHeight;
     setShouldScrollToBottom(scrollPosition < 100);
   };
 
-  // Socket and chat logic remains unchanged (omitted for brevity)
+  // ✅ NEW: Function to update chat notification counts in Redux
+  // const updateChatNotificationCounts = async () => {
+  //   try {
+  //     if (!userId) return;
+
+  //     // Get updated counts from backend
+  //     const response = await fetch(
+  //       `${import.meta.env.VITE_API_URL}/user/chat/unread-counts`,
+  //       {
+  //         credentials: "include",
+  //       }
+  //     );
+
+  //     if (response.ok) {
+  //       const counts = await response.json();
+  //       dispatch(setChatUnreadCounts(counts.data));
+  //       console.log("💬 Updated chat notification counts:", counts.data);
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to update chat notification counts:", error);
+  //   }
+  // };
+  const updateChatNotificationCounts = async () => {
+    try {
+      if (!userId) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/user/chat/unread-counts`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        const counts = await response.json();
+        dispatch(setChatUnreadCounts(counts.data));
+        console.log("💬 Updated chat notification counts:", counts.data);
+      }
+    } catch (error) {
+      console.error("Failed to update chat notification counts:", error);
+    }
+  };
+  const markCurrentChatAsRead = async () => {
+    if (socket && socket.connected && activeChatId && hasUserInteracted) {
+      socket.emit(
+        "markAsRead",
+        { chatId: activeChatId },
+        async (response: any) => {
+          if (response.success) {
+            console.log("💬 Explicitly marked current chat as read");
+            await updateChatNotificationCounts();
+
+            // Update local state to reflect read status
+            setChatUsers((prev) =>
+              prev.map((u) => (u.id === activeChatId ? { ...u, unread: 0 } : u))
+            );
+            setFilteredChatUsers((prev) =>
+              prev.map((u) => (u.id === activeChatId ? { ...u, unread: 0 } : u))
+            );
+          }
+        }
+      );
+    }
+  };
+  const debugCurrentChat = () => {
+    if (socket && socket.connected && activeChatId) {
+      socket.emit(
+        "debugChatStatus",
+        { chatId: activeChatId },
+        (response: any) => {
+          console.log("🔍 Frontend: Debug response", response);
+        }
+      );
+    } else {
+      console.log("🔍 Frontend: No active chat or socket not connected");
+    }
+  };
+  const debugUnreadCounts = () => {
+    if (socket && socket.connected) {
+      socket.emit("debugUnreadCounts", (response: any) => {
+        console.log("🔍 Frontend: Debug unread counts response", response);
+      });
+    } else {
+      console.log("🔍 Frontend: Socket not connected");
+    }
+  };
+
+  // Make it globally available
+  useEffect(() => {
+    (window as any).debugUnreadCounts = debugUnreadCounts;
+    return () => {
+      delete (window as any).debugUnreadCounts;
+    };
+  }, [socket]);
+  useEffect(() => {
+    (window as any).debugCurrentChat = debugCurrentChat;
+    return () => {
+      delete (window as any).debugCurrentChat;
+    };
+  }, [socket, activeChatId]);
   useEffect(() => {
     setChatHistories({});
     setSelectedUser(null);
@@ -273,6 +396,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     isMessagesLoaded,
     chatHistories,
   ]);
+
   useEffect(() => {
     if (selectedUser) {
       const updatedUser = chatUsers.find((u) => u.id === selectedUser.id);
@@ -283,15 +407,9 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       }
     }
   }, [chatUsers, selectedUser]);
-  // const getCookie = (name: string): string | null => {
-  //   const value = `; ${document.cookie}`;
-  //   const parts = value.split(`; ${name}=`);
-  //   if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
-  //   return null;
-  // };
+
+  // ✅ MAIN SOCKET CONNECTION WITH CHAT NOTIFICATIONS
   useEffect(() => {
-    // const token = localStorage.getItem("accessToken");
-    // const token = getCookie("accessToken");
     console.log("🔍 Chat component: Checking authentication");
     const isAuthenticated = checkAuthStatus();
     console.log("🔍 Chat authentication result:", isAuthenticated);
@@ -313,17 +431,70 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
     setSocket(socketInstance);
 
+    // ✅ FIX 1: ADD CONNECTION STATE HANDLERS
     socketInstance.on("connect", () => {
-      console.log("Connected to Socket.IO server");
+      console.log("💬 Connected to chat socket");
+      setConnectionState("connected"); // ✅ FIXED: Update connection state
       setError(null);
+      setReconnectAttempts(0);
+      // Update initial counts when connected
+      updateChatNotificationCounts();
+    });
+
+    socketInstance.on("disconnect", (reason) => {
+      console.log("🔌 Frontend: Socket disconnected", { reason });
+      setConnectionState("disconnected"); // ✅ FIXED: Update connection state
+    });
+
+    socketInstance.on("reconnecting", (attemptNumber) => {
+      console.log("🔄 Frontend: Socket reconnecting", { attemptNumber });
+      setConnectionState("reconnecting"); // ✅ FIXED: Update connection state
+      setReconnectAttempts(attemptNumber);
+    });
+
+    socketInstance.on("reconnect", (attemptNumber) => {
+      console.log("✅ Frontend: Socket reconnected", { attemptNumber });
+      setConnectionState("connected"); // ✅ FIXED: Update connection state
+      setReconnectAttempts(0);
+    });
+
+    socketInstance.on("reconnect_failed", () => {
+      console.error("❌ Frontend: Socket reconnection failed");
+      setConnectionState("disconnected"); // ✅ FIXED: Update connection state
+      setError("Connection lost. Please refresh the page.");
     });
 
     socketInstance.on("connect_error", (error) => {
       console.error("Socket.IO connection error:", error.message);
+      setConnectionState("disconnected"); // ✅ FIXED: Update connection state
       setError(`Failed to connect to chat server: ${error.message}`);
     });
 
+    // ✅ NEW: Listen for live chat notification updates
+    socketInstance.on(
+      "chatNotificationUpdate",
+      async (data: {
+        userId: string;
+        role: "mentor" | "mentee";
+        count: number;
+        chatId: string;
+        senderId?: string;
+      }) => {
+        console.log("💬 Received chat notification update:", data);
+
+        // Only update if this event is for the current user
+        if (data.userId === userId) {
+          // Update Redux store with new counts
+          await updateChatNotificationCounts();
+
+          console.log(`💬 Updated ${data.role} chat count to: ${data.count}`);
+        }
+      }
+    );
+
     socketInstance.on("receiveMessage", async (message) => {
+      console.log("💬 Received new message:", message);
+
       setChatHistories((prev) => {
         const chatId = message.chat.toString();
         const formattedMessage: ChatMessage = {
@@ -336,12 +507,12 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
           sender: message.sender._id === userId ? "user" : "other",
           senderId: message.sender._id,
           type: message.type,
-          status: message.sender._id === userId ? "sent" : "delivered",
+          // 🎯 CRITICAL: Use actual message status from backend
+          status: message.status || "sent",
         };
         const updated = [...(prev[chatId] || []), formattedMessage];
         return { ...prev, [chatId]: updated };
       });
-
       setChatUsers((prev) => {
         const updatedUsers = prev.map((user) =>
           user.id === message.chat.toString()
@@ -354,10 +525,13 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                     ? "Image"
                     : "Audio",
                 timestamp: message.createdAt,
+                // ✅ FIXED: Only auto-mark as read if user has interacted AND chat is active
                 unread:
-                  message.sender._id === userId || user.id === activeChatId
-                    ? 0
-                    : (user.unread || 0) + 1,
+                  message.sender._id === userId
+                    ? user.unread || 0 // Don't change count for own messages
+                    : user.id === activeChatId && hasUserInteracted
+                    ? 0 // Only mark as read if user has actually interacted with this chat
+                    : (user.unread || 0) + 1, // Otherwise increment
               }
             : user
         );
@@ -385,7 +559,9 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                     : "Audio",
                 timestamp: message.createdAt,
                 unread:
-                  message.sender._id === userId || user.id === activeChatId
+                  message.sender._id === userId
+                    ? user.unread || 0
+                    : user.id === activeChatId && hasUserInteracted
                     ? 0
                     : (user.unread || 0) + 1,
               }
@@ -402,6 +578,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         );
       });
 
+      // Handle media URLs
       if (message.type === "image" || message.type === "audio") {
         try {
           const s3Key = getS3Key(message.content);
@@ -419,12 +596,31 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         }
       }
 
-      if (message.chat.toString() === activeChatId && socket.connected) {
-        socket.emit("markAsRead", { chatId: activeChatId }, (response: any) => {
-          if (!response.success) {
-            console.error("Failed to mark messages as read:", response.error);
+      // ✅ IMPROVED: Auto-mark as read only if user has interacted AND chat is currently open
+      if (
+        message.chat.toString() === activeChatId &&
+        message.sender._id !== userId &&
+        hasUserInteracted && // ✅ NEW: Only auto-read if user has interacted
+        socketInstance.connected
+      ) {
+        socketInstance.emit(
+          "markAsRead",
+          { chatId: activeChatId },
+          (response: any) => {
+            if (!response.success) {
+              console.error("Failed to mark messages as read:", response.error);
+            } else {
+              console.log(
+                "💬 Auto-marked message as read (user has interacted)"
+              );
+            }
           }
-        });
+        );
+      }
+
+      // ✅ IMPROVED: Update global notification counts when receiving messages from others
+      if (message.sender._id !== userId) {
+        await updateChatNotificationCounts();
       }
 
       if (shouldScrollToBottom) {
@@ -436,6 +632,7 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       }
     });
 
+    // ✅ IMPROVED: Message status updates
     socketInstance.on("messageDelivered", ({ messageId, chatId }) => {
       setChatHistories((prev) => {
         const updatedMessages = (prev[chatId] || []).map((msg) =>
@@ -445,46 +642,40 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       });
     });
 
-    socketInstance.on("userStatus", ({ userId, isOnline }) => {
-      setChatUsers((prev) =>
-        prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
-      );
-      setFilteredChatUsers((prev) =>
-        prev.map((user) => (user.id === userId ? { ...user, isOnline } : user))
-      );
-    });
-
-    socketInstance.on("messageRead", ({ messageId, chatId }) => {
+    socketInstance.on("messagesRead", ({ chatId, userId: readByUserId }) => {
+      // ✅ IMPROVED: Update message status to read for messages sent by current user
       setChatHistories((prev) => {
         const updatedMessages = (prev[chatId] || []).map((msg) =>
-          msg._id === messageId ? { ...msg, status: "read" } : msg
+          msg.sender === "user" && msg.senderId === userId
+            ? { ...msg, status: "read" }
+            : msg
         );
         return { ...prev, [chatId]: updatedMessages };
       });
 
+      // Update unread counts in chat users list
       setChatUsers((prev) =>
         prev.map((user) =>
           user.id === chatId
-            ? {
-                ...user,
-                unread: (chatHistories[chatId] || []).filter(
-                  (msg) => msg.sender !== "user" && msg.status !== "read"
-                ).length,
-              }
+            ? { ...user, unread: 0 } // Reset unread count when messages are read
             : user
         )
       );
 
       setFilteredChatUsers((prev) =>
+        prev.map((user) => (user.id === chatId ? { ...user, unread: 0 } : user))
+      );
+    });
+
+    socketInstance.on("userStatus", ({ userId, isOnline }) => {
+      setChatUsers((prev) =>
         prev.map((user) =>
-          user.id === chatId
-            ? {
-                ...user,
-                unread: (chatHistories[chatId] || []).filter(
-                  (msg) => msg.sender !== "user" && msg.status !== "read"
-                ).length,
-              }
-            : user
+          user.otherUserId === userId ? { ...user, isOnline } : user
+        )
+      );
+      setFilteredChatUsers((prev) =>
+        prev.map((user) =>
+          user.otherUserId === userId ? { ...user, isOnline } : user
         )
       );
     });
@@ -524,11 +715,182 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
         );
       }
     });
+    socketInstance.on(
+      "userTyping",
+      ({ userId: typingUserId, userName, chatId }) => {
+        console.log("🎯 User typing received", {
+          typingUserId,
+          userName,
+          chatId,
+        });
 
+        setTypingStates((prev) => ({
+          ...prev,
+          [chatId]: [
+            ...(prev[chatId] || []).filter((u) => u.userId !== typingUserId),
+            { userId: typingUserId, userName, timestamp: Date.now() },
+          ],
+        }));
+
+        setChatUsers((prev) =>
+          prev.map((user) => {
+            if (user.id === chatId) {
+              const typingUsers = [
+                ...(typingStates[chatId] || []).filter(
+                  (u) => u.userId !== typingUserId
+                ),
+                { userId: typingUserId, userName, timestamp: Date.now() },
+              ];
+              return { ...user, isTyping: true, typingUsers };
+            }
+            return user;
+          })
+        );
+
+        setFilteredChatUsers((prev) =>
+          prev.map((user) => {
+            if (user.id === chatId) {
+              const typingUsers = [
+                ...(typingStates[chatId] || []).filter(
+                  (u) => u.userId !== typingUserId
+                ),
+                { userId: typingUserId, userName, timestamp: Date.now() },
+              ];
+              return { ...user, isTyping: true, typingUsers };
+            }
+            return user;
+          })
+        );
+      }
+    );
+
+    socketInstance.on(
+      "userStoppedTyping",
+      ({ userId: typingUserId, chatId }) => {
+        console.log("🎯 User stopped typing", { typingUserId, chatId });
+
+        setTypingStates((prev) => ({
+          ...prev,
+          [chatId]: (prev[chatId] || []).filter(
+            (u) => u.userId !== typingUserId
+          ),
+        }));
+
+        setChatUsers((prev) =>
+          prev.map((user) => {
+            if (user.id === chatId) {
+              const typingUsers = (typingStates[chatId] || []).filter(
+                (u) => u.userId !== typingUserId
+              );
+              return { ...user, isTyping: typingUsers.length > 0, typingUsers };
+            }
+            return user;
+          })
+        );
+
+        setFilteredChatUsers((prev) =>
+          prev.map((user) => {
+            if (user.id === chatId) {
+              const typingUsers = (typingStates[chatId] || []).filter(
+                (u) => u.userId !== typingUserId
+              );
+              return { ...user, isTyping: typingUsers.length > 0, typingUsers };
+            }
+            return user;
+          })
+        );
+      }
+    );
+
+    socketInstance.on(
+      "messageRead",
+      ({ messageId, chatId, userId: readByUserId }) => {
+        console.log("👁️ Frontend: Message read confirmation", {
+          messageId,
+          chatId,
+          readByUserId,
+        });
+
+        // Update specific message status to read
+        setChatHistories((prev) => {
+          const updatedMessages = (prev[chatId] || []).map((msg) =>
+            msg._id === messageId ? { ...msg, status: "read" } : msg
+          );
+          return { ...prev, [chatId]: updatedMessages };
+        });
+      }
+    );
+
+    // 🎯 NEW: Listen for bulk messages delivered confirmations
+    socketInstance.on(
+      "messagesDelivered",
+      ({ chatId, userId: deliveredToUserId, count }) => {
+        console.log("📨 Frontend: Messages delivered confirmation", {
+          chatId,
+          deliveredToUserId,
+          count,
+        });
+
+        // Update message statuses for messages sent to this user
+        setChatHistories((prev) => {
+          const updatedMessages = (prev[chatId] || []).map((msg) =>
+            msg.sender === "user" && msg.status === "sent"
+              ? { ...msg, status: "delivered" }
+              : msg
+          );
+          return { ...prev, [chatId]: updatedMessages };
+        });
+      }
+    );
     return () => {
+      // ✅ ADD: Cleanup typing when disconnecting
+      if (isTyping) {
+        handleTypingStop();
+      }
+
+      // Clear intervals
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
       socketInstance.disconnect();
     };
-  }, [userId, shouldScrollToBottom]);
+  }, [userId, dispatch]);
+  useEffect(() => {
+    // Set up a click handler on the chat area to detect first interaction
+    const chatArea = scrollAreaRef.current;
+
+    const handleFirstInteraction = () => {
+      if (!hasUserInteracted && selectedUser && activeChatId) {
+        console.log("🎯 First interaction detected with auto-selected chat");
+        setHasUserInteracted(true);
+        // Mark messages as read after a small delay to ensure UI is ready
+        setTimeout(() => {
+          markCurrentChatAsRead();
+        }, 500);
+      }
+    };
+
+    if (chatArea && selectedUser && !hasUserInteracted) {
+      chatArea.addEventListener("click", handleFirstInteraction);
+      // Also listen for scroll as interaction
+      chatArea.addEventListener("scroll", handleFirstInteraction);
+
+      return () => {
+        chatArea.removeEventListener("click", handleFirstInteraction);
+        chatArea.removeEventListener("scroll", handleFirstInteraction);
+      };
+    }
+  }, [selectedUser, activeChatId, hasUserInteracted, socket]);
+  const handleInputFocus = () => {
+    if (!hasUserInteracted && selectedUser && activeChatId) {
+      console.log("🎯 User started typing - marking as interacted");
+      setHasUserInteracted(true);
+      setTimeout(() => {
+        markCurrentChatAsRead();
+      }, 500);
+    }
+  };
 
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -539,27 +901,63 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
       try {
         setError(null);
+        console.log("📋 Fetching chat users for dashboard:", dashboard);
+
         const response = await getChatHistory(dashboard);
         const updatedChatUsers = response.data.map((user: ChatUser) => ({
           ...user,
           isOnline: false,
           isActive: user.isActive ?? true,
         }));
-        const isOnline = updatedChatUsers[0]?.otherUserId
-          ? await checkUserOnlineStatus(updatedChatUsers[0].otherUserId)
-          : false;
 
-        const updatedChatUsersWithOnline = updatedChatUsers.map((u, index) =>
-          index === 0 ? { ...u, isOnline } : u
+        console.log("📋 Chat users fetched", {
+          count: updatedChatUsers.length,
+        });
+
+        setChatUsers(updatedChatUsers);
+        setFilteredChatUsers(updatedChatUsers);
+
+        // ✅ FIXED: Auto-select first user but DON'T mark as read yet
+        // if (updatedChatUsers.length > 0) {
+        //   const firstUser = updatedChatUsers[0];
+        //   console.log("👤 Auto-selecting first user:", firstUser.name);
+
+        //   setSelectedUser(firstUser);
+        //   setActiveChatId(firstUser.id);
+        //   setIsFirstUserAutoSelected(true);
+        //   setHasUserInteracted(false);
+
+        //   // Check online status for the selected user
+        //   if (firstUser.otherUserId) {
+        //     try {
+        //       const isOnline = await checkUserOnlineStatus(
+        //         firstUser.otherUserId
+        //       );
+        //       const userWithOnlineStatus = { ...firstUser, isOnline };
+        //       setSelectedUser(userWithOnlineStatus);
+
+        //       // Update the user in the lists as well
+        //       setChatUsers((prev) =>
+        //         prev.map((u) =>
+        //           u.id === firstUser.id ? userWithOnlineStatus : u
+        //         )
+        //       );
+        //       setFilteredChatUsers((prev) =>
+        //         prev.map((u) =>
+        //           u.id === firstUser.id ? userWithOnlineStatus : u
+        //         )
+        //       );
+        //     } catch (error: any) {
+        //       console.error("Failed to check online status:", error);
+        //     }
+        //   }
+        // } else {
+        //   console.log("❌ No chat users found");
+        //   setError(`No chats available for ${dashboard} dashboard`);
+        // }
+        console.log(
+          "📋 Chat users loaded, waiting for chat to open for auto-selection"
         );
-        setChatUsers(updatedChatUsersWithOnline);
-        setFilteredChatUsers(updatedChatUsersWithOnline);
-        if (updatedChatUsers.length > 0) {
-          setSelectedUser(updatedChatUsers[0]);
-          setActiveChatId(updatedChatUsers[0].id);
-        } else {
-          setError(`No chats available for ${dashboard} dashboard`);
-        }
       } catch (error: any) {
         console.error("fetchChatHistory error:", error);
         setError(error.message || "Failed to fetch chat history");
@@ -570,7 +968,63 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       fetchChatHistory();
     }
   }, [isOnline.role, dashboard]);
+  useEffect(() => {
+    // Only auto-select when chat becomes visible AND we have users
+    if (open && chatUsers.length > 0 && !selectedUser) {
+      const firstUser = chatUsers[0];
+      console.log(
+        "👤 Chat is now visible - Auto-selecting first user:",
+        firstUser.name
+      );
 
+      setSelectedUser(firstUser);
+      setActiveChatId(firstUser.id);
+      setIsFirstUserAutoSelected(true);
+      setHasUserInteracted(false); // Will be set to true when user actually interacts
+
+      // Check online status for the selected user
+      if (firstUser.otherUserId) {
+        checkUserOnlineStatus(firstUser.otherUserId)
+          .then((isOnline) => {
+            const userWithOnlineStatus = { ...firstUser, isOnline };
+            setSelectedUser(userWithOnlineStatus);
+
+            setChatUsers((prev) =>
+              prev.map((u) =>
+                u.id === firstUser.id ? userWithOnlineStatus : u
+              )
+            );
+            setFilteredChatUsers((prev) =>
+              prev.map((u) =>
+                u.id === firstUser.id ? userWithOnlineStatus : u
+              )
+            );
+          })
+          .catch((error) => {
+            console.error("Failed to check online status:", error);
+          });
+      }
+    }
+
+    // Reset selection when chat closes
+    if (!open && selectedUser) {
+      console.log("👤 Chat closed - Clearing selection");
+      if (socket && socket.connected && activeChatId) {
+        socket.emit("chatClosed", { chatId: activeChatId }, (response: any) => {
+          console.log("👁️ Frontend: Chat closed on sheet close", {
+            chatId: activeChatId,
+            success: response?.success,
+          });
+        });
+      }
+
+      setSelectedUser(null);
+      setActiveChatId(null);
+      setHasUserInteracted(false);
+      setIsFirstUserAutoSelected(false);
+      setIsMessagesLoaded(false);
+    }
+  }, [open, chatUsers, selectedUser, socket, activeChatId]);
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredChatUsers(chatUsers);
@@ -582,13 +1036,303 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     }
   }, [searchQuery, chatUsers]);
 
+  // useEffect(() => {
+  //   // ✅ CRITICAL: Don't run if no user is selected or if this is just initialization
+  //   // if (!selectedUser || !activeChatId) {
+  //   //   console.log("🔍 Chat history: No user selected, skipping");
+  //   //   return;
+  //   // }
+  //   if (!selectedUser || !activeChatId || !open) {
+  //     console.log(
+  //       "🔍 Chat history: Chat not visible or no user selected, skipping"
+  //     );
+  //     return;
+  //   }
+
+  //   // console.log("🔍 Chat history effect triggered", {
+  //   //   hasSocket: !!socket,
+  //   //   socketConnected: socket?.connected,
+  //   //   activeChatId,
+  //   //   selectedUser: selectedUser?.name,
+  //   //   userId,
+  //   //   hasUserInteracted, // ✅ NEW: Log interaction state
+  //   // });
+  //   console.log("🔍 Chat history effect triggered", {
+  //     hasSocket: !!socket,
+  //     socketConnected: socket?.connected,
+  //     activeChatId,
+  //     selectedUser: selectedUser?.name,
+  //     userId,
+  //     chatVisible: open, // ✅ NEW: Log visibility
+  //     hasUserInteracted,
+  //   });
+
+  //   // ✅ CRITICAL: If socket exists but not connected, wait for connection
+  //   if (socket && !socket.connected) {
+  //     console.log(
+  //       "⏳ Chat history: Socket exists but not connected, waiting..."
+  //     );
+
+  //     const handleConnect = () => {
+  //       console.log("🔗 Chat history: Socket connected, loading messages");
+  //       loadChatHistory();
+  //     };
+
+  //     socket.on("connect", handleConnect);
+
+  //     return () => {
+  //       socket.off("connect", handleConnect);
+  //     };
+  //   }
+
+  //   // ✅ If socket is connected, load immediately
+  //   if (socket && socket.connected) {
+  //     loadChatHistory();
+  //   }
+
+  //   // ✅ EXTRACTED: Chat history loading logic
+  //   function loadChatHistory() {
+  //     if (
+  //       !socket ||
+  //       !socket.connected ||
+  //       !activeChatId ||
+  //       !selectedUser ||
+  //       !userId
+  //     ) {
+  //       console.log("❌ Chat history: Missing required data for loading");
+  //       return;
+  //     }
+
+  //     console.log("✅ Chat history: Loading messages for", {
+  //       chatId: activeChatId,
+  //       user: selectedUser.name,
+  //       willMarkAsRead: hasUserInteracted, // ✅ NEW: Log if we'll mark as read
+  //     });
+
+  //     setIsMessagesLoaded(false);
+  //     setError(null);
+
+  //     socket.emit(
+  //       "getChatHistory",
+  //       { chatId: activeChatId },
+  //       async (response: any) => {
+  //         console.log("📨 Chat history response:", {
+  //           success: response.success,
+  //           messageCount: response.messages?.length || 0,
+  //         });
+
+  //         if (response.success) {
+  //           const messages =
+  //             response.messages?.map((msg: any) => ({
+  //               _id: msg._id,
+  //               content: msg.content,
+  //               timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+  //                 hour: "2-digit",
+  //                 minute: "2-digit",
+  //               }),
+  //               sender: msg.sender._id === userId ? "user" : "other",
+  //               senderId: msg.sender._id,
+  //               type: msg.type,
+  //               // 🎯 CRITICAL: Always use database status, never infer from readBy
+  //               status: msg.status || "sent", // Use actual database status field
+  //             })) || [];
+
+  //           // Handle media URLs
+  //           const mediaMessages = messages.filter(
+  //             (msg: ChatMessage) => msg.type === "image" || msg.type === "audio"
+  //           );
+
+  //           if (mediaMessages.length > 0) {
+  //             const newMediaUrls: { [key: string]: string } = {};
+  //             for (const msg of mediaMessages) {
+  //               try {
+  //                 const s3Key = getS3Key(msg.content);
+  //                 const presignedUrl = await getMediaUrl(s3Key);
+  //                 newMediaUrls[msg._id] = presignedUrl;
+  //               } catch (err: any) {
+  //                 console.error(
+  //                   `Failed to get presigned URL for ${msg._id}:`,
+  //                   err
+  //                 );
+  //               }
+  //             }
+  //             setMediaUrls((prev) => ({ ...prev, ...newMediaUrls }));
+  //           }
+
+  //           // Update chat histories
+  //           setChatHistories((prev) => ({
+  //             ...prev,
+  //             [activeChatId]: messages,
+  //           }));
+
+  //           setIsMessagesLoaded(true);
+
+  //           if (socket.connected) {
+  //             socket.emit(
+  //               "chatOpened",
+  //               { chatId: activeChatId },
+  //               (response: any) => {
+  //                 if (response.success) {
+  //                   console.log("👁️ Frontend: Chat opened event sent", {
+  //                     chatId: activeChatId,
+  //                     markedAsRead: response.markedCount,
+  //                   });
+  //                 }
+  //               }
+  //             );
+  //           }
+
+  //           const shouldAutoMarkAsRead =
+  //             isFirstUserAutoSelected && !hasUserInteracted;
+
+  //           if (shouldAutoMarkAsRead) {
+  //             console.log(
+  //               "🎯 Auto-marking messages as read for FIRST user via chatOpened event"
+  //             );
+  //             // Use chatOpened event instead of direct markAsRead
+  //             if (socket.connected) {
+  //               socket.emit(
+  //                 "chatOpened",
+  //                 { chatId: activeChatId },
+  //                 async (readResponse: any) => {
+  //                   if (readResponse.success) {
+  //                     console.log(
+  //                       "✅ Auto-marked first user messages as read",
+  //                       {
+  //                         markedCount: readResponse.markedCount,
+  //                       }
+  //                     );
+  //                     await updateChatNotificationCounts();
+
+  //                     // Update local state immediately
+  //                     setChatUsers((prev) =>
+  //                       prev.map((u) =>
+  //                         u.id === activeChatId ? { ...u, unread: 0 } : u
+  //                       )
+  //                     );
+  //                     setFilteredChatUsers((prev) =>
+  //                       prev.map((u) =>
+  //                         u.id === activeChatId ? { ...u, unread: 0 } : u
+  //                       )
+  //                     );
+  //                   } else {
+  //                     console.error(
+  //                       "❌ Failed to auto-mark messages as read:",
+  //                       readResponse.error
+  //                     );
+  //                   }
+  //                 }
+  //               );
+  //             }
+  //           } else if (hasUserInteracted) {
+  //             console.log("👤 User has interacted, using chatOpened event");
+  //             socket.emit(
+  //               "chatOpened",
+  //               { chatId: activeChatId },
+  //               async (readResponse: any) => {
+  //                 if (readResponse.success) {
+  //                   console.log("💬 Marked messages as read via interaction", {
+  //                     markedCount: readResponse.markedCount,
+  //                   });
+  //                   await updateChatNotificationCounts();
+  //                 }
+  //               }
+  //             );
+  //           } else {
+  //             console.log(
+  //               "🤖 Other user selection, needs manual interaction to mark as read"
+  //             );
+  //           }
+  //           // Scroll to bottom
+  //           if (messages.length > 0) {
+  //             setTimeout(() => {
+  //               scrollToBottom(0, 5, messages.length);
+  //             }, 100);
+  //           }
+  //         } else {
+  //           console.error("❌ Chat history loading failed:", response.error);
+  //           setError(response.error || "Failed to load chat messages");
+  //           setIsMessagesLoaded(true);
+  //         }
+  //       }
+  //     );
+  //   }
+  // }, [
+  //   socket,
+  //   activeChatId,
+  //   selectedUser,
+  //   userId,
+  //   shouldScrollToBottom,
+  //   hasUserInteracted,
+  // ]); // ✅ Add hasUserInteracted to dependencies
   useEffect(() => {
-    if (socket && activeChatId && socket.connected) {
+    // ✅ CRITICAL: Only load if chat is visible AND user is selected
+    if (!selectedUser || !activeChatId || !open) {
+      console.log(
+        "🔍 Chat history: Chat not visible or no user selected, skipping"
+      );
+      return;
+    }
+
+    console.log("🔍 Chat history effect triggered", {
+      hasSocket: !!socket,
+      socketConnected: socket?.connected,
+      activeChatId,
+      selectedUser: selectedUser?.name,
+      userId,
+      chatVisible: open, // ✅ NEW: Log visibility
+      hasUserInteracted,
+    });
+
+    if (socket && !socket.connected) {
+      console.log(
+        "⏳ Chat history: Socket exists but not connected, waiting..."
+      );
+      const handleConnect = () => {
+        console.log("🔗 Chat history: Socket connected, loading messages");
+        loadChatHistory();
+      };
+      socket.on("connect", handleConnect);
+      return () => {
+        socket.off("connect", handleConnect);
+      };
+    }
+
+    if (socket && socket.connected) {
+      loadChatHistory();
+    }
+
+    function loadChatHistory() {
+      if (
+        !socket ||
+        !socket.connected ||
+        !activeChatId ||
+        !selectedUser ||
+        !userId
+      ) {
+        console.log("❌ Chat history: Missing required data for loading");
+        return;
+      }
+
+      console.log("✅ Chat history: Loading messages for visible chat", {
+        chatId: activeChatId,
+        user: selectedUser.name,
+        isFirstUser: isFirstUserAutoSelected,
+        hasUserInteracted,
+      });
+
       setIsMessagesLoaded(false);
+      setError(null);
+
       socket.emit(
         "getChatHistory",
         { chatId: activeChatId },
         async (response: any) => {
+          console.log("📨 Chat history response:", {
+            success: response.success,
+            messageCount: response.messages?.length || 0,
+          });
+
           if (response.success) {
             const messages =
               response.messages?.map((msg: any) => ({
@@ -601,63 +1345,125 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                 sender: msg.sender._id === userId ? "user" : "other",
                 senderId: msg.sender._id,
                 type: msg.type,
-                status:
-                  msg.status ||
-                  (msg.sender._id === userId ? "sent" : "delivered"),
+                status: msg.status || "sent",
               })) || [];
 
-            if (messages.length === 0) {
-              setError(`No messages found for chat ${activeChatId}`);
-            }
-
+            // Handle media URLs
             const mediaMessages = messages.filter(
               (msg: ChatMessage) => msg.type === "image" || msg.type === "audio"
             );
-            const newMediaUrls: { [key: string]: string } = {};
-            for (const msg of mediaMessages) {
-              try {
-                const s3Key = getS3Key(msg.content);
-                const presignedUrl = await getMediaUrl(s3Key);
-                newMediaUrls[msg._id] = presignedUrl;
-              } catch (err: any) {
-                console.error(
-                  `Failed to get presigned URL for ${msg._id}:`,
-                  err
-                );
-                setError(`Failed to load media for message ${msg._id}`);
+
+            if (mediaMessages.length > 0) {
+              const newMediaUrls: { [key: string]: string } = {};
+              for (const msg of mediaMessages) {
+                try {
+                  const s3Key = getS3Key(msg.content);
+                  const presignedUrl = await getMediaUrl(s3Key);
+                  newMediaUrls[msg._id] = presignedUrl;
+                } catch (err: any) {
+                  console.error(
+                    `Failed to get presigned URL for ${msg._id}:`,
+                    err
+                  );
+                }
               }
+              setMediaUrls((prev) => ({ ...prev, ...newMediaUrls }));
             }
 
-            setMediaUrls((prev) => ({ ...prev, ...newMediaUrls }));
             setChatHistories((prev) => ({
               ...prev,
               [activeChatId]: messages,
             }));
+
             setIsMessagesLoaded(true);
-            socket.emit(
-              "markAsRead",
-              { chatId: activeChatId },
-              (response: any) => {
-                if (!response.success) {
-                  setError(response.error || "Failed to mark messages as read");
+
+            // ✅ FIXED: Only auto-mark as read for FIRST user when chat is VISIBLE
+            if (isFirstUserAutoSelected && !hasUserInteracted && open) {
+              console.log(
+                "🎯 Chat is visible - Auto-marking first user messages as read"
+              );
+
+              socket.emit(
+                "chatOpened",
+                { chatId: activeChatId },
+                async (readResponse: any) => {
+                  if (readResponse.success) {
+                    console.log(
+                      "✅ Auto-marked first user messages as read (chat visible)",
+                      {
+                        markedCount: readResponse.markedCount,
+                      }
+                    );
+
+                    // Update notification counts
+                    await updateChatNotificationCounts();
+
+                    // Update local state immediately
+                    setChatUsers((prev) =>
+                      prev.map((u) =>
+                        u.id === activeChatId ? { ...u, unread: 0 } : u
+                      )
+                    );
+                    setFilteredChatUsers((prev) =>
+                      prev.map((u) =>
+                        u.id === activeChatId ? { ...u, unread: 0 } : u
+                      )
+                    );
+                  } else {
+                    console.error(
+                      "❌ Failed to auto-mark messages as read:",
+                      readResponse.error
+                    );
+                  }
                 }
-              }
-            );
-            if (messages.length > 0 && shouldScrollToBottom) {
-              scrollToBottom(0, 5, messages.length);
+              );
+            } else {
+              console.log("🤖 Not auto-marking as read:", {
+                isFirstUser: isFirstUserAutoSelected,
+                hasInteracted: hasUserInteracted,
+                chatVisible: open,
+              });
+            }
+
+            // Scroll to bottom
+            if (messages.length > 0) {
+              setTimeout(() => {
+                scrollToBottom(0, 5, messages.length);
+              }, 100);
             }
           } else {
+            console.error("❌ Chat history loading failed:", response.error);
             setError(response.error || "Failed to load chat messages");
             setIsMessagesLoaded(true);
           }
         }
       );
-    } else if (socket && !socket.connected) {
-      setError("Chat server disconnected, please try again later");
-      setIsMessagesLoaded(true);
     }
-  }, [socket, activeChatId, userId, shouldScrollToBottom]);
+  }, [
+    socket,
+    activeChatId,
+    selectedUser,
+    userId,
+    shouldScrollToBottom,
+    hasUserInteracted,
+    open,
+    isFirstUserAutoSelected,
+  ]); // ✅ Added 'open' dependency
 
+  useEffect(() => {
+    // Cleanup function when component unmounts or chat closes
+    return () => {
+      if (socket && socket.connected && activeChatId) {
+        socket.emit("chatClosed", { chatId: activeChatId }, (response: any) => {
+          console.log("👁️ Frontend: Chat closed on unmount", {
+            chatId: activeChatId,
+            success: response?.success,
+          });
+        });
+      }
+    };
+  }, [socket, activeChatId]);
+  // Rest of the component methods remain the same...
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -699,7 +1505,104 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     const interval = setInterval(updateProgress, 1000);
     return () => clearInterval(interval);
   }, [isPlaying]);
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      const staleThreshold = 10000; // 10 seconds
 
+      setTypingStates((prev) => {
+        const updated = { ...prev };
+        let hasChanges = false;
+
+        Object.keys(updated).forEach((chatId) => {
+          const validUsers = updated[chatId].filter(
+            (user) => now - user.timestamp < staleThreshold
+          );
+
+          if (validUsers.length !== updated[chatId].length) {
+            updated[chatId] = validUsers;
+            hasChanges = true;
+          }
+        });
+
+        return hasChanges ? updated : prev;
+      });
+
+      setChatUsers((prev) =>
+        prev.map((user) => {
+          const typingUsers = typingStates[user.id] || [];
+          const validTypingUsers = typingUsers.filter(
+            (tu) => now - tu.timestamp < staleThreshold
+          );
+
+          return {
+            ...user,
+            isTyping: validTypingUsers.length > 0,
+            typingUsers: validTypingUsers,
+          };
+        })
+      );
+
+      setFilteredChatUsers((prev) =>
+        prev.map((user) => {
+          const typingUsers = typingStates[user.id] || [];
+          const validTypingUsers = typingUsers.filter(
+            (tu) => now - tu.timestamp < staleThreshold
+          );
+
+          return {
+            ...user,
+            isTyping: validTypingUsers.length > 0,
+            typingUsers: validTypingUsers,
+          };
+        })
+      );
+    }, 5000);
+
+    return () => clearInterval(cleanupInterval);
+  }, [typingStates]);
+
+  const handleTypingStart = () => {
+    if (!socket || !activeChatId || !selectedUser) return;
+
+    const now = Date.now();
+    // 🎯 RATE LIMITING: Max 2 events per second
+    if (now - lastTypingTimeRef.current < 500) return;
+
+    lastTypingTimeRef.current = now;
+
+    // Only emit if not already typing
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.emit("userTyping", {
+        chatId: activeChatId,
+        userName: `${user?.firstName} ${user?.lastName}`.trim() || "User",
+      });
+      console.log("🎯 Frontend: Started typing, emitted userTyping");
+    }
+
+    // 🎯 CRITICAL: Clear previous timeout and set new 3-second timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      console.log("🎯 Frontend: 3-second timeout reached, stopping typing");
+      handleTypingStop();
+    }, 3000); // 🎯 FIXED: 3 seconds instead of 15
+  };
+
+  const handleTypingStop = () => {
+    if (!socket || !activeChatId || !isTyping) return;
+
+    setIsTyping(false);
+    socket.emit("userStoppedTyping", { chatId: activeChatId });
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+  };
   const getS3Key = (url: string): string => {
     const bucketUrl = `https://${import.meta.env.VITE_S3_BUCKET_NAME}.s3.${
       import.meta.env.VITE_AWS_REGION
@@ -716,7 +1619,84 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     return key;
   };
 
+  // const handleUserClick = async (user: ChatUser) => {
+  //   console.log("💬 User clicked:", user.name, "Chat ID:", user.id);
+  //   if (
+  //     socket &&
+  //     socket.connected &&
+  //     activeChatId &&
+  //     activeChatId !== user.id
+  //   ) {
+  //     socket.emit("chatClosed", { chatId: activeChatId }, (response: any) => {
+  //       console.log("👁️ Frontend: Previous chat closed", {
+  //         previousChatId: activeChatId,
+  //         success: response?.success,
+  //       });
+  //     });
+  //   }
+
+  //   setSelectedUser(user);
+  //   setActiveChatId(user.id);
+  //   setError(null);
+  //   setImagePreview(null);
+  //   setAudioBlob(null);
+  //   setIsPlaying({});
+  //   setMediaUrls({});
+  //   setAudioProgress({});
+  //   setShouldScrollToBottom(true);
+  //   setIsMessagesLoaded(false);
+
+  //   // ✅ CRITICAL: Mark this as user-initiated interaction
+  //   setHasUserInteracted(true);
+
+  //   // ✅ IMMEDIATELY reset unread count in UI for better UX
+  //   setChatUsers((prev) =>
+  //     prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
+  //   );
+  //   setFilteredChatUsers((prev) =>
+  //     prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
+  //   );
+
+  //   try {
+  //     const isOnline = await checkUserOnlineStatus(user?.otherUserId);
+  //     setSelectedUser((prev) =>
+  //       prev ? { ...prev, isOnline } : { ...user, isOnline }
+  //     );
+  //     setChatUsers((prev) =>
+  //       prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
+  //     );
+  //     setFilteredChatUsers((prev) =>
+  //       prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
+  //     );
+  //   } catch (error: any) {
+  //     console.error("Failed to check online status:", error);
+  //     setError("Failed to load user online status");
+  //   }
+
+  //   // ✅ The markAsRead will be handled in the chat history loading effect
+  //   // since hasUserInteracted is now true
+
+  //   setIsSidebarOpen(false);
+  // };
+
   const handleUserClick = async (user: ChatUser) => {
+    console.log("💬 User clicked:", user.name, "Chat ID:", user.id);
+
+    // Close previous chat if different
+    if (
+      socket &&
+      socket.connected &&
+      activeChatId &&
+      activeChatId !== user.id
+    ) {
+      socket.emit("chatClosed", { chatId: activeChatId }, (response: any) => {
+        console.log("👁️ Frontend: Previous chat closed", {
+          previousChatId: activeChatId,
+          success: response?.success,
+        });
+      });
+    }
+
     setSelectedUser(user);
     setActiveChatId(user.id);
     setError(null);
@@ -727,6 +1707,12 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     setAudioProgress({});
     setShouldScrollToBottom(true);
     setIsMessagesLoaded(false);
+
+    // ✅ CRITICAL: Mark this as user-initiated interaction
+    setHasUserInteracted(true);
+    setIsFirstUserAutoSelected(false); // ✅ Not auto-selected anymore
+
+    // ✅ IMMEDIATELY reset unread count in UI for better UX
     setChatUsers((prev) =>
       prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
     );
@@ -735,30 +1721,24 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
     );
 
     try {
-      const isOnline = await checkUserOnlineStatus(user?.otherUserId);
-      setSelectedUser((prev) =>
-        prev ? { ...prev, isOnline } : { ...user, isOnline }
-      );
-      setChatUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
-      );
-      setFilteredChatUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
-      );
+      if (user.otherUserId) {
+        const isOnline = await checkUserOnlineStatus(user.otherUserId);
+        setSelectedUser((prev) =>
+          prev ? { ...prev, isOnline } : { ...user, isOnline }
+        );
+        setChatUsers((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
+        );
+        setFilteredChatUsers((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, isOnline } : u))
+        );
+      }
     } catch (error: any) {
       console.error("Failed to check online status:", error);
       setError("Failed to load user online status");
     }
 
-    if (socket && socket.connected) {
-      socket.emit("markAsRead", { chatId: user.id }, (response: any) => {
-        if (!response.success) {
-          setError(response.error || "Failed to mark messages as read");
-        }
-      });
-    }
-
-    setIsSidebarOpen(false); // Close sidebar on mobile after selection
+    setIsSidebarOpen(false);
   };
 
   const handleSendMessage = () => {
@@ -767,6 +1747,10 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
       return;
     }
 
+    // ✅ ADD: Stop typing indicator when sending message
+    if (isTyping) {
+      handleTypingStop();
+    }
     if (!socket.connected) {
       setError("Chat server disconnected, please try again later");
       return;
@@ -1026,14 +2010,27 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
   };
 
   const renderMessageStatus = (status?: string) => {
+    // 🎯 DEBUG: Log status rendering for debugging
+    console.log("🎨 Rendering message status:", { status });
+
     if (!status) return null;
+
     if (status === "sent") {
-      return <Check className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />;
+      // Single white tick for sent
+      return <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white opacity-90" />;
     } else if (status === "delivered") {
-      return <CheckCheck className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />;
+      // Double white ticks for delivered
+      return (
+        <CheckCheck className="h-3 w-3 sm:h-4 sm:w-4 text-white opacity-90" />
+      );
     } else if (status === "read") {
-      return <CheckCheck className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />;
+      // Double blue ticks for read
+      return <CheckCheck className="h-3 w-3 sm:h-4 sm:w-4 text-blue-700" />;
+    } else if (status === "failed") {
+      // Red X for failed
+      return <X className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />;
     }
+
     return null;
   };
 
@@ -1101,6 +2098,29 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
 
   const toggleSidebar = () => {
     setIsSidebarOpen((prev) => !prev);
+  };
+  const renderTypingIndicator = (user: ChatUser) => {
+    if (!user.isTyping || !user.typingUsers?.length) {
+      return user.lastMessage || "Start chatting now!";
+    }
+
+    const typingUsers = user.typingUsers;
+    if (typingUsers.length === 1) {
+      return <span className="text-indigo-500 italic">typing...</span>;
+    } else if (typingUsers.length === 2) {
+      return (
+        <span className="text-indigo-500 italic">
+          {typingUsers[0].userName} and {typingUsers[1].userName} are typing...
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-indigo-500 italic">
+          {typingUsers[0].userName} and {typingUsers.length - 1} others are
+          typing...
+        </span>
+      );
+    }
   };
 
   return (
@@ -1187,8 +2207,11 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                           </span>
                         </div>
                         <div className="flex justify-between items-center mt-1">
-                          <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-[150px]">
+                          {/* <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-[150px]">
                             {user.lastMessage || "Start chatting now!"}
+                          </p> */}
+                          <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-[150px]">
+                            {renderTypingIndicator(user)}
                           </p>
                           {typeof user.unread === "number" &&
                             user.unread > 0 &&
@@ -1248,6 +2271,21 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                         )}
                       </p>
                     </div>
+                    {connectionState !== "connected" && (
+                      <div className="flex items-center space-x-2">
+                        {connectionState === "reconnecting" ? (
+                          <div className="flex items-center space-x-1 text-yellow-600 bg-yellow-50 px-2 py-1 rounded-md text-xs">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span>Reconnecting...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-1 text-red-600 bg-red-50 px-2 py-1 rounded-md text-xs">
+                            <X className="h-3 w-3" />
+                            <span>Disconnected</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center space-x-1">
                     {isOnline.role === "mentor" && (
@@ -1555,13 +2593,35 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                       </Button>
                     </div>
                   )}
+
                   <div className="flex items-center gap-1 sm:gap-2 bg-gray-50 rounded-full p-1 sm:p-2 pl-3 sm:pl-4 pr-1 border border-gray-200 hover:border-blue-200 transition-colors shadow-sm">
                     <Input
                       ref={inputRef}
                       placeholder="Type your message here..."
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setNewMessage(value);
+
+                        // 🎯 IMPROVED: More responsive typing detection
+                        if (value.length > 0) {
+                          if (!isTyping) {
+                            handleTypingStart();
+                          } else {
+                            // Reset timeout if still typing
+                            if (typingTimeoutRef.current) {
+                              clearTimeout(typingTimeoutRef.current);
+                            }
+                            typingTimeoutRef.current = setTimeout(() => {
+                              handleTypingStop();
+                            }, 3000);
+                          }
+                        } else if (value.length === 0 && isTyping) {
+                          handleTypingStop();
+                        }
+                      }}
                       onKeyPress={handleKeyPress}
+                      onFocus={handleInputFocus} // ✅ NEW: Detect when user starts typing
                       className="flex-1 border-none bg-transparent text-gray-700 placeholder:text-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm sm:text-base"
                       disabled={
                         isRecording ||

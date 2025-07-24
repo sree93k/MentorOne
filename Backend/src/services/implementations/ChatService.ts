@@ -1,5 +1,6 @@
 import ChatRepository from "../../repositories/implementations/ChatRepository";
 import BookingRepository from "../../repositories/implementations/BookingRepository";
+import MessageRepository from "../../repositories/implementations/MessageRepository";
 import { IChatService } from "../interface/IChatService";
 import { createClient } from "@redis/client";
 import { EChat } from "../../entities/chatEntity";
@@ -7,11 +8,13 @@ import { EChat } from "../../entities/chatEntity";
 export default class ChatService implements IChatService {
   private chatRepository: ChatRepository;
   private bookingRepository: BookingRepository;
+  private messageRepository: MessageRepository;
   private redisClient;
 
   constructor() {
     this.chatRepository = new ChatRepository();
     this.bookingRepository = new BookingRepository();
+    this.messageRepository = new MessageRepository();
     this.redisClient = createClient({ url: process.env.REDIS_URL });
     this.redisClient.connect().catch((err) => {
       console.error("ChatService: Redis connection error:", err.message);
@@ -97,6 +100,36 @@ export default class ChatService implements IChatService {
     return chats;
   }
 
+  // NEW: Get unread chat count for a specific role
+  async getUnreadChatCount(
+    userId: string,
+    role: "mentee" | "mentor"
+  ): Promise<number> {
+    try {
+      console.log("ChatService: getUnreadChatCount start", { userId, role });
+
+      const unreadCount = await this.chatRepository.getUnreadChatCountByRole(
+        userId,
+        role
+      );
+
+      console.log("ChatService: getUnreadChatCount result", {
+        userId,
+        role,
+        unreadCount,
+      });
+
+      return unreadCount;
+    } catch (error: any) {
+      console.error("ChatService: getUnreadChatCount error", {
+        userId,
+        role,
+        error: error.message,
+      });
+      throw new Error("Failed to get unread chat count: " + error.message);
+    }
+  }
+
   async getUserOnlineStatus(userId: string): Promise<boolean> {
     try {
       console.log("ChatService: getUserOnlineStatus start", { userId });
@@ -172,6 +205,30 @@ export default class ChatService implements IChatService {
         error: error.message,
       });
       throw new Error("Failed to check findChatByIdAndUpdate", error.message);
+    }
+  }
+  async debugUserUnreadCounts(userId: string): Promise<void> {
+    try {
+      console.log("🔍 ChatService: debugUserUnreadCounts start", { userId });
+
+      // Debug both mentor and mentee roles
+      for (const role of ["mentor", "mentee"] as const) {
+        console.log(`\n🔍 === DEBUGGING ${role.toUpperCase()} ROLE ===`);
+
+        await this.chatRepository.debugUnreadCountIssues(userId, role);
+
+        const officialCount = await this.getUnreadChatCount(userId, role);
+        console.log(`🔍 Official unread count for ${role}:`, officialCount);
+      }
+
+      console.log("🔍 ChatService: debugUserUnreadCounts completed", {
+        userId,
+      });
+    } catch (error: any) {
+      console.error("🔍 ChatService: debugUserUnreadCounts error", {
+        error: error.message,
+        userId,
+      });
     }
   }
 }
