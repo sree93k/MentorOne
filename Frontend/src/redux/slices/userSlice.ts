@@ -1,152 +1,3 @@
-// import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-// interface User {
-//   _id: string;
-//   email: string;
-//   firstName: string;
-//   lastName: string;
-//   role: "mentor" | "mentee";
-//   profilePicture: string; // This will now store S3 key or signed URL
-//   phone: string;
-//   passwordDate: string;
-//   activated?: boolean;
-//   mentorActivated?: boolean;
-// }
-
-// interface InitialState {
-//   _id: string;
-//   user: User | null;
-//   loading: boolean;
-//   error: string | null;
-//   isAuthenticated: boolean;
-//   activated: boolean;
-//   mentorActivated?: boolean;
-//   accessToken: string;
-//   currentTab: string;
-//   formData: object;
-//   dashboard: string;
-//   isOnline: { status: boolean; role: "mentor" | "mentee" | null };
-//   isApproved: string;
-//   reason: string;
-//   pageTitle: string;
-//   tempData: object;
-//   // Add signed URL cache for profile picture
-//   profilePictureSignedUrl?: string;
-// }
-
-// const initialState: InitialState = {
-//   _id: "",
-//   user: null,
-//   loading: false,
-//   error: null,
-//   isAuthenticated: false,
-//   activated: false,
-//   mentorActivated: false,
-//   accessToken: "",
-//   currentTab: "",
-//   formData: {},
-//   dashboard: "",
-//   isOnline: { status: false, role: null },
-//   isApproved: "",
-//   reason: "",
-//   pageTitle: "User Panel",
-//   tempData: {},
-//   profilePictureSignedUrl: undefined,
-// };
-
-// const userSlice = createSlice({
-//   name: "user",
-//   initialState,
-//   reducers: {
-//     setUser(state, action) {
-//       state.user = action.payload;
-//       if (action.payload && action.payload.activated !== undefined) {
-//         state.activated = action.payload.activated;
-//       }
-//       if (action.payload && action.payload.currentTab !== undefined) {
-//         state.currentTab = action.payload.currentTab;
-//       }
-//       // Clear signed URL when user changes
-//       state.profilePictureSignedUrl = undefined;
-//     },
-//     setLoading(state, action) {
-//       state.loading = action.payload;
-//     },
-//     setError(state, action) {
-//       state.error = action.payload;
-//     },
-//     setIsAuthenticated(state, action) {
-//       state.isAuthenticated = action.payload;
-//     },
-//     setActivated(state, action) {
-//       state.activated = action.payload;
-//     },
-//     setMentorActivated(state, action) {
-//       state.mentorActivated = action.payload;
-//     },
-//     setCurrentTab(state, action) {
-//       state.currentTab = action.payload;
-//     },
-//     setAccessToken(state, action) {
-//       state.accessToken = action.payload;
-//     },
-//     setFormData(state, action) {
-//       state.formData = action.payload;
-//     },
-//     setDashboard(state, action) {
-//       state.dashboard = action.payload;
-//     },
-//     setOnlineStatus(
-//       state,
-//       action: PayloadAction<{
-//         status: boolean;
-//         role: "mentor" | "mentee" | null;
-//       }>
-//     ) {
-//       state.isOnline = action.payload;
-//     },
-//     setIsApproved(state, action) {
-//       state.isApproved = action.payload;
-//     },
-//     setReason(state, action) {
-//       state.reason = action.payload;
-//     },
-//     // New action to update profile picture signed URL
-//     setProfilePictureSignedUrl(state, action) {
-//       state.profilePictureSignedUrl = action.payload;
-//     },
-//     // Action to update profile picture (both in user and clear signed URL)
-//     updateProfilePicture(state, action) {
-//       if (state.user) {
-//         state.user.profilePicture = action.payload;
-//       }
-//       // Clear signed URL so it gets regenerated
-//       state.profilePictureSignedUrl = undefined;
-//     },
-//     resetUser: () => initialState,
-//   },
-// });
-
-// export const {
-//   setUser,
-//   setLoading,
-//   setError,
-//   setIsAuthenticated,
-//   setActivated,
-//   setMentorActivated,
-//   setCurrentTab,
-//   setAccessToken,
-//   setFormData,
-//   setDashboard,
-//   setOnlineStatus,
-//   setIsApproved,
-//   setReason,
-//   setProfilePictureSignedUrl,
-//   updateProfilePicture,
-//   resetUser,
-// } = userSlice.actions;
-
-// export default userSlice.reducer;
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface User {
@@ -168,6 +19,13 @@ interface NotificationCounts {
   lastFetched: string | null;
 }
 
+// NEW: Chat notification counts interface
+interface ChatNotificationCounts {
+  mentorUnreadChats: number;
+  menteeUnreadChats: number;
+  lastUpdated: string | null;
+}
+
 interface InitialState {
   _id: string;
   user: User | null;
@@ -186,8 +44,9 @@ interface InitialState {
   pageTitle: string;
   tempData: object;
   profilePictureSignedUrl?: string;
-  // NEW: Notification state
   notifications: NotificationCounts;
+  // NEW: Chat notification state
+  chatNotifications: ChatNotificationCounts;
 }
 
 const initialState: InitialState = {
@@ -208,11 +67,16 @@ const initialState: InitialState = {
   pageTitle: "User Panel",
   tempData: {},
   profilePictureSignedUrl: undefined,
-  // NEW: Initial notification state
   notifications: {
     mentorCount: 0,
     menteeCount: 0,
     lastFetched: null,
+  },
+  // NEW: Initial chat notification state
+  chatNotifications: {
+    mentorUnreadChats: 0,
+    menteeUnreadChats: 0,
+    lastUpdated: null,
   },
 };
 
@@ -281,7 +145,7 @@ const userSlice = createSlice({
       }
       state.profilePictureSignedUrl = undefined;
     },
-    // NEW: Notification actions
+    // Existing notification actions
     setNotificationCounts(
       state,
       action: PayloadAction<{ mentorCount: number; menteeCount: number }>
@@ -331,6 +195,63 @@ const userSlice = createSlice({
         );
       }
     },
+
+    // NEW: Chat notification actions
+    setChatUnreadCounts(
+      state,
+      action: PayloadAction<{
+        mentorUnreadChats: number;
+        menteeUnreadChats: number;
+      }>
+    ) {
+      state.chatNotifications.mentorUnreadChats =
+        action.payload.mentorUnreadChats;
+      state.chatNotifications.menteeUnreadChats =
+        action.payload.menteeUnreadChats;
+      state.chatNotifications.lastUpdated = new Date().toISOString();
+    },
+    incrementChatUnread(
+      state,
+      action: PayloadAction<{ role: "mentor" | "mentee" }>
+    ) {
+      const { role } = action.payload;
+      if (role === "mentor") {
+        state.chatNotifications.mentorUnreadChats += 1;
+      } else if (role === "mentee") {
+        state.chatNotifications.menteeUnreadChats += 1;
+      }
+      state.chatNotifications.lastUpdated = new Date().toISOString();
+    },
+    decrementChatUnread(
+      state,
+      action: PayloadAction<{ role: "mentor" | "mentee" }>
+    ) {
+      const { role } = action.payload;
+      if (role === "mentor") {
+        state.chatNotifications.mentorUnreadChats = Math.max(
+          0,
+          state.chatNotifications.mentorUnreadChats - 1
+        );
+      } else if (role === "mentee") {
+        state.chatNotifications.menteeUnreadChats = Math.max(
+          0,
+          state.chatNotifications.menteeUnreadChats - 1
+        );
+      }
+      state.chatNotifications.lastUpdated = new Date().toISOString();
+    },
+    clearChatUnread(
+      state,
+      action: PayloadAction<{ role: "mentor" | "mentee" }>
+    ) {
+      const { role } = action.payload;
+      if (role === "mentor") {
+        state.chatNotifications.mentorUnreadChats = 0;
+      } else if (role === "mentee") {
+        state.chatNotifications.menteeUnreadChats = 0;
+      }
+      state.chatNotifications.lastUpdated = new Date().toISOString();
+    },
     resetUser: () => initialState,
   },
 });
@@ -351,11 +272,16 @@ export const {
   setReason,
   setProfilePictureSignedUrl,
   updateProfilePicture,
-  // NEW: Export notification actions
+  // Existing notification actions
   setNotificationCounts,
   incrementNotificationCount,
   clearNotificationCount,
   decrementNotificationCount,
+  // NEW: Export chat notification actions
+  setChatUnreadCounts,
+  incrementChatUnread,
+  decrementChatUnread,
+  clearChatUnread,
   resetUser,
 } = userSlice.actions;
 

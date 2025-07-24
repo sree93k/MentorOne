@@ -2,8 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import ChatService from "../../services/implementations/ChatService";
+import MessageService from "../../services/implementations/MessageService";
 import VideoCallService from "../../services/implementations/VideoCallService";
 import { IChatService } from "../../services/interface/IChatService";
+import { IMessageService } from "../../services/interface/IMessageService";
 import { IVideoCallService } from "../../services/interface/IVideoCallService";
 import { HttpStatus } from "../../constants/HttpStatus";
 
@@ -26,10 +28,12 @@ interface ChatUserResponse {
 
 class SocketController {
   private chatService: IChatService;
+  private messageService: IMessageService;
   private videoCallService: IVideoCallService;
 
   constructor() {
     this.chatService = new ChatService();
+    this.messageService = new MessageService();
     this.videoCallService = new VideoCallService();
   }
 
@@ -151,6 +155,141 @@ class SocketController {
         );
     } catch (error) {
       console.error("Error in getChatUsers:", error);
+      next(error);
+    }
+  };
+
+  // NEW: Get chat unread counts
+  public getChatUnreadCounts = async (
+    req: Request & { user?: AuthUser },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User ID is required");
+      }
+
+      console.log("SocketController getChatUnreadCounts start", { userId });
+
+      const [mentorUnreadChats, menteeUnreadChats] = await Promise.all([
+        this.chatService.getUnreadChatCount(userId, "mentor"),
+        this.chatService.getUnreadChatCount(userId, "mentee"),
+      ]);
+
+      console.log("SocketController getChatUnreadCounts result", {
+        userId,
+        mentorUnreadChats,
+        menteeUnreadChats,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { mentorUnreadChats, menteeUnreadChats },
+            "Chat unread counts fetched successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in getChatUnreadCounts:", error);
+      next(error);
+    }
+  };
+
+  // ✅ NEW: Mark specific chat as read
+  public markChatAsRead = async (
+    req: Request & { user?: AuthUser },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { chatId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User not authenticated");
+      }
+
+      if (!chatId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Chat ID is required");
+      }
+
+      console.log("SocketController markChatAsRead start", { chatId, userId });
+
+      const markedCount = await this.messageService.markMessagesAsRead(
+        chatId,
+        userId
+      );
+
+      console.log("SocketController markChatAsRead result", {
+        chatId,
+        userId,
+        markedCount,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { markedCount },
+            "Messages marked as read successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in markChatAsRead:", error);
+      next(error);
+    }
+  };
+
+  // ✅ NEW: Get unread count for specific chat
+  public getChatUnreadMessageCount = async (
+    req: Request & { user?: AuthUser },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { chatId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        throw new ApiError(HttpStatus.UNAUTHORIZED, "User not authenticated");
+      }
+
+      if (!chatId) {
+        throw new ApiError(HttpStatus.BAD_REQUEST, "Chat ID is required");
+      }
+
+      console.log("SocketController getChatUnreadMessageCount start", {
+        chatId,
+        userId,
+      });
+
+      const unreadCount = await this.messageService.getUnreadMessageCount(
+        chatId,
+        userId
+      );
+
+      console.log("SocketController getChatUnreadMessageCount result", {
+        chatId,
+        userId,
+        unreadCount,
+      });
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            { unreadCount },
+            "Unread count retrieved successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in getChatUnreadMessageCount:", error);
       next(error);
     }
   };

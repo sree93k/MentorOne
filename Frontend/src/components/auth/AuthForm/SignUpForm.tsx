@@ -198,6 +198,7 @@ export function SignupForm({
                       value={username}
                       onChange={handleUsernameChange}
                       className="pl-10"
+                      placeholder="Enter your fullname"
                     />
                   </div>
                   {errors.username && (
@@ -216,6 +217,7 @@ export function SignupForm({
                       value={email}
                       onChange={handleChange("email")}
                       className="pl-10"
+                      placeholder="e.g., username@gmail.com"
                     />
                   </div>
                   {errors.email && (
@@ -265,6 +267,7 @@ export function SignupForm({
                       value={phone}
                       onChange={handleChange("phone")}
                       className="pl-10"
+                      placeholder="Enter your phone number"
                     />
                   </div>
                   {errors.phone && (

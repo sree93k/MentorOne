@@ -1,20 +1,19 @@
-import { Document, ObjectId } from "mongoose";
-
-export interface ChatRole {
-  userId: ObjectId;
-  role: "mentee" | "mentor";
-}
+import { Document, Types } from "mongoose";
 
 export interface EChat extends Document {
-  _id: ObjectId;
+  _id: Types.ObjectId;
   chatName?: string;
   isGroupChat: boolean;
-  users: ObjectId[];
-  roles: ChatRole[];
-  bookingId?: ObjectId;
-  latestMessage?: ObjectId;
-  groupAdmin?: ObjectId;
-  isActive: Boolean;
+  users: Types.ObjectId[];
+  roles: Array<{
+    userId: Types.ObjectId;
+    role: "mentee" | "mentor";
+  }>;
+  bookingId?: Types.ObjectId;
+  latestMessage?: Types.ObjectId;
+  groupAdmin?: Types.ObjectId;
+  isActive: boolean;
+  otherUserId?: string; // Added for frontend use
   createdAt: Date;
   updatedAt: Date;
 }

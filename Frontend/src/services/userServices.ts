@@ -6,6 +6,7 @@ import {
 } from "@/types/user";
 import SocketService from "./socketService";
 import toast from "react-hot-toast";
+import { io, Socket } from "socket.io-client";
 
 const api = userAxiosInstance;
 
@@ -562,20 +563,6 @@ export const markNotificationAsRead = async (
   }
 };
 
-// ✅ CHANGED: Initialize Notifications - Updated for cookie auth
-// export const initializeNotifications = (
-//   userId: string,
-//   callback: (notification: Notification) => void
-// ): void => {
-//   try {
-//     SocketService.connect("/notifications", userId);
-//     SocketService.onNewNotification(callback);
-//   } catch (error: any) {
-//     console.error("Failed to initialize notifications:", error.message);
-//     toast.error("Unable to connect to notifications service");
-//     throw error;
-//   }
-// };
 export const initializeNotifications = (
   userId: string,
   callback: (notification: Notification) => void
@@ -732,33 +719,6 @@ export const getRoleSpecificNotifications = async (
   }
 };
 
-// UPDATED: Initialize Notifications with count sync
-// export const initializeNotificationsWithCounts = (
-//   userId: string,
-//   onNewNotification: (notification: Notification) => void,
-//   onCountUpdate: (data: {
-//     role: "mentor" | "mentee";
-//     increment: number;
-//   }) => void
-// ): void => {
-//   try {
-//     SocketService.connect("/notifications", userId);
-//     SocketService.onNewNotification(onNewNotification);
-//     SocketService.onNotificationCountUpdate(onCountUpdate);
-
-//     // Get initial counts
-//     SocketService.getNotificationCounts((response: any) => {
-//       if (response.success) {
-//         // This will be handled in the component
-//         console.log("Initial notification counts:", response.counts);
-//       }
-//     });
-//   } catch (error: any) {
-//     console.error("Failed to initialize notifications:", error.message);
-//     toast.error("Unable to connect to notifications service");
-//     throw error;
-//   }
-// };
 export const initializeNotificationsWithCounts = (
   userId: string,
   onNewNotification: (notification: any) => void,
@@ -830,3 +790,278 @@ export const clearNotificationCountForRole = (
     );
   }
 };
+
+// Add these new functions to your existing userServices.ts file
+
+// NEW: Get chat unread counts
+export const getChatUnreadCounts = async (): Promise<{
+  mentorUnreadChats: number;
+  menteeUnreadChats: number;
+}> => {
+  try {
+    console.log("📊 userServices: Fetching chat unread counts");
+    const response = await api.get("/user/chat/unread-counts");
+    console.log("📊 userServices: Chat unread counts response:", response.data);
+
+    // Ensure we return valid numbers
+    const data = response.data.data;
+    return {
+      mentorUnreadChats:
+        typeof data.mentorUnreadChats === "number" ? data.mentorUnreadChats : 0,
+      menteeUnreadChats:
+        typeof data.menteeUnreadChats === "number" ? data.menteeUnreadChats : 0,
+    };
+  } catch (error: any) {
+    console.error("📊 userServices: Error fetching chat unread counts:", error);
+
+    // Return zero counts if there's an error (don't throw)
+    return {
+      mentorUnreadChats: 0,
+      menteeUnreadChats: 0,
+    };
+  }
+};
+
+// NEW: Initialize chat notifications with socket
+export const initializeChatNotifications = (
+  userId: string,
+  onChatNotificationUpdate: (data: {
+    userId: string;
+    role: "mentor" | "mentee";
+    count: number;
+    chatId: string;
+    senderId?: string;
+  }) => void
+): Socket | null => {
+  try {
+    console.log(
+      "💬 userServices: Initializing chat notifications for user:",
+      userId
+    );
+
+    // Check authentication
+    const isAuth = checkAuthStatus();
+    if (!isAuth) {
+      console.log("❌ userServices: Not authenticated for chat notifications");
+      return null;
+    }
+
+    // Connect to chat socket
+    const socket = io(`${import.meta.env.VITE_SOCKET_URL}/chat`, {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      withCredentials: true,
+    });
+
+    socket.on("connect", () => {
+      console.log(
+        "💬 userServices: Connected to chat socket for notifications"
+      );
+    });
+
+    socket.on("chatNotificationUpdate", (data) => {
+      console.log("💬 userServices: Received chat notification update:", data);
+      onChatNotificationUpdate(data);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("💬 userServices: Chat socket connection error:", error);
+    });
+
+    console.log("✅ userServices: Chat notifications initialized");
+    return socket;
+  } catch (error: any) {
+    console.error(
+      "❌ userServices: Failed to initialize chat notifications:",
+      error.message
+    );
+    return null;
+  }
+};
+
+// ✅ NEW: Clean up chat notifications
+export const cleanupChatNotifications = (socket: Socket | null): void => {
+  if (socket) {
+    console.log("🧹 userServices: Cleaning up chat notifications");
+    try {
+      socket.off("chatNotificationUpdate");
+      socket.disconnect();
+      console.log("✅ userServices: Chat notifications cleaned up");
+    } catch (error: any) {
+      console.error(
+        "❌ userServices: Error cleaning up chat notifications:",
+        error
+      );
+    }
+  }
+};
+
+// ✅ NEW: Check authentication status (FRONTEND FUNCTION)
+export const checkAuthStatus = (): boolean => {
+  console.log("🔍 userServices: Checking authentication");
+  console.log("🔍 All cookies:", document.cookie);
+
+  // Check the readable cookie
+  const isAuthenticated = getCookie("isAuthenticated");
+  console.log("🔍 isAuthenticated cookie value:", isAuthenticated);
+
+  const result = isAuthenticated === "true";
+  console.log("🔍 checkAuthStatus result:", result);
+
+  return result;
+};
+
+const getCookie = (name: string): string | null => {
+  if (typeof document === "undefined") {
+    console.log("🔍 getCookie: Running in server environment");
+    return null;
+  }
+
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+
+  if (parts.length === 2) {
+    const cookieValue = parts.pop()?.split(";").shift();
+    console.log(`🔍 getCookie: Found ${name} =`, cookieValue);
+    return cookieValue || null;
+  }
+
+  console.log(`🔍 getCookie: ${name} not found`);
+  return null;
+};
+
+// ✅ NEW: Mark chat as read (for when user opens a specific chat)
+export const markChatAsRead = async (chatId: string): Promise<boolean> => {
+  try {
+    console.log("💬 userServices: Marking chat as read:", chatId);
+
+    const response = await api.post(
+      `/user/chat/${chatId}/mark-read`,
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.data.success) {
+      console.log("✅ userServices: Chat marked as read successfully");
+      return true;
+    } else {
+      console.error(
+        "❌ userServices: Failed to mark chat as read:",
+        response.data.message
+      );
+      return false;
+    }
+  } catch (error: any) {
+    console.error("❌ userServices: Error marking chat as read:", error);
+    return false;
+  }
+};
+
+// ✅ NEW: Get unread message count for a specific chat
+export const getChatUnreadMessageCount = async (
+  chatId: string
+): Promise<number> => {
+  try {
+    console.log("💬 userServices: Getting unread count for chat:", chatId);
+
+    const response = await api.get(`/user/chat/${chatId}/unread-count`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const count = response.data.data.unreadCount || 0;
+    console.log("💬 userServices: Unread count for chat:", chatId, "=", count);
+    return count;
+  } catch (error: any) {
+    console.error("❌ userServices: Error getting chat unread count:", error);
+    return 0;
+  }
+};
+
+export class ChatNotificationManager {
+  private socket: Socket | null = null;
+  private userId: string | null = null;
+  private onUpdateCallback:
+    | ((data: {
+        userId: string;
+        role: "mentor" | "mentee";
+        count: number;
+        chatId: string;
+        senderId?: string;
+      }) => void)
+    | null = null;
+
+  constructor() {
+    console.log("💬 ChatNotificationManager: Initialized");
+  }
+
+  // Initialize with user ID and callback
+  initialize(
+    userId: string,
+    onUpdate: (data: {
+      userId: string;
+      role: "mentor" | "mentee";
+      count: number;
+      chatId: string;
+      senderId?: string;
+    }) => void
+  ): boolean {
+    try {
+      console.log("💬 ChatNotificationManager: Initializing for user:", userId);
+
+      this.userId = userId;
+      this.onUpdateCallback = onUpdate;
+
+      // Initialize socket connection
+      this.socket = initializeChatNotifications(userId, onUpdate);
+
+      return this.socket !== null;
+    } catch (error: any) {
+      console.error(
+        "❌ ChatNotificationManager: Initialization failed:",
+        error
+      );
+      return false;
+    }
+  }
+
+  // Check if connected
+  isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
+  // Reconnect if disconnected
+  reconnect(): void {
+    if (this.userId && this.onUpdateCallback) {
+      console.log("🔄 ChatNotificationManager: Reconnecting...");
+      this.cleanup();
+      this.initialize(this.userId, this.onUpdateCallback);
+    }
+  }
+
+  // Clean up connections
+  cleanup(): void {
+    console.log("🧹 ChatNotificationManager: Cleaning up");
+    if (this.socket) {
+      cleanupChatNotifications(this.socket);
+      this.socket = null;
+    }
+    this.userId = null;
+    this.onUpdateCallback = null;
+  }
+
+  // Get current socket instance
+  getSocket(): Socket | null {
+    return this.socket;
+  }
+}
+
+// ✅ Export singleton instance
+export const chatNotificationManager = new ChatNotificationManager();

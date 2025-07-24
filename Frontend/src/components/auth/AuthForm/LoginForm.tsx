@@ -263,7 +263,7 @@ export function LoginForm({
                     value={email}
                     onChange={handleChange("email")}
                     className="pl-10"
-                    placeholder="e.g., sreekuttan1234@gmail.com"
+                    placeholder="e.g., username@gmail.com"
                   />
                 </div>
               </div>
