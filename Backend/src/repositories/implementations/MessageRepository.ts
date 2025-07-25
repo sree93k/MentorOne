@@ -15,20 +15,20 @@ export default class MessageRepository
   // 🎯 ENHANCED: Create message with proper status and logging
   async create(data: Partial<EMessage>): Promise<EMessage> {
     try {
-      console.log("📤 MessageRepository: create start", {
-        senderId: data.sender,
-        chatId: data.chat,
-        type: data.type,
-        status: data.status,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("📤 MessageRepository: create start", {
+      //   senderId: data.sender,
+      //   chatId: data.chat,
+      //   type: data.type,
+      //   status: data.status,
+      //   timestamp: new Date().toISOString(),
+      // });
 
-      const message = new Message({
-        ...data,
-        status: data.status || "sent", // 🎯 INDUSTRY STANDARD: Default to "sent"
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      // const message = new Message({
+      //   ...data,
+      //   status: data.status || "sent", // 🎯 INDUSTRY STANDARD: Default to "sent"
+      //   createdAt: new Date(),
+      //   updatedAt: new Date(),
+      // });
 
       const savedMessage = await message.save();
 
@@ -38,20 +38,20 @@ export default class MessageRepository
         "firstName lastName profilePicture"
       );
 
-      console.log("📤 MessageRepository: create completed", {
-        messageId: savedMessage._id,
-        status: savedMessage.status,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("📤 MessageRepository: create completed", {
+      //   messageId: savedMessage._id,
+      //   status: savedMessage.status,
+      //   timestamp: new Date().toISOString(),
+      // });
 
       return savedMessage as EMessage;
     } catch (error: any) {
-      console.error("📤 MessageRepository: create error", {
-        error: error.message,
-        senderId: data.sender,
-        chatId: data.chat,
-        timestamp: new Date().toISOString(),
-      });
+      // console.error("📤 MessageRepository: create error", {
+      //   error: error.message,
+      //   senderId: data.sender,
+      //   chatId: data.chat,
+      //   timestamp: new Date().toISOString(),
+      // });
       throw new Error("Failed to create message: " + error.message);
     }
   }
@@ -125,10 +125,10 @@ export default class MessageRepository
   // }
   async findByChatId(chatId: string): Promise<EMessage[]> {
     try {
-      console.log("📨 MessageRepository: findByChatId start", {
-        chatId,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("📨 MessageRepository: findByChatId start", {
+      //   chatId,
+      //   timestamp: new Date().toISOString(),
+      // });
 
       const messages = await Message.find({ chat: chatId })
         .populate("sender", "firstName lastName profilePicture")
@@ -146,11 +146,11 @@ export default class MessageRepository
           : "sent";
 
         if (dbStatus !== finalStatus) {
-          console.warn("📨 Invalid message status detected:", {
-            messageId: msg._id,
-            invalidStatus: dbStatus,
-            correctedTo: finalStatus,
-          });
+          // console.warn("📨 Invalid message status detected:", {
+          //   messageId: msg._id,
+          //   invalidStatus: dbStatus,
+          //   correctedTo: finalStatus,
+          // });
         }
 
         return {
@@ -159,15 +159,15 @@ export default class MessageRepository
         };
       });
 
-      console.log("📨 MessageRepository: findByChatId completed", {
-        chatId,
-        messageCount: messagesWithStatus.length,
-        statusBreakdown: messagesWithStatus.reduce((acc: any, msg: any) => {
-          acc[msg.status] = (acc[msg.status] || 0) + 1;
-          return acc;
-        }, {}),
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("📨 MessageRepository: findByChatId completed", {
+      //   chatId,
+      //   messageCount: messagesWithStatus.length,
+      //   statusBreakdown: messagesWithStatus.reduce((acc: any, msg: any) => {
+      //     acc[msg.status] = (acc[msg.status] || 0) + 1;
+      //     return acc;
+      //   }, {}),
+      //   timestamp: new Date().toISOString(),
+      // });
 
       return messagesWithStatus as EMessage[];
     } catch (error: any) {
@@ -209,13 +209,13 @@ export default class MessageRepository
         }
       );
 
-      console.log("🎯 MessageRepository: markAsReadByUser completed", {
-        chatId,
-        userId,
-        modifiedCount: result.modifiedCount,
-        matchedCount: result.matchedCount,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("🎯 MessageRepository: markAsReadByUser completed", {
+      //   chatId,
+      //   userId,
+      //   modifiedCount: result.modifiedCount,
+      //   matchedCount: result.matchedCount,
+      //   timestamp: new Date().toISOString(),
+      // });
 
       return result.modifiedCount;
     } catch (error: any) {
@@ -959,23 +959,23 @@ export default class MessageRepository
         status: "sent", // Only update sent messages
       }).select("_id sender status");
 
-      console.log(
-        "📨 MessageRepository: Messages found to update to delivered",
-        {
-          chatId,
-          recipientId,
-          messageCount: messagesToUpdate.length,
-          messageIds: messagesToUpdate.map((m) => m._id),
-          timestamp: new Date().toISOString(),
-        }
-      );
+      // console.log(
+      //   "📨 MessageRepository: Messages found to update to delivered",
+      //   {
+      //     chatId,
+      //     recipientId,
+      //     messageCount: messagesToUpdate.length,
+      //     messageIds: messagesToUpdate.map((m) => m._id),
+      //     timestamp: new Date().toISOString(),
+      //   }
+      // );
 
       if (messagesToUpdate.length === 0) {
-        console.log("📨 MessageRepository: No sent messages to update", {
-          chatId,
-          recipientId,
-          timestamp: new Date().toISOString(),
-        });
+        // console.log("📨 MessageRepository: No sent messages to update", {
+        //   chatId,
+        //   recipientId,
+        //   timestamp: new Date().toISOString(),
+        // });
         return 0;
       }
 
@@ -1003,31 +1003,31 @@ export default class MessageRepository
         (msg) => msg.status === "delivered"
       );
 
-      console.log("📨 MessageRepository: Delivery update verification", {
-        chatId,
-        recipientId,
-        expectedUpdates: messagesToUpdate.length,
-        actualUpdates: result.modifiedCount,
-        verifiedUpdates: successfullyUpdated.length,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("📨 MessageRepository: Delivery update verification", {
+      //   chatId,
+      //   recipientId,
+      //   expectedUpdates: messagesToUpdate.length,
+      //   actualUpdates: result.modifiedCount,
+      //   verifiedUpdates: successfullyUpdated.length,
+      //   timestamp: new Date().toISOString(),
+      // });
 
-      console.log("📨 MessageRepository: bulkUpdateSentToDelivered completed", {
-        chatId,
-        recipientId,
-        modifiedCount: result.modifiedCount,
-        timestamp: new Date().toISOString(),
-      });
+      // console.log("📨 MessageRepository: bulkUpdateSentToDelivered completed", {
+      //   chatId,
+      //   recipientId,
+      //   modifiedCount: result.modifiedCount,
+      //   timestamp: new Date().toISOString(),
+      // });
 
       return result.modifiedCount;
     } catch (error: any) {
-      console.error("📨 MessageRepository: bulkUpdateSentToDelivered error", {
-        error: error.message,
-        stack: error.stack,
-        chatId,
-        recipientId,
-        timestamp: new Date().toISOString(),
-      });
+      // console.error("📨 MessageRepository: bulkUpdateSentToDelivered error", {
+      //   error: error.message,
+      //   stack: error.stack,
+      //   chatId,
+      //   recipientId,
+      //   timestamp: new Date().toISOString(),
+      // });
       throw new Error("Failed to bulk update to delivered: " + error.message);
     }
   }

@@ -24,6 +24,8 @@ import toast, { Toaster } from "react-hot-toast";
 import Notification from "../users/Notification";
 import WelcomeModalForm1 from "./MentorWelcomeModal";
 import SuccessStep from "@/components/mentor/WelcomeComponents/SuccessStep";
+import SocketService from "@/services/socketService";
+import { io } from "socket.io-client";
 import {
   setError,
   setUser,
@@ -38,6 +40,9 @@ import {
   incrementNotificationCount,
   clearNotificationCount,
   decrementNotificationCount,
+  clearUnseenNotificationCount,
+  setUnseenNotificationCounts,
+  markAllNotificationsAsRead, // ✅ ADD THIS
 } from "@/redux/slices/userSlice";
 import {
   uploadMentorWelcomeForm,
@@ -53,8 +58,8 @@ import NotificationBadge from "@/components/users/NotificationBadge";
 import {
   initializeNotificationsWithCounts,
   cleanupNotifications,
-  clearNotificationCountForRole,
-  getNotificationCounts,
+  markAllNotificationsAsSeen,
+  getUnseenNotificationCounts,
 } from "@/services/userServices";
 
 interface WelcomeFormData {
@@ -190,8 +195,8 @@ const MentorSidebar: React.FC = () => {
   // ✅ UPDATED: Access notification counts from Redux
   const { notifications } = useSelector((state: RootState) => state.user);
   const currentRole = "mentor"; // This sidebar is for mentors
-  const notificationCount = notifications.mentorCount; // Dynamic count from Redux
-
+  // const notificationCount = notifications.mentorCount; // Dynamic count from Redux
+  const notificationCount = notifications.mentorUnseenCount;
   // Approval checking useEffect (keep existing logic)
   useEffect(() => {
     const checkApprovalStatus = async () => {
@@ -278,69 +283,180 @@ const MentorSidebar: React.FC = () => {
   }, [isAuthenticated, dispatch]);
 
   // ✅ UPDATED: Initialize notifications and sync counts
+  // useEffect(() => {
+  //   if (!isAuthenticated || !user?._id) return;
+
+  //   console.log("🔔 Initializing mentor notifications for user:", user._id);
+  //   cleanupNotifications();
+  //   const fetchInitialCounts = async () => {
+  //     try {
+  //       const counts = await getUnseenNotificationCounts();
+  //       console.log("🔍 DEBUG: Fetched counts from API:", counts); // ✅ ADD THIS
+  //       dispatch(setUnseenNotificationCounts(counts));
+  //       console.log(
+  //         "🔍 DEBUG: Current Redux state after dispatch:",
+  //         notifications
+  //       ); // ✅ ADD THIS
+  //     } catch (error) {
+  //       console.error(
+  //         "Failed to fetch initial unseen notification counts:",
+  //         error
+  //       );
+  //     }
+  //   };
+
+  //   fetchInitialCounts();
+
+  //   // Initialize real-time notifications
+  //   const handleNewNotification = (notification: any) => {
+  //     console.log("🔔 New notification received:", notification);
+  //     console.log(
+  //       "🔍 DEBUG: Current mentor unseen count before increment:",
+  //       notifications.mentorUnseenCount
+  //     ); // ✅ ADD THIS
+
+  //     if (
+  //       notification.targetRole === "mentor" ||
+  //       notification.targetRole === "both"
+  //     ) {
+  //       dispatch(incrementNotificationCount({ role: "mentor" }));
+  //       console.log("🔍 DEBUG: Incremented mentor count"); // ✅ ADD THIS
+  //       toast.success(
+  //         `New notification: ${notification.content || "No content"}`
+  //       );
+  //     }
+  //   };
+
+  //   const handleCountUpdate = (data: {
+  //     role: "mentor" | "mentee";
+  //     increment: number;
+  //   }) => {
+  //     console.log("📊 Count update received:", data);
+
+  //     if (data.role === "mentor") {
+  //       if (data.increment > 0) {
+  //         dispatch(incrementNotificationCount({ role: "mentor" }));
+  //       } else {
+  //         dispatch(decrementNotificationCount({ role: "mentor" }));
+  //       }
+  //     }
+  //   };
+
+  //   // try {
+  //   //   initializeNotificationsWithCounts(
+  //   //     user._id,
+  //   //     handleNewNotification,
+  //   //     handleCountUpdate
+  //   //   );
+  //   // } catch (error) {
+  //   //   console.error("Failed to initialize notifications:", error);
+  //   //   // Don't crash the app, just log the error
+  //   // }
+  //   try {
+  //     // ✅ Don't use socket for initial counts, just use the direct API call
+  //     // The fetchInitialCounts() already handles this correctly
+
+  //     // Only initialize socket for real-time updates
+  //     SocketService.connect("/notifications", user._id);
+  //     SocketService.onNewNotification(handleNewNotification);
+  //     SocketService.onNotificationCountUpdate(handleCountUpdate);
+
+  //     console.log("✅ Real-time notifications initialized successfully");
+  //   } catch (error) {
+  //     console.error("Failed to initialize notifications:", error);
+  //   }
+
+  //   return () => {
+  //     cleanupNotifications();
+  //   };
+  // }, [isAuthenticated, user?._id, dispatch]);
   useEffect(() => {
     if (!isAuthenticated || !user?._id) return;
 
-    console.log("🔔 Initializing mentor notifications for user:", user._id);
-
-    // Get initial notification counts
+    console.log("🔔 NUCLEAR: Initializing notifications for user:", user._id);
+    cleanupNotifications();
     const fetchInitialCounts = async () => {
       try {
-        const counts = await getNotificationCounts();
-        dispatch(setNotificationCounts(counts));
-        console.log("📊 Initial notification counts loaded:", counts);
+        const counts = await getUnseenNotificationCounts();
+        dispatch(setUnseenNotificationCounts(counts));
+        console.log("📊 Counts loaded:", counts);
       } catch (error) {
-        console.error("Failed to fetch initial notification counts:", error);
-        // Don't show error toast for this, just log it
+        console.error("Failed to fetch counts:", error);
       }
     };
 
     fetchInitialCounts();
 
-    // Initialize real-time notifications
-    const handleNewNotification = (notification: any) => {
-      console.log("🔔 New notification received:", notification);
+    // ✅ NUCLEAR: Direct socket connection
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
+    const socket = io(`${API_URL}/notifications`, {
+      withCredentials: true,
+      reconnection: true,
+    });
 
-      // Only increment count if notification is for mentor role
+    socket.on("connect", () => {
+      console.log("✅ NUCLEAR: Socket connected", socket.id);
+      socket.emit("join", user._id);
+    });
+
+    // socket.on("new_notification", (notification) => {
+    //   console.log("📨 NUCLEAR: New notification:", notification);
+    //   if (
+    //     notification.targetRole === currentRole || // ✅ Change currentRole to "mentor"/"mentee"
+    //     notification.targetRole === "both"
+    //   ) {
+    //     dispatch(incrementNotificationCount({ role: currentRole }));
+    //     toast.success(
+    //       `New notification: ${notification.content || "No content"}`
+    //     );
+    //   }
+    // });
+
+    // socket.on("notification_count_update", (data) => {
+    //   console.log("📊 NUCLEAR: Count update:", data);
+    //   if (data.role === currentRole) {
+    //     if (data.increment > 0) {
+    //       dispatch(incrementNotificationCount({ role: currentRole }));
+    //     } else {
+    //       dispatch(decrementNotificationCount({ role: currentRole }));
+    //     }
+    //   }
+    // });
+    let countUpdatedByNotification = false;
+
+    socket.on("new_notification", (notification) => {
+      console.log("📨 NUCLEAR: New notification:", notification);
       if (
-        notification.targetRole === "mentor" ||
+        notification.targetRole === currentRole ||
         notification.targetRole === "both"
       ) {
-        dispatch(incrementNotificationCount({ role: "mentor" }));
+        dispatch(incrementNotificationCount({ role: currentRole }));
+        countUpdatedByNotification = true; // ✅ SET FLAG
         toast.success(
           `New notification: ${notification.content || "No content"}`
         );
+
+        // Reset flag after 1 second
+        setTimeout(() => {
+          countUpdatedByNotification = false;
+        }, 1000);
       }
-    };
+    });
 
-    const handleCountUpdate = (data: {
-      role: "mentor" | "mentee";
-      increment: number;
-    }) => {
-      console.log("📊 Count update received:", data);
+    socket.on("notification_count_update", (data) => {
+      console.log("📊 NUCLEAR: Count update:", data);
 
-      if (data.role === "mentor") {
+      // ✅ ONLY UPDATE IF NOT ALREADY UPDATED BY NOTIFICATION
+      if (!countUpdatedByNotification && data.role === currentRole) {
         if (data.increment > 0) {
-          dispatch(incrementNotificationCount({ role: "mentor" }));
+          dispatch(incrementNotificationCount({ role: currentRole }));
         } else {
-          dispatch(decrementNotificationCount({ role: "mentor" }));
+          dispatch(decrementNotificationCount({ role: currentRole }));
         }
       }
-    };
-
-    try {
-      initializeNotificationsWithCounts(
-        user._id,
-        handleNewNotification,
-        handleCountUpdate
-      );
-    } catch (error) {
-      console.error("Failed to initialize notifications:", error);
-      // Don't crash the app, just log the error
-    }
-
+    });
     return () => {
-      cleanupNotifications();
+      socket.disconnect();
     };
   }, [isAuthenticated, user?._id, dispatch]);
 
@@ -405,17 +521,26 @@ const MentorSidebar: React.FC = () => {
     if (path) navigate(path);
   };
 
-  // ✅ UPDATED: Handle notification click with badge clearing
-  const openNotification = () => {
-    console.log("🔔 Opening notification panel, clearing count for mentor");
+  const openNotification = async () => {
+    console.log("🔔 Opening notification panel, marking as seen for mentor");
+    console.log(
+      "🔍 markAllNotificationsAsSeen function:",
+      typeof markAllNotificationsAsSeen
+    ); // ✅ ADD THIS DEBUG
 
-    // Clear the notification count for mentor role (Option A behavior)
-    dispatch(clearNotificationCount({ role: "mentor" }));
+    try {
+      await markAllNotificationsAsSeen("mentor");
+      console.log("✅ Successfully marked mentor notifications as seen"); // ✅ ADD THIS
 
-    // Clear count on server side (optional, for real-time sync)
-    clearNotificationCountForRole("mentor");
+      // Clear the unseen count for mentor role
+      dispatch(clearUnseenNotificationCount({ role: "mentor" }));
 
-    setIsNotification(true);
+      setIsNotification(true);
+    } catch (error) {
+      console.error("Failed to mark notifications as seen:", error);
+      // Still open the panel even if marking as seen fails
+      setIsNotification(true);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -455,12 +580,58 @@ const MentorSidebar: React.FC = () => {
 
         setDropdownOpen(false);
 
-        // Re-initialize notifications for new role after a short delay
+        // // Re-initialize notifications for new role after a short delay
+        // if (user?._id) {
+        //   setTimeout(() => {
+        //     console.log(
+        //       `🔔 MentorSidebar: Re-initializing notifications for ${newRole}`
+        //     );
+        //     initializeNotificationsWithCounts(
+        //       user._id,
+        //       (notification: any) => {
+        //         if (
+        //           notification.targetRole === newRole ||
+        //           notification.targetRole === "both"
+        //         ) {
+        //           dispatch(incrementNotificationCount({ role: newRole }));
+        //           toast.success(
+        //             `New notification: ${notification.content || "No content"}`
+        //           );
+        //         }
+        //       },
+        //       (data: { role: "mentor" | "mentee"; increment: number }) => {
+        //         if (data.role === newRole) {
+        //           if (data.increment > 0) {
+        //             dispatch(incrementNotificationCount({ role: newRole }));
+        //           } else {
+        //             dispatch(decrementNotificationCount({ role: newRole }));
+        //           }
+        //         }
+        //       }
+        //     );
+        //   }, 1000);
+        // }
         if (user?._id) {
-          setTimeout(() => {
+          setTimeout(async () => {
             console.log(
               `🔔 MentorSidebar: Re-initializing notifications for ${newRole}`
             );
+
+            // ✅ FETCH INITIAL UNSEEN COUNTS FOR NEW ROLE
+            try {
+              const counts = await getUnseenNotificationCounts();
+              dispatch(setUnseenNotificationCounts(counts));
+              console.log(
+                `📊 Initial unseen notification counts loaded for ${newRole}:`,
+                counts
+              );
+            } catch (error) {
+              console.error(
+                `Failed to fetch initial unseen notification counts for ${newRole}:`,
+                error
+              );
+            }
+
             initializeNotificationsWithCounts(
               user._id,
               (notification: any) => {

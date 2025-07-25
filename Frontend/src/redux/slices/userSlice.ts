@@ -13,13 +13,18 @@ interface User {
   mentorActivated?: boolean;
 }
 
+// ✅ UPDATED: Two-state notification system
 interface NotificationCounts {
+  // For individual notification read status (used in notification panel)
   mentorCount: number;
   menteeCount: number;
+  // ✅ NEW: For badge counts (unseen notifications)
+  mentorUnseenCount: number;
+  menteeUnseenCount: number;
   lastFetched: string | null;
 }
 
-// NEW: Chat notification counts interface
+// Chat notification counts interface (keeping existing)
 interface ChatNotificationCounts {
   mentorUnreadChats: number;
   menteeUnreadChats: number;
@@ -45,7 +50,6 @@ interface InitialState {
   tempData: object;
   profilePictureSignedUrl?: string;
   notifications: NotificationCounts;
-  // NEW: Chat notification state
   chatNotifications: ChatNotificationCounts;
 }
 
@@ -70,9 +74,11 @@ const initialState: InitialState = {
   notifications: {
     mentorCount: 0,
     menteeCount: 0,
+    // ✅ NEW: Initial unseen counts
+    mentorUnseenCount: 0,
+    menteeUnseenCount: 0,
     lastFetched: null,
   },
-  // NEW: Initial chat notification state
   chatNotifications: {
     mentorUnreadChats: 0,
     menteeUnreadChats: 0,
@@ -145,7 +151,8 @@ const userSlice = createSlice({
       }
       state.profilePictureSignedUrl = undefined;
     },
-    // Existing notification actions
+
+    // ✅ EXISTING: Read notification counts (for notification panel content)
     setNotificationCounts(
       state,
       action: PayloadAction<{ mentorCount: number; menteeCount: number }>
@@ -154,6 +161,21 @@ const userSlice = createSlice({
       state.notifications.menteeCount = action.payload.menteeCount;
       state.notifications.lastFetched = new Date().toISOString();
     },
+
+    // ✅ NEW: Unseen notification counts (for badge display)
+    setUnseenNotificationCounts(
+      state,
+      action: PayloadAction<{
+        mentorUnseenCount: number;
+        menteeUnseenCount: number;
+      }>
+    ) {
+      state.notifications.mentorUnseenCount = action.payload.mentorUnseenCount;
+      state.notifications.menteeUnseenCount = action.payload.menteeUnseenCount;
+      state.notifications.lastFetched = new Date().toISOString();
+    },
+
+    // ✅ UPDATED: Increment both read and unseen counts for new notifications
     incrementNotificationCount(
       state,
       action: PayloadAction<{ role: "mentor" | "mentee" | "both" }>
@@ -161,11 +183,15 @@ const userSlice = createSlice({
       const { role } = action.payload;
       if (role === "mentor" || role === "both") {
         state.notifications.mentorCount += 1;
+        state.notifications.mentorUnseenCount += 1;
       }
       if (role === "mentee" || role === "both") {
         state.notifications.menteeCount += 1;
+        state.notifications.menteeUnseenCount += 1;
       }
     },
+
+    // ✅ EXISTING: Clear read notification count (when individual notification marked as read)
     clearNotificationCount(
       state,
       action: PayloadAction<{ role: "mentor" | "mentee" }>
@@ -177,6 +203,21 @@ const userSlice = createSlice({
         state.notifications.menteeCount = 0;
       }
     },
+
+    // ✅ NEW: Clear unseen notification count (when notification panel opens)
+    clearUnseenNotificationCount(
+      state,
+      action: PayloadAction<{ role: "mentor" | "mentee" }>
+    ) {
+      const { role } = action.payload;
+      if (role === "mentor") {
+        state.notifications.mentorUnseenCount = 0;
+      } else if (role === "mentee") {
+        state.notifications.menteeUnseenCount = 0;
+      }
+    },
+
+    // ✅ UPDATED: Decrement both read and unseen counts
     decrementNotificationCount(
       state,
       action: PayloadAction<{ role: "mentor" | "mentee" | "both" }>
@@ -187,8 +228,50 @@ const userSlice = createSlice({
           0,
           state.notifications.mentorCount - 1
         );
+        state.notifications.mentorUnseenCount = Math.max(
+          0,
+          state.notifications.mentorUnseenCount - 1
+        );
       }
       if (role === "mentee" || role === "both") {
+        state.notifications.menteeCount = Math.max(
+          0,
+          state.notifications.menteeCount - 1
+        );
+        state.notifications.menteeUnseenCount = Math.max(
+          0,
+          state.notifications.menteeUnseenCount - 1
+        );
+      }
+    },
+
+    // ✅ NEW: Mark all notifications as read (bulk action)
+    markAllNotificationsAsRead(
+      state,
+      action: PayloadAction<{ role: "mentor" | "mentee" }>
+    ) {
+      const { role } = action.payload;
+      if (role === "mentor") {
+        state.notifications.mentorCount = 0;
+        // Don't clear unseen count here - that's handled separately when panel opens
+      } else {
+        state.notifications.menteeCount = 0;
+        // Don't clear unseen count here - that's handled separately when panel opens
+      }
+    },
+
+    // ✅ NEW: Mark individual notification as read (decrements read count only)
+    markNotificationAsRead(
+      state,
+      action: PayloadAction<{ role: "mentor" | "mentee" }>
+    ) {
+      const { role } = action.payload;
+      if (role === "mentor") {
+        state.notifications.mentorCount = Math.max(
+          0,
+          state.notifications.mentorCount - 1
+        );
+      } else {
         state.notifications.menteeCount = Math.max(
           0,
           state.notifications.menteeCount - 1
@@ -196,7 +279,7 @@ const userSlice = createSlice({
       }
     },
 
-    // NEW: Chat notification actions
+    // EXISTING: Chat notification actions (keeping as is)
     setChatUnreadCounts(
       state,
       action: PayloadAction<{
@@ -272,12 +355,17 @@ export const {
   setReason,
   setProfilePictureSignedUrl,
   updateProfilePicture,
-  // Existing notification actions
+  // EXISTING: Read notification actions
   setNotificationCounts,
   incrementNotificationCount,
   clearNotificationCount,
   decrementNotificationCount,
-  // NEW: Export chat notification actions
+  // ✅ NEW: Unseen notification actions
+  setUnseenNotificationCounts,
+  clearUnseenNotificationCount,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  // EXISTING: Chat notification actions
   setChatUnreadCounts,
   incrementChatUnread,
   decrementChatUnread,

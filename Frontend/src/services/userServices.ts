@@ -732,7 +732,7 @@ export const initializeNotificationsWithCounts = (
       "🔔 userServices: Initializing notifications with counts for user:",
       userId
     );
-
+    cleanupNotifications();
     // Connect to notification socket
     SocketService.connect("/notifications", userId);
 
@@ -1062,6 +1062,63 @@ export class ChatNotificationManager {
     return this.socket;
   }
 }
+// ✅ NEW: Get unseen notification counts (for badge)
+export const getUnseenNotificationCounts = async (): Promise<{
+  mentorUnseenCount: number;
+  menteeUnseenCount: number;
+}> => {
+  try {
+    console.log("📊 userServices: Fetching unseen notification counts");
+    const response = await api.get("/user/notifications/unseen-counts");
+    console.log(
+      "📊 userServices: Unseen notification counts response:",
+      response.data
+    );
+    return {
+      mentorUnseenCount: response.data.data.mentorCount || 0,
+      menteeUnseenCount: response.data.data.menteeCount || 0,
+    };
+  } catch (error: any) {
+    console.error(
+      "📊 userServices: Error fetching unseen notification counts:",
+      error
+    );
+    return { mentorUnseenCount: 0, menteeUnseenCount: 0 };
+  }
+};
 
+// ✅ NEW: Mark all notifications as seen
+export const markAllNotificationsAsSeen = async (
+  role: "mentor" | "mentee"
+): Promise<void> => {
+  try {
+    console.log(`🔔 userServices: Marking all ${role} notifications as seen`);
+    await api.post("/user/notifications/mark-all-seen", { role });
+    console.log(`✅ userServices: All ${role} notifications marked as seen`);
+  } catch (error: any) {
+    console.error(
+      `❌ userServices: Error marking ${role} notifications as seen:`,
+      error
+    );
+    throw new Error("Failed to mark notifications as seen");
+  }
+};
+
+// ✅ NEW: Mark all notifications as read
+export const markAllNotificationsAsRead = async (
+  role: "mentor" | "mentee"
+): Promise<void> => {
+  try {
+    console.log(`🔔 userServices: Marking all ${role} notifications as read`);
+    await api.post("/user/notifications/mark-all-read", { role });
+    console.log(`✅ userServices: All ${role} notifications marked as read`);
+  } catch (error: any) {
+    console.error(
+      `❌ userServices: Error marking ${role} notifications as read:`,
+      error
+    );
+    throw new Error("Failed to mark all notifications as read");
+  }
+};
 // ✅ Export singleton instance
 export const chatNotificationManager = new ChatNotificationManager();

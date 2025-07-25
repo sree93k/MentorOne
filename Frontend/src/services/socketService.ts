@@ -3,13 +3,15 @@ import { io, Socket } from "socket.io-client";
 class SocketService {
   private sockets: { [namespace: string]: Socket | null } = {};
 
+  // In SocketService.ts - connect method
   connect(namespace: string, userId: string): Socket {
+    console.log(`🔌 Attempting to connect to ${namespace} for user: ${userId}`);
+
     if (!this.sockets[namespace]) {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
 
-      // ✅ CHANGED: No token from localStorage - cookies sent automatically
       this.sockets[namespace] = io(`${API_URL}${namespace}`, {
-        withCredentials: true, // ✅ CRITICAL: Enable cookies
+        withCredentials: true,
         path: "/socket.io/",
         reconnection: true,
         reconnectionAttempts: 5,
@@ -18,24 +20,41 @@ class SocketService {
 
       this.sockets[namespace]!.on("connect", () => {
         console.log(
-          `Connected to Socket.IO ${namespace}, socket ID: ${this.sockets[namespace]?.id}`
+          `✅ Connected to Socket.IO ${namespace}, socket ID: ${this.sockets[namespace]?.id}`
         );
         this.sockets[namespace]?.emit("join", userId);
       });
 
       this.sockets[namespace]!.on("disconnect", () => {
-        console.log(`Disconnected from Socket.IO ${namespace}`);
+        console.log(`❌ Disconnected from Socket.IO ${namespace}`);
       });
 
       this.sockets[namespace]!.on("connect_error", (err) => {
-        console.error(`Socket.IO ${namespace} connect error:`, err.message);
+        console.error(`❌ Socket.IO ${namespace} connect error:`, err.message);
         if (err.message.includes("Authentication error")) {
-          // ✅ CHANGED: Don't remove accessToken, clear other data and redirect
           localStorage.clear();
           sessionStorage.clear();
           window.location.href = "/login";
         }
       });
+
+      // ✅ ADD DEBUG LISTENERS for notifications
+      if (namespace === "/notifications") {
+        this.sockets[namespace]!.on("new_notification", (notification) => {
+          console.log("📨 Received new_notification via socket:", notification);
+        });
+
+        this.sockets[namespace]!.on("notification_count_update", (data) => {
+          console.log(
+            "📊 Received notification_count_update via socket:",
+            data
+          );
+        });
+      }
+    } else {
+      console.log(
+        `🔄 Socket for ${namespace} already exists, reusing connection`
+      );
     }
     return this.sockets[namespace]!;
   }

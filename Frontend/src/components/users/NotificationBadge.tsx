@@ -14,15 +14,14 @@ const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   onClick,
   size = 24,
 }) => {
-  // Role-specific styling
   const getBadgeStyles = () => {
     const baseStyles =
-      "absolute -top-1 -right-1 flex items-center justify-center text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] px-1";
+      "absolute -top-1 -right-1 flex items-center justify-center text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] px-1 shadow-lg";
 
     if (role === "mentor") {
-      return `${baseStyles} bg-red-500 border-2 border-white shadow-lg`;
+      return `${baseStyles} bg-red-500 border-2 border-white`;
     } else {
-      return `${baseStyles} bg-blue-500 border-2 border-white shadow-lg`;
+      return `${baseStyles} bg-blue-500 border-2 border-white`;
     }
   };
 
@@ -49,18 +48,17 @@ const NotificationBadge: React.FC<NotificationBadgeProps> = ({
       <Bell size={size} className={getBellStyles()} />
 
       {count > 0 && (
-        <div className={getBadgeStyles()}>
-          <span className="leading-none">{getDisplayCount()}</span>
-        </div>
-      )}
-
-      {/* Pulse animation for new notifications */}
-      {count > 0 && (
-        <div
-          className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full animate-ping ${
-            role === "mentor" ? "bg-red-500" : "bg-blue-500"
-          } opacity-75`}
-        />
+        <>
+          <div className={getBadgeStyles()}>
+            <span className="leading-none">{getDisplayCount()}</span>
+          </div>
+          {/* ✅ Enhanced pulse animation */}
+          <div
+            className={`absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full animate-ping ${
+              role === "mentor" ? "bg-red-500" : "bg-blue-500"
+            } opacity-75`}
+          />
+        </>
       )}
     </div>
   );
