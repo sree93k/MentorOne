@@ -392,7 +392,7 @@ export default class PaymentService implements IPaymentService {
 
       const result = await this.paymentRepository.findAllByMentorId(mentorId);
 
-      console.log("payment service getAllMentorPayments step 2", result);
+      console.log("payment service getAllMentorPayments step 2");
 
       return result;
     } catch (error: any) {

@@ -232,12 +232,12 @@ export default class BookingService implements IBookingService {
         );
       }
 
-      console.log("Saved booking:", booking._id);
-      console.log("Saved payment:", payment._id);
+      // console.log("Saved booking:", booking._id);
+      // console.log("Saved payment:", payment._id);
 
       return { booking, payment, chat };
     } catch (error: any) {
-      console.error("Detailed error in saveBookingAndPayment:", error);
+      // console.error("Detailed error in saveBookingAndPayment:", error);
       throw new Error(error.message || "Failed to save booking and payment");
     }
   }
@@ -300,7 +300,7 @@ export default class BookingService implements IBookingService {
     console.log("cancel Booking Booking servcie step 1", bookingId);
 
     const booking = await this.bookingRepository.findById(bookingId);
-    console.log("cancel Booking Booking servcie step 2", booking);
+    // console.log("cancel Booking Booking servcie step 2", booking);
     if (!booking) {
       console.log("cancel Booking Booking servcie step 2.5 ERROR");
       throw new Error("Booking not found");
@@ -551,27 +551,27 @@ export default class BookingService implements IBookingService {
         query.status = status;
       }
 
-      console.log(
-        "BookingService getAllBookings > query:",
-        JSON.stringify(query)
-      );
+      // console.log(
+      //   "BookingService getAllBookings > query:",
+      //   JSON.stringify(query)
+      // );
 
       const [bookings, total] = await Promise.all([
         this.bookingRepository.findAllBookings(skip, limit, query),
         this.bookingRepository.countAllBookings(query),
       ]);
 
-      console.log("BookingService getAllBookings > response:", {
-        bookingsCount: bookings.length,
-        bookings: bookings.map((b: any) => ({
-          _id: b._id,
-          mentorId: b.mentorId,
-          menteeId: b.menteeId,
-          serviceId: b.serviceId,
-          status: b.status,
-        })),
-        total,
-      });
+      // console.log("BookingService getAllBookings > response:", {
+      //   bookingsCount: bookings.length,
+      //   bookings: bookings.map((b: any) => ({
+      //     _id: b._id,
+      //     mentorId: b.mentorId,
+      //     menteeId: b.menteeId,
+      //     serviceId: b.serviceId,
+      //     status: b.status,
+      //   })),
+      //   total,
+      // });
 
       return { bookings, total };
     } catch (error: any) {
@@ -606,11 +606,11 @@ export default class BookingService implements IBookingService {
           oneToOneType,
           digitalProductType,
         });
-      console.log(
-        "BOOKING SERVICE ......getAllServices step 1",
-        services.length,
-        total
-      );
+      // console.log(
+      //   "BOOKING SERVICE ......getAllServices step 1",
+      //   services.length,
+      //   total
+      // );
 
       return { services, total };
     } catch (error: any) {
@@ -842,13 +842,13 @@ export default class BookingService implements IBookingService {
         ),
         this.bookingRepository.countByMentee(menteeId, query),
       ]);
-      console.log(
-        "booking service getBookingsWithTestimonialsByMentee step 2",
-        {
-          bookings,
-          total,
-        }
-      );
+      // console.log(
+      //   "booking service getBookingsWithTestimonialsByMentee step 2",
+      //   {
+      //     bookings,
+      //     total,
+      //   }
+      // );
       return { bookings, total };
     } catch (error: any) {
       console.log(
@@ -1008,17 +1008,17 @@ export default class BookingService implements IBookingService {
         }
       }
       const bookings = await this.bookingRepository.findById(bookingId);
-      console.log("BookingService updateResheduleBooking step 1.1", bookings);
+      // console.log("BookingService updateResheduleBooking step 1.1", bookings);
 
       const deletedBlockedDate = await this.blockedRepository.deleteBlockedDate(
         userId,
         bookings.bookingDate,
         bookings.startTime
       );
-      console.log(
-        "BookingService updateResheduleBooking step 1.4",
-        deletedBlockedDate
-      );
+      // console.log(
+      //   "BookingService updateResheduleBooking step 1.4",
+      //   deletedBlockedDate
+      // );
 
       const booking = await this.bookingRepository.update(
         bookingId,
@@ -1033,7 +1033,7 @@ export default class BookingService implements IBookingService {
           type: "booking",
         },
       ];
-      console.log("BookingService updateResheduleBooking step 1.3", booking);
+      // console.log("BookingService updateResheduleBooking step 1.3", booking);
 
       const blockedDate = await this.blockedRepository.addBlockedDates(
         userId,
@@ -1070,9 +1070,9 @@ export default class BookingService implements IBookingService {
         dashboard,
         bookingId
       );
-      console.log("BookingService getBookingData success", {
-        count: Array.isArray(bookings) ? bookings.length : 1,
-      });
+      // console.log("BookingService getBookingData success", {
+      //   count: Array.isArray(bookings) ? bookings.length : 1,
+      // });
       return Array.isArray(bookings) ? bookings : [bookings];
     } catch (error: any) {
       console.error("BookingService getBookingData error", error);

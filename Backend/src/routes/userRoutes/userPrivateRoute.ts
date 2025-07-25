@@ -161,7 +161,27 @@ userPrivateRoute.get(
   authenticate,
   notificationController.getNotificationCounts.bind(notificationController)
 );
+userPrivateRoute.get(
+  "/notifications/unseen-counts",
+  authenticate,
+  notificationController.getUnseenNotificationCounts.bind(
+    notificationController
+  )
+);
 
+// ✅ NEW: Mark all notifications as seen (when panel opens)
+userPrivateRoute.post(
+  "/notifications/mark-all-seen",
+  authenticate,
+  notificationController.markAllNotificationsAsSeen.bind(notificationController)
+);
+
+// ✅ NEW: Mark all notifications as read (bulk action)
+userPrivateRoute.post(
+  "/notifications/mark-all-read",
+  authenticate,
+  notificationController.markAllNotificationsAsRead.bind(notificationController)
+);
 // New route for updating booking status
 userPrivateRoute.put(
   "/booking/:bookingId/updatestatus",

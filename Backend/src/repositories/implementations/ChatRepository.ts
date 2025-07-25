@@ -212,12 +212,12 @@ export default class ChatRepository
       }
 
       const chatIds = chats.map((chat) => chat._id);
-      console.log("📊 ChatRepository: Found chats for user", {
-        userId,
-        role,
-        totalChats: chats.length,
-        chatIds: chatIds.map((id) => id.toString()),
-      });
+      // console.log("📊 ChatRepository: Found chats for user", {
+      //   userId,
+      //   role,
+      //   totalChats: chats.length,
+      //   chatIds: chatIds.map((id) => id.toString()),
+      // });
 
       // ✅ ENHANCED: More comprehensive aggregation with debugging
       const pipeline = [
