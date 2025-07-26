@@ -74,6 +74,18 @@ const BookingSchema = new Schema<EBooking>({
     ref: "Testimonial",
     required: false,
   },
+  reminderJobs: {
+    oneHourJob: { type: String },
+    thirtyMinJob: { type: String },
+    tenMinJob: { type: String },
+    sessionStartJob: { type: String },
+  },
+  reminderStatus: {
+    oneHourSent: { type: Boolean, default: false },
+    thirtyMinSent: { type: Boolean, default: false },
+    tenMinSent: { type: Boolean, default: false },
+    sessionStartSent: { type: Boolean, default: false },
+  },
   createdAt: {
     type: Date,
     default: Date.now,

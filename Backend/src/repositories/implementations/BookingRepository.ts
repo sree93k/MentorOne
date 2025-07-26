@@ -23,7 +23,6 @@ export default class BookingRepository
 
   async findById(id: string) {
     try {
-      console.log("BookingRepository findById step 1", id);
       const booking = await Booking.findById(id)
         .populate({
           path: "mentorId",
@@ -38,7 +37,7 @@ export default class BookingRepository
           path: "menteeId",
           select: "firstName lastName",
         });
-      console.log("BookingRepository findById step 2", booking);
+
       return booking;
     } catch (error: any) {
       console.error("BookingRepository findById error", error);
@@ -69,13 +68,6 @@ export default class BookingRepository
     query: any = { menteeId }
   ) {
     try {
-      console.log("booking repository findByMentee step 1", {
-        menteeId,
-        skip,
-        limit,
-        query,
-      });
-
       const response = await Booking.find(query)
         .populate({
           path: "mentorId",
@@ -139,8 +131,6 @@ export default class BookingRepository
   }
   async update(id: string, data: any) {
     try {
-      console.log("booking repository update step 1", id, data);
-
       const response = await Booking.findByIdAndUpdate(id, data, { new: true })
         .populate({
           path: "mentorId",
@@ -175,7 +165,7 @@ export default class BookingRepository
           path: "serviceId",
           select: "title technology amount serviceType",
         });
-      console.log("booking repository findByMenteeAndService step 2", booking);
+      console.log("booking repository findByMenteeAndService step 2");
       return booking;
     } catch (error: any) {
       throw new Error("Failed to find booking", error.message);
@@ -272,7 +262,7 @@ export default class BookingRepository
     }
 
     const bookings = await Booking.aggregate(pipeline).exec();
-    console.log("BookingRepository findAllVideoCalls step 2", bookings);
+    console.log("BookingRepository findAllVideoCalls step 2");
     return bookings;
   }
 
@@ -337,7 +327,7 @@ export default class BookingRepository
       if (!booking) {
         throw new Error("Booking not found");
       }
-      console.log("BookingRepository updateBookingStatus step 2", booking);
+      console.log("BookingRepository updateBookingStatus step 2");
       return booking;
     } catch (error: any) {
       console.error("BookingRepository updateBookingStatus error", error);

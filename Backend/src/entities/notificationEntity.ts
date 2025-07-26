@@ -1,26 +1,25 @@
-// // entities/notificationEntity.ts
-// import { Document, ObjectId } from "mongoose";
-
-// export interface ENotification extends Document {
-//   _id: ObjectId;
+// export interface ENotification {
+//   _id?: string;
 //   recipientId: string;
 //   targetRole: "mentor" | "mentee" | "both";
-//   type: "payment" | "booking" | "chat";
+//   type: "payment" | "booking" | "chat" | "meeting";
 //   message: string;
 //   relatedId?: string;
 //   isRead: boolean;
+//   isSeen: boolean; // ✅ NEW FIELD
 //   createdAt: Date;
-//   senderId?: ObjectId; // Ref to User model
+//   senderId?: string;
 // }
 export interface ENotification {
   _id?: string;
   recipientId: string;
   targetRole: "mentor" | "mentee" | "both";
-  type: "payment" | "booking" | "chat" | "meeting";
+  // 📍 FIXED: Add booking_reminder to type union
+  type: "payment" | "booking" | "chat" | "meeting" | "booking_reminder";
   message: string;
   relatedId?: string;
   isRead: boolean;
-  isSeen: boolean; // ✅ NEW FIELD
+  isSeen: boolean;
   createdAt: Date;
   senderId?: string;
 }

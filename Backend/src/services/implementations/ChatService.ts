@@ -35,7 +35,6 @@ export default class ChatService implements IChatService {
       });
       throw new Error("Booking not found");
     }
-    console.log("ChatService: createChat - Booking found", { booking });
 
     const existingChatByUsers = await this.chatRepository.findByUsersAndRoles(
       menteeId,
@@ -64,12 +63,6 @@ export default class ChatService implements IChatService {
       bookingId
     );
     if (existingChatByBooking) {
-      console.log(
-        "ChatService: createChat - Existing chat found by bookingId",
-        {
-          chatId: existingChatByBooking._id,
-        }
-      );
       return existingChatByBooking;
     }
     console.log("ChatService: createChat - No chat found by bookingId");
@@ -84,19 +77,15 @@ export default class ChatService implements IChatService {
       chatName: `${menteeId}-${mentorId}`,
       isActive: true,
     };
-    console.log("ChatService: createChat - Creating new chat", { chatData });
+
     const chat = await this.chatRepository.create(chatData);
-    console.log("ChatService: createChat - Chat created", { chat });
+
     return chat;
   }
 
   async getChatsByUserAndRole(userId: string, role: "mentee" | "mentor") {
-    console.log("ChatService: getChatsByUserAndRole start", { userId, role });
-
     const chats = await this.chatRepository.findByUserAndRole(userId, role);
-    console.log("ChatService: getChatsByUserAndRole - Chats fetched", {
-      chatCount: chats.length,
-    });
+
     return chats;
   }
 
@@ -106,18 +95,10 @@ export default class ChatService implements IChatService {
     role: "mentee" | "mentor"
   ): Promise<number> {
     try {
-      console.log("ChatService: getUnreadChatCount start", { userId, role });
-
       const unreadCount = await this.chatRepository.getUnreadChatCountByRole(
         userId,
         role
       );
-
-      console.log("ChatService: getUnreadChatCount result", {
-        userId,
-        role,
-        unreadCount,
-      });
 
       return unreadCount;
     } catch (error: any) {

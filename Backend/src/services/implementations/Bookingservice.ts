@@ -18,7 +18,9 @@ import { IBlockedRepository } from "../../repositories/interface/IBlockedReposit
 import { EBooking } from "../../entities/bookingEntity";
 import PaymentService from "./PaymentService";
 import { IPaymentService } from "../interface/IPaymentService";
+import { ReminderScheduler } from "../../utils/reminderScheduler";
 
+import { sendMail } from "../../utils/emailService";
 interface SaveBookingAndPaymentParams {
   sessionId: string;
   serviceId: string;
@@ -89,7 +91,7 @@ export default class BookingService implements IBookingService {
     } else {
       status = "confirmed";
     }
-    console.log("++++++++++BOOKING SERVICE createBooking step 1", response);
+    console.log("++++++++++BOOKING SERVICE createBooking step 1");
     console.log(
       "++++++++++BOOKING SERVICE createBooking step 2",
       response?.type
@@ -103,15 +105,12 @@ export default class BookingService implements IBookingService {
           type: "booking",
         },
       ];
-      console.log("++++++++++BOOKING SERVICE createBooking step 3", dates);
+      console.log("++++++++++BOOKING SERVICE createBooking step 3");
       const blockedDate = await this.blockedRepository.addBlockedDates(
         mentorId,
         dates
       );
-      console.log(
-        "++++++++++BOOKING SERVICE createBooking step 4",
-        blockedDate
-      );
+      console.log("++++++++++BOOKING SERVICE createBooking step 4");
     }
     const booking = await this.bookingRepository.create({
       serviceId,
@@ -147,10 +146,7 @@ export default class BookingService implements IBookingService {
       total,
     } = params;
 
-    console.log(
-      "Booking service saveBookingAndPayment  STEP 1 ...params:",
-      params
-    );
+    console.log("Booking service saveBookingAndPayment  STEP 1 ...params:");
 
     try {
       if (!amount || amount <= 0) {
@@ -166,7 +162,7 @@ export default class BookingService implements IBookingService {
         sessionId
       );
       if (existingBooking) {
-        console.log("Booking already exists for sessionId:", sessionId);
+        console.log("Booking already exists for sessionId:");
         return { booking: existingBooking, payment: null, chat: null };
       }
 
@@ -206,13 +202,7 @@ export default class BookingService implements IBookingService {
       try {
         const io = getIO();
         console.log("IO instance:", !!io);
-        console.log("Sending notifications for:", {
-          paymentId: payment._id,
-          bookingId: booking._id,
-          total,
-          menteeId,
-          mentorId,
-        });
+
         await this.notificationService.createPaymentAndBookingNotifications(
           payment._id.toString(),
           booking._id.toString(),
@@ -221,10 +211,6 @@ export default class BookingService implements IBookingService {
           total,
           io
         );
-        console.log("Notifications sent successfully:", {
-          paymentId: payment._id,
-          bookingId: booking._id,
-        });
       } catch (notificationError: any) {
         console.error(
           "Failed to send notifications:",
@@ -232,29 +218,209 @@ export default class BookingService implements IBookingService {
         );
       }
 
-      // console.log("Saved booking:", booking._id);
-      // console.log("Saved payment:", payment._id);
+      try {
+        // Get mentee and mentor details
+        const mentee = await this.userRepository.findById(menteeId);
+        const mentor = await this.userRepository.findById(mentorId);
 
+        if (mentee?.email) {
+          const bookingDetailsHtml = this.generateBookingEmailTemplate({
+            menteeName: mentee.name || mentee.firstName || "Mentee",
+            mentorName: mentor?.name || mentor?.firstName || "Mentor",
+            serviceName: service.title || service.name || "Mentoring Session",
+            bookingDate,
+            startTime,
+            endTime,
+            day,
+            amount: total,
+            bookingId: booking._id.toString(),
+            sessionType: service.oneToOneType || "session",
+          });
+
+          const mail = await sendMail(
+            mentee.email,
+            `Your booking has been confirmed successfully! Here are your booking details.`,
+            mentee.name || mentee.firstName || "Mentee",
+            "Booking Confirmation - Mentor One",
+            bookingDetailsHtml
+          );
+          console.log("✅  Mail sent successfully booking", mail);
+
+          console.log(
+            "Booking confirmation email sent to mentee:",
+            mentee.email
+          );
+          try {
+            const jobIds = await ReminderScheduler.scheduleBookingReminders({
+              bookingId: booking._id.toString(),
+              menteeId,
+              mentorId,
+              bookingDate,
+              startTime,
+              serviceName: service.title || service.name || "Mentoring Session",
+              mentorName: mentor?.name || mentor?.firstName || "Mentor",
+              menteeName: mentee.name || mentee.firstName || "Mentee",
+            });
+
+            // Save job IDs in booking document
+            await this.bookingRepository.update(booking._id.toString(), {
+              reminderJobs: jobIds,
+            });
+
+            console.log("✅ Reminder jobs scheduled successfully:", jobIds);
+          } catch (reminderError: any) {
+            console.error(
+              "Failed to schedule reminder jobs:",
+              reminderError.message
+            );
+            // Don't throw error as booking is already successful
+          }
+        }
+      } catch (emailError: any) {
+        console.error(
+          "Failed to send booking confirmation email:",
+          emailError.message
+        );
+        // Don't throw error as booking is already successful
+      }
       return { booking, payment, chat };
     } catch (error: any) {
       // console.error("Detailed error in saveBookingAndPayment:", error);
       throw new Error(error.message || "Failed to save booking and payment");
     }
   }
+  private generateBookingEmailTemplate(details: {
+    menteeName: string;
+    mentorName: string;
+    serviceName: string;
+    bookingDate: string;
+    startTime: string;
+    endTime: string;
+    day: string;
+    amount: number;
+    bookingId: string;
+    sessionType: string;
+  }): string {
+    const {
+      menteeName,
+      mentorName,
+      serviceName,
+      bookingDate,
+      startTime,
+      endTime,
+      day,
+      amount,
+      bookingId,
+      sessionType,
+    } = details;
 
+    const CLIENT_HOST_URL =
+      process.env.CLIENT_HOST_URL || "https://mentorone.com";
+
+    // Format date for better readability
+    const formattedDate = new Date(bookingDate).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+      <div style="background-color: #4A90E2; padding: 25px 20px; text-align: center;">
+        <h1 style="color: #ffffff; font-size: 28px; margin: 0;">Mentor One</h1>
+        <p style="color: #ffffff; font-size: 16px; margin: 10px 0 0 0;">Booking Confirmed ✅</p>
+      </div>
+
+      <div style="padding: 30px 40px;">
+        <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 20px;">
+          Dear ${menteeName},
+        </p>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 25px;">
+          Great news! Your booking has been confirmed successfully. Here are your session details:
+        </p>
+
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin: 25px 0;">
+          <h3 style="color: #4A90E2; margin: 0 0 20px 0; font-size: 20px;">Booking Details</h3>
+          
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Booking ID:</strong>
+            <span style="color: #666;">#${bookingId
+              .slice(-8)
+              .toUpperCase()}</span>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Service:</strong>
+            <span style="color: #666;">${serviceName}</span>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Mentor:</strong>
+            <span style="color: #666;">${mentorName}</span>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Date:</strong>
+            <span style="color: #666;">${formattedDate}</span>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Time:</strong>
+            <span style="color: #666;">${startTime} - ${endTime}</span>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Session Type:</strong>
+            <span style="color: #666; text-transform: capitalize;">${sessionType}</span>
+          </div>
+          
+          <div style="margin-bottom: 0;">
+            <strong style="color: #333; display: inline-block; width: 140px;">Amount Paid:</strong>
+            <span style="color: #28a745; font-weight: bold;">$${amount.toFixed(
+              2
+            )}</span>
+          </div>
+        </div>
+
+        <div style="background-color: #e8f5e8; border-left: 4px solid #28a745; padding: 15px; margin: 25px 0;">
+          <p style="margin: 0; color: #2d5a2d; font-size: 14px;">
+            <strong>What's Next?</strong><br>
+            ${
+              sessionType === "chat"
+                ? "You can start chatting with your mentor immediately through your dashboard."
+                : "Your mentor will reach out to you shortly with session details. Please check your dashboard regularly for updates."
+            }
+          </p>
+        </div>
+
+        <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 30px;">
+          We're excited to help you on your learning journey! If you have any questions or need to reschedule, please don't hesitate to contact our support team.
+        </p>
+
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${CLIENT_HOST_URL}" style="display: inline-block; background-color: #4A90E2; color: #ffffff; padding: 12px 25px; border-radius: 5px; text-decoration: none; font-size: 16px; font-weight: bold; margin-right: 15px;">Go to Dashboard</a>
+          <a href="${CLIENT_HOST_URL}" style="display: inline-block; background-color: #28a745; color: #ffffff; padding: 12px 25px; border-radius: 5px; text-decoration: none; font-size: 16px; font-weight: bold;">Need Help?</a>
+        </div>
+      </div>
+
+      <div style="background-color: #f7f7f7; padding: 20px 40px; text-align: center; font-size: 13px; color: #888888; border-top: 1px solid #eeeeee;">
+        <p style="margin: 0;">© ${new Date().getFullYear()} Mentor One. All rights reserved.</p>
+        <p style="margin-top: 8px;">
+          <a href="${CLIENT_HOST_URL}" style="color: #4A90E2; text-decoration: none;">MentorOne.com</a> | 
+          <a href="${CLIENT_HOST_URL}" style="color: #4A90E2; text-decoration: none; margin-left: 10px;">Support</a>
+        </p>
+      </div>
+    </div>
+  `;
+  }
   async getBookingsByMentee(
     menteeId: string,
     page: number = 1,
     limit: number = 12,
     searchQuery: string = ""
   ): Promise<{ bookings: any[]; total: number }> {
-    console.log("booking service getBookingsByMentee step 1", {
-      menteeId,
-      page,
-      limit,
-      searchQuery,
-    });
-
     const skip = (page - 1) * limit;
     const query: any = { menteeId };
 
@@ -305,6 +471,14 @@ export default class BookingService implements IBookingService {
       console.log("cancel Booking Booking servcie step 2.5 ERROR");
       throw new Error("Booking not found");
     }
+    if (booking.reminderJobs) {
+      try {
+        await ReminderScheduler.cancelBookingReminders(booking.reminderJobs);
+        console.log("✅ Cancelled reminder jobs for booking:", bookingId);
+      } catch (reminderError: any) {
+        console.error("Failed to cancel reminder jobs:", reminderError.message);
+      }
+    }
     console.log("cancel Booking Booking servcie step 3");
     const updatedBooking = await this.bookingRepository.update(bookingId, {
       status: "cancelled",
@@ -314,20 +488,17 @@ export default class BookingService implements IBookingService {
       booking.bookingDate,
       booking.startTime
     );
-    console.log("cancel Booking Booking servcie step 4", updatedBooking);
+    console.log("cancel Booking Booking servcie step 4");
     const updatePayment = await this.PaymentService.updatePaymentByBookingId(
       bookingId,
       {
         status: "refunded",
       }
     );
-    console.log(
-      "cancel Booking Booking servcie step 4.5 updatePayment",
-      updatePayment
-    );
+    console.log("cancel Booking Booking servcie step 4.5 updatePayment");
 
     let wallet = await this.walletRepository.findByUserId(booking.menteeId);
-    console.log("cancel Booking Booking servcie step 4..6", updatePayment);
+    console.log("cancel Booking Booking servcie step 4..6");
     if (!wallet) {
       console.log("cancel Booking Booking servcie step 4.7");
       wallet = await this.walletRepository.createWallet(booking.menteeId);
@@ -338,7 +509,7 @@ export default class BookingService implements IBookingService {
       updatePayment.total,
       updatePayment._id.toString()
     );
-    console.log("cancel Booking Booking servcie step 4.9", updatedWallet);
+    console.log("cancel Booking Booking servcie step 4.9");
     console.log("cancel Booking Booking servcie step 5");
   }
 
@@ -357,12 +528,7 @@ export default class BookingService implements IBookingService {
     limit: number = 12
   ): Promise<{ tutorials: any[]; total: number }> {
     try {
-      console.log("bookingservice getAllVideoTutorials step 1", {
-        type,
-        searchQuery,
-        page,
-        limit,
-      });
+      console.log("bookingservice getAllVideoTutorials step 1");
       const { tutorials, total } =
         await this.serviceService.getAllVideoTutorials({
           type,
@@ -383,9 +549,9 @@ export default class BookingService implements IBookingService {
 
   async getTutorialById(tutorialId: string): Promise<any> {
     try {
-      console.log("bookingservice getTutorialById step 1", tutorialId);
+      console.log("bookingservice getTutorialById step 1");
       const tutorial = await this.serviceService.getTutorialById(tutorialId);
-      console.log("bookingservice getTutorialById step 2", tutorial);
+      console.log("bookingservice getTutorialById step 2");
       if (!tutorial) {
         throw new Error("Tutorial not found");
       }
@@ -420,7 +586,7 @@ export default class BookingService implements IBookingService {
 
   async bookService(params: BookServiceParams): Promise<any> {
     try {
-      console.log("bookingservice bookService step 1", params);
+      console.log("bookingservice bookService step 1");
       const { serviceId, mentorId, menteeId, sessionId } = params;
       const service = await this.serviceService.getServiceById(serviceId);
       if (!service) {
@@ -432,7 +598,7 @@ export default class BookingService implements IBookingService {
         sessionId
       );
       if (existingBooking) {
-        console.log("Booking already exists for sessionId:", sessionId);
+        console.log("Booking already exists for sessionId:");
         return { booking: existingBooking, payment: null };
       }
 
@@ -1049,6 +1215,49 @@ export default class BookingService implements IBookingService {
       }
 
       console.log("BookingService updateResheduleBooking step 3 booking");
+      if (
+        payload.rescheduleRequest.rescheduleStatus === "accepted" &&
+        bookings.reminderJobs
+      ) {
+        try {
+          // Cancel old reminders
+          await ReminderScheduler.cancelBookingReminders(bookings.reminderJobs);
+
+          // Schedule new reminders with updated time
+          if (payload.bookingDate && payload.startTime) {
+            const mentor = await this.userRepository.findById(userId);
+            const mentee = await this.userRepository.findById(
+              bookings.menteeId.toString()
+            );
+            const service = await this.serviceService.getServiceById(
+              bookings.serviceId.toString()
+            );
+
+            const jobIds = await ReminderScheduler.scheduleBookingReminders({
+              bookingId: bookingId,
+              menteeId: bookings.menteeId.toString(),
+              mentorId: userId,
+              bookingDate: payload.bookingDate,
+              startTime: payload.startTime,
+              serviceName: service?.title || "Mentoring Session",
+              mentorName: mentor?.name || mentor?.firstName || "Mentor",
+              menteeName: mentee?.name || mentee?.firstName || "Mentee",
+            });
+
+            // Update booking with new job IDs
+            await this.bookingRepository.update(bookingId, {
+              reminderJobs: jobIds,
+            });
+
+            console.log("✅ Rescheduled reminder jobs successfully:", jobIds);
+          }
+        } catch (reminderError: any) {
+          console.error(
+            "Failed to reschedule reminder jobs:",
+            reminderError.message
+          );
+        }
+      }
       return booking;
     } catch (error: any) {
       console.error("BookingService updateResheduleBooking error", error);
