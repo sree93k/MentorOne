@@ -14,6 +14,8 @@ export default class ChatRepository
   }
   async create(data: Partial<EChat>): Promise<EChat> {
     try {
+      console.log("=========ChatRepository create step 1", data);
+
       const chat = new Chat(data);
       return (await chat.save()) as EChat;
     } catch (error: any) {
@@ -23,10 +25,11 @@ export default class ChatRepository
 
   async findById(id: string): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findById step 1");
       const chat = await Chat.findById(id)
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findById step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new Error("Failed to find chat", error.message);
@@ -38,10 +41,11 @@ export default class ChatRepository
     update: Partial<EChat>
   ): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findByIdAndUpdate step 1");
       const chat = await Chat.findByIdAndUpdate(id, update, { new: true })
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findByIdAndUpdate step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new Error("Failed to update chat", error.message);
@@ -53,6 +57,8 @@ export default class ChatRepository
     role: "mentee" | "mentor"
   ): Promise<EChat[]> {
     try {
+      console.log("ChatRepository: findByUserAndRole start", { userId, role });
+
       const chats = await Chat.find({
         "roles.userId": userId,
         "roles.role": role,
@@ -61,6 +67,11 @@ export default class ChatRepository
         .populate("latestMessage")
         .sort({ updatedAt: -1 });
 
+      console.log("ChatRepository: findByUserAndRole - Chats found", {
+        chatCount: chats.length,
+        chatIds: chats.map((chat) => chat._id.toString()),
+      });
+
       // Map chats to include otherUserId
       const enhancedChats = chats.map((chat) => {
         // Find the other user's ID (opposite role)
@@ -68,23 +79,121 @@ export default class ChatRepository
         const otherUser = chat.roles.find((r) => r.role === otherUserRole);
         const otherUserId = otherUser ? otherUser.userId.toString() : null;
 
+        console.log(
+          "ChatRepository: findByUserAndRole - Other user extracted",
+          {
+            chatId: chat._id.toString(),
+            userId,
+            role,
+            otherUserRole,
+            otherUserId,
+          }
+        );
+
         return {
           ...chat.toObject(),
           otherUserId,
         } as unknown as EChat;
       });
 
+      console.log(
+        "ChatRepository: findByUserAndRole - Enhanced chats prepared",
+        {
+          chatCount: enhancedChats.length,
+        }
+      );
+
       return enhancedChats;
     } catch (error: any) {
+      console.error("ChatRepository: findByUserAndRole error", {
+        userId,
+        role,
+        error: error.message,
+      });
       throw new Error("Failed to find chats", error.message);
     }
   }
 
+  // IMPROVED: Smart chat count logic - Count chats with unread messages, not individual messages
+  // async getUnreadChatCountByRole(
+  //   userId: string,
+  //   role: "mentee" | "mentor"
+  // ): Promise<number> {
+  //   try {
+  //     console.log("ChatRepository: getUnreadChatCountByRole start", {
+  //       userId,
+  //       role,
+  //     });
+
+  //     // 🔧 CRITICAL FIX: Convert string userId to ObjectId
+  //     const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  //     // First, get all chats for this user and role
+  //     const chats = await Chat.find({
+  //       "roles.userId": userObjectId, // Use ObjectId here too
+  //       "roles.role": role,
+  //     }).select("_id");
+
+  //     if (chats.length === 0) {
+  //       console.log(
+  //         "ChatRepository: getUnreadChatCountByRole - No chats found",
+  //         { userId, role }
+  //       );
+  //       return 0;
+  //     }
+
+  //     const chatIds = chats.map((chat) => chat._id);
+
+  //     // ✅ FIXED: Use ObjectId in aggregation pipeline
+  //     const unreadChatsCount = await Message.aggregate([
+  //       {
+  //         $match: {
+  //           chat: { $in: chatIds },
+  //           sender: { $ne: userObjectId }, // Use ObjectId for sender comparison
+  //           readBy: { $nin: [userObjectId] }, // Use ObjectId for readBy comparison
+  //         },
+  //       },
+  //       {
+  //         $group: {
+  //           _id: "$chat", // Group by chat
+  //         },
+  //       },
+  //       {
+  //         $count: "unreadChats", // Count distinct chats with unread messages
+  //       },
+  //     ]);
+
+  //     const count =
+  //       unreadChatsCount.length > 0 ? unreadChatsCount[0].unreadChats : 0;
+
+  //     console.log("ChatRepository: getUnreadChatCountByRole result", {
+  //       userId,
+  //       role,
+  //       totalChats: chats.length,
+  //       unreadChatsCount: count,
+  //     });
+
+  //     return count;
+  //   } catch (error: any) {
+  //     console.error("ChatRepository: getUnreadChatCountByRole error", {
+  //       userId,
+  //       role,
+  //       error: error.message,
+  //     });
+  //     throw new Error("Failed to get unread chat count: " + error.message);
+  //   }
+  // }
   async getUnreadChatCountByRole(
     userId: string,
     role: "mentee" | "mentor"
   ): Promise<number> {
     try {
+      console.log("📊 ChatRepository: getUnreadChatCountByRole start", {
+        userId,
+        role,
+        timestamp: new Date().toISOString(),
+      });
+
       // 🔧 CRITICAL FIX: Convert string userId to ObjectId
       const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -95,10 +204,20 @@ export default class ChatRepository
       }).select("_id");
 
       if (chats.length === 0) {
+        console.log(
+          "📊 ChatRepository: getUnreadChatCountByRole - No chats found",
+          { userId, role }
+        );
         return 0;
       }
 
       const chatIds = chats.map((chat) => chat._id);
+      console.log("📊 ChatRepository: Found chats for user", {
+        userId,
+        role,
+        totalChats: chats.length,
+        chatIds: chatIds.map((id) => id.toString()),
+      });
 
       // ✅ ENHANCED: More comprehensive aggregation with debugging
       const pipeline = [
@@ -164,25 +283,33 @@ export default class ChatRepository
 
       const unreadChatsAnalysis = await Message.aggregate(pipeline);
 
-      // unreadChatsAnalysis.forEach((chat, index) => {
-      //   console.log(`📊 Chat ${index + 1} analysis:`, {
-      //     chatId: chat.chatId.toString(),
-      //     userId,
-      //     totalMessages: chat.totalMessages,
-      //     unreadByReadBy: chat.unreadByReadBy,
-      //     unreadByStatus: chat.unreadByStatus,
-      //     unreadCombined: chat.unreadCombined, // This is the most accurate
-      //     // Sample messages for debugging
-      //     sampleMessages: chat.messages.slice(0, 3).map((msg: any) => ({
-      //       id: msg.messageId.toString(),
-      //       status: msg.status,
-      //       isReadByUser: msg.readBy.some(
-      //         (id: any) => id.toString() === userId
-      //       ),
-      //       readByCount: msg.readBy.length,
-      //     })),
-      //   });
-      // });
+      // ✅ ENHANCED DEBUGGING: Log detailed analysis for each chat
+      console.log("📊 ChatRepository: Unread analysis per chat", {
+        userId,
+        role,
+        totalChatsAnalyzed: unreadChatsAnalysis.length,
+        timestamp: new Date().toISOString(),
+      });
+
+      unreadChatsAnalysis.forEach((chat, index) => {
+        console.log(`📊 Chat ${index + 1} analysis:`, {
+          chatId: chat.chatId.toString(),
+          userId,
+          totalMessages: chat.totalMessages,
+          unreadByReadBy: chat.unreadByReadBy,
+          unreadByStatus: chat.unreadByStatus,
+          unreadCombined: chat.unreadCombined, // This is the most accurate
+          // Sample messages for debugging
+          sampleMessages: chat.messages.slice(0, 3).map((msg: any) => ({
+            id: msg.messageId.toString(),
+            status: msg.status,
+            isReadByUser: msg.readBy.some(
+              (id: any) => id.toString() === userId
+            ),
+            readByCount: msg.readBy.length,
+          })),
+        });
+      });
 
       const finalCount = unreadChatsAnalysis.length;
 
@@ -207,6 +334,16 @@ export default class ChatRepository
 
       const oldCount =
         oldMethodResult.length > 0 ? oldMethodResult[0].unreadChats : 0;
+
+      console.log("📊 ChatRepository: getUnreadChatCountByRole comparison", {
+        userId,
+        role,
+        totalChats: chats.length,
+        newMethodCount: finalCount,
+        oldMethodCount: oldCount,
+        difference: finalCount - oldCount,
+        timestamp: new Date().toISOString(),
+      });
 
       // ✅ ALERT: Log if there's a difference between methods
       if (finalCount !== oldCount) {
@@ -238,36 +375,36 @@ export default class ChatRepository
           ],
         }).select("_id chat status readBy sender createdAt");
 
-        // console.log("🔍 ChatRepository: Problematic messages found", {
-        //   userId,
-        //   count: problematicMessages.length,
-        //   messages: problematicMessages.map((msg) => ({
-        //     id: msg._id.toString(),
-        //     chat: msg.chat.toString(),
-        //     status: msg.status,
-        //     readBy: msg.readBy.map((id) => id.toString()),
-        //     hasUserInReadBy: msg.readBy.some((id) => id.toString() === userId),
-        //   })),
-        // });
+        console.log("🔍 ChatRepository: Problematic messages found", {
+          userId,
+          count: problematicMessages.length,
+          messages: problematicMessages.map((msg) => ({
+            id: msg._id.toString(),
+            chat: msg.chat.toString(),
+            status: msg.status,
+            readBy: msg.readBy.map((id) => id.toString()),
+            hasUserInReadBy: msg.readBy.some((id) => id.toString() === userId),
+          })),
+        });
       }
 
-      // console.log("📊 ChatRepository: getUnreadChatCountByRole final result", {
-      //   userId,
-      //   role,
-      //   unreadChatsCount: finalCount,
-      //   method: "enhanced_with_status_and_readby",
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.log("📊 ChatRepository: getUnreadChatCountByRole final result", {
+        userId,
+        role,
+        unreadChatsCount: finalCount,
+        method: "enhanced_with_status_and_readby",
+        timestamp: new Date().toISOString(),
+      });
 
       return finalCount;
     } catch (error: any) {
-      // console.error("📊 ChatRepository: getUnreadChatCountByRole error", {
-      //   userId,
-      //   role,
-      //   error: error.message,
-      //   stack: error.stack,
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.error("📊 ChatRepository: getUnreadChatCountByRole error", {
+        userId,
+        role,
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      });
       throw new Error("Failed to get unread chat count: " + error.message);
     }
   }
@@ -276,11 +413,11 @@ export default class ChatRepository
     role: "mentor" | "mentee"
   ): Promise<void> {
     try {
-      // console.log("🔍 ChatRepository: debugUnreadCountIssues start", {
-      //   userId,
-      //   role,
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.log("🔍 ChatRepository: debugUnreadCountIssues start", {
+        userId,
+        role,
+        timestamp: new Date().toISOString(),
+      });
 
       const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -290,57 +427,57 @@ export default class ChatRepository
         "roles.role": role,
       }).select("_id users roles");
 
-      // console.log("🔍 Debug: User's chats", {
-      //   userId,
-      //   role,
-      //   chatCount: chats.length,
-      //   chats: chats.map((c) => ({
-      //     id: c._id.toString(),
-      //     users: c.users.map((u) => u.toString()),
-      //     roles: c.roles,
-      //   })),
-      // });
+      console.log("🔍 Debug: User's chats", {
+        userId,
+        role,
+        chatCount: chats.length,
+        chats: chats.map((c) => ({
+          id: c._id.toString(),
+          users: c.users.map((u) => u.toString()),
+          roles: c.roles,
+        })),
+      });
 
       for (const chat of chats) {
-        // console.log(`\n🔍 === ANALYZING CHAT ${chat._id} ===`);
+        console.log(`\n🔍 === ANALYZING CHAT ${chat._id} ===`);
 
         // Get all messages in this chat
         const messages = await Message.find({ chat: chat._id }).sort({
           createdAt: 1,
         });
 
-        // console.log("🔍 Chat messages overview", {
-        //   chatId: chat._id.toString(),
-        //   totalMessages: messages.length,
-        //   messagesByStatus: messages.reduce((acc: any, msg: any) => {
-        //     acc[msg.status] = (acc[msg.status] || 0) + 1;
-        //     return acc;
-        //   }, {}),
-        // });
+        console.log("🔍 Chat messages overview", {
+          chatId: chat._id.toString(),
+          totalMessages: messages.length,
+          messagesByStatus: messages.reduce((acc: any, msg: any) => {
+            acc[msg.status] = (acc[msg.status] || 0) + 1;
+            return acc;
+          }, {}),
+        });
 
         // Analyze each message
         const messagesFromOthers = messages.filter(
           (msg) => msg.sender.toString() !== userId
         );
 
-        // console.log("🔍 Messages from others analysis", {
-        //   chatId: chat._id.toString(),
-        //   messagesFromOthers: messagesFromOthers.length,
-        //   breakdown: messagesFromOthers.map((msg) => ({
-        //     id: msg._id.toString(),
-        //     status: msg.status,
-        //     readBy: msg.readBy.map((id) => id.toString()),
-        //     isReadByCurrentUser: msg.readBy.some(
-        //       (id) => id.toString() === userId
-        //     ),
-        //     sender: msg.sender.toString(),
-        //     createdAt: msg.createdAt,
-        //     // Determine if this should count as unread
-        //     shouldCountAsUnread:
-        //       !msg.readBy.some((id) => id.toString() === userId) &&
-        //       ["sent", "delivered"].includes(msg.status),
-        //   })),
-        // });
+        console.log("🔍 Messages from others analysis", {
+          chatId: chat._id.toString(),
+          messagesFromOthers: messagesFromOthers.length,
+          breakdown: messagesFromOthers.map((msg) => ({
+            id: msg._id.toString(),
+            status: msg.status,
+            readBy: msg.readBy.map((id) => id.toString()),
+            isReadByCurrentUser: msg.readBy.some(
+              (id) => id.toString() === userId
+            ),
+            sender: msg.sender.toString(),
+            createdAt: msg.createdAt,
+            // Determine if this should count as unread
+            shouldCountAsUnread:
+              !msg.readBy.some((id) => id.toString() === userId) &&
+              ["sent", "delivered"].includes(msg.status),
+          })),
+        });
 
         // Count unread by different methods
         const unreadByReadByOnly = messagesFromOthers.filter(
@@ -357,13 +494,13 @@ export default class ChatRepository
             ["sent", "delivered"].includes(msg.status)
         ).length;
 
-        // console.log("🔍 Chat unread count comparison", {
-        //   chatId: chat._id.toString(),
-        //   unreadByReadByOnly,
-        //   unreadByStatusOnly,
-        //   unreadByCombined,
-        //   hasUnreadMessages: unreadByCombined > 0,
-        // });
+        console.log("🔍 Chat unread count comparison", {
+          chatId: chat._id.toString(),
+          unreadByReadByOnly,
+          unreadByStatusOnly,
+          unreadByCombined,
+          hasUnreadMessages: unreadByCombined > 0,
+        });
 
         // Find inconsistent messages
         const inconsistentMessages = messagesFromOthers.filter((msg) => {
@@ -380,32 +517,32 @@ export default class ChatRepository
           );
         });
 
-        // if (inconsistentMessages.length > 0) {
-        //   console.warn("⚠️ INCONSISTENT MESSAGES FOUND", {
-        //     chatId: chat._id.toString(),
-        //     count: inconsistentMessages.length,
-        //     details: inconsistentMessages.map((msg) => ({
-        //       id: msg._id.toString(),
-        //       status: msg.status,
-        //       readBy: msg.readBy.map((id) => id.toString()),
-        //       hasUserInReadBy: msg.readBy.some(
-        //         (id) => id.toString() === userId
-        //       ),
-        //       issue:
-        //         msg.status === "read" &&
-        //         !msg.readBy.some((id) => id.toString() === userId)
-        //           ? "Status is 'read' but user not in readBy array"
-        //           : "User in readBy array but status is not 'read'",
-        //     })),
-        //   });
-        // }
+        if (inconsistentMessages.length > 0) {
+          console.warn("⚠️ INCONSISTENT MESSAGES FOUND", {
+            chatId: chat._id.toString(),
+            count: inconsistentMessages.length,
+            details: inconsistentMessages.map((msg) => ({
+              id: msg._id.toString(),
+              status: msg.status,
+              readBy: msg.readBy.map((id) => id.toString()),
+              hasUserInReadBy: msg.readBy.some(
+                (id) => id.toString() === userId
+              ),
+              issue:
+                msg.status === "read" &&
+                !msg.readBy.some((id) => id.toString() === userId)
+                  ? "Status is 'read' but user not in readBy array"
+                  : "User in readBy array but status is not 'read'",
+            })),
+          });
+        }
       }
 
-      // console.log("🔍 ChatRepository: debugUnreadCountIssues completed", {
-      //   userId,
-      //   role,
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.log("🔍 ChatRepository: debugUnreadCountIssues completed", {
+        userId,
+        role,
+        timestamp: new Date().toISOString(),
+      });
     } catch (error: any) {
       console.error("🔍 ChatRepository: debugUnreadCountIssues error", {
         error: error.message,
@@ -417,10 +554,11 @@ export default class ChatRepository
 
   async findByBookingId(bookingId: string): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findByBookingId step 1");
       const chat = await Chat.findOne({ bookingId })
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findByBookingId step 2");
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new Error("Failed to find chat", error.message);
@@ -431,11 +569,17 @@ export default class ChatRepository
     isActive: boolean
   ): Promise<EChat | null> {
     try {
+      console.log(
+        "Chatrepository updateByBookingId step 1 bookingId",
+        bookingId
+      );
+      console.log("Chatrepository updateByBookingId step 2 isActive", isActive);
       const chat = await Chat.findOneAndUpdate(
         { bookingId },
         { $set: { isActive } },
         { new: true } // Return the updated document
       ).exec();
+      console.log("Chatrepository updateByBookingId step 3 chat");
 
       return chat as EChat;
     } catch (error: any) {
@@ -450,6 +594,10 @@ export default class ChatRepository
     mentorId: string
   ): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY findByUsersAndRoles step 1", {
+        menteeId,
+        mentorId,
+      });
       const chat = await Chat.findOne({
         roles: {
           $all: [
@@ -460,7 +608,7 @@ export default class ChatRepository
       })
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY findByUsersAndRoles step 2", chat);
       return chat as unknown as EChat | null;
     } catch (error: any) {
       throw new Error("Failed to find chat by users and roles", error.message);
@@ -472,6 +620,11 @@ export default class ChatRepository
     update: { isActive: boolean; bookingId: string }
   ): Promise<EChat | null> {
     try {
+      console.log("CHAT REPOSITORY updateByUsersAndRoles step 1", {
+        menteeId,
+        mentorId,
+        update,
+      });
       const chat = await Chat.findOneAndUpdate(
         {
           roles: {
@@ -486,7 +639,7 @@ export default class ChatRepository
       )
         .populate("users", "firstName lastName profilePicture")
         .populate("latestMessage");
-
+      console.log("CHAT REPOSITORY updateByUsersAndRoles step 2", chat);
       if (!chat) {
         throw new Error("Chat not found for the provided users and roles");
       }

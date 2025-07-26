@@ -15,20 +15,20 @@ export default class MessageRepository
   // 🎯 ENHANCED: Create message with proper status and logging
   async create(data: Partial<EMessage>): Promise<EMessage> {
     try {
-      // console.log("📤 MessageRepository: create start", {
-      //   senderId: data.sender,
-      //   chatId: data.chat,
-      //   type: data.type,
-      //   status: data.status,
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.log("📤 MessageRepository: create start", {
+        senderId: data.sender,
+        chatId: data.chat,
+        type: data.type,
+        status: data.status,
+        timestamp: new Date().toISOString(),
+      });
 
-      // const message = new Message({
-      //   ...data,
-      //   status: data.status || "sent", // 🎯 INDUSTRY STANDARD: Default to "sent"
-      //   createdAt: new Date(),
-      //   updatedAt: new Date(),
-      // });
+      const message = new Message({
+        ...data,
+        status: data.status || "sent", // 🎯 INDUSTRY STANDARD: Default to "sent"
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
       const savedMessage = await message.save();
 
@@ -56,79 +56,12 @@ export default class MessageRepository
     }
   }
 
-  // 🎯 ENHANCED: Find messages with better sorting and population
-  // async findByChatId(chatId: string): Promise<EMessage[]> {
-  //   try {
-  //     console.log("📨 MessageRepository: findByChatId start", {
-  //       chatId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     const messages = await Message.find({ chat: chatId })
-  //       .populate("sender", "firstName lastName profilePicture")
-  //       .sort({ createdAt: 1 }) // Oldest first
-  //       .lean(); // 🎯 PERFORMANCE: Use lean() for read-only operations
-
-  //     console.log("📨 MessageRepository: findByChatId completed", {
-  //       chatId,
-  //       messageCount: messages.length,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     return messages as EMessage[];
-  //   } catch (error: any) {
-  //     console.error("📨 MessageRepository: findByChatId error", {
-  //       error: error.message,
-  //       chatId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-  //     throw new Error("Failed to find messages: " + error.message);
-  //   }
-  // }
-  // async findByChatId(chatId: string): Promise<EMessage[]> {
-  //   try {
-  //     console.log("📨 MessageRepository: findByChatId start", {
-  //       chatId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     const messages = await Message.find({ chat: chatId })
-  //       .populate("sender", "firstName lastName profilePicture")
-  //       .sort({ createdAt: 1 }) // Oldest first
-  //       .lean(); // Performance optimization
-
-  //     // 🎯 CRITICAL: Ensure all messages have proper status from database
-  //     const messagesWithStatus = messages.map((msg: any) => ({
-  //       ...msg,
-  //       status: msg.status || "sent", // Fallback to "sent" if somehow missing
-  //     }));
-
-  //     console.log("📨 MessageRepository: findByChatId completed", {
-  //       chatId,
-  //       messageCount: messagesWithStatus.length,
-  //       statusBreakdown: messagesWithStatus.reduce((acc: any, msg: any) => {
-  //         acc[msg.status] = (acc[msg.status] || 0) + 1;
-  //         return acc;
-  //       }, {}),
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     return messagesWithStatus as EMessage[];
-  //   } catch (error: any) {
-  //     console.error("📨 MessageRepository: findByChatId error", {
-  //       error: error.message,
-  //       chatId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-  //     throw new Error("Failed to find messages: " + error.message);
-  //   }
-  // }
   async findByChatId(chatId: string): Promise<EMessage[]> {
     try {
-      // console.log("📨 MessageRepository: findByChatId start", {
-      //   chatId,
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.log("📨 MessageRepository: findByChatId start", {
+        chatId,
+        timestamp: new Date().toISOString(),
+      });
 
       const messages = await Message.find({ chat: chatId })
         .populate("sender", "firstName lastName profilePicture")
@@ -146,11 +79,11 @@ export default class MessageRepository
           : "sent";
 
         if (dbStatus !== finalStatus) {
-          // console.warn("📨 Invalid message status detected:", {
-          //   messageId: msg._id,
-          //   invalidStatus: dbStatus,
-          //   correctedTo: finalStatus,
-          // });
+          console.warn("📨 Invalid message status detected:", {
+            messageId: msg._id,
+            invalidStatus: dbStatus,
+            correctedTo: finalStatus,
+          });
         }
 
         return {
@@ -159,15 +92,15 @@ export default class MessageRepository
         };
       });
 
-      // console.log("📨 MessageRepository: findByChatId completed", {
-      //   chatId,
-      //   messageCount: messagesWithStatus.length,
-      //   statusBreakdown: messagesWithStatus.reduce((acc: any, msg: any) => {
-      //     acc[msg.status] = (acc[msg.status] || 0) + 1;
-      //     return acc;
-      //   }, {}),
-      //   timestamp: new Date().toISOString(),
-      // });
+      console.log("📨 MessageRepository: findByChatId completed", {
+        chatId,
+        messageCount: messagesWithStatus.length,
+        statusBreakdown: messagesWithStatus.reduce((acc: any, msg: any) => {
+          acc[msg.status] = (acc[msg.status] || 0) + 1;
+          return acc;
+        }, {}),
+        timestamp: new Date().toISOString(),
+      });
 
       return messagesWithStatus as EMessage[];
     } catch (error: any) {
