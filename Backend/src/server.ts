@@ -14,7 +14,9 @@ import multer from "multer";
 import { Server } from "socket.io";
 import { createClient } from "@redis/client";
 import { createAdapter } from "@socket.io/redis-adapter";
-
+import "./services/queue"; // Initialize queue processors
+import { CleanupJobs } from "./jobs/cleanupJobs";
+import { serverAdapter } from "./utils/bullDashboard";
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
   "REFRESH_TOKEN_SECRET",
@@ -40,7 +42,8 @@ export const pubClient = createClient({ url: process.env.REDIS_URL });
 export const subClient = pubClient.duplicate();
 
 let redisConnected = false;
-
+CleanupJobs.initializeCleanupJobs();
+console.log("🚀 Reminder system initialized");
 // Enhanced error handling and connection tracking
 pubClient.on("error", (err) => {
   console.error("❌ Redis Pub Client Error:", err);
@@ -105,7 +108,7 @@ const io = new Server(httpServer, {
 const chatNamespace = io.of("/chat");
 const videoNamespace = io.of("/video");
 const notificationNamespace = io.of("/notifications");
-
+app.use("/admin/queues", serverAdapter.getRouter());
 // Middleware
 app.use(
   cors({
@@ -220,7 +223,10 @@ const startServer = async (): Promise<void> => {
     process.exit(1);
   }
 };
-
+console.log("🚀 Server started");
+console.log(
+  "📊 Bull Dashboard available at: http://localhost:3000/admin/queues"
+);
 // Graceful shutdown
 const gracefulShutdown = async (signal: string): Promise<void> => {
   console.log(`${signal} received, shutting down gracefully`);

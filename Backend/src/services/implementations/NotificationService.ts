@@ -7,7 +7,7 @@ import { INotificationService } from "../../services/interface/INotificationServ
 interface NotificationData {
   recipientId: string;
   targetRole: "mentor" | "mentee" | "both";
-  type: "payment" | "booking" | "chat" | "meeting";
+  type: "payment" | "booking" | "chat" | "meeting" | "booking_reminder";
   message: string;
   relatedId?: string;
   sender?: { firstName: string; lastName: string; id: string };
@@ -24,7 +24,7 @@ export default class NotificationService implements INotificationService {
 
   async createNotification(
     recipientId: string,
-    type: "payment" | "booking" | "chat" | "meeting",
+    type: "payment" | "booking" | "chat" | "meeting" | "booking_reminder",
     message: string,
     relatedId?: string,
     io?: any,
@@ -69,6 +69,8 @@ export default class NotificationService implements INotificationService {
             ? `/bookings/${relatedId}`
             : type === "meeting"
             ? `/user/meeting-join/${relatedId}`
+            : type === "booking_reminder"
+            ? `/bookings/${relatedId}`
             : undefined,
         isRead: false,
         createdAt: notification.createdAt.toISOString(),
@@ -354,6 +356,8 @@ export default class NotificationService implements INotificationService {
             ? `/bookings/${n.relatedId}`
             : n.type === "meeting"
             ? `/user/meeting-join/${n.relatedId}`
+            : n.type === "booking_reminder"
+            ? `/bookings/${n.relatedId}`
             : undefined,
         isRead: n.isRead,
         isSeen: n.isSeen, // ✅ NEW FIELD

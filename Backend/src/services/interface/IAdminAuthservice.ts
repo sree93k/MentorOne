@@ -3,26 +3,6 @@
 
 import { EAdmin } from "../../entities/adminEntity";
 
-// export interface IAdminAuthService {
-//   login(user: Partial<EAdmin>): Promise<{
-//     accessToken: string;
-//     refreshToken: string;
-//     adminFound: Omit<EAdmin, "adminPassword">;
-//   } | null>;
-
-//   logout(token: string, id: string): Promise<boolean | null>;
-//   // refreshAccessToken(
-//   //   userId: string,
-//   //   refreshToken: string
-//   // ): Promise<string | null>;
-//   refreshAccessToken(
-//     userId: string,
-//     refreshToken: string
-//   ): Promise<{ newAccessToken: string; newRefreshToken: string } | null>;
-//   logoutFromAllDevices(userId: string): Promise<boolean>;
-//   // findById(id: string): Promise<EAdmin | null>;
-// }
-// Update your interface file
 export interface IAdminAuthService {
   login(user: { adminEmail: string; adminPassword: string }): Promise<{
     accessToken: string;
