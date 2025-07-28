@@ -1,144 +1,64 @@
-// import React, { useState } from "react";
-// import { motion, AnimatePresence } from "framer-motion";
-// import Chatbot from "./ChatBot"; // Your core Chatbot component
-// import { Button } from "@/components/ui/button"; // Shadcn Button
-// import AnimatedGradientCircle from "@/components/users/AnimatedGraidentCirlce"; // Import the new component
-
-// // Optional: If you use lucide-react for icons
-// // import { MessageSquare, X } from 'lucide-react';
-
-// const ChatbotWidget: React.FC = () => {
-//   const [isOpen, setIsOpen] = useState(false);
-
-//   const toggleChat = () => {
-//     setIsOpen(!isOpen);
-//   };
-
-//   // Replace with a dynamic userId from your authentication context
-//   // This helps maintain chat history per user on the backend.
-//   const userId = "currentMenteeUser"; // Example: Get this from your auth state (e.g., useSelector, useContext)
-
-//   return (
-//     <>
-//       {/* Chatbot Window */}
-//       <AnimatePresence>
-//         {isOpen && (
-//           <motion.div
-//             initial={{ opacity: 0, y: 100, x: 100 }}
-//             animate={{ opacity: 1, y: 0, x: 0 }}
-//             exit={{ opacity: 0, y: 100, x: 100 }}
-//             transition={{ duration: 0.3, ease: "easeOut" }}
-//             // Fixed position for the chat window
-//             className="fixed bottom-24 right-4 z-[1000] w-full max-w-sm h-[600px] bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden flex flex-col md:max-w-md lg:max-w-lg"
-//           >
-//             <div className="flex justify-between items-center p-4 bg-blue-600 text-white rounded-t-lg shadow-md">
-//               <h3 className="text-lg font-semibold">AI Mentor Chat</h3>
-//               <Button
-//                 variant="ghost"
-//                 size="icon"
-//                 onClick={toggleChat}
-//                 className="hover:bg-blue-700 text-white"
-//               >
-//                 {/* Use a simple X or an icon component like <X className="h-5 w-5" /> */}
-//                 <span className="text-xl font-bold">×</span>
-//               </Button>
-//             </div>
-//             <div className="flex-grow overflow-hidden">
-//               <Chatbot userId={userId} /> {/* Pass the userId */}
-//             </div>
-//           </motion.div>
-//         )}
-//       </AnimatePresence>
-
-//       {/* Toggle Button (with Animated Gradient) */}
-//       <Button
-//         onClick={toggleChat}
-//         // Fixed position for the button
-//         className="fixed bottom-4 right-4 z-[1001] p-0 w-16 h-16 rounded-full overflow-hidden shadow-lg transform hover:scale-110 transition-all duration-300 ease-in-out group"
-//         size="icon"
-//       >
-//         <AnimatedGradientCircle /> {/* The animated gradient circle */}
-//         {/* Icon/Text for the button, overlaid on the gradient */}
-//         <div className="relative z-10 flex items-center justify-center w-full h-full text-white text-3xl font-bold group-hover:animate-pulse">
-//           {/* Use icons if you have them, e.g., <MessageSquare className="w-8 h-8" /> */}
-//           {isOpen ? (
-//             <span className="text-4xl">×</span>
-//           ) : (
-//             // A simple message icon SVG
-//             <svg
-//               className="w-8 h-8"
-//               fill="currentColor"
-//               viewBox="0 0 20 20"
-//               xmlns="http://www.w3.org/2000/svg"
-//             >
-//               <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-//               <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-//             </svg>
-//           )}
-//         </div>
-//       </Button>
-//     </>
-//   );
-// };
-
-// export default ChatbotWidget;
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, X, Send, Bot, User, ChevronDown } from "lucide-react";
+import {
+  MessageCircle,
+  X,
+  Send,
+  Bot,
+  User,
+  ChevronDown,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 
-// FAQ Data Structure
-const FAQ_DATA = [
-  {
-    id: 1,
-    category: "Getting Started",
-    question: "How do I find the right mentor?",
-    answer:
-      "Browse our mentor profiles, filter by expertise, and book a consultation. We match you based on your goals and learning style.",
-  },
-  {
-    id: 2,
-    category: "Sessions",
-    question: "How long are mentoring sessions?",
-    answer:
-      "Standard sessions are 60 minutes, but we offer 30-minute quick consultations and 90-minute deep-dive sessions.",
-  },
-  {
-    id: 3,
-    category: "Pricing",
-    question: "What are your pricing plans?",
-    answer:
-      "We offer flexible pricing: $50/session for 1-on-1 mentoring, $30/session for group sessions, and monthly packages starting at $150.",
-  },
-  {
-    id: 4,
-    category: "Platform",
-    question: "Can I reschedule sessions?",
-    answer:
-      "Yes! You can reschedule up to 24 hours before your session through your dashboard or by contacting your mentor directly.",
-  },
-  {
-    id: 5,
-    category: "Support",
-    question: "What if I'm not satisfied with my mentor?",
-    answer:
-      "We offer a satisfaction guarantee. You can request a new mentor match within your first 3 sessions at no extra cost.",
-  },
-];
-
-const QUICK_ACTIONS = [
-  { id: 1, text: "Find a mentor", action: "find_mentor" },
-  { id: 2, text: "Book a session", action: "book_session" },
-  { id: 3, text: "View my dashboard", action: "dashboard" },
-  { id: 4, text: "Pricing plans", action: "pricing" },
-];
+// Backend service
+import chatbotService from "@/services/chatbotService";
 
 interface Message {
   id: string;
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
-  type?: "text" | "faq" | "quick_action";
+  source?: "faq" | "ai" | "fallback" | "keyword_match";
+  faqId?: string;
+  helpful?: boolean;
+  suggestions?: string[];
+  userType?: "anonymous" | "mentee" | "mentor";
+}
+
+interface FAQ {
+  _id: string;
+  question: string;
+  answer: string;
+  category: {
+    name: string;
+    _id: string;
+  };
+  keywords: string[];
+  priority: number;
+  analytics: {
+    views: number;
+    helpful: number;
+    notHelpful: number;
+  };
+}
+
+interface FAQCategory {
+  _id: string;
+  name: string;
+  description: string;
+  priority: number;
+}
+
+interface RateLimitStatus {
+  hasLimit: boolean;
+  allowed?: boolean;
+  remaining?: number;
+  resetTime?: string;
+  message?: string;
 }
 
 const ChatbotWidget: React.FC = () => {
@@ -148,6 +68,12 @@ const ChatbotWidget: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [showFAQ, setShowFAQ] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [categories, setCategories] = useState<FAQCategory[]>([]);
+  const [rateLimitStatus, setRateLimitStatus] =
+    useState<RateLimitStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -158,9 +84,35 @@ const ChatbotWidget: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Load initial data when component mounts
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        console.log("🔄 Loading initial chatbot data...");
+        const [faqsData, categoriesData, rateLimitData] = await Promise.all([
+          chatbotService.getFAQs(),
+          chatbotService.getCategories(),
+          chatbotService.getRateLimitStatus(),
+        ]);
+
+        setFaqs(faqsData);
+        setCategories(categoriesData);
+        setRateLimitStatus(rateLimitData);
+        setIsConnected(true);
+        console.log("✅ Initial data loaded successfully");
+      } catch (error) {
+        console.error("❌ Failed to load initial data:", error);
+        setIsConnected(false);
+        setError("Unable to connect to chatbot service");
+      }
+    };
+
+    loadInitialData();
+  }, []);
+
+  // Load conversation history and show welcome message when chat opens
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Initial welcome message
       setTimeout(() => {
         addBotMessage(
           "Hi! 👋 How can I help you today? I can assist you with finding mentors, booking sessions, or answer any questions about our platform."
@@ -168,7 +120,14 @@ const ChatbotWidget: React.FC = () => {
         setTimeout(() => {
           addBotMessage(
             "Feel free to ask me anything or check out our FAQ for quick answers!",
-            "faq"
+            undefined,
+            undefined,
+            undefined,
+            [
+              "Tell me about pricing",
+              "How do I find a mentor?",
+              "What features do you offer?",
+            ]
           );
         }, 1000);
       }, 500);
@@ -177,14 +136,22 @@ const ChatbotWidget: React.FC = () => {
 
   const addBotMessage = (
     text: string,
-    type: "text" | "faq" | "quick_action" = "text"
+    source?: "faq" | "ai" | "fallback" | "keyword_match",
+    faqId?: string,
+    helpful?: boolean,
+    suggestions?: string[],
+    userType?: "anonymous" | "mentee" | "mentor"
   ) => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
       sender: "bot",
       timestamp: new Date(),
-      type,
+      source,
+      faqId,
+      helpful,
+      suggestions,
+      userType,
     };
     setMessages((prev) => [...prev, newMessage]);
   };
@@ -199,107 +166,126 @@ const ChatbotWidget: React.FC = () => {
     setMessages((prev) => [...prev, newMessage]);
   };
 
-  const simulateTyping = (callback: () => void, delay = 1500) => {
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      callback();
-    }, delay);
-  };
-
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputText.trim()) return;
 
-    addUserMessage(inputText);
-    const userMessage = inputText.toLowerCase();
+    // Check rate limit for anonymous users
+    if (rateLimitStatus?.hasLimit && !rateLimitStatus.allowed) {
+      setError(`Rate limit exceeded. Please try again later.`);
+      return;
+    }
+
+    const userMessage = inputText;
     setInputText("");
+    setError(null);
 
-    // Simple keyword-based responses
-    simulateTyping(() => {
-      if (userMessage.includes("mentor") || userMessage.includes("find")) {
-        addBotMessage(
-          "Great! I can help you find the perfect mentor. What field or skill are you looking to develop? You can browse our mentors by expertise on the 'Find Mentors' page."
-        );
-      } else if (
-        userMessage.includes("book") ||
-        userMessage.includes("session")
-      ) {
-        addBotMessage(
-          "Booking a session is easy! Once you've chosen a mentor, you can view their availability and book directly through their profile. Need help finding the right time slot?"
-        );
-      } else if (
-        userMessage.includes("price") ||
-        userMessage.includes("cost")
-      ) {
-        addBotMessage(
-          "Our pricing is flexible: $50 for 1-on-1 sessions, $30 for group sessions, and we offer monthly packages starting at $150. Would you like to see our full pricing details?"
-        );
-      } else if (
-        userMessage.includes("cancel") ||
-        userMessage.includes("reschedule")
-      ) {
-        addBotMessage(
-          "You can reschedule or cancel sessions up to 24 hours in advance through your dashboard. Need help accessing your bookings?"
-        );
-      } else {
-        addBotMessage(
-          "I'd be happy to help! You can ask me about finding mentors, booking sessions, pricing, or check our FAQ for more information. What specifically would you like to know?"
-        );
+    addUserMessage(userMessage);
+    setIsTyping(true);
+
+    try {
+      console.log("🚀 Sending message to backend:", userMessage);
+      const response = await chatbotService.sendMessage(userMessage);
+      console.log("✅ Received response:", response);
+
+      setIsTyping(false);
+      setIsConnected(true);
+
+      addBotMessage(
+        response.response,
+        response.source,
+        response.faqId,
+        undefined,
+        response.suggestions,
+        response.userType
+      );
+
+      // Update rate limit status
+      try {
+        const newRateLimit = await chatbotService.getRateLimitStatus();
+        setRateLimitStatus(newRateLimit);
+      } catch (rateLimitError) {
+        console.warn("Failed to update rate limit status:", rateLimitError);
       }
-    });
+    } catch (error: any) {
+      console.error("❌ Failed to send message:", error);
+      setIsTyping(false);
+      setIsConnected(false);
+      setError(error.message);
+
+      addBotMessage(
+        "I'm sorry, I'm having trouble responding right now. Please try again later.",
+        "fallback"
+      );
+    }
   };
 
-  const handleQuickAction = (action: string, text: string) => {
-    addUserMessage(text);
-    simulateTyping(() => {
-      switch (action) {
-        case "find_mentor":
-          addBotMessage(
-            "Perfect! Let me guide you to find the right mentor. What's your area of interest? We have experts in technology, business, design, marketing, and more."
-          );
-          break;
-        case "book_session":
-          addBotMessage(
-            "Ready to book? First, you'll need to select a mentor. Once you've found someone who matches your needs, you can view their calendar and pick a time that works for you."
-          );
-          break;
-        case "dashboard":
-          addBotMessage(
-            "Your dashboard shows all your upcoming sessions, mentor connections, and learning progress. You can access it from the main menu after logging in."
-          );
-          break;
-        case "pricing":
-          addBotMessage(
-            "Here's our pricing: Individual sessions ($50), Group sessions ($30), Monthly unlimited ($150), Quarterly package ($400). All plans include session recordings and follow-up resources."
-          );
-          break;
-      }
-    });
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputText(suggestion);
   };
 
-  const handleFAQClick = (faq: (typeof FAQ_DATA)[0]) => {
+  const handleFAQClick = (faq: FAQ) => {
     addUserMessage(faq.question);
-    simulateTyping(() => {
-      addBotMessage(faq.answer);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      setIsTyping(false);
+      addBotMessage(faq.answer, "faq", faq._id);
     }, 800);
+
     setShowFAQ(false);
+  };
+
+  const handleFeedback = async (
+    messageId: string,
+    faqId: string,
+    helpful: boolean
+  ) => {
+    try {
+      await chatbotService.markFAQHelpful(faqId, helpful);
+
+      // Update the message to show feedback was recorded
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, helpful } : msg))
+      );
+    } catch (error) {
+      console.error("Failed to record feedback:", error);
+    }
+  };
+
+  const clearConversation = async () => {
+    try {
+      await chatbotService.clearConversation();
+      setMessages([]);
+      setError(null);
+
+      // Add welcome message after clearing
+      setTimeout(() => {
+        addBotMessage(
+          "Hi! 👋 How can I help you today? I can assist you with finding mentors, booking sessions, or answer any questions about our platform."
+        );
+      }, 500);
+    } catch (error) {
+      console.error("Failed to clear conversation:", error);
+    }
   };
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
     if (!isOpen) {
       setShowFAQ(false);
+      setError(null);
     }
   };
 
-  const categories = [
-    "all",
-    ...Array.from(new Set(FAQ_DATA.map((faq) => faq.category))),
-  ];
   const filteredFAQs =
     selectedCategory === "all"
-      ? FAQ_DATA
-      : FAQ_DATA.filter((faq) => faq.category === selectedCategory);
+      ? faqs
+      : faqs.filter((faq) => faq.category._id === selectedCategory);
+
+  const categoryOptions = [
+    { value: "all", label: "All Categories" },
+    ...categories.map((cat) => ({ value: cat._id, label: cat.name })),
+  ];
 
   return (
     <>
@@ -325,18 +311,62 @@ const ChatbotWidget: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">AI Mentor Assistant</h3>
-                  <p className="text-xs text-white/80">Always here to help</p>
+                  <p className="text-xs text-white/80 flex items-center">
+                    {isConnected ? (
+                      <>
+                        <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                        Always here to help
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                        Connection issues
+                      </>
+                    )}
+                  </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleChat}
-                className="hover:bg-white/20 text-white h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearConversation}
+                  className="hover:bg-white/20 text-white h-8 w-8"
+                  title="Clear conversation"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleChat}
+                  className="hover:bg-white/20 text-white h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 bg-red-50 border-b border-red-200">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Rate Limit Warning */}
+            {rateLimitStatus?.hasLimit &&
+              rateLimitStatus.remaining !== undefined &&
+              rateLimitStatus.remaining < 3 && (
+                <div className="p-3 bg-yellow-50 border-b border-yellow-200">
+                  <p className="text-sm text-yellow-700">
+                    {rateLimitStatus.remaining} questions remaining this hour
+                  </p>
+                </div>
+              )}
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
@@ -370,14 +400,96 @@ const ChatbotWidget: React.FC = () => {
                         <Bot className="w-4 h-4 text-gray-600" />
                       )}
                     </div>
-                    <div
-                      className={`px-4 py-3 rounded-2xl text-sm ${
-                        message.sender === "user"
-                          ? "bg-blue-600 text-white rounded-br-md"
-                          : "bg-white text-gray-800 rounded-bl-md shadow-sm border"
-                      }`}
-                    >
-                      {message.text}
+                    <div className="flex flex-col space-y-1">
+                      <div
+                        className={`px-4 py-3 rounded-2xl text-sm ${
+                          message.sender === "user"
+                            ? "bg-blue-600 text-white rounded-br-md"
+                            : "bg-white text-gray-800 rounded-bl-md shadow-sm border"
+                        }`}
+                      >
+                        {message.text}
+
+                        {/* Source indicator for bot messages */}
+                        {message.sender === "bot" && message.source && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {message.userType && (
+                              <span className="capitalize">
+                                {message.userType}
+                              </span>
+                            )}{" "}
+                            • {message.source.replace("_", " ").toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Feedback buttons for FAQ responses */}
+                      {message.sender === "bot" &&
+                        message.source === "faq" &&
+                        message.faqId &&
+                        message.helpful === undefined && (
+                          <div className="flex items-center space-x-2 px-2">
+                            <span className="text-xs text-gray-500">
+                              Was this helpful?
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleFeedback(message.id, message.faqId!, true)
+                              }
+                              className="h-6 w-6 p-0 hover:bg-green-100"
+                            >
+                              <ThumbsUp className="h-3 w-3 text-green-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleFeedback(
+                                  message.id,
+                                  message.faqId!,
+                                  false
+                                )
+                              }
+                              className="h-6 w-6 p-0 hover:bg-red-100"
+                            >
+                              <ThumbsDown className="h-3 w-3 text-red-600" />
+                            </Button>
+                          </div>
+                        )}
+
+                      {/* Feedback confirmation */}
+                      {message.sender === "bot" &&
+                        message.helpful !== undefined && (
+                          <div className="px-2">
+                            <span className="text-xs text-gray-500">
+                              Thanks for your feedback!{" "}
+                              {message.helpful ? "👍" : "👎"}
+                            </span>
+                          </div>
+                        )}
+
+                      {/* Suggestions */}
+                      {message.sender === "bot" &&
+                        message.suggestions &&
+                        message.suggestions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 px-2">
+                            {message.suggestions.map((suggestion, index) => (
+                              <Button
+                                key={index}
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleSuggestionClick(suggestion)
+                                }
+                                className="text-xs py-1 px-2 h-auto hover:bg-blue-50 hover:border-blue-300"
+                              >
+                                {suggestion}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
                     </div>
                   </div>
                 </motion.div>
@@ -411,30 +523,6 @@ const ChatbotWidget: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Quick Actions */}
-              {messages.length <= 2 && !isTyping && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 2 }}
-                  className="grid grid-cols-2 gap-2 mt-4"
-                >
-                  {QUICK_ACTIONS.map((action) => (
-                    <Button
-                      key={action.id}
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleQuickAction(action.action, action.text)
-                      }
-                      className="text-xs py-2 h-auto text-left justify-start hover:bg-blue-50 hover:border-blue-300"
-                    >
-                      {action.text}
-                    </Button>
-                  ))}
-                </motion.div>
-              )}
-
               <div ref={messagesEndRef} />
             </div>
 
@@ -446,7 +534,7 @@ const ChatbotWidget: React.FC = () => {
                 onClick={() => setShowFAQ(!showFAQ)}
                 className="w-full justify-between text-sm text-gray-600 hover:bg-gray-50"
               >
-                Frequently Asked Questions
+                Frequently Asked Questions ({faqs.length})
                 <ChevronDown
                   className={`w-4 h-4 transition-transform ${
                     showFAQ ? "rotate-180" : ""
@@ -462,20 +550,22 @@ const ChatbotWidget: React.FC = () => {
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-2 space-y-2 max-h-48 overflow-y-auto"
                   >
-                    <select
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full p-2 text-xs border rounded-lg"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat === "all" ? "All Categories" : cat}
-                        </option>
-                      ))}
-                    </select>
+                    {categoryOptions.length > 1 && (
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full p-2 text-xs border rounded-lg"
+                      >
+                        {categoryOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     {filteredFAQs.map((faq) => (
                       <button
-                        key={faq.id}
+                        key={faq._id}
                         onClick={() => handleFAQClick(faq)}
                         className="w-full text-left p-2 text-xs bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
                       >
@@ -483,10 +573,15 @@ const ChatbotWidget: React.FC = () => {
                           {faq.question}
                         </div>
                         <div className="text-gray-500 text-xs mt-1">
-                          {faq.category}
+                          {faq.category.name} • {faq.analytics.views} views
                         </div>
                       </button>
                     ))}
+                    {filteredFAQs.length === 0 && (
+                      <div className="text-center text-gray-500 text-xs py-4">
+                        No FAQs found for this category
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -500,18 +595,39 @@ const ChatbotWidget: React.FC = () => {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                  placeholder="Type your message..."
+                  placeholder={
+                    isConnected
+                      ? "Type your message..."
+                      : "Connection lost, retrying..."
+                  }
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  disabled={
+                    isTyping ||
+                    !isConnected ||
+                    (rateLimitStatus?.hasLimit && !rateLimitStatus.allowed)
+                  }
                 />
                 <Button
                   onClick={handleSendMessage}
                   size="icon"
                   className="rounded-full bg-blue-600 hover:bg-blue-700 w-10 h-10"
-                  disabled={!inputText.trim()}
+                  disabled={
+                    !inputText.trim() ||
+                    isTyping ||
+                    !isConnected ||
+                    (rateLimitStatus?.hasLimit && !rateLimitStatus.allowed)
+                  }
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
+
+              {/* Connection status */}
+              {!isConnected && (
+                <div className="text-xs text-gray-500 mt-2 text-center">
+                  Trying to reconnect...
+                </div>
+              )}
             </div>
           </motion.div>
         )}

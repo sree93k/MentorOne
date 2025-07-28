@@ -6,7 +6,6 @@ import store, { persistor } from "./redux/store/store.ts";
 import { PersistGate } from "redux-persist/integration/react";
 import GlobalTransitionWrapper from "./components/users/PageTansistion";
 import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext.tsx";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
     <PersistGate persistor={persistor}>

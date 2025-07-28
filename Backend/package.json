@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "seed:chatbot": "ts-node src/scripts/runSeed.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/app.js"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +17,7 @@
     "@aws-sdk/lib-storage": "^3.787.0",
     "@bull-board/api": "^6.12.0",
     "@bull-board/express": "^6.12.0",
+    "@google/generative-ai": "^0.24.1",
     "@redis/client": "^1.6.1",
     "@socket.io/redis-adapter": "^8.3.0",
     "aws-sdk": "^2.1692.0",
