@@ -2,7 +2,6 @@ import { Document, Schema, ObjectId } from "mongoose";
 import { ESchoolExperience } from "../entities/schoolEntity";
 import { ECollegeExperience } from "./collegeEntity";
 import { EWorkExperience } from "./professionalEnitity";
-import { EGoals } from "./goalsEntity";
 export interface EUsers extends Document {
   _id: ObjectId | null;
   firstName: string | null;
