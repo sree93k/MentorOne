@@ -104,23 +104,40 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     console.log(
       `VideoGrid: Screen sharing active by ${screenSharingParticipant.name} (ID: ${screenSharingParticipant.id}), stream ID: ${screenSharingStream.stream?.id}`
     );
-    // Screen-sharing layout: 70% left (screen share), 30% right (participant tiles in a column)
+    // Enhanced screen-sharing layout with modern styling
     return (
-      <div className="flex-1 flex flex-row p-2 bg-gray-900 overflow-hidden">
-        {/* Left side: 70% for screen sharing */}
-        <div className="w-[80%] h-full pr-2">
-          <div className="w-full h-full">
-            <VideoTile
-              participant={screenSharingStream}
-              isLocal={screenSharingParticipant?.id === currentUserId}
-              isThreeUsers={false}
-            />
+      <div className="flex-1 flex flex-row p-4 bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900 overflow-hidden gap-4">
+        {/* Left side: 75% for screen sharing with enhanced styling */}
+        <div className="w-[75%] h-full">
+          <div className="w-full h-full relative group">
+            <div className="absolute top-4 left-4 z-10">
+              <div className="bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium border border-white/20">
+                📺 {screenSharingParticipant.name} is presenting
+              </div>
+            </div>
+            <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-gray-800">
+              <VideoTile
+                participant={screenSharingStream}
+                isLocal={screenSharingParticipant?.id === currentUserId}
+                isThreeUsers={false}
+              />
+            </div>
           </div>
         </div>
-        {/* Right side: 30% for participant tiles in a column */}
-        <div className="w-[20%] h-full flex flex-col gap-2 overflow-y-auto">
-          {participantsForTiles.map((participant) => (
-            <div key={participant.id} className="w-full">
+
+        {/* Right side: 25% for participant tiles in a column */}
+        <div className="w-[25%] h-full flex flex-col gap-3 overflow-y-auto">
+          <div className="mb-2">
+            <div className="text-white/80 text-sm font-medium mb-3 px-2">
+              Participants ({participantsForTiles.length})
+            </div>
+          </div>
+          {participantsForTiles.map((participant, index) => (
+            <div
+              key={participant.id}
+              className="w-full aspect-video min-h-[120px] animate-fade-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
               <VideoTile
                 participant={participant}
                 isLocal={participant.id === currentUserId}
@@ -133,24 +150,71 @@ const VideoGrid: React.FC<VideoGridProps> = ({
     );
   }
 
-  // Normal layout (no screen sharing)
+  // Enhanced normal layout (no screen sharing)
   const { gridCols, tileStyle, isThreeUsers } = getGridConfig(
     participants.length
   );
 
   return (
-    <div
-      className={`flex-1 grid ${gridCols} gap-2 p-2 bg-gray-900 place-items-center overflow-hidden sm:${gridCols} lg:${gridCols}`}
-    >
-      {participants.map((participant) => (
-        <div key={participant.id} className={tileStyle}>
-          <VideoTile
-            participant={participant}
-            isLocal={participant.id === currentUserId}
-            isThreeUsers={isThreeUsers}
-          />
-        </div>
-      ))}
+    <div className="flex-1 p-4 bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900 overflow-hidden">
+      <div
+        className={`h-full grid ${gridCols} gap-4 place-items-center`}
+        style={{
+          gridTemplateColumns:
+            participants.length === 1
+              ? "1fr"
+              : participants.length === 2
+              ? "repeat(2, minmax(0, 1fr))"
+              : participants.length <= 4
+              ? "repeat(2, minmax(0, 1fr))"
+              : participants.length <= 6
+              ? "repeat(3, minmax(0, 1fr))"
+              : window.innerWidth >= 1280
+              ? "repeat(4, minmax(0, 1fr))"
+              : "repeat(3, minmax(0, 1fr))",
+        }}
+      >
+        {participants.map((participant, index) => (
+          <div
+            key={participant.id}
+            className={`${tileStyle} animate-fade-in-scale`}
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <VideoTile
+              participant={participant}
+              isLocal={participant.id === currentUserId}
+              isThreeUsers={isThreeUsers}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        .animate-fade-in {
+          animation: fadeIn 0.5s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-fade-in-scale {
+          animation: fadeInScale 0.6s ease-out forwards;
+          opacity: 0;
+          transform: scale(0.9);
+        }
+
+        @keyframes fadeIn {
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes fadeInScale {
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 };
