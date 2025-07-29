@@ -22,6 +22,7 @@ import {
   Heart,
   ThumbsUp,
   PartyPopper,
+  Timer,
 } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import Peer from "peerjs";
@@ -31,7 +32,6 @@ import Participants from "@/components/videoCall/Participants";
 import MeetingInfo from "@/components/videoCall/MeetingInfo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
-import { checkAuthStatus } from "@/utils/auth";
 
 interface Participant {
   id: string;
@@ -59,15 +59,24 @@ interface JoinRequest {
   peerId: string;
 }
 
+interface FloatingReaction {
+  id: string;
+  emoji: string;
+  x: number;
+}
+
 const VideoCallMeeting: React.FC = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isOnline } = useSelector((state: RootState) => state.user);
+
+  // States
   const [socket, setSocket] = useState<Socket | null>(null);
   const [peer, setPeer] = useState<Peer | null>(null);
   const [screenSharePeer, setScreenSharePeer] = useState<Peer | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [countParticipents, setCountParticipents] = useState(0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [localScreenShareStream, setLocalScreenShareStream] =
@@ -83,7 +92,16 @@ const VideoCallMeeting: React.FC = () => {
     []
   );
   const [creatorId, setCreatorId] = useState<string | null>(null);
+  const [floatingReactions, setFloatingReactions] = useState<
+    FloatingReaction[]
+  >([]);
 
+  // Meeting duration tracking
+  const [meetingStartTime, setMeetingStartTime] = useState<Date | null>(null);
+  const [meetingDuration, setMeetingDuration] = useState("0:00");
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Refs (keeping all your existing refs)
   const socketRef = useRef<Socket | null>(null);
   const peerRef = useRef<Peer | null>(null);
   const screenSharePeerRef = useRef<Peer | null>(null);
@@ -104,6 +122,142 @@ const VideoCallMeeting: React.FC = () => {
   const { isVideoOn: initialVideoOn = true, isMicOn: initialAudioOn = true } =
     location.state || {};
 
+  // Calculate meeting duration
+  const calculateDuration = (startTime: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - startTime.getTime();
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds
+        .toString()
+        .padStart(2, "0")}`;
+    } else {
+      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }
+  };
+
+  useEffect(() => {
+    // Start timer immediately when component mounts
+    if (!meetingStartTime) {
+      const startTime = new Date();
+      setMeetingStartTime(startTime);
+      console.log(
+        "⏱️ Timer started immediately at:",
+        startTime.toLocaleTimeString()
+      );
+
+      const interval = setInterval(() => {
+        const now = new Date();
+        const diffMs = now.getTime() - startTime.getTime();
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        const duration = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+        setMeetingDuration(duration);
+        console.log("⏱️ Timer update:", duration); // You should see this every second
+      }, 1000);
+
+      intervalRef.current = interval;
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []); // Empty dependency array - runs only once when component mounts
+
+  // 🔍 DEBUGGING: Add this temporary useEffect to check if timer state is updating
+  useEffect(() => {
+    console.log("⏱️ Meeting duration state changed:", meetingDuration);
+  }, [meetingDuration]);
+
+  const addFloatingReaction = (emoji: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    const x = Math.random() * 80 + 10; // Random position between 10% and 90%
+
+    setFloatingReactions((prev) => [...prev, { id, emoji, x }]);
+
+    // Remove after animation completes
+    setTimeout(() => {
+      setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 3000);
+  };
+
+  // Single panel management - only one panel can be open at a time
+  const handleChatToggle = () => {
+    if (isChatOpen) {
+      setIsChatOpen(false);
+    } else {
+      // Close other panels and open chat
+      setIsParticipantsOpen(false);
+      setIsMeetingInfoOpen(false);
+      setIsChatOpen(true);
+    }
+  };
+
+  const handleParticipantsToggle = () => {
+    if (isParticipantsOpen) {
+      setIsParticipantsOpen(false);
+    } else {
+      // Close other panels and open participants
+      setIsChatOpen(false);
+      setIsMeetingInfoOpen(false);
+      setIsParticipantsOpen(true);
+    }
+  };
+
+  const handleMeetingInfoToggle = () => {
+    if (isMeetingInfoOpen) {
+      setIsMeetingInfoOpen(false);
+    } else {
+      // Close other panels and open meeting info
+      setIsChatOpen(false);
+      setIsParticipantsOpen(false);
+      setIsMeetingInfoOpen(true);
+    }
+  };
+  const sendReaction = (reaction: string) => {
+    const emojiMap: { [key: string]: string } = {
+      heart: "❤️",
+      thumbsup: "👍",
+      party: "🎉",
+    };
+
+    const emoji = emojiMap[reaction] || reaction;
+
+    console.log("🎉 Sending reaction:", { emoji, meetingId, userId, userName });
+    console.log("🔍 Socket status:", {
+      exists: !!socket,
+      connected: socket?.connected,
+    });
+
+    if (!socket || !socket.connected) {
+      console.error("❌ Socket not connected!");
+      toast.error("Not connected to meeting");
+      return;
+    }
+
+    // Send reaction via socket
+    socket.emit("reaction", {
+      meetingId,
+      userId,
+      userName,
+      reaction: emoji,
+    });
+
+    console.log("✅ Reaction sent via socket");
+    toast.success(`You sent a ${emoji} reaction`);
+    setShowReactions(false);
+  };
+
+  // All your existing functions remain the same
   useBeforeUnload(
     useCallback(() => {
       if (localStreamRef.current) {
@@ -152,6 +306,7 @@ const VideoCallMeeting: React.FC = () => {
           isSharingScreen: false,
         },
       ]);
+      setCountParticipents(countParticipents + 1);
       processPendingJoins();
       processPendingCalls();
     } catch (error) {
@@ -183,6 +338,7 @@ const VideoCallMeeting: React.FC = () => {
           remotePeerId,
           localStreamRef.current!
         );
+        setCountParticipents(countParticipents + 1);
         peerCallsRef.current[remoteUserId] = call;
         call.on("stream", (remoteStream) => {
           setParticipants((prev) =>
@@ -609,15 +765,6 @@ const VideoCallMeeting: React.FC = () => {
     setMessages((prev) => [...prev, message]);
   };
 
-  const sendReaction = (reaction: string) => {
-    socket?.emit("reaction", { meetingId, userId, userName, reaction });
-    toast({
-      title: "Reaction sent",
-      description: `You sent a ${reaction} reaction`,
-    });
-    setShowReactions(false);
-  };
-
   const leaveMeeting = () => {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => {
@@ -638,38 +785,71 @@ const VideoCallMeeting: React.FC = () => {
     setMessages([]);
     socket?.emit("leave-meeting", { meetingId, userId });
 
+    // ✅ FIXED: Use the current meetingDuration state instead of recalculating
+    let finalDuration = meetingDuration; // Use the current timer value
+
+    // Convert MM:SS or HH:MM:SS format to readable format for end page
+    const formatDurationForEndPage = (duration: string): string => {
+      const parts = duration.split(":");
+
+      if (parts.length === 2) {
+        // MM:SS format
+        const minutes = parseInt(parts[0]);
+        const seconds = parseInt(parts[1]);
+
+        if (minutes === 0) {
+          return `${seconds} sec`;
+        } else if (minutes < 60) {
+          return `${minutes} min`;
+        }
+      } else if (parts.length === 3) {
+        // HH:MM:SS format
+        const hours = parseInt(parts[0]);
+        const minutes = parseInt(parts[1]);
+
+        if (hours > 0) {
+          return `${hours}h ${minutes}m`;
+        } else {
+          return `${minutes} min`;
+        }
+      }
+
+      return duration; // fallback to original format
+    };
+
+    const formattedDuration = formatDurationForEndPage(finalDuration);
+    // const participantCount = participants.length;
+    const participantCount = countParticipents;
+
+    console.log("🔍 Leaving meeting with:", {
+      originalDuration: finalDuration,
+      formattedDuration: formattedDuration,
+      participantCount: participantCount,
+    });
+
     // Pass the join link for mentees, host link for mentors
     const joinLink =
       user?.role === "mentee"
         ? `/user/meeting-join/${meetingId}`
         : `/user/meeting/${meetingId}`;
-    navigate(`/user/meeting-end/${meetingId}`, { state: { joinLink } });
+
+    navigate(`/user/meeting-end/${meetingId}`, {
+      state: {
+        joinLink,
+        duration: formattedDuration, // Use the formatted duration
+        participantCount,
+      },
+    });
   };
 
   useEffect(() => {
-    document.title = `Meeting: ${meetingId} | MentorOne Meet`;
-    // const userAuthticate = checkUserAuthenticate();
-
     if (!meetingId || !userId) {
       toast.error("Invalid meeting ID or user ID.");
       navigate("/login");
       return;
     }
-    // ✅ FIXED: ONLY check authentication status once
-    console.log("🔍 VideoCallMeeting: Component mounted");
-    console.log("🔍 All cookies:", document.cookie);
 
-    const isAuthenticated = checkAuthStatus();
-    console.log("🔍 Authentication check result:", isAuthenticated);
-
-    if (!isAuthenticated) {
-      console.log("❌ NOT AUTHENTICATED - Will redirect to login");
-      toast.error("Please log in to join the meeting.");
-      navigate("/login");
-      return;
-    }
-
-    console.log("✅ AUTHENTICATED - Proceeding with meeting setup");
+    console.log("🔍 Setting up socket connection...");
 
     const socketInstance = io(`${import.meta.env.VITE_SOCKET_URL}/video`, {
       transports: ["websocket"],
@@ -680,6 +860,7 @@ const VideoCallMeeting: React.FC = () => {
       reconnectionDelay: 1000,
       withCredentials: true,
     });
+
     socketRef.current = socketInstance;
     setSocket(socketInstance);
 
@@ -706,34 +887,28 @@ const VideoCallMeeting: React.FC = () => {
 
     initLocalStream();
 
+    // Socket event listeners
     socketInstance.on("connect", () => {
+      console.log("✅ Socket connected");
       socketInstance.emit(
         "join-meeting",
         { meetingId, userId, userName, peerId },
-        (response: any) => {
+        (response) => {
           if (!response?.success) {
             toast.error(response?.error || "Failed to join meeting.");
             navigate("/user/meetinghome");
           } else {
             setCreatorId(response.creatorId);
+            console.log("✅ Successfully joined meeting");
           }
         }
       );
     });
 
-    // socketInstance.on("connect_error", (error) => {
-    //   toast.error("Failed to connect to the server.");
-    //   if (error.message.includes("Authentication error")) {
-    //     // localStorage.removeItem("accessToken");
-    //     document.cookie =
-    //       "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    //     navigate("/login");
-    //   }
-    // });
     socketInstance.on("connect_error", (error) => {
+      console.error("❌ Socket connection error:", error);
       toast.error("Failed to connect to the server.");
       if (error.message.includes("Authentication error")) {
-        // ✅ FIXED: Clear the readable cookie on auth error
         document.cookie =
           "isAuthenticated=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         navigate("/login");
@@ -833,131 +1008,135 @@ const VideoCallMeeting: React.FC = () => {
       }
     );
 
-    socketInstance.on(
-      "screen-share-status",
-      ({ userId: remoteUserId, isSharingScreen, screenSharePeerId }) => {
-        setParticipants((prev: Participant[]) =>
-          prev.map((p) => {
-            if (p.id === remoteUserId) {
-              return {
-                ...p,
-                isSharingScreen,
-                screenSharePeerId: isSharingScreen
-                  ? screenSharePeerId
-                  : undefined,
-                screenShareStream: isSharingScreen ? p.screenShareStream : null,
-              };
-            }
-            return p;
-          })
-        );
+    // Add all other socket event listeners here...
+    socketInstance.on("user-left", ({ userId: remoteUserId }) => {
+      setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+      if (peerCallsRef.current[remoteUserId]) {
+        peerCallsRef.current[remoteUserId].close();
+        delete peerCallsRef.current[remoteUserId];
+      }
+      if (screenShareCallsRef.current[remoteUserId]) {
+        screenShareCallsRef.current[remoteUserId].close();
+        delete screenShareCallsRef.current[remoteUserId];
+      }
+    });
 
-        if (isSharingScreen && screenSharePeerId && peerRef.current) {
-          const call = peerRef.current.call(
-            screenSharePeerId,
-            localStreamRef.current!
+    socketInstance.on("message", (message: Message) => {
+      const convertedMessage = {
+        ...message,
+        timestamp:
+          typeof message.timestamp === "string"
+            ? new Date(message.timestamp)
+            : message.timestamp,
+      };
+      if (message.senderId !== userId) {
+        setMessages((prev) => [...prev, convertedMessage]);
+      }
+    });
+
+    socketInstance.on("reaction", (data) => {
+      console.log("🎉 Reaction received via socket:", data);
+      const { senderId, senderName, reaction } = data;
+
+      // Show floating animation for ALL users (including sender)
+      addFloatingReaction(reaction);
+
+      // Show toast notification for others only (not sender)
+      if (senderId !== userId) {
+        toast.success(`${senderName} sent ${reaction}`);
+      }
+    });
+
+    // ... ADD ALL YOUR OTHER SOCKET LISTENERS HERE ...
+    socketInstance.on(
+      "join-request",
+      ({ userId: remoteUserId, userName, peerId }) => {
+        if (userId !== creatorId) return;
+        setPendingJoinRequests((prev) => {
+          const filteredRequests = prev.filter(
+            (req) => req.userId !== remoteUserId
           );
-          screenShareCallsRef.current[remoteUserId] = call;
-          call.on("stream", (remoteStream) => {
-            setParticipants((prev) =>
-              prev.map((p) =>
-                p.id === remoteUserId
-                  ? { ...p, screenShareStream: remoteStream }
-                  : p
-              )
-            );
-          });
-          call.on("error", (err) => {
-            console.error(
-              `PeerJS screen share call error with ${remoteUserId}:`,
-              err
-            );
-          });
-          call.on("close", () => {
-            setParticipants((prev) =>
-              prev.map((p) =>
-                p.id === remoteUserId
-                  ? { ...p, screenShareStream: null, isSharingScreen: false }
-                  : p
-              )
-            );
-          });
-        } else {
-          if (screenShareCallsRef.current[remoteUserId]) {
-            screenShareCallsRef.current[remoteUserId].close();
-            delete screenShareCallsRef.current[remoteUserId];
-          }
-        }
+          return [
+            ...filteredRequests,
+            { userId: remoteUserId, userName, peerId },
+          ];
+        });
+        toast.info(`${userName} is requesting to join the meeting`, {
+          duration: 10000,
+        });
       }
     );
 
     socketInstance.on(
-      "existing-participants",
-      (
-        existingParticipants: {
-          userId: string;
-          userName: string;
-          peerId: string;
-        }[]
-      ) => {
-        existingParticipants.forEach(
-          ({
+      "user-joined",
+      ({
+        userId: remoteUserId,
+        userName: remoteName,
+        peerId: remotePeerId,
+      }) => {
+        if (remoteUserId === userId) return;
+
+        if (!localStreamRef.current || !peerRef.current) {
+          pendingJoinsRef.current.push({
             userId: remoteUserId,
             userName: remoteName,
             peerId: remotePeerId,
-          }) => {
-            if (remoteUserId === userId) return;
+          });
+          return;
+        }
 
-            if (!localStreamRef.current || !peerRef.current) {
-              pendingJoinsRef.current.push({
-                userId: remoteUserId,
-                userName: remoteName,
-                peerId: remotePeerId,
-              });
-              return;
-            }
+        setParticipants((prev) => {
+          if (prev.some((p) => p.id === remoteUserId)) return prev;
+          return [
+            ...prev,
+            {
+              id: remoteUserId,
+              name: remoteName,
+              audio: true,
+              video: true,
+              isSharingScreen: false,
+            },
+          ];
+        });
 
-            setParticipants((prev) => {
-              if (prev.some((p) => p.id === remoteUserId)) return prev;
-              return [
-                ...prev,
-                {
-                  id: remoteUserId,
-                  name: remoteName,
-                  audio: true,
-                  video: true,
-                },
-              ];
-            });
+        const call = peerInstance.call(remotePeerId, localStreamRef.current);
+        peerCallsRef.current[remoteUserId] = call;
 
-            const call = peerInstance.call(
-              remotePeerId,
-              localStreamRef.current
-            );
-            peerCallsRef.current[remoteUserId] = call;
-            call.on("stream", (remoteStream) => {
-              setParticipants((prev) =>
-                prev.map((p) =>
-                  p.id === remoteUserId
-                    ? {
-                        ...p,
-                        stream: remoteStream,
-                        cameraStream: remoteStream,
-                      }
-                    : p
-                )
-              );
-            });
-            call.on("error", (err) => {
-              toast.error(`Failed to connect to ${remoteName}`);
-            });
-            call.on("close", () => {
-              setParticipants((prev) =>
-                prev.filter((p) => p.id !== remoteUserId)
-              );
-            });
-          }
-        );
+        call.on("stream", (remoteStream) => {
+          setParticipants((prev) =>
+            prev.map((p) =>
+              p.id === remoteUserId
+                ? { ...p, stream: remoteStream, cameraStream: remoteStream }
+                : p
+            )
+          );
+        });
+
+        call.on("error", (err) => {
+          toast.error(`Failed to connect to ${remoteName}`);
+        });
+
+        call.on("close", () => {
+          setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
+        });
+
+        if (
+          isSharingScreen &&
+          screenSharePeerRef.current &&
+          localScreenShareStreamRef.current
+        ) {
+          const call = screenSharePeerRef.current.call(
+            remoteUserId,
+            localScreenShareStreamRef.current
+          );
+          screenShareCallsRef.current[remoteUserId] = call;
+          call.on("error", (err) => {
+            console.error(`Screen share call error with ${remoteUserId}:`, err);
+          });
+          call.on("close", () => {
+            console.log(`Screen share call closed with ${remoteUserId}`);
+          });
+        }
       }
     );
 
@@ -973,8 +1152,7 @@ const VideoCallMeeting: React.FC = () => {
       }
     });
 
-    socketInstance.on("message", (message: Message) => {
-      // Convert timestamp string to Date object if it's a string
+    socketInstance.on("message", (message) => {
       const convertedMessage = {
         ...message,
         timestamp:
@@ -985,13 +1163,6 @@ const VideoCallMeeting: React.FC = () => {
       if (message.senderId !== userId) {
         setMessages((prev) => [...prev, convertedMessage]);
       }
-    });
-
-    socketInstance.on("reaction", ({ senderId, senderName, reaction }) => {
-      toast({
-        title: `${senderName} reacted`,
-        description: `Sent a ${reaction} reaction`,
-      });
     });
 
     socketInstance.on(
@@ -1008,11 +1179,13 @@ const VideoCallMeeting: React.FC = () => {
       navigate("/user/meetinghome");
     });
 
+    // Peer event listeners
     peerInstance.on("open", (id) => {
-      console.log("PeerJS connected:", id);
+      console.log("✅ PeerJS connected:", id);
     });
 
     peerInstance.on("error", (err) => {
+      console.error("❌ PeerJS error:", err);
       toast.error(`PeerJS error: ${err.message || err.type}`);
     });
 
@@ -1021,17 +1194,14 @@ const VideoCallMeeting: React.FC = () => {
       if (localStreamRef.current) {
         call.answer(localStreamRef.current);
         peerCallsRef.current[remoteUserId] = call;
+
         call.on("stream", (remoteStream) => {
           setParticipants((prev) => {
             const participant = prev.find((p) => p.id === remoteUserId);
             if (participant) {
               return prev.map((p) =>
                 p.id === remoteUserId
-                  ? {
-                      ...p,
-                      stream: remoteStream,
-                      cameraStream: remoteStream,
-                    }
+                  ? { ...p, stream: remoteStream, cameraStream: remoteStream }
                   : p
               );
             }
@@ -1049,9 +1219,11 @@ const VideoCallMeeting: React.FC = () => {
             ];
           });
         });
+
         call.on("error", (err) => {
           console.error(`PeerJS call error with ${remoteUserId}:`, err);
         });
+
         call.on("close", () => {
           setParticipants((prev) => prev.filter((p) => p.id !== remoteUserId));
         });
@@ -1061,6 +1233,8 @@ const VideoCallMeeting: React.FC = () => {
     });
 
     return () => {
+      console.log("🧹 Cleaning up socket and peer connections...");
+
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -1085,28 +1259,6 @@ const VideoCallMeeting: React.FC = () => {
       });
       peerCallsRef.current = {};
 
-      Object.entries(screenShareCallsRef.current).forEach(([userId, call]) => {
-        try {
-          if (call) {
-            if (call.peerConnection) {
-              const senders = call.peerConnection.getSenders();
-              senders.forEach((sender) => {
-                if (sender.track) {
-                  sender.track.stop();
-                }
-              });
-            }
-            call.close();
-          }
-        } catch (err) {
-          console.error(
-            `Error closing screen share peer connection for ${userId}:`,
-            err
-          );
-        }
-      });
-      screenShareCallsRef.current = {};
-
       if (peerRef.current) {
         try {
           peerRef.current.destroy();
@@ -1116,27 +1268,11 @@ const VideoCallMeeting: React.FC = () => {
         peerRef.current = null;
       }
 
-      if (screenSharePeerRef.current) {
-        try {
-          screenSharePeerRef.current.destroy();
-        } catch (err) {
-          console.error("Error destroying screen share PeerJS instance:", err);
-        }
-        screenSharePeerRef.current = null;
-      }
-
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => {
           track.stop();
         });
         localStreamRef.current = null;
-      }
-
-      if (localScreenShareStreamRef.current) {
-        localScreenShareStreamRef.current.getTracks().forEach((track) => {
-          track.stop();
-        });
-        localScreenShareStreamRef.current = null;
       }
 
       setMessages([]);
@@ -1153,80 +1289,113 @@ const VideoCallMeeting: React.FC = () => {
   ]);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900 relative overflow-hidden">
+      {/* Floating Reactions Animation */}
+      <div className="fixed inset-0 pointer-events-none z-50">
+        {floatingReactions.map((reaction) => (
+          <div
+            key={reaction.id}
+            className="absolute bottom-32 text-4xl animate-bounce-up-fade"
+            style={{
+              left: `${reaction.x}%`,
+              animation: "bounceUpFade 3s ease-out forwards",
+            }}
+          >
+            {reaction.emoji}
+          </div>
+        ))}
+      </div>
+
+      {/* Main Content Area */}
       <div className="flex-1 flex relative">
         <VideoGrid participants={participants} currentUserId={userId} />
+
+        {/* Enhanced Side Panels */}
         {isChatOpen && (
-          <Chat
-            isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-            messages={messages}
-            sendMessage={sendMessage}
-            currentUserId={userId}
-          />
+          <div className="animate-slide-in-right">
+            <Chat
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+              messages={messages}
+              sendMessage={sendMessage}
+              currentUserId={userId}
+            />
+          </div>
         )}
+
         {isParticipantsOpen && (
-          <Participants
-            isOpen={isParticipantsOpen}
-            onClose={() => setIsParticipantsOpen(false)}
-            participants={participants}
-            userId={userId}
-          />
+          <div className="animate-slide-in-right">
+            <Participants
+              isOpen={isParticipantsOpen}
+              onClose={() => setIsParticipantsOpen(false)}
+              participants={participants}
+              userId={userId}
+            />
+          </div>
         )}
+
         {isMeetingInfoOpen && (
-          <MeetingInfo
-            isOpen={isMeetingInfoOpen}
-            onClose={() => setIsMeetingInfoOpen(false)}
-            meetingId={meetingId || ""}
-          />
+          <div className="animate-slide-in-left">
+            <MeetingInfo
+              isOpen={isMeetingInfoOpen}
+              onClose={() => setIsMeetingInfoOpen(false)}
+              meetingId={meetingId || ""}
+            />
+          </div>
         )}
       </div>
+
+      {/* Enhanced Reactions Panel */}
       {showReactions && (
-        <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 rounded-full p-2 flex gap-2 z-10">
+        <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-xl rounded-2xl p-3 flex gap-3 z-40 animate-fade-in-up border border-white/20">
           <Button
             variant="ghost"
-            className="rounded-full p-2 text-pink-500 hover:bg-gray-700"
+            className="rounded-xl p-3 text-pink-400 hover:bg-pink-500/20 hover:scale-110 transition-all duration-200"
             onClick={() => sendReaction("heart")}
           >
-            <Heart size={20} />
+            <Heart size={24} className="fill-current" />
           </Button>
           <Button
             variant="ghost"
-            className="rounded-full p-2 text-yellow-500 hover:bg-gray-700"
+            className="rounded-xl p-3 text-blue-400 hover:bg-blue-500/20 hover:scale-110 transition-all duration-200"
             onClick={() => sendReaction("thumbsup")}
           >
-            <ThumbsUp size={20} />
+            <ThumbsUp size={24} className="fill-current" />
           </Button>
           <Button
             variant="ghost"
-            className="rounded-full p-2 text-purple-500 hover:bg-gray-700"
+            className="rounded-xl p-3 text-yellow-400 hover:bg-yellow-500/20 hover:scale-110 transition-all duration-200"
             onClick={() => sendReaction("party")}
           >
-            <PartyPopper size={20} />
+            <PartyPopper size={24} className="fill-current" />
           </Button>
         </div>
       )}
+
+      {/* Enhanced Join Requests */}
       {userId === creatorId && pendingJoinRequests.length > 0 && (
-        <div className="absolute bottom-4 right-4 bg-gray-800 rounded-lg p-4 z-20 max-w-sm w-full">
+        <div className="absolute bottom-4 right-4 bg-white/10 backdrop-blur-xl rounded-2xl p-4 z-50 max-w-sm w-full border border-white/20 animate-slide-in-right">
+          <h4 className="text-white font-medium mb-3">Join Requests</h4>
           {pendingJoinRequests.map((request) => (
             <div
               key={request.userId}
-              className="flex items-center justify-between mb-2"
+              className="flex items-center justify-between mb-3 p-3 bg-white/5 rounded-xl"
             >
-              <span className="text-white">
+              <span className="text-white text-sm">
                 {request.userName} wants to join
               </span>
               <div className="flex gap-2">
                 <Button
-                  variant="default"
-                  className="bg-blue-600 hover:bg-green-700 text-white"
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded-lg transition-all duration-200"
                   onClick={() => handleAdmitUser(request)}
                 >
                   Admit
                 </Button>
                 <Button
-                  variant="default"
-                  className="bg-white hover:bg-red-700"
+                  size="sm"
+                  variant="outline"
+                  className="border-red-400 text-red-400 hover:bg-red-500/20 px-4 py-1 rounded-lg transition-all duration-200"
                   onClick={() => handleRejectUser(request)}
                 >
                   Reject
@@ -1236,43 +1405,51 @@ const VideoCallMeeting: React.FC = () => {
           ))}
         </div>
       )}
-      <div className="relative flex items-center p-4 bg-gray-900 text-white">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-400 truncate max-w-xs">
-            {meetingId ? ` ${meetingId}` : "No Meeting ID"}
-          </span>
+
+      {/* Enhanced Control Bar */}
+      <div className="relative flex items-center justify-between p-6 bg-gradient-to-t from-gray-900/95 via-gray-800/90 to-transparent backdrop-blur-xl border-t border-white/10">
+        {/* Left Side - Meeting Info */}
+        <div className="flex items-center gap-4 text-white/80">
+          <div className="flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg backdrop-blur-sm">
+            <Timer className="w-4 h-4" />
+            <span className="text-sm font-medium">{meetingDuration}</span>
+          </div>
         </div>
-        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+
+        {/* Center - Control Buttons */}
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               !isAudioOn
-                ? "bg-red-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+                ? "bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
             onClick={toggleAudio}
             aria-label={isAudioOn ? "Mute microphone" : "Unmute microphone"}
           >
             {isAudioOn ? <Mic size={24} /> : <MicOff size={24} />}
           </Button>
+
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               !isVideoOn
-                ? "bg-red-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+                ? "bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
             onClick={toggleVideo}
             aria-label={isVideoOn ? "Turn off camera" : "Turn on camera"}
           >
             {isVideoOn ? <Video size={24} /> : <VideoOff size={24} />}
           </Button>
+
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               isSharingScreen
-                ? "bg-green-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+                ? "bg-green-500 hover:bg-green-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
             onClick={toggleScreenShare}
             aria-label={
@@ -1285,64 +1462,154 @@ const VideoCallMeeting: React.FC = () => {
               <ScreenShare size={24} />
             )}
           </Button>
+
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               showReactions
-                ? "bg-yellow-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+                ? "bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
             onClick={() => setShowReactions(!showReactions)}
             aria-label="Show reactions"
           >
             <Smile size={24} />
           </Button>
+
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               isChatOpen
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+                ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
-            onClick={() => setIsChatOpen(!isChatOpen)}
+            onClick={handleChatToggle}
             aria-label="Toggle chat"
           >
             <MessageSquare size={24} />
+            {messages.length > 0 && !isChatOpen && (
+              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {messages.length > 9 ? "9+" : messages.length}
+              </div>
+            )}
           </Button>
+
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               isParticipantsOpen
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-600"
+                ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
-            onClick={() => setIsParticipantsOpen(!isParticipantsOpen)}
+            onClick={handleParticipantsToggle}
             aria-label="Toggle participants"
           >
             <Users size={24} />
+            <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {participants.length}
+            </div>
           </Button>
+
           <Button
             variant="ghost"
-            className={`w-14 h-14 rounded-full ${
+            className={`w-14 h-14 rounded-full transition-all duration-200 hover:scale-105 ${
               isMeetingInfoOpen
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-white hover:bg-gray-"
+                ? "bg-blue-500 hover:bg-blue-600 text-white shadow-lg"
+                : "bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
             }`}
-            onClick={() => setIsMeetingInfoOpen(!isMeetingInfoOpen)}
+            onClick={handleMeetingInfoToggle}
             aria-label="Toggle meeting info"
           >
             <Info size={24} />
           </Button>
+
           <Button
             variant="ghost"
-            className="w-14 h-14 rounded-full bg-red-600 text-white hover:bg-red-700"
+            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-200 hover:scale-105 shadow-lg"
             onClick={leaveMeeting}
             aria-label="Leave meeting"
           >
             <Phone size={24} className="rotate-135" />
           </Button>
         </div>
+
+        {/* Right Side - Participant Count */}
+        <div className="flex items-center gap-2 text-white/80">
+          <div className="bg-white/10 px-3 py-2 rounded-lg backdrop-blur-sm">
+            <span className="text-sm font-medium">
+              {participants.length} participant
+              {participants.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes bounceUpFade {
+          0% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: translateY(-100px) scale(1.2);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(-200px) scale(0.8);
+            opacity: 0;
+          }
+        }
+
+        .animate-bounce-up-fade {
+          animation: bounceUpFade 3s ease-out forwards;
+        }
+
+        .animate-slide-in-right {
+          animation: slideInRight 0.3s ease-out;
+        }
+
+        .animate-slide-in-left {
+          animation: slideInLeft 0.3s ease-out;
+        }
+
+        .animate-fade-in-up {
+          animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideInLeft {
+          from {
+            transform: translateX(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes fadeInUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };

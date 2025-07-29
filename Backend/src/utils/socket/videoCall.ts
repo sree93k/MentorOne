@@ -18,22 +18,6 @@ interface CustomSocket extends Socket {
 export const initializeVideoSocket = async (videoNamespace: Server) => {
   console.log("Initializing Socket.IO /video namespace");
 
-  // videoNamespace.use((socket: CustomSocket, next: (err?: Error) => void) => {
-  //   const token = socket.handshake.auth.token;
-  //   if (!token) {
-  //     console.error("Authentication error: No token provided");
-  //     return next(new Error("Authentication error: No token provided"));
-  //   }
-
-  //   try {
-  //     const decoded = verifyAccessToken(token) as UserPayload;
-  //     socket.data.user = decoded;
-  //     next();
-  //   } catch (error: any) {
-  //     console.error("Authentication error:", error.message);
-  //     return next(new Error("Authentication error: Invalid token"));
-  //   }
-  // });
   videoNamespace.use((socket: CustomSocket, next: (err?: Error) => void) => {
     // ✅ FIXED: Read token from cookies instead of auth object
     console.log("🔍 Socket middleware: Checking authentication");
@@ -366,6 +350,21 @@ export const initializeVideoSocket = async (videoNamespace: Server) => {
         `message: User ${message.senderId} sent a message in meeting: ${meetingId} - ${message.text}`
       );
       videoNamespace.to(`meeting_${meetingId}`).emit("message", message);
+    });
+
+    socket.on("reaction", ({ meetingId, userId, userName, reaction }) => {
+      console.log(
+        `🎉 Reaction received: ${userName} sent ${reaction} in meeting ${meetingId}`
+      );
+
+      // Broadcast reaction to ALL users in the meeting room (including sender)
+      videoNamespace.to(`meeting_${meetingId}`).emit("reaction", {
+        senderId: userId,
+        senderName: userName,
+        reaction: reaction,
+      });
+
+      console.log(`✅ Reaction broadcasted to meeting_${meetingId}`);
     });
 
     socket.on("update-peer-id", async ({ meetingId, userId, peerId }) => {
