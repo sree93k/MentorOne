@@ -11,6 +11,8 @@ const SignupPage = lazy(() => import("../pages/userAuth/Signup"));
 const MenteeRoute = lazy(() => import("./MenteeRouter"));
 const MentorRoute = lazy(() => import("./MentorRouter"));
 const UserRouter = lazy(() => import("./UserRouter"));
+const BlockedPage = lazy(() => import("../pages/usersPage/BlockedPage"));
+const AppealStatusPage = lazy(() => import("../pages/public/AppealStatusPage"));
 //==>>>>>>>>>>
 const AuthRouter: React.FC = () => {
   return (
@@ -21,6 +23,7 @@ const AuthRouter: React.FC = () => {
         <Route path="/" element={<PublicRoute element={LandingPage} />} />
         <Route path="/login" element={<PublicRoute element={SigninPage} />} />
         <Route path="/signup" element={<PublicRoute element={SignupPage} />} />
+        <Route path="/blocked" element={<BlockedPage />} />
         <Route
           path="/seeker/*"
           element={<PrivateRoute element={MenteeRoute} />}
@@ -30,6 +33,7 @@ const AuthRouter: React.FC = () => {
           element={<PrivateRoute element={MentorRoute} />}
         />
         <Route path="/user/*" element={<PrivateRoute element={UserRouter} />} />
+        <Route path="/appeal/status/:appealId" element={<AppealStatusPage />} />
       </Routes>
     </Suspense>
   );

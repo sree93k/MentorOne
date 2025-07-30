@@ -164,7 +164,47 @@ export const decodedRefreshToken = async (
     res.status(401).json(new ApiResponse(401, null, "Invalid refresh token"));
   }
 };
+// ADD this new middleware function at the end of the file
+export const blockDetectionMiddleware = async (
+  req: Request & Partial<{ user: string | jwt.JwtPayload }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res
+        .status(401)
+        .json(new ApiResponse(401, null, "User not authenticated"));
+      return;
+    }
 
+    // Import UserRepository dynamically to avoid circular dependencies
+    const { default: UserRepository } = await import(
+      "../repositories/implementations/UserRepository"
+    );
+    const userRepo = new UserRepository();
+    const user = await userRepo.findById(userId);
+
+    if (user?.isBlocked) {
+      res
+        .status(403)
+        .json(
+          new ApiResponse(
+            403,
+            { action: "logout", blocked: true },
+            "Account has been blocked"
+          )
+        );
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error("Error in blockDetectionMiddleware:", error);
+    next(error);
+  }
+};
 // ✅ UPDATED: No longer expects refresh token from cookies
 export const verifyRefreshTokenMiddleware = async (
   req: Request & Partial<{ user: string | jwt.JwtPayload }>,

@@ -204,3 +204,35 @@ export const transferToMentor = async (
     }
   }
 };
+// ADD this new function to your existing adminService.ts file
+export const blockUserWithReason = async (
+  userId: string,
+  blockData: {
+    category: string;
+    reason: string;
+    adminNote?: string;
+  }
+): Promise<any> => {
+  try {
+    console.log("🚨 adminService: Blocking user with enhanced data", {
+      userId,
+      blockData,
+    });
+
+    const response = await adminAxiosInstance.patch(
+      `/admin/userstatus_update/${userId}`,
+      {
+        isBlocked: true,
+        category: blockData.category,
+        reason: blockData.reason,
+        adminNote: blockData.adminNote,
+      }
+    );
+
+    console.log("✅ adminService: User blocked successfully", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ adminService: Error blocking user", error);
+    throw new Error(error.response?.data?.message || "Failed to block user");
+  }
+};

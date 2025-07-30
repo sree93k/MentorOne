@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import uploadController from "../../controllers/implementation/uploadController";
-import { authenticate } from "../../middlewares/authenticateuser";
+import {
+  authenticate,
+  blockDetectionMiddleware,
+} from "../../middlewares/authenticateuser";
 import userController from "../../controllers/implementation/userController";
 import paymentController from "../../controllers/implementation/paymentController";
 import socketController from "../../controllers/implementation/socketController";
@@ -105,9 +108,16 @@ userPrivateRoute.get("/validate_session", authenticate, (req, res) => {
 
 // Video call routes
 // Make sure videoCallController methods are properly bound
+// userPrivateRoute.post(
+//   "/video-call/create",
+//   authenticate,
+//   videoCallController.createMeeting.bind(videoCallController)
+// );
+
 userPrivateRoute.post(
   "/video-call/create",
   authenticate,
+  blockDetectionMiddleware, // 🆕 ADD this middleware
   videoCallController.createMeeting.bind(videoCallController)
 );
 
@@ -117,9 +127,15 @@ userPrivateRoute.get(
   videoCallController.validateMeeting.bind(videoCallController)
 );
 
+// userPrivateRoute.post(
+//   "/video-call/join/:meetingId",
+//   authenticate,
+//   videoCallController.joinMeeting.bind(videoCallController)
+// );
 userPrivateRoute.post(
   "/video-call/join/:meetingId",
   authenticate,
+  blockDetectionMiddleware, // 🆕 ADD this middleware
   videoCallController.joinMeeting.bind(videoCallController)
 );
 
@@ -127,6 +143,14 @@ userPrivateRoute.post(
   "/video-call/end/:meetingId",
   authenticate,
   videoCallController.endMeeting.bind(videoCallController)
+);
+
+userPrivateRoute.post(
+  "/appeal/submit",
+  authenticate,
+  async (req: Request, res: Response) => {
+    // Appeal submission logic
+  }
 );
 
 // New route for sending meeting notifications
@@ -207,4 +231,18 @@ userPrivateRoute.get(
   socketController.getUserOnlineStatus.bind(socketController)
 );
 
+// 🆕 ADD new appeal routes
+userPrivateRoute.post(
+  "/appeal/submit",
+  authenticate,
+  async (req: Request, res: Response) => {
+    // Appeal submission logic
+  }
+);
+
+userPrivateRoute.get(
+  "/block-status/:userId",
+  authenticate,
+  userController.checkUserBlockStatus
+);
 export default userPrivateRoute;

@@ -16,7 +16,14 @@ import MenteeService from "./MenteeService";
 import { IMenteeService } from "../interface/IMenteeService";
 import MentorService from "./MentorService";
 import { IMentorService } from "../interface/IMentorService";
-
+import {
+  UserNotFoundError,
+  UserUnauthorizedError,
+  UserValidationError,
+  UserBlockedError,
+} from "../../utils/exceptions/UserExceptions";
+import { UserValidators } from "../../utils/validators/UserValidators";
+import { UserCacheService } from "../../utils/cache/UserCacheService";
 // Define collection types
 type CollectionType = "user" | "mentee" | "mentor";
 
@@ -35,7 +42,24 @@ const collegeDetailsSchema = Yup.object().shape({
     .oneOf(["college", "fresher"], "Invalid user type")
     .required("User type is required"),
 });
-
+interface BlockStatusResponse {
+  isBlocked: boolean;
+  blockData?: {
+    reason: string;
+    category: string;
+    adminEmail: string;
+    timestamp: string;
+    canAppeal: boolean;
+    severity: "high" | "medium" | "low";
+  };
+  userInfo: {
+    userId: string;
+    email: string;
+    isActive: boolean;
+    lastLogin?: Date;
+  };
+  cacheHit?: boolean;
+}
 export default class UserService implements IUserService {
   private UserRepository: IUserRepository;
   private CareerCollege: ICareerCollege;
@@ -43,6 +67,7 @@ export default class UserService implements IUserService {
   private CareerProfessional: ICareerProfessional;
   private MenteeService: IMenteeService;
   private MentorService: IMentorService;
+  private cacheService: UserCacheService;
   constructor() {
     this.UserRepository = new UserRespository();
     this.CareerCollege = new CareerCollege();
@@ -50,6 +75,7 @@ export default class UserService implements IUserService {
     this.CareerProfessional = new CareerProfessional();
     this.MenteeService = new MenteeService();
     this.MentorService = new MentorService();
+    this.cacheService = UserCacheService.getInstance();
   }
 
   async findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null> {
@@ -556,6 +582,277 @@ export default class UserService implements IUserService {
     } catch (error) {
       console.log(`Error in bulk update for ${collectionType}:`, error);
       return [];
+    }
+  }
+  async checkUserBlockStatus(
+    userId: string,
+    requestingUserId: string
+  ): Promise<BlockStatusResponse> {
+    const startTime = Date.now();
+    console.log("🔍 UserService: Starting checkUserBlockStatus", {
+      userId,
+      requestingUserId,
+      timestamp: new Date().toISOString(),
+    });
+
+    try {
+      // 🎯 STEP 1: Input Validation
+      console.log("🔍 UserService: Step 1 - Validating inputs");
+
+      UserValidators.validateUserId(userId, "userId");
+      UserValidators.validateUserId(requestingUserId, "requestingUserId");
+      UserValidators.validateUserAuthorization(requestingUserId, userId);
+
+      console.log("✅ UserService: Input validation passed");
+
+      // 🎯 STEP 2: Cache Check
+      console.log("🔍 UserService: Step 2 - Checking cache");
+
+      const cachedResult = await this.cacheService.getBlockStatus(userId);
+      if (cachedResult) {
+        console.log("✅ UserService: Cache hit, returning cached data");
+
+        const result: BlockStatusResponse = {
+          isBlocked: cachedResult.isBlocked,
+          blockData: cachedResult.blockData,
+          userInfo: cachedResult.userInfo,
+          cacheHit: true,
+        };
+
+        this.logPerformanceMetrics("checkUserBlockStatus", startTime, true);
+        return result;
+      }
+
+      console.log("📦 UserService: Cache miss, querying database");
+
+      // 🎯 STEP 3: Database Query (through Repository)
+      console.log("🔍 UserService: Step 3 - Querying database via repository");
+
+      const user = await this.UserRepository.findById(userId);
+
+      if (!user) {
+        console.error("❌ UserService: User not found in database");
+        throw new UserNotFoundError(userId, {
+          requestingUserId,
+          method: "checkUserBlockStatus",
+        });
+      }
+
+      console.log("✅ UserService: User found in database", {
+        userId: user._id,
+        email: user.email,
+        isBlocked: user.isBlocked,
+      });
+
+      // 🎯 STEP 4: Business Logic Processing
+      console.log("🔍 UserService: Step 4 - Processing business logic");
+
+      const blockStatusResponse = await this.processUserBlockStatus(user);
+
+      // 🎯 STEP 5: Cache the Result
+      console.log("🔍 UserService: Step 5 - Caching result");
+
+      const cacheSuccess = await this.cacheService.setBlockStatus(userId, {
+        isBlocked: blockStatusResponse.isBlocked,
+        blockData: blockStatusResponse.blockData,
+        userInfo: blockStatusResponse.userInfo,
+      });
+
+      if (cacheSuccess) {
+        console.log("✅ UserService: Result cached successfully");
+      } else {
+        console.warn("⚠️ UserService: Failed to cache result (non-critical)");
+      }
+
+      // 🎯 STEP 6: Return Response
+      const finalResponse: BlockStatusResponse = {
+        ...blockStatusResponse,
+        cacheHit: false,
+      };
+
+      this.logPerformanceMetrics("checkUserBlockStatus", startTime, false);
+      console.log(
+        "✅ UserService: checkUserBlockStatus completed successfully"
+      );
+
+      return finalResponse;
+    } catch (error: any) {
+      console.error("❌ UserService: checkUserBlockStatus failed", {
+        userId,
+        requestingUserId,
+        error: error.message,
+        errorType: error.constructor.name,
+        stack: error.stack,
+      });
+
+      // Log performance metrics even for errors
+      this.logPerformanceMetrics(
+        "checkUserBlockStatus",
+        startTime,
+        false,
+        error
+      );
+
+      // Re-throw if it's already our custom exception
+      if (
+        error instanceof UserNotFoundError ||
+        error instanceof UserUnauthorizedError ||
+        error instanceof UserValidationError
+      ) {
+        throw error;
+      }
+
+      // Wrap unexpected errors
+      throw new UserValidationError("system", "unexpected_error", {
+        originalError: error.message,
+        userId,
+        requestingUserId,
+      });
+    }
+  }
+
+  /**
+   * Process user block status with comprehensive business logic
+   * Private method - encapsulates business rules
+   */
+  private async processUserBlockStatus(
+    user: any
+  ): Promise<Omit<BlockStatusResponse, "cacheHit">> {
+    console.log("🔄 UserService: Processing user block status", {
+      userId: user._id,
+      isBlocked: user.isBlocked,
+    });
+
+    try {
+      // Build user info
+      const userInfo = {
+        userId: user._id.toString(),
+        email: user.email,
+        isActive: !user.isBlocked && user.activated !== false,
+        lastLogin: user.lastLogin || undefined,
+      };
+
+      // If user is not blocked, return simple response
+      if (!user.isBlocked) {
+        console.log("✅ UserService: User is not blocked");
+        return {
+          isBlocked: false,
+          userInfo,
+        };
+      }
+
+      // User is blocked - get block details
+      console.log("🚨 UserService: User is blocked, processing block data");
+
+      const blockData = await this.buildBlockData(user);
+      UserValidators.validateBlockStatusData(blockData);
+
+      const response = {
+        isBlocked: true,
+        blockData,
+        userInfo,
+      };
+
+      console.log("✅ UserService: Block status processed successfully", {
+        userId: user._id,
+        category: blockData.category,
+        severity: blockData.severity,
+      });
+
+      return response;
+    } catch (error: any) {
+      console.error("❌ UserService: Failed to process block status", {
+        userId: user._id,
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+  private async buildBlockData(user: any): Promise<{
+    reason: string;
+    category: string;
+    adminEmail: string;
+    timestamp: string;
+    canAppeal: boolean;
+    severity: "high" | "medium" | "low";
+  }> {
+    console.log("🔨 UserService: Building block data for user", user._id);
+
+    // Default block data structure
+    const defaultBlockData = {
+      reason: "Account suspended due to policy violation",
+      category: "terms_violation",
+      adminEmail: "sreekuttan12kaathu@gmail.com",
+      timestamp: user.blockedAt || user.updatedAt || new Date().toISOString(),
+      canAppeal: true,
+      severity: "medium" as const,
+    };
+
+    // In a real application, you might have a separate BlockedUsers collection
+    // or additional fields in the User model to store block details
+
+    // For now, we'll check if there's any additional block information
+    const blockData = {
+      ...defaultBlockData,
+      // Override with actual data if available
+      ...(user.blockDetails || {}),
+      // Ensure severity is one of the allowed values
+      severity: this.determineSeverity(
+        user.blockReason || defaultBlockData.category
+      ),
+    };
+
+    console.log("✅ UserService: Block data built successfully", {
+      userId: user._id,
+      category: blockData.category,
+      severity: blockData.severity,
+    });
+
+    return blockData;
+  }
+  private determineSeverity(category: string): "high" | "medium" | "low" {
+    const severityMap: { [key: string]: "high" | "medium" | "low" } = {
+      harassment: "high",
+      fraud: "high",
+      security: "high",
+      spam: "medium",
+      inappropriate_content: "medium",
+      terms_violation: "medium",
+      other: "low",
+    };
+
+    return severityMap[category] || "medium";
+  }
+
+  /**
+   * Log performance metrics
+   * Private method - monitoring and observability
+   */
+  private logPerformanceMetrics(
+    operation: string,
+    startTime: number,
+    cacheHit: boolean,
+    error?: Error
+  ): void {
+    const duration = Date.now() - startTime;
+    const metrics = {
+      operation,
+      duration: `${duration}ms`,
+      cacheHit,
+      success: !error,
+      timestamp: new Date().toISOString(),
+      ...(error && {
+        error: error.message,
+        errorType: error.constructor.name,
+      }),
+    };
+
+    console.log("📊 UserService: Performance metrics", metrics);
+
+    // In production, you might send this to a monitoring service
+    if (process.env.NODE_ENV === "production") {
+      // Example: Send to monitoring service
+      // this.monitoringService.trackMetrics(metrics);
     }
   }
 }

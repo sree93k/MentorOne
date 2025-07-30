@@ -28,8 +28,25 @@ export interface IAdminService {
     mentorData: EMentor | null;
   } | null>;
 
+  // userStatusChange(
+  //   id: string,
+  //   status: string
+  // ): Promise<{ userData: EUsers | null } | null>;
+  // userStatusChange(
+  //   id: string,
+  //   status: boolean,
+  //   reason?: string
+  // ): Promise<{ userData: EUsers | null } | null>;
   userStatusChange(
     id: string,
-    status: string
+    status: boolean,
+    blockData?: {
+      reason?: string;
+      category?: string;
+      adminNote?: string;
+      adminId?: string;
+      adminIP?: string;
+      timestamp?: string;
+    }
   ): Promise<{ userData: EUsers | null } | null>;
 }

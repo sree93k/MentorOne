@@ -20,6 +20,7 @@ import {
   getUserRoleData,
   updateUserStatus,
   updateMentorStatus,
+  blockUserWithReason,
 } from "@/services/adminService";
 import {
   Select,
@@ -35,6 +36,7 @@ import { useNavigate } from "react-router-dom";
 // FIXED: Import admin-specific ProfilePicture component
 import { AdminProfilePicture } from "@/components/admin/AdminSecureMedia";
 import { getAdminSignedUrl } from "@/services/adminMediaService";
+import BlockUserModal from "@/components/admin/BlockUserModal";
 interface UserProfileData {
   user: {
     _id: string;
@@ -184,6 +186,7 @@ const UserProfile: React.FC = () => {
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingMentorStatus, setIsEditingMentorStatus] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const navigate = useNavigate();
 
   // Modal states
@@ -227,25 +230,69 @@ const UserProfile: React.FC = () => {
     fetchUserData();
   }, [id, dispatch]);
 
-  const handleStatusUpdate = async () => {
+  // const handleStatusUpdate = async () => {
+  //   if (!userProfile) return;
+  //   const newIsBlocked = status === "Blocked";
+  //   if (newIsBlocked !== userProfile.user.isBlocked) {
+  //     dispatch(setLoading(true));
+  //     try {
+  //       await updateUserStatus(userProfile.user._id, newIsBlocked);
+  //       setUserProfile({
+  //         ...userProfile,
+  //         user: { ...userProfile.user, isBlocked: newIsBlocked },
+  //       });
+  //       setIsEditingStatus(false);
+  //     } catch (err) {
+  //       dispatch(setError("Failed to update user status"));
+  //     } finally {
+  //       dispatch(setLoading(false));
+  //     }
+  //   } else {
+  //     setIsEditingStatus(false);
+  //   }
+  // };
+  const handleStatusUpdate = async (blockData?: {
+    category: string;
+    reason: string;
+    adminNote?: string;
+  }) => {
     if (!userProfile) return;
+
     const newIsBlocked = status === "Blocked";
+
     if (newIsBlocked !== userProfile.user.isBlocked) {
       dispatch(setLoading(true));
       try {
-        await updateUserStatus(userProfile.user._id, newIsBlocked);
+        if (newIsBlocked && blockData) {
+          // Use enhanced blocking with reason
+          await blockUserWithReason(userProfile.user._id, blockData);
+        } else {
+          // Regular unblock
+          await updateUserStatus(userProfile.user._id, newIsBlocked);
+        }
+
         setUserProfile({
           ...userProfile,
           user: { ...userProfile.user, isBlocked: newIsBlocked },
         });
         setIsEditingStatus(false);
-      } catch (err) {
+        setIsBlockModalOpen(false);
+
+        toast.success(
+          newIsBlocked
+            ? "User blocked successfully"
+            : "User unblocked successfully"
+        );
+      } catch (err: any) {
+        console.error("Status update error:", err);
+        toast.error(err.message || "Failed to update user status");
         dispatch(setError("Failed to update user status"));
       } finally {
         dispatch(setLoading(false));
       }
     } else {
       setIsEditingStatus(false);
+      setIsBlockModalOpen(false);
     }
   };
 
@@ -414,6 +461,32 @@ const UserProfile: React.FC = () => {
                       Status
                     </span>
                     {isEditingStatus ? (
+                      // <div className="flex items-center gap-2">
+                      //   <Select value={status} onValueChange={setStatus}>
+                      //     <SelectTrigger className="h-8 w-32">
+                      //       <SelectValue placeholder="Select status" />
+                      //     </SelectTrigger>
+                      //     <SelectContent className="bg-white">
+                      //       <SelectItem value="Active">Active</SelectItem>
+                      //       <SelectItem value="Blocked">Blocked</SelectItem>
+                      //     </SelectContent>
+                      //   </Select>
+                      //   <Button
+                      //     size="icon"
+                      //     variant="ghost"
+                      //     className="h-6 w-6"
+                      //     onClick={() => {
+                      //       setModalTitle("Confirm Status Update");
+                      //       setModalDescription(
+                      //         `Are you sure you want to set the status to ${status}?`
+                      //       );
+                      //       setConfirmAction(() => handleStatusUpdate);
+                      //       setIsModalOpen(true);
+                      //     }}
+                      //   >
+                      //     <Check className="h-4 w-4" />
+                      //   </Button>
+                      // </div>
                       <div className="flex items-center gap-2">
                         <Select value={status} onValueChange={setStatus}>
                           <SelectTrigger className="h-8 w-32">
@@ -429,12 +502,20 @@ const UserProfile: React.FC = () => {
                           variant="ghost"
                           className="h-6 w-6"
                           onClick={() => {
-                            setModalTitle("Confirm Status Update");
-                            setModalDescription(
-                              `Are you sure you want to set the status to ${status}?`
-                            );
-                            setConfirmAction(() => handleStatusUpdate);
-                            setIsModalOpen(true);
+                            if (status === "Blocked") {
+                              // Open enhanced blocking modal
+                              setIsBlockModalOpen(true);
+                            } else {
+                              // Direct unblock
+                              setModalTitle("Confirm Status Update");
+                              setModalDescription(
+                                `Are you sure you want to set the status to ${status}?`
+                              );
+                              setConfirmAction(
+                                () => () => handleStatusUpdate()
+                              );
+                              setIsModalOpen(true);
+                            }
                           }}
                         >
                           <Check className="h-4 w-4" />
@@ -1013,6 +1094,20 @@ const UserProfile: React.FC = () => {
         onConfirm={confirmAction}
         title={modalTitle}
         description={modalDescription}
+      />
+      <BlockUserModal
+        isOpen={isBlockModalOpen}
+        user={{
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        }}
+        onConfirm={handleStatusUpdate}
+        onCancel={() => setIsBlockModalOpen(false)}
+        isLoading={loading}
       />
     </div>
   );

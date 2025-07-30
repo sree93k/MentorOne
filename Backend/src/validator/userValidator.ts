@@ -15,10 +15,9 @@ const userDataSchema = Joi.object({
     .max(50)
     .required(),
   email: Joi.string().email().required(),
-  password: Joi.string()
-    .pattern(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    ),
+  password: Joi.string().pattern(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  ),
   phone: Joi.string()
     .pattern(/^[0-9]{10}$/)
     .optional(),
@@ -49,7 +48,7 @@ const signupSchema = Joi.object({
   email: Joi.string()
     .email({ tlds: { allow: false } })
     .required(),
-    password: Joi.string()
+  password: Joi.string()
     .min(8)
     .max(128)
     .required()
@@ -118,24 +117,14 @@ const googleAuthSchema = Joi.object({
   profilePicture: Joi.string().uri().allow(null, "").optional(),
 }).unknown(false);
 
-
 const resetPasswordSchema = Joi.object({
-  password: Joi.string()
-    .pattern(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    ),
-    email: Joi.string()
+  password: Joi.string().pattern(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  ),
+  email: Joi.string()
     .email({ tlds: { allow: false } })
     .required(),
-})
-
-
-
-
-
-
-
-
+});
 
 //==>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 export function validateOTP(
@@ -262,23 +251,23 @@ export function validateGoogleData(
   next();
 }
 
-
 export function validateResetPassword(
   req: Request,
   res: Response,
   next: NextFunction
 ): void {
   console.log("reset validatio > 1");
-  const { error } = resetPasswordSchema.validate(req.body, { abortEarly: false });
+  const { error } = resetPasswordSchema.validate(req.body, {
+    abortEarly: false,
+  });
   console.log("reset validatio > 2");
 
   if (error) {
-    console.log("rest validate errro",error);
-    
+    console.log("rest validate errro", error);
+
     res.status(400).json(new ApiError(400, error.details[0].message));
     return;
   }
 
   next();
 }
-

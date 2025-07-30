@@ -17,6 +17,7 @@ import { IMenteeService } from "../interface/IMenteeService";
 import MentorService from "./MentorService";
 import { IMentorService } from "../interface/IMentorService";
 import { EService } from "../../entities/serviceEntity";
+import { UserEjectionService } from "./UserEjectionService";
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
@@ -286,24 +287,284 @@ export default class AdminService implements IAdminService {
     }
   }
 
+  // async userStatusChange(
+  //   id: string,
+  //   status: string
+  // ): Promise<{ userData: EUsers | null } | null> {
+  //   try {
+  //     console.log("userStatusChange start ", id, status);
+
+  //     const updateUser = await this.UserRepository.updateField(
+  //       id,
+  //       "isBlocked",
+  //       status
+  //     );
+  //     console.log("userStatusChange response is ", updateUser);
+
+  //     return { userData: updateUser };
+  //   } catch (error) {
+  //     console.error("Error in userStatusChange:", error);
+  //     return null;
+  //   }
+  // }
+  // FIND this method and REPLACE it
+  // async userStatusChange(
+  //   id: string,
+  //   status: boolean,
+  //   reason?: string
+  // ): Promise<{ userData: EUsers | null } | null> {
+  //   try {
+  //     console.log("userStatusChange start ", id, status, reason);
+
+  //     const updateUser = await this.UserRepository.updateField(
+  //       id,
+  //       "isBlocked",
+  //       status
+  //     );
+
+  //     // 🆕 ADD: Real-time ejection when blocking
+  //     if (status && updateUser) {
+  //       const userEjectionService = new UserEjectionService();
+  //       await userEjectionService.ejectUser(
+  //         id,
+  //         reason || "Account blocked by administrator",
+  //         "admin-id"
+  //       );
+  //     }
+
+  //     console.log("userStatusChange response is ", updateUser);
+  //     return { userData: updateUser };
+  //   } catch (error) {
+  //     console.error("Error in userStatusChange:", error);
+  //     return null;
+  //   }
+  // }
+  // async userStatusChange(
+  //   id: string,
+  //   status: boolean,
+  //   blockData?: {
+  //     reason?: string;
+  //     category?: string;
+  //     adminNote?: string;
+  //     adminId?: string;
+  //     adminIP?: string;
+  //     timestamp?: string;
+  //   }
+  // ): Promise<{ userData: EUsers | null } | null> {
+  //   try {
+  //     console.log("🚨 Enhanced userStatusChange start", {
+  //       id,
+  //       status,
+  //       blockData,
+  //     });
+
+  //     const updateUser = await this.UserRepository.updateField(
+  //       id,
+  //       "isBlocked",
+  //       status
+  //     );
+
+  //     // Enhanced blocking with real-time ejection
+  //     if (status && updateUser && blockData) {
+  //       console.log("🚨 Initiating enhanced user ejection");
+
+  //       const userEjectionService = new UserEjectionService();
+  //       await userEjectionService.ejectUser(
+  //         id,
+  //         blockData.reason || "Account blocked by administrator",
+  //         blockData.adminId || "admin"
+  //       );
+
+  //       // Send enhanced email notification
+  //       await this.sendEnhancedBlockEmail(updateUser, blockData);
+
+  //       // Create audit log with enhanced data
+  //       await this.createEnhancedAuditLog(id, blockData);
+  //     }
+
+  //     console.log("✅ Enhanced userStatusChange completed", updateUser);
+  //     return { userData: updateUser };
+  //   } catch (error) {
+  //     console.error("❌ Error in enhanced userStatusChange:", error);
+  //     return null;
+  //   }
+  // }
   async userStatusChange(
     id: string,
-    status: string
+    status: boolean,
+    blockData?: {
+      reason?: string;
+      category?: string;
+      adminNote?: string;
+      adminId?: string;
+      adminIP?: string;
+      timestamp?: string;
+    }
   ): Promise<{ userData: EUsers | null } | null> {
     try {
-      console.log("userStatusChange start ", id, status);
+      console.log("🚨 Enhanced userStatusChange start", {
+        id,
+        status,
+        blockData,
+      });
 
       const updateUser = await this.UserRepository.updateField(
         id,
         "isBlocked",
         status
       );
-      console.log("userStatusChange response is ", updateUser);
 
+      // Enhanced blocking with comprehensive real-time ejection
+      if (status && updateUser && blockData) {
+        console.log("🚨 Initiating enhanced user ejection with full data");
+
+        const userEjectionService = new UserEjectionService();
+        await userEjectionService.ejectUser(
+          id,
+          blockData.reason || "Account blocked by administrator",
+          blockData.adminId || "admin",
+          {
+            category: blockData.category,
+            adminNote: blockData.adminNote,
+            adminIP: blockData.adminIP,
+            timestamp: blockData.timestamp,
+          }
+        );
+
+        console.log("✅ Enhanced user ejection completed successfully");
+      }
+
+      console.log("✅ Enhanced userStatusChange completed", updateUser);
       return { userData: updateUser };
     } catch (error) {
-      console.error("Error in userStatusChange:", error);
+      console.error("❌ Error in enhanced userStatusChange:", error);
       return null;
+    }
+  }
+  private async sendEnhancedBlockEmail(
+    user: EUsers,
+    blockData: {
+      reason?: string;
+      category?: string;
+      adminNote?: string;
+      adminId?: string;
+      adminIP?: string;
+      timestamp?: string;
+    }
+  ): Promise<void> {
+    try {
+      const categoryLabels: { [key: string]: string } = {
+        spam: "Spam/Unsolicited Messages",
+        harassment: "Harassment/Abusive Behavior",
+        inappropriate_content: "Inappropriate Content",
+        terms_violation: "Terms of Service Violation",
+        fraud: "Fraudulent Activity",
+        security: "Security Concerns",
+        other: "Policy Violation",
+      };
+
+      const categoryLabel =
+        categoryLabels[blockData.category || "other"] || "Policy Violation";
+
+      const emailHtml = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+      <div style="background-color: #dc2626; padding: 25px 20px; text-align: center;">
+        <h1 style="color: #ffffff; font-size: 28px; margin: 0;">⚠️ Account Suspended</h1>
+      </div>
+      
+      <div style="padding: 30px 40px;">
+        <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 20px;">
+          Dear ${user.firstName} ${user.lastName},
+        </p>
+        
+        <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 20px 0;">
+          <p style="font-size: 16px; line-height: 1.6; color: #333333; margin: 0;">
+            Your account has been <strong>temporarily suspended</strong> due to: <strong>${categoryLabel}</strong>
+          </p>
+        </div>
+        
+        <div style="background-color: #f9fafb; padding: 16px; border-radius: 6px; margin: 20px 0;">
+          <p style="font-size: 14px; color: #6b7280; margin: 0;"><strong>Reason:</strong></p>
+          <p style="font-size: 16px; color: #374151; margin: 8px 0 0 0;">${
+            blockData.reason
+          }</p>
+        </div>
+        
+        <div style="background-color: #eff6ff; border: 1px solid #3b82f6; padding: 16px; border-radius: 6px; margin: 20px 0;">
+          <p style="font-size: 14px; color: #1e40af; margin: 0;">
+            <strong>📧 Need Help?</strong><br>
+            If you believe this is a mistake, please contact our support team at 
+            <a href="mailto:sreekuttan12kaathu@gmail.com" style="color: #1e40af;">sreekuttan12kaathu@gmail.com</a>
+            with your account details and an explanation.
+          </p>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #6b7280; margin-top: 30px;">
+          Please review our Terms of Service and Community Guidelines to ensure this doesn't happen again.
+        </p>
+      </div>
+      
+      <div style="background-color: #f7f7f7; padding: 20px 40px; text-align: center; font-size: 13px; color: #888888; border-top: 1px solid #eeeeee;">
+        <p style="margin: 0;">© ${new Date().getFullYear()} Mentor One. All rights reserved.</p>
+        <p style="margin-top: 8px;">
+          <a href="${
+            process.env.CLIENT_HOST_URL || "https://mentorone.com"
+          }" style="color: #4A90E2; text-decoration: none;">MentorOne.com</a>
+        </p>
+      </div>
+    </div>
+    `;
+
+      const subject = `🚨 Account Suspended - ${categoryLabel}`;
+      const textMessage = `Your account has been suspended due to: ${categoryLabel}. Reason: ${blockData.reason}. Contact sreekuttan12kaathu@gmail.com for assistance.`;
+
+      await sendMail(
+        user.email,
+        textMessage,
+        `${user.firstName} ${user.lastName}`,
+        subject,
+        emailHtml
+      );
+
+      console.log("📧 Enhanced block notification email sent to:", user.email);
+    } catch (error) {
+      console.error("❌ Error sending enhanced block email:", error);
+    }
+  }
+
+  private async createEnhancedAuditLog(
+    userId: string,
+    blockData: {
+      reason?: string;
+      category?: string;
+      adminNote?: string;
+      adminId?: string;
+      adminIP?: string;
+      timestamp?: string;
+    }
+  ): Promise<void> {
+    try {
+      // Import AuditLog model (you already have this from earlier code)
+      const AuditLog = (await import("../../models/auditLogModel")).default;
+
+      await AuditLog.create({
+        adminId: blockData.adminId || "unknown-admin",
+        targetUserId: userId,
+        action: "BLOCKED",
+        reason: blockData.reason || "No reason provided",
+        timestamp: new Date(),
+        ipAddress: blockData.adminIP || "unknown-ip",
+        metadata: {
+          category: blockData.category || "other",
+          adminNote: blockData.adminNote || "",
+          actionType: "ENHANCED_BLOCK",
+          timestamp: blockData.timestamp || new Date().toISOString(),
+        },
+      });
+
+      console.log("📋 Enhanced audit log created for user:", userId);
+    } catch (error) {
+      console.error("❌ Error creating enhanced audit log:", error);
     }
   }
 }

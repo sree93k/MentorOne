@@ -1,5 +1,23 @@
 import { EUsers } from "../../entities/userEntity";
-import { EOTP } from "../../entities/OTPEntity";
+
+interface BlockStatusResponse {
+  isBlocked: boolean;
+  blockData?: {
+    reason: string;
+    category: string;
+    adminEmail: string;
+    timestamp: string;
+    canAppeal: boolean;
+    severity: "high" | "medium" | "low";
+  };
+  userInfo: {
+    userId: string;
+    email: string;
+    isActive: boolean;
+    lastLogin?: Date;
+  };
+  cacheHit?: boolean;
+}
 
 export interface IUserService {
   findUserWithEmail(user: Partial<EUsers>): Promise<EUsers | null>;
@@ -14,4 +32,8 @@ export interface IUserService {
     isOnline: boolean,
     role: "mentor" | "mentee" | null
   ): Promise<EUsers | null>;
+  checkUserBlockStatus(
+    userId: string,
+    requestingUserId: string
+  ): Promise<BlockStatusResponse>;
 }

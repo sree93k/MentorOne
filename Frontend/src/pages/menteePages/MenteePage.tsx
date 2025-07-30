@@ -1,7 +1,10 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
-
+import { useBlockDetection } from "@/hooks/useBlockDetection";
+import { BlockedAccountModal } from "@/components/modal/BlockedAccountModal";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
 // Import your existing sub-pages
 import MenteeBillingPage from "./subPages/MenteePayment";
 import BookingsPage from "./subPages/MenteeBookings";
@@ -34,9 +37,14 @@ const CoursePage = lazy(() => import("./subPages/CoursePage"));
 // const BlogPostPage = lazy(() => import("../usersPage/BlogPost"));
 
 const MenteePage = () => {
+  const { user } = useSelector((state: RootState) => state.user); // Adjust according to your Redux state
+  const { isBlocked, blockData } = useBlockDetection(user?._id);
   return (
     // Ensure this main div has a min-height and is suitable for relative positioning
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative">
+      {isBlocked && blockData && (
+        <BlockedAccountModal isOpen={isBlocked} blockData={blockData} />
+      )}
       <MenteeHeader />
       <MenteeSidebar />
       <main className="ml-24 p-8">
