@@ -1,5 +1,9 @@
 import { Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { useBlockDetection } from "@/hooks/useBlockDetection";
+import { BlockedAccountModal } from "@/components/modal/BlockedAccountModal";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store/store";
 
 import ServicesPage from "./MentorSubPages/MentorServices";
 import CreateService from "./MentorSubPages/CreateServices";
@@ -23,15 +27,16 @@ const MentorProfile = lazy(() => import("./MentorSubPages/MentorProfile"));
 
 //Mentee Dashboard
 export const MentorPage = () => {
+  const { user } = useSelector((state: RootState) => state.user); // Adjust according to your Redux state
+  const { isBlocked, blockData } = useBlockDetection(user?._id);
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
+      {isBlocked && blockData && (
+        <BlockedAccountModal isOpen={isBlocked} blockData={blockData} />
+      )}
       <MentorHeader />
-      {/* Sidebar */}
       <MentorSidebar />
-      {/* Main Content */}
       <main className="ml-15 px-8">
-        {/* <MenteeDashboard /> */}
         <Suspense fallback={<h1>loaidng</h1>}>
           <Routes>
             <Route path="/dashboard" element={<MentorDashboard />} />

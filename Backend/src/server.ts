@@ -17,6 +17,8 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import "./services/queue"; // Initialize queue processors
 import { CleanupJobs } from "./jobs/cleanupJobs";
 import { serverAdapter } from "./utils/bullDashboard";
+import adminController from "./controllers/implementation/adminController";
+import { setIO } from "./utils/socketManager";
 const requiredEnvVars = [
   "ACCESS_TOKEN_SECRET",
   "REFRESH_TOKEN_SECRET",
@@ -108,6 +110,8 @@ const io = new Server(httpServer, {
 const chatNamespace = io.of("/chat");
 const videoNamespace = io.of("/video");
 const notificationNamespace = io.of("/notifications");
+adminController.setSocketIO(io);
+setIO(io);
 app.use("/admin/queues", serverAdapter.getRouter());
 // Middleware
 app.use(

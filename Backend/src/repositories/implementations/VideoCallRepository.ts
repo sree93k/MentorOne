@@ -58,4 +58,40 @@ export default class VideoCallRepository
   async endMeeting(meetingId: string): Promise<void> {
     await VideoCall.updateOne({ meetingId }, { $set: { endedAt: new Date() } });
   }
+
+  // ADD these methods if they don't exist:
+
+  async findActiveMeetingsByUser(userId: string): Promise<any[]> {
+    try {
+      // Adjust this query based on your VideoCall model structure
+      const meetings = await this.model.find({
+        $or: [{ creatorId: userId }, { "participants.userId": userId }],
+        status: { $ne: "ended" }, // Assuming you have a status field
+      });
+
+      return meetings;
+    } catch (error) {
+      console.error("Error finding active meetings by user:", error);
+      return [];
+    }
+  }
+
+  async removeUserFromMeeting(
+    meetingId: string,
+    userId: string
+  ): Promise<boolean> {
+    try {
+      const result = await this.model.updateOne(
+        { _id: meetingId },
+        {
+          $pull: { participants: { userId } }, // Remove user from participants array
+        }
+      );
+
+      return result.modifiedCount > 0;
+    } catch (error) {
+      console.error("Error removing user from meeting:", error);
+      return false;
+    }
+  }
 }

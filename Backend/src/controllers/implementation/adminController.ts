@@ -8,18 +8,72 @@ import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import PaymentService from "../../services/implementations/PaymentService";
 import { HttpStatus } from "../../constants/HttpStatus";
-
+import { Server } from "socket.io";
+import { UserEjectionService } from "../../services/implementations/UserEjectionService";
+import { getIO } from "../../utils/socketManager";
 class AdminController {
   private adminService: IAdminService;
   private bookingService: IBookingService;
   private paymentService: IPaymentService;
-
+  private io: Server | null = null;
   constructor() {
     this.adminService = new AdminService();
     this.bookingService = new BookingService();
     this.paymentService = new PaymentService();
   }
+  public setSocketIO(socketIO: Server): void {
+    this.io = socketIO;
+    console.log("✅ Socket.IO instance set in AdminController");
+  }
+  public blockUserRealtime = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { userId, reason } = req.body;
+      const adminId = req.user?.id; // Assuming you have admin user in req.user
 
+      console.log("🚨 Real-time block request:", { userId, reason, adminId });
+
+      if (!userId) {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            new ApiResponse(HttpStatus.BAD_REQUEST, null, "User ID is required")
+          );
+        return;
+      }
+
+      // Use UserEjectionService for real-time ejection
+      const userEjectionService = new UserEjectionService();
+      await userEjectionService.ejectUser(
+        userId,
+        reason || "Account blocked",
+        adminId
+      );
+
+      // Also update the database
+      const response = await this.adminService.userStatusChange(
+        userId,
+        true,
+        reason
+      );
+
+      res
+        .status(HttpStatus.OK)
+        .json(
+          new ApiResponse(
+            HttpStatus.OK,
+            response,
+            "User blocked and ejected successfully"
+          )
+        );
+    } catch (error) {
+      console.error("Error in blockUserRealtime:", error);
+      next(error);
+    }
+  };
   public validateSuccessResponse = (
     req: Request,
     res: Response,
@@ -152,31 +206,116 @@ class AdminController {
     }
   };
 
+  // public userStatusUpdate = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     console.log("admincontroller mentorStatusUpdate step1 ", req.params.id);
+  //     console.log("admincontroller mentorStatusUpdate step2 ", req.body);
+  //     const id = req.params.id;
+  //     const status = req.body.isBlocked;
+  //     const repsonse = await this.adminService.userStatusChange(id, status);
+  //     console.log(
+  //       "admincontroller mentorStatusUpdate step3 resposne",
+  //       repsonse
+  //     );
+  //     res
+  //       .status(HttpStatus.OK)
+  //       .json(
+  //         new ApiResponse(
+  //           HttpStatus.OK,
+  //           repsonse,
+  //           "Mentor status updated successfully"
+  //         )
+  //       );
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
+  // public userStatusUpdate = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> => {
+  //   try {
+  //     console.log("🔍 DEBUG: Admin blocking user");
+  //     console.log("🔍 DEBUG: User ID:", req.params.id);
+  //     console.log("🔍 DEBUG: Block status:", req.body.isBlocked);
+  //     console.log("🔍 DEBUG: Reason:", req.body.reason);
+
+  //     const id = req.params.id;
+  //     const { isBlocked, reason } = req.body; // 🆕 ADD reason
+
+  //     const response = await this.adminService.userStatusChange(
+  //       id,
+  //       isBlocked,
+  //       reason
+  //     );
+
+  //     console.log("admincontroller userStatusUpdate step3 response", response);
+  //     console.log("🔍 DEBUG: Block response:", response);
+  //     res
+  //       .status(HttpStatus.OK)
+  //       .json(
+  //         new ApiResponse(
+  //           HttpStatus.OK,
+  //           response,
+  //           "User status updated successfully"
+  //         )
+  //       );
+  //   } catch (error) {
+  //     console.error("❌ DEBUG: Block error:", error);
+  //     next(error);
+  //   }
+  // };
   public userStatusUpdate = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      console.log("admincontroller mentorStatusUpdate step1 ", req.params.id);
-      console.log("admincontroller mentorStatusUpdate step2 ", req.body);
+      console.log("🔍 DEBUG: Enhanced admin blocking user");
+      console.log("🔍 DEBUG: User ID:", req.params.id);
+      console.log("🔍 DEBUG: Request body:", req.body);
+      console.log("🔍 DEBUG: Admin IP:", req.ip); // ✅ IP Logging
+
       const id = req.params.id;
-      const status = req.body.isBlocked;
-      const repsonse = await this.adminService.userStatusChange(id, status);
-      console.log(
-        "admincontroller mentorStatusUpdate step3 resposne",
-        repsonse
+      const { isBlocked, reason, category, adminNote } = req.body;
+      const adminId = req.user?.id || "unknown-admin";
+      const adminIP = req.ip || "unknown-ip";
+
+      // Enhanced blocking data
+      const blockData = {
+        isBlocked,
+        reason: reason || "No reason provided",
+        category: category || "other",
+        adminNote: adminNote || "",
+        adminId,
+        adminIP,
+        timestamp: new Date().toISOString(),
+      };
+
+      const response = await this.adminService.userStatusChange(
+        id,
+        isBlocked,
+        blockData
       );
+
+      console.log("✅ DEBUG: Enhanced block response:", response);
+
       res
         .status(HttpStatus.OK)
         .json(
           new ApiResponse(
             HttpStatus.OK,
-            repsonse,
-            "Mentor status updated successfully"
+            response,
+            `User ${isBlocked ? "blocked" : "unblocked"} successfully`
           )
         );
     } catch (error) {
+      console.error("❌ DEBUG: Enhanced block error:", error);
       next(error);
     }
   };
@@ -280,6 +419,60 @@ class AdminController {
       console.error("Error transferring to mentor:", error);
       next(error);
     }
+  };
+
+  // Add to your adminController.ts
+  public debugUserSockets = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { userId } = req.params;
+      const io = getIO();
+
+      // Check all namespaces
+      const namespaces = ["/notifications", "/chat", "/video"];
+      const socketInfo: any = {};
+
+      for (const namespace of namespaces) {
+        const ns = io.of(namespace);
+        const socketsInUserRoom = await ns.in(`user_${userId}`).allSockets();
+        socketInfo[namespace] = {
+          userRoomSockets: socketsInUserRoom.size,
+          socketIds: Array.from(socketsInUserRoom),
+        };
+      }
+
+      res.json({
+        success: true,
+        data: {
+          userId,
+          socketInfo,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  };
+  public debugUserSocketRoom = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const { userId } = req.params;
+    const io = getIO();
+
+    const notificationNS = io.of("/notifications");
+    const roomSockets = await notificationNS.in(`user_${userId}`).allSockets();
+
+    res.json({
+      userId,
+      roomName: `user_${userId}`,
+      socketsInRoom: roomSockets.size,
+      socketIds: Array.from(roomSockets),
+    });
   };
 }
 export default new AdminController();

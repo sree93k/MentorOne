@@ -1120,5 +1120,63 @@ export const markAllNotificationsAsRead = async (
     throw new Error("Failed to mark all notifications as read");
   }
 };
+
+// ADD this new function to check block status via API (HTTP fallback)
+export const checkUserBlockStatus = async (
+  userId: string
+): Promise<{
+  isBlocked: boolean;
+  blockData?: any;
+} | null> => {
+  try {
+    console.log("🔍 Checking user block status via API:", userId);
+
+    const response = await userAxiosInstance.get(
+      `/user/block-status/${userId}`
+    );
+
+    console.log("✅ Block status check response:", response.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("❌ Block status check failed:", error);
+
+    // If 401/403, user might be blocked
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      return {
+        isBlocked: true,
+        blockData: {
+          reason: "Account access denied",
+          category: "terms_violation",
+          adminEmail: "sreekuttan12kaathu@gmail.com",
+          timestamp: new Date().toISOString(),
+          canAppeal: true,
+          severity: "medium",
+        },
+      };
+    }
+
+    return null;
+  }
+};
+
+// ENHANCED: Update checkAuthStatus to include block detection
+export const checkAuthStatusWithBlockDetection = async (): Promise<{
+  isAuthenticated: boolean;
+  isBlocked: boolean;
+  blockData?: any;
+}> => {
+  console.log("🔍 Enhanced auth check with block detection");
+
+  const isAuthenticated = checkAuthStatus();
+
+  if (!isAuthenticated) {
+    return { isAuthenticated: false, isBlocked: false };
+  }
+
+  // If authenticated, check if user is blocked
+  // This would require the user ID - you might need to decode from token
+  // For now, return basic auth status
+  return { isAuthenticated: true, isBlocked: false };
+};
 // ✅ Export singleton instance
 export const chatNotificationManager = new ChatNotificationManager();

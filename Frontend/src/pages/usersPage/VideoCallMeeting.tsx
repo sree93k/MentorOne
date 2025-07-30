@@ -32,6 +32,7 @@ import Participants from "@/components/videoCall/Participants";
 import MeetingInfo from "@/components/videoCall/MeetingInfo";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
+import { useBlockDetection } from "@/hooks/useBlockDetection";
 
 interface Participant {
   id: string;
@@ -69,7 +70,7 @@ const VideoCallMeeting: React.FC = () => {
   const { meetingId } = useParams<{ meetingId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isOnline } = useSelector((state: RootState) => state.user);
+  const { user } = useSelector((state: RootState) => state.user);
 
   // States
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -116,7 +117,7 @@ const VideoCallMeeting: React.FC = () => {
   const pendingScreenShareCallsRef = useRef<
     { call: any; remoteUserId: string }[]
   >([]);
-
+  const { isBlocked } = useBlockDetection(user?._id);
   const userId = user?._id || `anonymous_${Date.now()}`;
   const userName = user?.firstName || "User";
   const { isVideoOn: initialVideoOn = true, isMicOn: initialAudioOn = true } =
@@ -139,7 +140,15 @@ const VideoCallMeeting: React.FC = () => {
       return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     }
   };
-
+  useEffect(() => {
+    if (isBlocked) {
+      // Immediately leave the meeting
+      if (socket) {
+        socket.emit("leave-meeting", { meetingId, userId: user?._id });
+      }
+      navigate("/blocked");
+    }
+  }, [isBlocked]);
   useEffect(() => {
     // Start timer immediately when component mounts
     if (!meetingStartTime) {
