@@ -425,13 +425,13 @@ export const BlockedPage = () => {
                     Contact our support team directly:
                   </p>
                   <div className="space-y-3">
-                    href=
-                    {`mailto:${
-                      blockData?.adminEmail || "sreekuttan12kaathu@gmail.com"
-                    }`}
-                    className="flex items-center space-x-2 text-purple-300
+                    <a
+                      href={`mailto:${
+                        blockData?.adminEmail || "sreekuttan12kaathu@gmail.com"
+                      }`}
+                      className="flex items-center space-x-2 text-purple-300
                     hover:text-purple-200 transition-colors text-sm"
-                    <a>
+                    >
                       <span>📧</span>
                       <span>
                         {blockData?.adminEmail ||

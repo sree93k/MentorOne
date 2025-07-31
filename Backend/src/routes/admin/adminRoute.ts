@@ -3,6 +3,7 @@ import adminController from "../../controllers/implementation/adminController";
 import { validateAdminLogin } from "../../validator/AdminValidator";
 import adminAuthRoute from "./adminAuthRoute";
 import { authenticate } from "../../middlewares/authenticateAdmin";
+import appealController from "../../controllers/implementation/AppealController"; // ✅ Fixed import
 
 const adminRoutes = Router();
 
@@ -77,4 +78,23 @@ adminRoutes.get(
   "/debug/socket-rooms/:userId",
   adminController.debugUserSocketRoom
 );
+
+// ✅ FIXED APPEAL ROUTES:
+adminRoutes.get("/appeals", authenticate, appealController.getAppeals);
+adminRoutes.get(
+  "/appeals/:appealId",
+  authenticate,
+  appealController.getAppealDetails
+);
+adminRoutes.patch(
+  "/appeals/:appealId/review",
+  authenticate,
+  appealController.reviewAppeal
+);
+adminRoutes.get(
+  "/appeals/statistics",
+  authenticate,
+  appealController.getAppealStatistics
+);
+
 export default adminRoutes;

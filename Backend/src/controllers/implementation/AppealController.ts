@@ -114,7 +114,38 @@ class AppealController {
       next(error);
     }
   };
+  public getAppealDetails = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { appealId } = req.params;
 
+      if (!appealId) {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            new ApiResponse(
+              HttpStatus.BAD_REQUEST,
+              null,
+              "Appeal ID is required"
+            )
+          );
+        return;
+      }
+
+      const result = await this.appealService.getAppealById(appealId);
+      const statusCode = result.success ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+
+      res
+        .status(statusCode)
+        .json(new ApiResponse(statusCode, result.data, result.message));
+    } catch (error: any) {
+      console.error("AppealController: Error getting appeal details", error);
+      next(error);
+    }
+  };
   // Admin-only methods
   public getAppeals = async (
     req: Request,

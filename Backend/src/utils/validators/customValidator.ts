@@ -19,9 +19,33 @@ export interface ValidationError {
   value?: any;
 }
 
+// export class CustomValidator {
+//   static validate(rules: ValidationRule[]) {
+//     return (req: Request, res: Response, next: NextFunction) => {
+//       const errors: ValidationError[] = [];
+
+//       for (const rule of rules) {
+//         const value = req.body[rule.field];
+//         const fieldErrors = this.validateField(rule.field, value, rule.rules);
+//         errors.push(...fieldErrors);
+//       }
+
+//       if (errors.length > 0) {
+//         return res.status(400).json({
+//           success: false,
+//           message: "Validation errors",
+//           errors,
+//         });
+//       }
+
+//       next();
+//     };
+//   }
+
 export class CustomValidator {
   static validate(rules: ValidationRule[]) {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
+      // ✅ Fixed return type
       const errors: ValidationError[] = [];
 
       for (const rule of rules) {
@@ -31,17 +55,17 @@ export class CustomValidator {
       }
 
       if (errors.length > 0) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: "Validation errors",
           errors,
         });
+        return; // ✅ Don't call next() when there are errors
       }
 
-      next();
+      next(); // ✅ Only call next() when validation passes
     };
   }
-
   private static validateField(
     field: string,
     value: any,
