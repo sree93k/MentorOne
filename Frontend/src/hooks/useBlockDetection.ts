@@ -207,7 +207,17 @@ export const useBlockDetection = (userId?: string) => {
         handleBlockedAccount(blockInfo);
       }
     });
+    socketConnection.on("appeal_update", (data: any) => {
+      console.log("📬 Appeal status update received:", data);
 
+      // Show toast notification
+      if (data.status === "approved") {
+        // If appeal approved, user might be unblocked - redirect to login
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 3000);
+      }
+    });
     // 🎯 DEBUG: Listen to all events for troubleshooting
     socketConnection.onAny((eventName, ...args) => {
       if (eventName.includes("block") || eventName.includes("disconnect")) {

@@ -164,6 +164,77 @@ export default class AppealService implements IAppealService {
     }
   }
 
+  //   async reviewAppeal(
+  //     appealId: string,
+  //     adminId: string,
+  //     decision: "approved" | "rejected",
+  //     adminResponse: string,
+  //     adminNotes?: string
+  //   ): Promise<{
+  //     success: boolean;
+  //     data?: EAppeal;
+  //     message: string;
+  //   }> {
+  //     try {
+  //       console.log("AppealService: Reviewing appeal", {
+  //         appealId,
+  //         decision,
+  //         adminId,
+  //       });
+
+  //       const updateData: UpdateAppealDTO = {
+  //         status: decision,
+  //         reviewedBy: adminId,
+  //         reviewedAt: new Date(),
+  //         adminResponse,
+  //         adminNotes,
+  //       };
+
+  //       const updatedAppeal = await this.appealRepository.updateAppealStatus(
+  //         appealId,
+  //         updateData
+  //       );
+
+  //       if (!updatedAppeal) {
+  //         return {
+  //           success: false,
+  //           message: "Appeal not found",
+  //         };
+  //       }
+
+  //       // If approved, unblock the user
+  //       if (decision === "approved") {
+  //         await this.userRepository.updateField(
+  //           updatedAppeal.userId,
+  //           "isBlocked",
+  //           false
+  //         );
+  //         console.log("AppealService: User unblocked", {
+  //           userId: updatedAppeal.userId,
+  //         });
+  //       }
+
+  //       // Send notification email to user
+  //       await this.sendAppealDecisionToUser(updatedAppeal);
+
+  //       console.log("AppealService: Appeal reviewed successfully", {
+  //         appealId,
+  //         decision,
+  //       });
+
+  //       return {
+  //         success: true,
+  //         data: updatedAppeal,
+  //         message: `Appeal ${decision} successfully`,
+  //       };
+  //     } catch (error: any) {
+  //       console.error("AppealService: Error reviewing appeal", error);
+  //       return {
+  //         success: false,
+  //         message: "Failed to review appeal",
+  //       };
+  //     }
+  //   }
   async reviewAppeal(
     appealId: string,
     adminId: string,
@@ -214,6 +285,13 @@ export default class AppealService implements IAppealService {
         });
       }
 
+      // ✅ ADD: Send real-time notifications
+      await this.sendRealTimeNotification(
+        appealId,
+        decision,
+        updatedAppeal.userId
+      );
+
       // Send notification email to user
       await this.sendAppealDecisionToUser(updatedAppeal);
 
@@ -257,7 +335,43 @@ export default class AppealService implements IAppealService {
       };
     }
   }
+  private async sendRealTimeNotification(
+    appealId: string,
+    status: string,
+    userId?: string
+  ): Promise<void> {
+    try {
+      const { getIO } = await import("../../utils/socketManager");
+      const io = getIO();
 
+      // Send to admin notification namespace
+      io.of("/notifications").emit("appeal_status_update", {
+        appealId,
+        status,
+        timestamp: new Date().toISOString(),
+      });
+
+      // If user is online, send to user notification namespace
+      if (userId) {
+        io.of("/notifications")
+          .to(`user_${userId}`)
+          .emit("appeal_update", {
+            appealId,
+            status,
+            message: `Your appeal has been ${status}`,
+            timestamp: new Date().toISOString(),
+          });
+      }
+
+      console.log("✅ Real-time appeal notification sent", {
+        appealId,
+        status,
+      });
+    } catch (error: any) {
+      console.error("❌ Failed to send real-time notification:", error.message);
+      // Don't throw - notification failure shouldn't break the appeal process
+    }
+  }
   // Private helper methods for email notifications
   private async sendAppealNotificationToAdmin(
     appeal: EAppeal,
@@ -309,6 +423,43 @@ export default class AppealService implements IAppealService {
     );
   }
 
+  //   private async sendAppealDecisionToUser(appeal: EAppeal): Promise<void> {
+  //     const isApproved = appeal.status === "approved";
+  //     const subject = isApproved
+  //       ? "✅ Account Appeal Approved - Access Restored"
+  //       : "❌ Account Appeal Decision";
+
+  //     const emailContent = `
+  //       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  //         <h2 style="color: ${isApproved ? "#059669" : "#dc2626"};">
+  //           ${isApproved ? "✅" : "❌"} Appeal ${
+  //       appeal.status === "approved" ? "Approved" : "Rejected"
+  //     }
+  //         </h2>
+  //         <p>Dear ${appeal.firstName},</p>
+  //         <p>Your account appeal has been reviewed.</p>
+  //         ${
+  //           appeal.adminResponse
+  //             ? `<p><strong>Admin Response:</strong> ${appeal.adminResponse}</p>`
+  //             : ""
+  //         }
+  //         ${
+  //           isApproved
+  //             ? "<p>Your account has been reactivated. You can now log in normally.</p>"
+  //             : ""
+  //         }
+  //         <p><strong>Appeal ID:</strong> ${appeal._id}</p>
+  //       </div>
+  //     `;
+
+  //     await sendMail(
+  //       appeal.email,
+  //       subject,
+  //       `${appeal.firstName} ${appeal.lastName}`,
+  //       subject,
+  //       emailContent
+  //     );
+  //   }
   private async sendAppealDecisionToUser(appeal: EAppeal): Promise<void> {
     const isApproved = appeal.status === "approved";
     const subject = isApproved
@@ -316,25 +467,114 @@ export default class AppealService implements IAppealService {
       : "❌ Account Appeal Decision";
 
     const emailContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: ${isApproved ? "#059669" : "#dc2626"};">
-          ${isApproved ? "✅" : "❌"} Appeal ${
-      appeal.status === "approved" ? "Approved" : "Rejected"
-    }
-        </h2>
-        <p>Dear ${appeal.firstName},</p>
-        <p>Your account appeal has been reviewed.</p>
-        ${
-          appeal.adminResponse
-            ? `<p><strong>Admin Response:</strong> ${appeal.adminResponse}</p>`
-            : ""
-        }
-        ${
-          isApproved
-            ? "<p>Your account has been reactivated. You can now log in normally.</p>"
-            : ""
-        }
-        <p><strong>Appeal ID:</strong> ${appeal._id}</p>
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, ${
+          isApproved ? "#059669" : "#dc2626"
+        } 0%, ${
+      isApproved ? "#047857" : "#b91c1c"
+    } 100%); padding: 32px 24px; text-align: center;">
+          <div style="background: rgba(255,255,255,0.1); width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 32px;">${isApproved ? "✅" : "❌"}</span>
+          </div>
+          <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0;">
+            Appeal ${appeal.status === "approved" ? "Approved" : "Rejected"}
+          </h1>
+          <p style="color: rgba(255,255,255,0.9); font-size: 14px; margin: 8px 0 0;">
+            ${
+              isApproved
+                ? "Your access has been restored"
+                : "Decision has been made"
+            }
+          </p>
+        </div>
+        
+        <!-- Content -->
+        <div style="padding: 32px 24px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h2 style="color: #1f2937; font-size: 18px; font-weight: 600; margin: 0 0 8px;">
+              Hello ${appeal.firstName}
+            </h2>
+            <p style="color: #6b7280; font-size: 14px; margin: 0;">
+              Your account appeal has been reviewed by our team
+            </p>
+          </div>
+
+          <!-- Decision Details -->
+          <div style="background: ${
+            isApproved ? "#f0fdf4" : "#fef2f2"
+          }; border: 1px solid ${
+      isApproved ? "#bbf7d0" : "#fecaca"
+    }; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <h3 style="color: ${
+              isApproved ? "#065f46" : "#dc2626"
+            }; font-size: 16px; font-weight: 600; margin: 0 0 12px;">
+              ${isApproved ? "🎉 Appeal Approved" : "📋 Appeal Rejected"}
+            </h3>
+            <div style="background: white; border-radius: 6px; padding: 16px;">
+              <p style="color: #374151; font-size: 14px; line-height: 1.6; margin: 0;">
+                <strong>Admin Response:</strong><br>
+                ${appeal.adminResponse}
+              </p>
+            </div>
+          </div>
+
+          ${
+            isApproved
+              ? `
+          <!-- Success Actions -->
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <h4 style="color: #065f46; font-size: 14px; font-weight: 600; margin: 0 0 12px;">
+              🚀 What's Next:
+            </h4>
+            <ul style="color: #047857; font-size: 13px; line-height: 1.6; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 6px;">Your account has been reactivated</li>
+              <li style="margin-bottom: 6px;">You can now log in normally</li>
+              <li style="margin-bottom: 6px;">All account features are restored</li>
+              <li style="margin-bottom: 6px;">Thank you for your patience</li>
+            </ul>
+            <div style="text-align: center; margin-top: 20px;">
+              <a href="${process.env.FRONTEND_URL}/login" 
+                 style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">
+                Login to Your Account
+              </a>
+            </div>
+          </div>
+          `
+              : `
+          <!-- Rejection Info -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <h4 style="color: #1e40af; font-size: 14px; font-weight: 600; margin: 0 0 12px;">
+              📧 Still have questions?
+            </h4>
+            <p style="color: #475569; font-size: 13px; line-height: 1.6; margin: 0;">
+              If you believe this decision is incorrect or have additional information, 
+              you can contact our support team at 
+              <a href="mailto:sreekuttan12kaathu@gmail.com" style="color: #1d4ed8;">
+                sreekuttan12kaathu@gmail.com
+              </a>
+            </p>
+          </div>
+          `
+          }
+
+          <!-- Appeal Details -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <h4 style="color: #374151; font-size: 12px; font-weight: 600; margin: 0 0 8px;">Appeal Details:</h4>
+            <p style="color: #6b7280; font-size: 11px; margin: 0;">
+              Appeal ID: ${appeal._id}<br>
+              Reviewed: ${new Date(appeal.reviewedAt!).toLocaleString()}<br>
+              Category: ${appeal.category.replace("_", " ").toUpperCase()}
+            </p>
+          </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 13px; margin: 0;">
+            © ${new Date().getFullYear()} Mentor One. All rights reserved.
+          </p>
+        </div>
       </div>
     `;
 
