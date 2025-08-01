@@ -305,36 +305,6 @@ export const useAppealManagement = () => {
     toast.success("Status refreshed");
   };
 
-  /**
-   * 🔧 Handle re-appeal
-   */
-  // const handleStartReappeal = () => {
-  //   if (currentAppeal?.canReappeal && currentAppeal.appealCount < 2) {
-  //     setShowForm(true);
-  //   } else {
-  //     toast.error(
-  //       "You have reached the maximum number of appeals. Please contact support directly."
-  //     );
-  //   }
-  // };
-  // const handleStartReappeal = () => {
-  //   if (currentAppeal?.canReappeal && currentAppeal.appealCount < 2) {
-  //     // ✅ CLEAR the appeal message when starting re-appeal
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       appealMessage: "", // ✅ Always start with empty message
-  //     }));
-  //     setErrors([]);
-  //     setShowForm(true);
-  //   } else {
-  //     toast.error(
-  //       "You have reached the maximum number of appeals. Please contact support directly."
-  //     );
-  //   }
-  // };
-  /**
-   * 🔧 Handle re-appeal - Clear form data
-   */
   const handleStartReappeal = () => {
     if (currentAppeal?.canReappeal && currentAppeal.appealCount < 2) {
       console.log("🔍 Starting re-appeal, clearing form data");
@@ -363,12 +333,6 @@ export const useAppealManagement = () => {
     }
   };
 
-  /**
-   * 🔧 Handle start first appeal
-   */
-  // const handleStartAppeal = () => {
-  //   setShowForm(true);
-  // };
   const handleStartAppeal = () => {
     // ✅ CLEAR the appeal message when starting first appeal
     setFormData((prev) => ({

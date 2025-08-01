@@ -64,6 +64,7 @@
     "input-otp": "^1.4.2",
     "joi": "^17.13.3",
     "jwt-decode": "^4.0.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.483.0",
     "motion": "^12.6.3",
     "next": "^15.2.4",
@@ -77,6 +78,7 @@
     "react-hook-form": "^7.54.2",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
+    "react-leaflet": "^5.0.0",
     "react-loading": "^2.0.3",
     "react-lottie": "^1.2.10",
     "react-media-recorder": "^1.7.1",
@@ -97,6 +99,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/dompurify": "^3.0.5",
+    "@types/leaflet": "^1.9.20",
     "@types/lodash": "^4.17.17",
     "@types/node": "^22.13.13",
     "@types/peerjs": "^0.0.30",

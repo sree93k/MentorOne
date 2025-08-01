@@ -12,7 +12,6 @@
 
 // const MenteeHeader: React.FC = () => {
 //   const [isChatOpen, setIsChatOpen] = useState(false);
-
 //   const location = useLocation();
 //   const dispatch = useDispatch();
 
@@ -42,7 +41,30 @@
 //   }, [isAuthenticated, user?._id, dispatch]);
 
 //   const openChat = () => {
+//     console.log("🔥 MenteeHeader: Opening chat, isChatOpen will be:", true);
 //     setIsChatOpen(true);
+//   };
+
+//   // ✅ NEW: Handle chat close to update counts
+//   const handleChatClose = (isOpen: boolean) => {
+//     console.log("🔥 MenteeHeader: Chat visibility changed:", isOpen);
+//     setIsChatOpen(isOpen);
+
+//     // ✅ Refresh counts when chat closes to get latest state
+//     if (!isOpen && isAuthenticated && user?._id) {
+//       setTimeout(async () => {
+//         try {
+//           const counts = await getChatUnreadCounts();
+//           dispatch(setChatUnreadCounts(counts));
+//           console.log(
+//             "📊 MenteeHeader: Refreshed counts after chat close:",
+//             counts
+//           );
+//         } catch (error) {
+//           console.error("Failed to refresh chat counts:", error);
+//         }
+//       }, 1000); // Small delay to ensure backend is updated
+//     }
 //   };
 
 //   const isActive = (path: string) =>
@@ -109,7 +131,8 @@
 //           <ThemeToggle />
 //         </div>
 
-//         <Chatting open={isChatOpen} onOpenChange={setIsChatOpen} />
+//         {/* ✅ FIXED: Pass proper onOpenChange handler */}
+//         <Chatting open={isChatOpen} onOpenChange={handleChatClose} />
 //       </header>
 //     </>
 //   );
@@ -163,12 +186,10 @@ const MenteeHeader: React.FC = () => {
     setIsChatOpen(true);
   };
 
-  // ✅ NEW: Handle chat close to update counts
   const handleChatClose = (isOpen: boolean) => {
     console.log("🔥 MenteeHeader: Chat visibility changed:", isOpen);
     setIsChatOpen(isOpen);
 
-    // ✅ Refresh counts when chat closes to get latest state
     if (!isOpen && isAuthenticated && user?._id) {
       setTimeout(async () => {
         try {
@@ -181,7 +202,7 @@ const MenteeHeader: React.FC = () => {
         } catch (error) {
           console.error("Failed to refresh chat counts:", error);
         }
-      }, 1000); // Small delay to ensure backend is updated
+      }, 1000);
     }
   };
 
@@ -235,6 +256,15 @@ const MenteeHeader: React.FC = () => {
             >
               Services
             </Link>
+            {/* ✅ NEW: Added Contact Link */}
+            <Link
+              to="/seeker/contact"
+              className={`${isActive(
+                "/contact"
+              )} text-gray-700 dark:text-gray-300`}
+            >
+              Contact
+            </Link>
           </nav>
           <div className="flex items-center gap-4"></div>
         </div>
@@ -249,7 +279,6 @@ const MenteeHeader: React.FC = () => {
           <ThemeToggle />
         </div>
 
-        {/* ✅ FIXED: Pass proper onOpenChange handler */}
         <Chatting open={isChatOpen} onOpenChange={handleChatClose} />
       </header>
     </>

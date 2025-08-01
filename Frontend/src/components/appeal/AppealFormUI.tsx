@@ -116,18 +116,6 @@ export const AppealFormUI: React.FC<AppealFormUIProps> = ({
           <option value="other">Other</option>
         </select>
 
-        {/* <textarea
-          value={formData.appealMessage}
-          onChange={(e) => onInputChange("appealMessage", e.target.value)}
-          placeholder={
-            isReappeal
-              ? "Please provide additional information or clarification addressing the previous rejection reason..."
-              : "Explain why this action should be reviewed. Include any relevant details..."
-          }
-          disabled={isSubmitting}
-          className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none h-32 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50"
-          maxLength={1000}
-        /> */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-white text-sm font-medium">

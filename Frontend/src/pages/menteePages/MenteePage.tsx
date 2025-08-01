@@ -22,6 +22,7 @@ import VideoCallJoinPage from "@/pages/usersPage/VideoCallJoinPage";
 import ServicesListing from "./subPages/ServicesListedPage";
 import NotFoundPage from "../usersPage/NotFoundPage";
 import PaymentStatusPage from "@/components/modal/PaymentStatusModal";
+import ContactPage from "@/pages/usersPage/ContactPage";
 // Import the new ChatbotWidget
 import ChatbotWidget from "@/components/users/ChatBotWidget"; // Adjust path if different
 
@@ -69,6 +70,7 @@ const MenteePage = () => {
             <Route path="/meeting/:meetingId" element={<VideoCallMeeting />} />
             <Route path="/allservices" element={<ServicesListing />} />
             <Route path="/payment-status" element={<PaymentStatusPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route
               path="/meeting-end/:meetingId"
               element={<VideoCallEndPage />}
