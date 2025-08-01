@@ -26,12 +26,17 @@ class AdminAppealService {
   /**
    * Get all appeals with filters
    */
+  /**
+   * Get all appeals with filters
+   */
   async getAppeals(params: {
     page?: number;
     limit?: number;
     status?: string;
     category?: string;
     search?: string;
+    startDate?: string;
+    endDate?: string;
   }): Promise<
     AdminAppealApiResponse<{
       data: AdminAppealData[];
@@ -41,12 +46,28 @@ class AdminAppealService {
     try {
       console.log("📋 AdminAppealService: Fetching appeals", params);
 
+      // ✅ FIXED: Build query parameters properly
       const queryParams = new URLSearchParams();
+
       if (params.page) queryParams.append("page", params.page.toString());
       if (params.limit) queryParams.append("limit", params.limit.toString());
-      if (params.status) queryParams.append("status", params.status);
-      if (params.category) queryParams.append("category", params.category);
-      if (params.search) queryParams.append("search", params.search);
+
+      // ✅ Only append non-empty string parameters
+      if (params.status && params.status.trim())
+        queryParams.append("status", params.status.trim());
+      if (params.category && params.category.trim())
+        queryParams.append("category", params.category.trim());
+      if (params.search && params.search.trim())
+        queryParams.append("search", params.search.trim());
+      if (params.startDate && params.startDate.trim())
+        queryParams.append("startDate", params.startDate.trim());
+      if (params.endDate && params.endDate.trim())
+        queryParams.append("endDate", params.endDate.trim());
+
+      console.log(
+        "📋 AdminAppealService: Query string built",
+        queryParams.toString()
+      );
 
       const response = await adminAxiosInstance.get(
         `/admin/appeals?${queryParams}`
@@ -76,7 +97,6 @@ class AdminAppealService {
       };
     }
   }
-
   /**
    * Get specific appeal details
    */

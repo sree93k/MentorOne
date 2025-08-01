@@ -1,78 +1,6 @@
-// import { Model } from "mongoose";
-// import Appeal from "../../models/appealModel";
-
-// export default class AppealRepository {
-//   private appealModel: Model<any>;
-
-//   constructor() {
-//     this.appealModel = Appeal;
-//   }
-
-//   async createAppeal(appealData: {
-//     userId: string;
-//     email: string;
-//     firstName: string;
-//     lastName: string;
-//     appealMessage: string;
-//     category: string;
-//     status: string;
-//     submittedAt: Date;
-//   }) {
-//     try {
-//       const appeal = new this.appealModel(appealData);
-//       return await appeal.save();
-//     } catch (error) {
-//       console.error("Error creating appeal:", error);
-//       throw error;
-//     }
-//   }
-
-//   async findById(appealId: string) {
-//     try {
-//       return await this.appealModel.findById(appealId);
-//     } catch (error) {
-//       console.error("Error finding appeal:", error);
-//       throw error;
-//     }
-//   }
-
-//   async updateAppeal(appealId: string, updateData: any) {
-//     try {
-//       return await this.appealModel.findByIdAndUpdate(
-//         appealId,
-//         { $set: updateData },
-//         { new: true }
-//       );
-//     } catch (error) {
-//       console.error("Error updating appeal:", error);
-//       throw error;
-//     }
-//   }
-
-//   async getAllAppeals(page: number = 1, limit: number = 10, status?: string) {
-//     try {
-//       const query = status ? { status } : {};
-//       const skip = (page - 1) * limit;
-
-//       const appeals = await this.appealModel
-//         .find(query)
-//         .sort({ submittedAt: -1 })
-//         .skip(skip)
-//         .limit(limit)
-//         .lean();
-
-//       const total = await this.appealModel.countDocuments(query);
-
-//       return { appeals, total };
-//     } catch (error) {
-//       console.error("Error getting appeals:", error);
-//       throw error;
-//     }
-//   }
-// }
 import { FilterQuery } from "mongoose";
-import BaseRepository from "./BaseRepository";
-import Appeal from "../../models/appealModel";
+import BaseRepository from "./BaseRepository"; // ✅ Import with curly braces
+import AppealModel from "../../models/appealModel"; // ✅ Import the default export
 import {
   EAppeal,
   CreateAppealDTO,
@@ -87,7 +15,11 @@ export default class AppealRepository
   implements IAppealRepository
 {
   constructor() {
-    super(Appeal);
+    console.log("🔍 AppealRepository: Constructor called");
+    console.log("🔍 AppealModel:", AppealModel);
+    console.log("🔍 AppealModel.modelName:", AppealModel?.modelName);
+
+    super(AppealModel); // ✅ Pass the model to BaseRepository
   }
 
   async createAppeal(appealData: CreateAppealDTO): Promise<EAppeal> {
@@ -140,46 +72,15 @@ export default class AppealRepository
     }
   }
 
-  async findAppealsWithFilters(
-    filters: AppealSearchFilters,
-    page: number,
-    limit: number
-  ): Promise<IPaginatedResult<EAppeal>> {
+  async findByQuery(query: any): Promise<EAppeal[]> {
     try {
-      const query: FilterQuery<EAppeal> = {};
-
-      // Apply filters
-      if (filters.status) {
-        query.status = filters.status;
-      }
-
-      if (filters.email) {
-        query.email = { $regex: filters.email, $options: "i" };
-      }
-
-      if (filters.userId) {
-        query.userId = filters.userId;
-      }
-
-      if (filters.category) {
-        query.category = filters.category;
-      }
-
-      if (filters.dateFrom || filters.dateTo) {
-        query.submittedAt = {};
-        if (filters.dateFrom) {
-          query.submittedAt.$gte = filters.dateFrom;
-        }
-        if (filters.dateTo) {
-          query.submittedAt.$lte = filters.dateTo;
-        }
-      }
-
-      return await this.findPaginated(query, page, limit, {
+      return await this.find(query, {
         sort: { submittedAt: -1 },
+        lean: true,
       });
-    } catch (error) {
-      throw this.handleError(error, "findAppealsWithFilters");
+    } catch (error: any) {
+      console.error("AppealRepository: Error in findByQuery", error);
+      throw new Error(`Failed to find appeals by query: ${error.message}`);
     }
   }
 
@@ -214,39 +115,59 @@ export default class AppealRepository
     }
   }
 
-  async getAppealStatistics(): Promise<{
-    total: number;
-    pending: number;
-    approved: number;
-    rejected: number;
-    under_review: number;
-  }> {
+  async getAppealStatistics(): Promise<any> {
     try {
-      const stats = await this.aggregate([
-        {
-          $group: {
-            _id: "$status",
-            count: { $sum: 1 },
-          },
-        },
-      ]);
+      console.log("AppealRepository: Getting appeal statistics");
 
-      const result = {
-        total: 0,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-        under_review: 0,
+      // ✅ Use aggregate method from BaseRepository
+      const statsPromises = [
+        this.count({}),
+        this.count({ status: "pending" }),
+        this.count({ status: "approved" }),
+        this.count({ status: "rejected" }),
+        this.count({ status: "under_review" }),
+        this.count({
+          submittedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        }),
+        this.aggregate([
+          {
+            $group: {
+              _id: "$category",
+              count: { $sum: 1 },
+            },
+          },
+        ]),
+      ];
+
+      const [
+        totalAppeals,
+        pendingAppeals,
+        approvedAppeals,
+        rejectedAppeals,
+        underReviewAppeals,
+        recentAppeals,
+        categoryStats,
+      ] = await Promise.all(statsPromises);
+
+      const stats = {
+        total: totalAppeals,
+        pending: pendingAppeals,
+        approved: approvedAppeals,
+        rejected: rejectedAppeals,
+        under_review: underReviewAppeals,
+        recent: recentAppeals,
+        categoryBreakdown: categoryStats,
+        approvalRate:
+          totalAppeals > 0
+            ? ((approvedAppeals / totalAppeals) * 100).toFixed(1)
+            : 0,
       };
 
-      stats.forEach((stat) => {
-        result[stat._id as keyof typeof result] = stat.count;
-        result.total += stat.count;
-      });
-
-      return result;
-    } catch (error) {
-      throw this.handleError(error, "getAppealStatistics");
+      console.log("AppealRepository: Statistics retrieved", stats);
+      return stats;
+    } catch (error: any) {
+      console.error("AppealRepository: Error getting statistics", error);
+      throw new Error(`Failed to get appeal statistics: ${error.message}`);
     }
   }
 
@@ -269,6 +190,70 @@ export default class AppealRepository
       );
     } catch (error) {
       throw this.handleError(error, "findRecentAppealsByUser");
+    }
+  }
+
+  async findAppealsWithFilters(
+    searchQuery: any,
+    page: number,
+    limit: number
+  ): Promise<IPaginatedResult<EAppeal>> {
+    try {
+      console.log("AppealRepository: findAppealsWithFilters", {
+        searchQuery,
+        page,
+        limit,
+      });
+
+      // ✅ ADD: Debug existing data dates
+      if (searchQuery.submittedAt) {
+        console.log("🔍 Date filter applied, checking existing data...");
+        const sampleAppeals = await this.find(
+          {},
+          {
+            limit: 5,
+            sort: { submittedAt: -1 },
+            select: "submittedAt firstName email",
+          }
+        );
+
+        console.log(
+          "🔍 Sample appeal dates in DB:",
+          sampleAppeals.map((a) => ({
+            name: a.firstName,
+            email: a.email,
+            date: a.submittedAt,
+            formatted: new Date(a.submittedAt).toISOString(),
+          }))
+        );
+      }
+
+      // ✅ Use the built-in findPaginated method from BaseRepository
+      const result = await this.findPaginated(searchQuery, page, limit, {
+        sort: { submittedAt: -1 },
+        lean: true,
+      });
+
+      console.log("AppealRepository: Appeals found", {
+        totalCount: result.total,
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        resultsInPage: result.data.length,
+        searchQuery: JSON.stringify(searchQuery),
+      });
+
+      // ✅ Map to expected interface format
+      return {
+        data: result.data,
+        totalCount: result.total,
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
+    } catch (error: any) {
+      console.error("AppealRepository: Error in findAppealsWithFilters", error);
+      throw new Error(`Failed to find appeals: ${error.message}`);
     }
   }
 }

@@ -1,13 +1,3 @@
-// export interface IBaseRepository<T> {
-//   create(item: T): Promise<T>;
-//   findById(id: string): Promise<T | null>;
-//   findByEmail(email: string): Promise<T | null>;
-//   findAll(): Promise<T[]>;
-//   update(id: string, item: Partial<T>): Promise<T | null>;
-//   delete(id: string): Promise<boolean>;
-//   updateField(id: string, field: keyof T, value: string): Promise<T | null>;
-//   findByField<K extends keyof T>(field: K, value: string): Promise<T[] | null>;
-// }
 import { Document, FilterQuery, UpdateQuery, QueryOptions } from "mongoose";
 
 export interface IBaseRepository<T extends Document> {
@@ -94,10 +84,21 @@ export interface IUpdateOptions extends IQueryOptions {
   runValidators?: boolean;
 }
 
+// export interface IPaginatedResult<T> {
+//   data: T[];
+//   total: number;
+//   page: number;
+//   limit: number;
+//   totalPages: number;
+//   hasNextPage: boolean;
+//   hasPreviousPage: boolean;
+// }
 export interface IPaginatedResult<T> {
   data: T[];
-  total: number;
+  total: number; // ✅ Keep this
+  totalCount?: number; // ✅ Add this for compatibility
   page: number;
+  currentPage?: number; // ✅ Add this for compatibility
   limit: number;
   totalPages: number;
   hasNextPage: boolean;
