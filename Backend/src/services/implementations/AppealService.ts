@@ -2,7 +2,7 @@ import { IAppealService } from "../interface/IAppealService";
 import { IAppealRepository } from "../../repositories/interface/IAppealRepository";
 import AppealRepository from "../../repositories/implementations/AppealRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import UserRepository from "../../repositories/implementations/UserRepository";
+import UserRepository from "../../repositories/implementations/UserRepository"; // ✅ Fixed import
 import {
   EAppeal,
   CreateAppealDTO,
@@ -18,7 +18,7 @@ export default class AppealService implements IAppealService {
 
   constructor() {
     this.appealRepository = new AppealRepository();
-    this.userRepository = new UserRepository();
+    this.userRepository = new UserRepository(); // ✅ Fixed instantiation
   }
 
   async submitAppeal(appealData: CreateAppealDTO): Promise<{
@@ -49,24 +49,71 @@ export default class AppealService implements IAppealService {
         };
       }
 
-      // Check for recent appeals to prevent spam
-      const recentAppeals = await this.appealRepository.findRecentAppealsByUser(
-        user._id.toString(),
-        24 // 24 hours
-      );
+      // ✅ Generate block event ID based on user + timestamp
+      const blockEventId = `${user._id}_${new Date(user.updatedAt).getTime()}`;
 
-      if (recentAppeals.length >= 3) {
-        return {
-          success: false,
-          message:
-            "Too many appeals submitted recently. Please wait 24 hours before submitting another appeal.",
-        };
+      // ✅ Check existing appeals for this block event
+      const existingAppeals = await this.appealRepository.findByQuery({
+        userId: user._id.toString(),
+        blockEventId: blockEventId,
+      });
+
+      console.log("AppealService: Existing appeals found", {
+        count: existingAppeals.length,
+        blockEventId,
+      });
+
+      // ✅ Determine appeal count and validate limits
+      let appealCount = 1;
+      let previousAppealId = null;
+      let canReappeal = true;
+
+      if (existingAppeals.length > 0) {
+        const latestAppeal = existingAppeals[existingAppeals.length - 1];
+
+        // Check if user has reached appeal limit
+        if (existingAppeals.length >= 2) {
+          return {
+            success: false,
+            message:
+              "You have reached the maximum number of appeals for this blocking incident. Please contact support directly.",
+          };
+        }
+
+        // Check if latest appeal is still pending
+        if (
+          latestAppeal.status === "pending" ||
+          latestAppeal.status === "under_review"
+        ) {
+          return {
+            success: false,
+            message:
+              "You already have a pending appeal for this blocking incident. Please wait for the review to complete.",
+          };
+        }
+
+        // Only allow re-appeal if previous was rejected
+        if (latestAppeal.status !== "rejected") {
+          return {
+            success: false,
+            message:
+              "You can only submit a new appeal if your previous appeal was rejected.",
+          };
+        }
+
+        appealCount = existingAppeals.length + 1;
+        previousAppealId = latestAppeal._id;
+        canReappeal = appealCount < 2; // Can re-appeal only once
       }
 
-      // Create appeal
+      // Create appeal with new tracking fields
       const appeal = await this.appealRepository.createAppeal({
         ...appealData,
         userId: user._id.toString(),
+        blockEventId,
+        appealCount,
+        previousAppealId,
+        canReappeal,
       });
 
       // Send notifications
@@ -77,27 +124,62 @@ export default class AppealService implements IAppealService {
 
       console.log("AppealService: Appeal submitted successfully", {
         appealId: appeal._id,
+        appealCount,
+        canReappeal,
       });
 
       return {
         success: true,
         data: appeal,
         message:
-          "Appeal submitted successfully. You will receive an email confirmation.",
+          appealCount === 1
+            ? "Appeal submitted successfully. You will receive an email confirmation."
+            : "Re-appeal submitted successfully. This is your final appeal for this blocking incident.",
         appealId: appeal._id.toString(),
       };
     } catch (error: any) {
       console.error("AppealService: Error submitting appeal", error);
       return {
         success: false,
-        message: "Failed to submit appeal. Please try again later.",
+        message: error.message.includes("duplicate key")
+          ? "An appeal for this blocking incident already exists."
+          : "Failed to submit appeal. Please try again later.",
       };
     }
   }
 
+  //   async getAppealById(appealId: string): Promise<{
+  //     success: boolean;
+  //     data?: any; // ✅ Changed to any for flexibility
+  //     message: string;
+  //   }> {
+  //     try {
+  //       const appeal = await this.appealRepository.findById(appealId);
+
+  //       if (!appeal) {
+  //         return {
+  //           success: false,
+  //           message: "Appeal not found",
+  //         };
+  //       }
+
+  //       // ✅ Return full appeal data for admin or public data for users
+  //       return {
+  //         success: true,
+  //         data: appeal, // Return full appeal object
+  //         message: "Appeal retrieved successfully",
+  //       };
+  //     } catch (error: any) {
+  //       console.error("AppealService: Error getting appeal", error);
+  //       return {
+  //         success: false,
+  //         message: "Failed to retrieve appeal",
+  //       };
+  //     }
+  //   }
   async getAppealById(appealId: string): Promise<{
     success: boolean;
-    data?: Partial<EAppeal>;
+    data?: any;
     message: string;
   }> {
     try {
@@ -110,26 +192,31 @@ export default class AppealService implements IAppealService {
         };
       }
 
-      // Return only public data
-      const publicData = {
-        appealId: appeal._id,
+      // 🔧 ENHANCED: Return more detailed appeal data for user
+      const appealData = {
+        _id: appeal._id,
         status: appeal.status,
+        appealCount: appeal.appealCount || 1,
+        canReappeal: appeal.canReappeal !== false,
         submittedAt: appeal.submittedAt,
         reviewedAt: appeal.reviewedAt,
         adminResponse: appeal.adminResponse,
         category: appeal.category,
+        firstName: appeal.firstName,
+        lastName: appeal.lastName,
+        email: appeal.email,
       };
 
       return {
         success: true,
-        data: publicData,
-        message: "Appeal status retrieved successfully",
+        data: appealData,
+        message: "Appeal retrieved successfully",
       };
     } catch (error: any) {
       console.error("AppealService: Error getting appeal", error);
       return {
         success: false,
-        message: "Failed to retrieve appeal status",
+        message: "Failed to retrieve appeal",
       };
     }
   }
@@ -144,15 +231,106 @@ export default class AppealService implements IAppealService {
     message: string;
   }> {
     try {
-      const result = await this.appealRepository.findAppealsWithFilters(
+      console.log("AppealService: Getting appeals with filters", {
         filters,
+        page,
+        limit,
+      });
+
+      // ✅ Build advanced search query
+      const searchQuery: any = {};
+
+      // ✅ FIXED: Text search across multiple fields
+      if (filters.search && filters.search.trim() !== "") {
+        const searchTerm = filters.search.trim();
+        console.log("🔍 Building text search for:", searchTerm);
+
+        searchQuery.$or = [
+          { firstName: { $regex: searchTerm, $options: "i" } },
+          { lastName: { $regex: searchTerm, $options: "i" } },
+          { email: { $regex: searchTerm, $options: "i" } },
+          { appealMessage: { $regex: searchTerm, $options: "i" } },
+        ];
+      }
+
+      // ✅ FIXED: Status filter
+      if (filters.status && filters.status.trim() !== "") {
+        console.log("🔍 Adding status filter:", filters.status);
+        searchQuery.status = filters.status;
+      }
+
+      // ✅ FIXED: Category filter
+      if (filters.category && filters.category.trim() !== "") {
+        console.log("🔍 Adding category filter:", filters.category);
+        searchQuery.category = filters.category;
+      }
+
+      // ✅ FIXED: Email filter
+      if (filters.email && filters.email.trim() !== "") {
+        console.log("🔍 Adding email filter:", filters.email);
+        searchQuery.email = { $regex: filters.email, $options: "i" };
+      }
+
+      // ✅ FIXED: Date range filter
+      if (filters.startDate || filters.endDate) {
+        console.log("🔍 Adding date filter:", {
+          startDate: filters.startDate,
+          endDate: filters.endDate,
+        });
+
+        searchQuery.submittedAt = {};
+
+        if (filters.startDate && filters.startDate.trim() !== "") {
+          // Set to start of day
+          const startDate = new Date(filters.startDate);
+          startDate.setHours(0, 0, 0, 0);
+          searchQuery.submittedAt.$gte = startDate;
+          console.log("🔍 Start date set to:", startDate);
+        }
+
+        if (filters.endDate && filters.endDate.trim() !== "") {
+          // Set to end of day
+          const endDate = new Date(filters.endDate);
+          endDate.setHours(23, 59, 59, 999);
+          searchQuery.submittedAt.$lte = endDate;
+          console.log("🔍 End date set to:", endDate);
+        }
+      }
+
+      console.log(
+        "🔍 AppealService: Final search query built",
+        JSON.stringify(searchQuery, null, 2)
+      );
+
+      const result = await this.appealRepository.findAppealsWithFilters(
+        searchQuery,
         page,
         limit
       );
 
+      console.log("AppealService: Appeals retrieved", {
+        totalCount: result.totalCount,
+        currentPage: result.currentPage,
+        totalPages: result.totalPages,
+        queryUsed: searchQuery,
+      });
+
+      // ✅ Ensure compatibility with frontend expectations
+      const responseData: IPaginatedResult<EAppeal> = {
+        data: result.data,
+        total: result.totalCount || 0,
+        totalCount: result.totalCount || 0,
+        page: result.currentPage || page,
+        currentPage: result.currentPage || page,
+        limit: limit,
+        totalPages: result.totalPages || 0,
+        hasNextPage: result.hasNextPage || false,
+        hasPreviousPage: result.hasPreviousPage || false,
+      };
+
       return {
         success: true,
-        data: result,
+        data: responseData,
         message: "Appeals retrieved successfully",
       };
     } catch (error: any) {
@@ -163,78 +341,6 @@ export default class AppealService implements IAppealService {
       };
     }
   }
-
-  //   async reviewAppeal(
-  //     appealId: string,
-  //     adminId: string,
-  //     decision: "approved" | "rejected",
-  //     adminResponse: string,
-  //     adminNotes?: string
-  //   ): Promise<{
-  //     success: boolean;
-  //     data?: EAppeal;
-  //     message: string;
-  //   }> {
-  //     try {
-  //       console.log("AppealService: Reviewing appeal", {
-  //         appealId,
-  //         decision,
-  //         adminId,
-  //       });
-
-  //       const updateData: UpdateAppealDTO = {
-  //         status: decision,
-  //         reviewedBy: adminId,
-  //         reviewedAt: new Date(),
-  //         adminResponse,
-  //         adminNotes,
-  //       };
-
-  //       const updatedAppeal = await this.appealRepository.updateAppealStatus(
-  //         appealId,
-  //         updateData
-  //       );
-
-  //       if (!updatedAppeal) {
-  //         return {
-  //           success: false,
-  //           message: "Appeal not found",
-  //         };
-  //       }
-
-  //       // If approved, unblock the user
-  //       if (decision === "approved") {
-  //         await this.userRepository.updateField(
-  //           updatedAppeal.userId,
-  //           "isBlocked",
-  //           false
-  //         );
-  //         console.log("AppealService: User unblocked", {
-  //           userId: updatedAppeal.userId,
-  //         });
-  //       }
-
-  //       // Send notification email to user
-  //       await this.sendAppealDecisionToUser(updatedAppeal);
-
-  //       console.log("AppealService: Appeal reviewed successfully", {
-  //         appealId,
-  //         decision,
-  //       });
-
-  //       return {
-  //         success: true,
-  //         data: updatedAppeal,
-  //         message: `Appeal ${decision} successfully`,
-  //       };
-  //     } catch (error: any) {
-  //       console.error("AppealService: Error reviewing appeal", error);
-  //       return {
-  //         success: false,
-  //         message: "Failed to review appeal",
-  //       };
-  //     }
-  //   }
   async reviewAppeal(
     appealId: string,
     adminId: string,
@@ -285,7 +391,7 @@ export default class AppealService implements IAppealService {
         });
       }
 
-      // ✅ ADD: Send real-time notifications
+      // Send real-time notifications
       await this.sendRealTimeNotification(
         appealId,
         decision,
@@ -314,6 +420,138 @@ export default class AppealService implements IAppealService {
     }
   }
 
+  // ✅ ADD: Get latest appeal by email
+  //   async getLatestAppealByEmail(email: string): Promise<{
+  //     success: boolean;
+  //     data?: any;
+  //     message: string;
+  //   }> {
+  //     try {
+  //       console.log("AppealService: Getting latest appeal for email", { email });
+
+  //       // Find user by email
+  //       const user = await this.userRepository.findByEmail(email);
+  //       if (!user) {
+  //         return {
+  //           success: false,
+  //           message: "User not found",
+  //         };
+  //       }
+
+  //       // Find latest appeal for this user
+  //       const appeals = await this.appealRepository.findByQuery({
+  //         userId: user._id.toString(),
+  //       });
+
+  //       if (appeals.length === 0) {
+  //         return {
+  //           success: false,
+  //           message: "No appeals found",
+  //         };
+  //       }
+
+  //       // Get the most recent appeal
+  //       const latestAppeal = appeals.sort(
+  //         (a, b) =>
+  //           new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+  //       )[0];
+
+  //       console.log("AppealService: Latest appeal found", {
+  //         appealId: latestAppeal._id,
+  //         status: latestAppeal.status,
+  //         appealCount: latestAppeal.appealCount,
+  //       });
+
+  //       return {
+  //         success: true,
+  //         data: {
+  //           _id: latestAppeal._id,
+  //           status: latestAppeal.status,
+  //           appealCount: latestAppeal.appealCount || 1,
+  //           canReappeal: latestAppeal.canReappeal !== false,
+  //           submittedAt: latestAppeal.submittedAt,
+  //           adminResponse: latestAppeal.adminResponse,
+  //         },
+  //         message: "Latest appeal retrieved successfully",
+  //       };
+  //     } catch (error: any) {
+  //       console.error("AppealService: Error getting latest appeal", error);
+  //       return {
+  //         success: false,
+  //         message: "Failed to retrieve latest appeal",
+  //       };
+  //     }
+  //   }
+  async getLatestAppealByEmail(email: string): Promise<{
+    success: boolean;
+    data?: any;
+    message: string;
+  }> {
+    try {
+      console.log("AppealService: Getting latest appeal for email", { email });
+
+      // Find user by email
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      // Find latest appeal for this user
+      const appeals = await this.appealRepository.findByQuery({
+        userId: user._id.toString(),
+      });
+
+      if (appeals.length === 0) {
+        return {
+          success: false,
+          message: "No appeals found",
+        };
+      }
+
+      // Get the most recent appeal
+      const latestAppeal = appeals.sort(
+        (a, b) =>
+          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+      )[0];
+
+      console.log("AppealService: Latest appeal found", {
+        appealId: latestAppeal._id,
+        status: latestAppeal.status,
+        appealCount: latestAppeal.appealCount,
+      });
+
+      // 🔧 ENHANCED: Return detailed appeal data
+      const appealData = {
+        _id: latestAppeal._id,
+        status: latestAppeal.status,
+        appealCount: latestAppeal.appealCount || 1,
+        canReappeal: latestAppeal.canReappeal !== false,
+        submittedAt: latestAppeal.submittedAt,
+        reviewedAt: latestAppeal.reviewedAt,
+        adminResponse: latestAppeal.adminResponse,
+        category: latestAppeal.category,
+        firstName: latestAppeal.firstName,
+        lastName: latestAppeal.lastName,
+        email: latestAppeal.email,
+      };
+
+      return {
+        success: true,
+        data: appealData,
+        message: "Latest appeal retrieved successfully",
+      };
+    } catch (error: any) {
+      console.error("AppealService: Error getting latest appeal", error);
+      return {
+        success: false,
+        message: "Failed to retrieve latest appeal",
+      };
+    }
+  }
+
   async getAppealStatistics(): Promise<{
     success: boolean;
     data?: any;
@@ -335,6 +573,8 @@ export default class AppealService implements IAppealService {
       };
     }
   }
+
+  // ✅ Private helper methods remain the same
   private async sendRealTimeNotification(
     appealId: string,
     status: string,
@@ -372,12 +612,11 @@ export default class AppealService implements IAppealService {
       // Don't throw - notification failure shouldn't break the appeal process
     }
   }
-  // Private helper methods for email notifications
+
   private async sendAppealNotificationToAdmin(
     appeal: EAppeal,
     user: any
   ): Promise<void> {
-    // Implementation similar to previous version but cleaner
     const adminEmailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #dc2626;">🚨 New Account Appeal</h2>
@@ -403,14 +642,15 @@ export default class AppealService implements IAppealService {
   }
 
   private async sendAppealConfirmationToUser(appeal: EAppeal): Promise<void> {
-    // Implementation similar to previous version
     const userEmailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #059669;">✅ Appeal Submitted</h2>
         <p>Dear ${appeal.firstName},</p>
         <p>Your appeal has been submitted and will be reviewed within 24-48 hours.</p>
         <p><strong>Appeal ID:</strong> ${appeal._id}</p>
-        <a href="${process.env.FRONTEND_URL}/appeal/status/${appeal._id}">Check Status</a>
+      <a href="${process.env.FRONTEND_URL}/appeal/status/${
+      appeal._id
+    }?email=${encodeURIComponent(appeal.email)}">Check Status</a>
       </div>
     `;
 
@@ -423,43 +663,6 @@ export default class AppealService implements IAppealService {
     );
   }
 
-  //   private async sendAppealDecisionToUser(appeal: EAppeal): Promise<void> {
-  //     const isApproved = appeal.status === "approved";
-  //     const subject = isApproved
-  //       ? "✅ Account Appeal Approved - Access Restored"
-  //       : "❌ Account Appeal Decision";
-
-  //     const emailContent = `
-  //       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  //         <h2 style="color: ${isApproved ? "#059669" : "#dc2626"};">
-  //           ${isApproved ? "✅" : "❌"} Appeal ${
-  //       appeal.status === "approved" ? "Approved" : "Rejected"
-  //     }
-  //         </h2>
-  //         <p>Dear ${appeal.firstName},</p>
-  //         <p>Your account appeal has been reviewed.</p>
-  //         ${
-  //           appeal.adminResponse
-  //             ? `<p><strong>Admin Response:</strong> ${appeal.adminResponse}</p>`
-  //             : ""
-  //         }
-  //         ${
-  //           isApproved
-  //             ? "<p>Your account has been reactivated. You can now log in normally.</p>"
-  //             : ""
-  //         }
-  //         <p><strong>Appeal ID:</strong> ${appeal._id}</p>
-  //       </div>
-  //     `;
-
-  //     await sendMail(
-  //       appeal.email,
-  //       subject,
-  //       `${appeal.firstName} ${appeal.lastName}`,
-  //       subject,
-  //       emailContent
-  //     );
-  //   }
   private async sendAppealDecisionToUser(appeal: EAppeal): Promise<void> {
     const isApproved = appeal.status === "approved";
     const subject = isApproved
@@ -534,27 +737,52 @@ export default class AppealService implements IAppealService {
               <li style="margin-bottom: 6px;">Thank you for your patience</li>
             </ul>
             <div style="text-align: center; margin-top: 20px;">
-              <a href="${process.env.FRONTEND_URL}/login" 
-                 style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">
-                Login to Your Account
-              </a>
+     <div style="text-align: center; margin-top: 12px;">
+  <a href="${process.env.FRONTEND_URL}/appeal/status/${
+                  appeal._id
+                }?email=${encodeURIComponent(appeal.email)}" 
+     style="color: #065f46; font-size: 13px; text-decoration: underline;">
+    View Appeal Details
+  </a>
+</div>
             </div>
           </div>
           `
               : `
           <!-- Rejection Info -->
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <h4 style="color: #1e40af; font-size: 14px; font-weight: 600; margin: 0 0 12px;">
-              📧 Still have questions?
-            </h4>
-            <p style="color: #475569; font-size: 13px; line-height: 1.6; margin: 0;">
-              If you believe this decision is incorrect or have additional information, 
-              you can contact our support team at 
-              <a href="mailto:sreekuttan12kaathu@gmail.com" style="color: #1d4ed8;">
-                sreekuttan12kaathu@gmail.com
-              </a>
-            </p>
-          </div>
+<!-- Rejection Info -->
+<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+  ${
+    appeal.canReappeal && appeal.appealCount < 2
+      ? `
+  <h4 style="color: #1e40af; font-size: 14px; font-weight: 600; margin: 0 0 12px;">
+    🔄 You can submit a re-appeal
+  </h4>
+  <p style="color: #475569; font-size: 13px; line-height: 1.6; margin: 0 0 12px;">
+    If you have additional information or believe this decision was incorrect, you can submit one more appeal.
+  </p>
+  <div style="text-align: center;">
+    <a href="${process.env.FRONTEND_URL}/appeal/status/${
+          appeal._id
+        }?email=${encodeURIComponent(appeal.email)}" 
+       style="background: #3b82f6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 13px;">
+      Submit Re-appeal
+    </a>
+  </div>
+  <hr style="margin: 16px 0; border: none; border-top: 1px solid #e2e8f0;">
+  `
+      : ""
+  }
+  <h4 style="color: #1e40af; font-size: 14px; font-weight: 600; margin: 0 0 12px;">
+    📧 Need help?
+  </h4>
+  <p style="color: #475569; font-size: 13px; line-height: 1.6; margin: 0;">
+    Contact our support team at 
+    <a href="mailto:sreekuttan12kaathu@gmail.com" style="color: #1d4ed8;">
+      sreekuttan12kaathu@gmail.com
+    </a>
+  </p>
+</div>
           `
           }
 

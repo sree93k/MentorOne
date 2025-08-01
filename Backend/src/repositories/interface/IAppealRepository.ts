@@ -25,11 +25,11 @@ export interface IAppealRepository extends IBaseRepository<EAppeal> {
   /**
    * Get paginated appeals with search filters
    */
-  findAppealsWithFilters(
-    filters: AppealSearchFilters,
-    page: number,
-    limit: number
-  ): Promise<IPaginatedResult<EAppeal>>;
+  //   findAppealsWithFilters(
+  //     filters: AppealSearchFilters,
+  //     page: number,
+  //     limit: number
+  //   ): Promise<IPaginatedResult<EAppeal>>;
 
   /**
    * Update appeal status and admin response
@@ -57,4 +57,9 @@ export interface IAppealRepository extends IBaseRepository<EAppeal> {
     userId: string,
     hoursBack: number
   ): Promise<EAppeal[]>;
+  findAppealsWithFilters(
+    searchQuery: any,
+    page: number,
+    limit: number
+  ): Promise<IPaginatedResult<EAppeal>>;
 }

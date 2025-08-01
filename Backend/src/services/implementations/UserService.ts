@@ -855,4 +855,67 @@ export default class UserService implements IUserService {
       // this.monitoringService.trackMetrics(metrics);
     }
   }
+
+  // ✅ ADD this new method:
+  async getLatestAppealByEmail(email: string): Promise<{
+    success: boolean;
+    data?: any;
+    message: string;
+  }> {
+    try {
+      console.log("AppealService: Getting latest appeal for email", { email });
+
+      // Find user by email
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      // Find latest appeal for this user
+      const appeals = await this.appealRepository.find({
+        userId: user._id.toString(),
+      });
+
+      if (appeals.length === 0) {
+        return {
+          success: false,
+          message: "No appeals found",
+        };
+      }
+
+      // Get the most recent appeal
+      const latestAppeal = appeals.sort(
+        (a, b) =>
+          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+      )[0];
+
+      console.log("AppealService: Latest appeal found", {
+        appealId: latestAppeal._id,
+        status: latestAppeal.status,
+        appealCount: latestAppeal.appealCount,
+      });
+
+      return {
+        success: true,
+        data: {
+          _id: latestAppeal._id,
+          status: latestAppeal.status,
+          appealCount: latestAppeal.appealCount || 1,
+          canReappeal: latestAppeal.canReappeal !== false,
+          submittedAt: latestAppeal.submittedAt,
+          adminResponse: latestAppeal.adminResponse,
+        },
+        message: "Latest appeal retrieved successfully",
+      };
+    } catch (error: any) {
+      console.error("AppealService: Error getting latest appeal", error);
+      return {
+        success: false,
+        message: "Failed to retrieve latest appeal",
+      };
+    }
+  }
 }

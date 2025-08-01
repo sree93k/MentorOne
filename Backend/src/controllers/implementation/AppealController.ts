@@ -114,6 +114,54 @@ class AppealController {
       next(error);
     }
   };
+
+  // ✅ KEEP ONLY THIS getAppeals METHOD (enhanced version)
+  public getAppeals = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("🔍 AppealController: Raw query params", req.query);
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      // ✅ FIXED: Extract filters from query params
+      const filters = {
+        search: (req.query.search as string) || "",
+        status: (req.query.status as string) || "",
+        email: (req.query.email as string) || "",
+        category: (req.query.category as string) || "",
+        startDate: (req.query.startDate as string) || "",
+        endDate: (req.query.endDate as string) || "",
+      };
+
+      console.log("🔍 AppealController: Processed filters", {
+        page,
+        limit,
+        filters,
+      });
+
+      const result = await this.appealService.getAppealsWithFilters(
+        filters,
+        page,
+        limit
+      );
+
+      const statusCode = result.success
+        ? HttpStatus.OK
+        : HttpStatus.BAD_REQUEST;
+
+      res
+        .status(statusCode)
+        .json(new ApiResponse(statusCode, result.data, result.message));
+    } catch (error: any) {
+      console.error("AppealController: Error getting appeals", error);
+      next(error);
+    }
+  };
+
   public getAppealDetails = async (
     req: Request,
     res: Response,
@@ -143,40 +191,6 @@ class AppealController {
         .json(new ApiResponse(statusCode, result.data, result.message));
     } catch (error: any) {
       console.error("AppealController: Error getting appeal details", error);
-      next(error);
-    }
-  };
-  // Admin-only methods
-  public getAppeals = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
-      const filters = {
-        status: req.query.status as string,
-        email: req.query.email as string,
-        category: req.query.category as string,
-        // Add more filters as needed
-      };
-
-      const result = await this.appealService.getAppealsWithFilters(
-        filters,
-        page,
-        limit
-      );
-
-      const statusCode = result.success
-        ? HttpStatus.OK
-        : HttpStatus.BAD_REQUEST;
-
-      res
-        .status(statusCode)
-        .json(new ApiResponse(statusCode, result.data, result.message));
-    } catch (error: any) {
-      console.error("AppealController: Error getting appeals", error);
       next(error);
     }
   };
@@ -280,6 +294,76 @@ class AppealController {
         .json(new ApiResponse(statusCode, result.data, result.message));
     } catch (error: any) {
       console.error("AppealController: Error getting statistics", error);
+      next(error);
+    }
+  };
+
+  //   public getLatestAppealByEmail = async (
+  //     req: Request,
+  //     res: Response,
+  //     next: NextFunction
+  //   ): Promise<void> => {
+  //     try {
+  //       const { email } = req.params;
+
+  //       if (!email) {
+  //         res
+  //           .status(HttpStatus.BAD_REQUEST)
+  //           .json(
+  //             new ApiResponse(HttpStatus.BAD_REQUEST, null, "Email is required")
+  //           );
+  //         return;
+  //       }
+
+  //       console.log("AppealController: Getting latest appeal for email", {
+  //         email,
+  //       });
+
+  //       const result = await this.appealService.getLatestAppealByEmail(email);
+  //       const statusCode = result.success ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+
+  //       res
+  //         .status(statusCode)
+  //         .json(new ApiResponse(statusCode, result.data, result.message));
+  //     } catch (error: any) {
+  //       console.error("AppealController: Error getting latest appeal", error);
+  //       next(error);
+  //     }
+  //   };
+  public getLatestAppealByEmail = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            new ApiResponse(HttpStatus.BAD_REQUEST, null, "Email is required")
+          );
+        return;
+      }
+
+      // ✅ Decode email parameter
+      const decodedEmail = decodeURIComponent(email);
+
+      console.log("AppealController: Getting latest appeal for email", {
+        email: decodedEmail,
+      });
+
+      const result = await this.appealService.getLatestAppealByEmail(
+        decodedEmail
+      );
+      const statusCode = result.success ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+
+      res
+        .status(statusCode)
+        .json(new ApiResponse(statusCode, result.data, result.message));
+    } catch (error: any) {
+      console.error("AppealController: Error getting latest appeal", error);
       next(error);
     }
   };

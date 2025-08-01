@@ -62,4 +62,9 @@ export interface IAppealService {
     data?: any;
     message: string;
   }>;
+  getLatestAppealByEmail(email: string): Promise<{
+    success: boolean;
+    data?: any;
+    message: string;
+  }>;
 }
