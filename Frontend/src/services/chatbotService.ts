@@ -1,9 +1,11 @@
 // Frontend: services/chatbotService.ts
-import axios from "axios";
+import { adminAxiosInstance } from "./instances/adminInstance";
+
+const api = adminAxiosInstance;
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5002";
 
-const chatbotAPI = axios.create({
+const chatbotAPI = api.create({
   baseURL: `${API_BASE_URL}/api/chatbot`,
   withCredentials: true, // Important for cookie-based auth
   headers: {

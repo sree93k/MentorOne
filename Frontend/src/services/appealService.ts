@@ -181,43 +181,6 @@ class AppealService {
     };
   }
 
-  /**
-   * 🔧 ENHANCED: Get user info with URL parameter support
-   */
-  /**
-   * 🔧 ENHANCED: Get user info with URL parameter support
-   */
-  //   getUserInfoFromStorage(emailFromUrl?: string): Partial<AppealSubmissionData> {
-  //     try {
-  //       // First try URL parameter (from admin email link)
-  //       if (emailFromUrl) {
-  //         return {
-  //           email: emailFromUrl,
-  //           firstName: "",
-  //           lastName: "",
-  //         };
-  //       }
-
-  //       // Then try browser storage
-  //       const userStr =
-  //         localStorage.getItem("user") || sessionStorage.getItem("user");
-
-  //       if (userStr) {
-  //         const user = JSON.parse(userStr);
-  //         return {
-  //           email: user.email || "",
-  //           firstName: user.firstName || "",
-  //           lastName: user.lastName || "",
-  //         };
-  //       }
-  //       return {};
-  //     } catch (error) {
-  //       console.warn("Could not retrieve user info from storage:", error);
-  //       return emailFromUrl
-  //         ? { email: emailFromUrl, firstName: "", lastName: "" }
-  //         : {};
-  //     }
-  //   }
   getUserInfoFromStorage(emailFromUrl?: string): Partial<AppealSubmissionData> {
     try {
       if (emailFromUrl) {
