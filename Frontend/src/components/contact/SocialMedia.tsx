@@ -52,9 +52,9 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ socialLinks = {} }) => {
   return (
     <Card className="bg-white dark:bg-gray-800 shadow-xl border-0">
       <CardHeader>
-        <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
+        {/* <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
           Follow Us
-        </CardTitle>
+        </CardTitle> */}
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3">
