@@ -17,6 +17,7 @@ import {
   PaginatedResult,
 } from "../../repositories/interface/IContactMessageRepository";
 import { IUserService } from "../interface/IUserService";
+import { ADMIN_CONFIG } from "../../config/adminConfig";
 
 export class ContactMessageService implements IContactMessageService {
   private contactMessageRepository: ContactMessageRepository;
@@ -142,7 +143,7 @@ export class ContactMessageService implements IContactMessageService {
       // Convert service filters to repository filters
       const repositoryFilters = this.convertFilters(filters);
 
-      return await this.contactMessageRepository.findAll(
+      return await this.contactMessageRepository.findAllContactMessages(
         options,
         repositoryFilters
       );
@@ -257,6 +258,46 @@ export class ContactMessageService implements IContactMessageService {
     }
   }
 
+  //   async addResponse(
+  //     id: string,
+  //     adminId: string,
+  //     adminName: string,
+  //     message: string
+  //   ): Promise<ContactMessage> {
+  //     try {
+  //       this.validateId(id);
+  //       this.validateResponseData(adminId, adminName, message);
+
+  //       const response: AdminResponse = {
+  //         adminId: adminId.trim(),
+  //         adminName: adminName.trim(),
+  //         message: message.trim(),
+  //         createdAt: new Date(),
+  //       };
+
+  //       const updated = await this.contactMessageRepository.addResponse(
+  //         id,
+  //         response
+  //       );
+  //       if (!updated) {
+  //         throw new Error("Contact message not found");
+  //       }
+
+  //       // Auto-update status to in_progress when admin responds for the first time
+  //       if (updated.status === "new") {
+  //         await this.changeStatus(id, "in_progress");
+  //         // Re-fetch the updated message
+  //         return await this.getMessageById(id);
+  //       }
+
+  //       return updated;
+  //     } catch (error: any) {
+  //       console.error("Service: Error adding response:", error);
+  //       throw new Error(`Failed to add response: ${error.message}`);
+  //     }
+  //   }
+
+  // Updated addResponse method for ContactMessageService.ts
   async addResponse(
     id: string,
     adminId: string,
@@ -266,6 +307,12 @@ export class ContactMessageService implements IContactMessageService {
     try {
       this.validateId(id);
       this.validateResponseData(adminId, adminName, message);
+
+      // Get the original message first
+      const originalMessage = await this.getMessageById(id);
+      if (!originalMessage) {
+        throw new Error("Contact message not found");
+      }
 
       const response: AdminResponse = {
         adminId: adminId.trim(),
@@ -285,7 +332,23 @@ export class ContactMessageService implements IContactMessageService {
       // Auto-update status to in_progress when admin responds for the first time
       if (updated.status === "new") {
         await this.changeStatus(id, "in_progress");
-        // Re-fetch the updated message
+      }
+
+      // ✅ NEW: Send response notifications and emails
+      try {
+        await this.sendResponseNotifications(updated, response);
+      } catch (notificationError: any) {
+        // ✅ Non-blocking: Log error but don't fail the response
+        console.error("❌ Failed to send response notifications:", {
+          contactMessageId: id,
+          userEmail: updated.email,
+          error: notificationError.message,
+        });
+        // Continue execution - admin response was successful
+      }
+
+      // Re-fetch the updated message if status was changed
+      if (updated.status === "new") {
         return await this.getMessageById(id);
       }
 
@@ -293,6 +356,191 @@ export class ContactMessageService implements IContactMessageService {
     } catch (error: any) {
       console.error("Service: Error adding response:", error);
       throw new Error(`Failed to add response: ${error.message}`);
+    }
+  }
+
+  // ✅ ADD THESE NEW METHODS TO YOUR ContactMessageService CLASS:
+
+  private async sendResponseNotifications(
+    contactMessage: ContactMessage,
+    adminResponse: AdminResponse
+  ): Promise<void> {
+    console.log("📧 Sending response notifications for contact message:", {
+      messageId: contactMessage._id,
+      userEmail: contactMessage.email,
+      userName: contactMessage.name,
+    });
+
+    try {
+      // 1. Check if user is registered
+      const isRegisteredUser =
+        await this.userService.checkUserRegistrationByEmail(
+          contactMessage.email
+        );
+
+      console.log("👤 User registration status:", {
+        email: contactMessage.email,
+        isRegistered: isRegisteredUser,
+      });
+
+      // 2. Send email to all users (registered + guests)
+      await this.sendResponseEmail(contactMessage, adminResponse);
+
+      // 3. Send socket notification only to registered users
+      if (isRegisteredUser) {
+        await this.sendResponseSocketNotification(
+          contactMessage,
+          adminResponse
+        );
+      }
+
+      console.log("✅ Response notifications sent successfully");
+    } catch (error: any) {
+      console.error("❌ Error in sendResponseNotifications:", error);
+      throw error;
+    }
+  }
+
+  // ✅ NEW: Private method to send response email
+  private async sendResponseEmail(
+    contactMessage: ContactMessage,
+    adminResponse: AdminResponse
+  ): Promise<void> {
+    try {
+      console.log("📧 Sending response email to:", contactMessage.email);
+
+      // Import the email functions
+      const { sendMail, createContactResponseEmailTemplate } = await import(
+        "../../utils/emailService"
+      );
+
+      // Create email content
+      const emailHtml = createContactResponseEmailTemplate(
+        contactMessage.name,
+        contactMessage.subject,
+        adminResponse.message,
+        contactMessage.message
+      );
+
+      const emailSubject = `Re: ${contactMessage.subject} - MentorOne Support Response`;
+
+      const emailText = `Dear ${contactMessage.name},
+
+Thank you for contacting MentorOne Support. We've reviewed your inquiry and have a response for you.
+
+Your Original Message:
+Subject: ${contactMessage.subject}
+${contactMessage.message}
+
+MentorOne Support Response:
+${adminResponse.message}
+
+If you have any follow-up questions or need further assistance, please don't hesitate to reach out to us again.
+
+Best regards,
+MentorOne Support Team
+Visit us at: ${process.env.CLIENT_HOST_URL || "https://mentorone.com"}`;
+
+      // Send email using existing sendMail function
+      const emailResult = await sendMail(
+        contactMessage.email,
+        emailText,
+        contactMessage.name,
+        emailSubject,
+        emailHtml
+      );
+
+      if (emailResult) {
+        console.log(
+          "✅ Response email sent successfully to:",
+          contactMessage.email
+        );
+      } else {
+        console.error(
+          "❌ Failed to send response email to:",
+          contactMessage.email
+        );
+        throw new Error("Email delivery failed");
+      }
+    } catch (error: any) {
+      console.error("❌ Error sending response email:", error);
+      throw new Error(`Email sending failed: ${error.message}`);
+    }
+  }
+
+  // ✅ NEW: Private method to send socket notification to registered users
+  private async sendResponseSocketNotification(
+    contactMessage: ContactMessage,
+    adminResponse: AdminResponse
+  ): Promise<void> {
+    try {
+      console.log(
+        "🔔 Sending socket notification for registered user:",
+        contactMessage.email
+      );
+
+      // Find the registered user to get their ID and roles
+      const user = await this.userService.findUserWithEmail({
+        email: contactMessage.email,
+      });
+
+      if (!user || !user._id) {
+        console.log(
+          "⚠️ Registered user not found, skipping socket notification"
+        );
+        return;
+      }
+
+      console.log("👤 Found registered user:", {
+        userId: user._id,
+        roles: user.role,
+        name: `${user.firstName} ${user.lastName}`,
+      });
+
+      // Determine target role based on user's roles
+      let targetRole: "mentor" | "mentee" | "both" = "both";
+
+      if (user.role && Array.isArray(user.role)) {
+        if (user.role.includes("mentor") && user.role.includes("mentee")) {
+          targetRole = "both";
+        } else if (user.role.includes("mentor")) {
+          targetRole = "mentor";
+        } else if (user.role.includes("mentee")) {
+          targetRole = "mentee";
+        }
+      }
+
+      console.log("🎯 Notification target role:", targetRole);
+
+      // Import NotificationService
+      const NotificationService = (
+        await import("../implementations/NotificationService")
+      ).default;
+      const notificationService = new NotificationService();
+
+      const notificationMessage = `You have received a response to your contact message: "${contactMessage.subject}"`;
+
+      await notificationService.createNotification(
+        user._id.toString(),
+        "contact_response",
+        notificationMessage,
+        contactMessage._id?.toString(),
+        undefined,
+        {
+          firstName: ADMIN_CONFIG.ADMIN_DISPLAY_NAME.firstName,
+          lastName: ADMIN_CONFIG.ADMIN_DISPLAY_NAME.lastName,
+          id: ADMIN_CONFIG.ADMIN_USER_ID,
+        },
+        targetRole
+      );
+
+      console.log(
+        "✅ Socket notification sent successfully to user:",
+        user._id
+      );
+    } catch (error: any) {
+      console.error("❌ Error sending socket notification:", error);
+      throw new Error(`Socket notification failed: ${error.message}`);
     }
   }
 
@@ -459,10 +707,11 @@ export class ContactMessageService implements IContactMessageService {
 
   async getMessageCountByInquiryType(): Promise<{ [key: string]: number }> {
     try {
-      const messages = await this.contactMessageRepository.findAll(
-        { page: 1, limit: 999999 }, // Get all messages for counting
-        {}
-      );
+      const messages =
+        await this.contactMessageRepository.findAllContactMessages(
+          { page: 1, limit: 999999 }, // Get all messages for counting
+          {}
+        );
 
       const counts: { [key: string]: number } = {};
       messages.data.forEach((message) => {
@@ -483,10 +732,11 @@ export class ContactMessageService implements IContactMessageService {
 
   async getAverageResponseTime(): Promise<number> {
     try {
-      const messages = await this.contactMessageRepository.findAll(
-        { page: 1, limit: 999999 },
-        { status: "resolved" }
-      );
+      const messages =
+        await this.contactMessageRepository.findAllContactMessages(
+          { page: 1, limit: 999999 },
+          { status: "resolved" }
+        );
 
       if (messages.data.length === 0) {
         return 0;

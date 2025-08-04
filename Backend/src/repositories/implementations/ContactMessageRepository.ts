@@ -51,7 +51,85 @@ export class ContactMessageRepository
     }
   }
 
-  async findAll(
+  //   async findAll(
+  //     options: PaginationOptions,
+  //     filters?: FilterOptions
+  //   ): Promise<PaginatedResult<ContactMessage>> {
+  //     try {
+  //       const { page, limit, sortBy = "createdAt", sortOrder = "desc" } = options;
+  //       const skip = (page - 1) * limit;
+
+  //       // Build filter query
+  //       const filterQuery: FilterQuery<any> = {};
+
+  //       if (filters) {
+  //         if (filters.status) {
+  //           filterQuery.status = filters.status;
+  //         }
+
+  //         if (filters.inquiryType) {
+  //           filterQuery.inquiryType = filters.inquiryType;
+  //         }
+
+  //         if (filters.priority) {
+  //           filterQuery.priority = filters.priority;
+  //         }
+
+  //         if (filters.assignedTo) {
+  //           filterQuery.assignedTo = filters.assignedTo;
+  //         }
+
+  //         if (typeof filters.isRegisteredUser === "boolean") {
+  //           filterQuery.isRegisteredUser = filters.isRegisteredUser;
+  //         }
+
+  //         if (filters.dateRange) {
+  //           filterQuery.createdAt = {
+  //             $gte: filters.dateRange.start,
+  //             $lte: filters.dateRange.end,
+  //           };
+  //         }
+
+  //         if (filters.search) {
+  //           filterQuery.$or = [
+  //             { name: { $regex: filters.search, $options: "i" } },
+  //             { email: { $regex: filters.search, $options: "i" } },
+  //             { subject: { $regex: filters.search, $options: "i" } },
+  //             { message: { $regex: filters.search, $options: "i" } },
+  //           ];
+  //         }
+  //       }
+
+  //       const [data, totalItems] = await Promise.all([
+  //         ContactMessageModel.find(filterQuery)
+  //           .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
+  //           .skip(skip)
+  //           .limit(limit)
+  //           .lean(),
+  //         ContactMessageModel.countDocuments(filterQuery),
+  //       ]);
+
+  //       const totalPages = Math.ceil(totalItems / limit);
+
+  //       return {
+  //         data: data as ContactMessage[],
+  //         pagination: {
+  //           currentPage: page,
+  //           totalPages,
+  //           totalItems,
+  //           hasNext: page < totalPages,
+  //           hasPrev: page > 1,
+  //         },
+  //       };
+  //     } catch (error: any) {
+  //       console.error("Error finding all contact messages:", error);
+  //       throw new Error(`Failed to fetch contact messages: ${error.message}`);
+  //     }
+  //   }
+  // Fix for the findAll method in ContactMessageRepository
+  // Replace the existing findAll method with this improved version
+
+  async findAllContactMessages(
     options: PaginationOptions,
     filters?: FilterOptions
   ): Promise<PaginatedResult<ContactMessage>> {
@@ -79,8 +157,14 @@ export class ContactMessageRepository
           filterQuery.assignedTo = filters.assignedTo;
         }
 
-        if (typeof filters.isRegisteredUser === "boolean") {
+        // ✅ FIXED: More explicit handling of isRegisteredUser filter
+        if (filters.hasOwnProperty("isRegisteredUser")) {
+          // Only apply filter if the property exists, regardless of value
           filterQuery.isRegisteredUser = filters.isRegisteredUser;
+          console.log(
+            "🔍 Repository: Applied isRegisteredUser filter:",
+            filters.isRegisteredUser
+          );
         }
 
         if (filters.dateRange) {
@@ -100,6 +184,12 @@ export class ContactMessageRepository
         }
       }
 
+      // ✅ Debug logging
+      console.log("🔍 Repository query:", {
+        filterQuery,
+        options: { page, limit, sortBy, sortOrder },
+      });
+
       const [data, totalItems] = await Promise.all([
         ContactMessageModel.find(filterQuery)
           .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
@@ -110,6 +200,14 @@ export class ContactMessageRepository
       ]);
 
       const totalPages = Math.ceil(totalItems / limit);
+
+      // ✅ Debug logging
+      console.log("🔍 Repository results:", {
+        totalItems,
+        dataLength: data.length,
+        currentPage: page,
+        totalPages,
+      });
 
       return {
         data: data as ContactMessage[],
@@ -126,7 +224,6 @@ export class ContactMessageRepository
       throw new Error(`Failed to fetch contact messages: ${error.message}`);
     }
   }
-
   async update(
     id: string,
     updates: Partial<ContactMessage>

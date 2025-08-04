@@ -15,7 +15,13 @@ export interface ENotification {
   recipientId: string;
   targetRole: "mentor" | "mentee" | "both";
   // 📍 FIXED: Add booking_reminder to type union
-  type: "payment" | "booking" | "chat" | "meeting" | "booking_reminder";
+  type:
+    | "payment"
+    | "booking"
+    | "chat"
+    | "meeting"
+    | "booking_reminder"
+    | "contact_response";
   message: string;
   relatedId?: string;
   isRead: boolean;

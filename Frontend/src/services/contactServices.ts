@@ -1,92 +1,3 @@
-// // services/contactServices.ts
-// import { userAxiosInstance } from "./instances/userInstance";
-// const api = userAxiosInstance;
-// interface ContactFormData {
-//   name: string;
-//   email: string;
-//   phone: string;
-//   subject: string;
-//   inquiryType: string;
-//   message: string;
-// }
-
-// interface ContactResponse {
-//   success: boolean;
-//   message: string;
-//   data?: any;
-// }
-
-// const API_BASE_URL =
-//   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
-// // Contact form submission service
-// export const submitContactForm = async (
-//   formData: ContactFormData
-// ): Promise<ContactResponse> => {
-//   try {
-//     const response = await api.post(
-//       `${API_BASE_URL}/contact/submit`,
-//       formData,
-//       {
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     return {
-//       success: true,
-//       message: "Message sent successfully!",
-//       data: response.data,
-//     };
-//   } catch (error: any) {
-//     console.error("Contact form submission error:", error);
-
-//     return {
-//       success: false,
-//       message:
-//         error.response?.data?.message ||
-//         "Failed to send message. Please try again.",
-//     };
-//   }
-// };
-
-// // Newsletter subscription service
-// export const subscribeToNewsletter = async (
-//   email: string
-// ): Promise<ContactResponse> => {
-//   try {
-//     const response = await api.post(`${API_BASE_URL}/newsletter/subscribe`, {
-//       email,
-//     });
-
-//     return {
-//       success: true,
-//       message: "Successfully subscribed to newsletter!",
-//       data: response.data,
-//     };
-//   } catch (error: any) {
-//     console.error("Newsletter subscription error:", error);
-
-//     return {
-//       success: false,
-//       message:
-//         error.response?.data?.message ||
-//         "Subscription failed. Please try again.",
-//     };
-//   }
-// };
-
-// // Get contact information (for dynamic updates)
-// export const getContactInfo = async () => {
-//   try {
-//     const response = await api.get(`${API_BASE_URL}/contact/info`);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Failed to fetch contact info:", error);
-//     return null;
-//   }
-// };
 import {
   ContactFormData,
   ContactResponse,
@@ -140,6 +51,9 @@ export const submitContactForm = async (
 
 // =================== ADMIN CONTACT MANAGEMENT SERVICES ===================
 
+// Fix for the getContactMessages function in your frontend service
+// Replace the existing getContactMessages function
+
 export const getContactMessages = async (
   params: {
     page?: number;
@@ -156,27 +70,46 @@ export const getContactMessages = async (
   try {
     const queryParams = new URLSearchParams();
 
+    // ✅ FIXED: Better parameter handling
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== "") {
-        queryParams.append(key, value.toString());
+      if (value !== undefined && value !== null && value !== "") {
+        // ✅ Special handling for boolean values
+        if (typeof value === "boolean") {
+          queryParams.append(key, value.toString());
+        } else {
+          queryParams.append(key, value.toString());
+        }
       }
     });
 
-    const response = await fetch(
-      `${API_BASE_URL}/admin/contact/messages?${queryParams.toString()}`,
-      {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const url = `${API_BASE_URL}/admin/contact/messages?${queryParams.toString()}`;
+
+    // ✅ Debug logging
+    console.log("🔍 Frontend: Making request to:", url);
+    console.log("🔍 Frontend: Request params:", params);
+
+    const response = await fetch(url, {
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
       throw new Error("Failed to fetch messages");
     }
 
-    return await response.json();
+    const result = await response.json();
+
+    // ✅ Debug logging
+    console.log("🔍 Frontend: Response received:", {
+      success: result.success,
+      dataCount: result.data?.length,
+      pagination: result.pagination,
+      appliedFilters: result.appliedFilters,
+    });
+
+    return result;
   } catch (error) {
     console.error("Get contact messages error:", error);
     throw error;
