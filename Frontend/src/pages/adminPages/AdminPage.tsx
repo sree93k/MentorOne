@@ -11,7 +11,10 @@ const AdminDashboard = lazy(() => import("./adminSubPages/AdminDashboard"));
 const AdminSidebar = lazy(() => import("@/components/admin/AdminSideBar"));
 const AllUsers = lazy(() => import("./adminSubPages/AdminAllUsers"));
 const UserProfile = lazy(() => import("./adminSubPages/UserProfile"));
-
+const ContactMessages = lazy(() => import("./adminSubPages/ContactMessages"));
+const ContactMessageDetail = lazy(
+  () => import("./adminSubPages/ContactMessageDetail")
+);
 const AdminPage: React.FC = () => {
   return (
     <div className=" min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -28,6 +31,9 @@ const AdminPage: React.FC = () => {
             <Route path="/transactions" element={<TransactionsPage />} />
             {/* <Route path="/sampleProfile" element={<SampleProfile />} /> */}
             {/* Default redirect to dashboard */}
+            <Route path="/messages" element={<ContactMessages />} />
+            <Route path="/messages/:id" element={<ContactMessageDetail />} />
+
             <Route path="/appeals" element={<AppealsDashboard />} />
             <Route path="/appeals/:appealId" element={<AppealReview />} />
             <Route path="/" element={<Navigate to="dashboard" replace />} />

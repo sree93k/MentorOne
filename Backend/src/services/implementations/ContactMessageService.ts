@@ -24,13 +24,23 @@ export class ContactMessageService implements IContactMessageService {
 
   constructor(userService: IUserService) {
     this.userService = userService;
-    this.contactMessageRepository = new ContactMessageRepository(userService);
+    // ✅ FIXED: Remove userService dependency from repository
+    this.contactMessageRepository = new ContactMessageRepository();
   }
 
   async createMessage(data: CreateContactMessageDTO): Promise<ContactMessage> {
     try {
       // Validate required fields
       this.validateCreateMessageData(data);
+
+      // ✅ FIXED: Check user registration at service level (proper architecture)
+      const isRegisteredUser = await this.checkUserRegistrationStatus(
+        data.email
+      );
+      console.log("ContactMessageService: User registration check result", {
+        email: data.email,
+        isRegisteredUser,
+      });
 
       // Auto-assign priority based on inquiry type
       let priority: "low" | "medium" | "high" = "medium";
@@ -52,6 +62,7 @@ export class ContactMessageService implements IContactMessageService {
           priority = "medium";
       }
 
+      // ✅ FIXED: Include isRegisteredUser in message data
       const messageData: Partial<ContactMessage> = {
         name: data.name.trim(),
         email: data.email.toLowerCase().trim(),
@@ -65,12 +76,44 @@ export class ContactMessageService implements IContactMessageService {
         isRead: false,
         isSeen: false,
         attachments: data.attachments || [],
+        isRegisteredUser, // ✅ Set the correct value
       };
 
       return await this.contactMessageRepository.create(messageData);
     } catch (error: any) {
       console.error("Service: Error creating contact message:", error);
       throw new Error(`Failed to create contact message: ${error.message}`);
+    }
+  }
+
+  // ✅ NEW: Private method to check user registration status
+  private async checkUserRegistrationStatus(email: string): Promise<boolean> {
+    try {
+      if (!email || typeof email !== "string") {
+        console.log("ContactMessageService: Invalid email provided");
+        return false;
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Use UserService to check registration
+      const isRegistered = await this.userService.checkUserRegistrationByEmail(
+        normalizedEmail
+      );
+
+      console.log("ContactMessageService: User registration check", {
+        email: normalizedEmail,
+        isRegistered,
+      });
+
+      return isRegistered;
+    } catch (error: any) {
+      console.error("ContactMessageService: Error checking user registration", {
+        email,
+        error: error.message,
+      });
+      // Default to false (guest user) on error
+      return false;
     }
   }
 

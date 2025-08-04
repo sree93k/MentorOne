@@ -7,6 +7,7 @@ import webhookRoute from "./webhook/webhhookRoute";
 import mediaRoutes from "./media/mediaRoute";
 import adminMediaRoutes from "./media/adminMediaRoute"; // NEW: Import admin media routes
 import chatbotRouter from "./chatbot/chatbot";
+import contactRoutes from "./contact/contactRoute";
 
 const router = Router();
 
@@ -20,5 +21,5 @@ router.use("/stripe/api", webhookRoute);
 router.use("/media", mediaRoutes); // Keep this for user access
 router.use("/admin-media", adminMediaRoutes); // Use admin-specific routes
 router.use("/api/chatbot", chatbotRouter);
-
+router.use("/contact", contactRoutes);
 export { router };

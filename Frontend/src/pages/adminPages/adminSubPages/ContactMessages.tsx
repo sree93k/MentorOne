@@ -36,7 +36,6 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  CheckSquare,
   Loader,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -234,9 +233,9 @@ const ContactMessages: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex-1 ml-24 p-8 bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Contact Messages
@@ -249,7 +248,7 @@ const ContactMessages: React.FC = () => {
 
       {/* Statistics Cards */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-2">
@@ -317,7 +316,7 @@ const ContactMessages: React.FC = () => {
       )}
 
       {/* Search and Filters */}
-      <Card>
+      <Card className="mb-4">
         <CardContent className="p-4">
           <div className="flex flex-col space-y-4">
             {/* Search Bar */}
@@ -356,7 +355,7 @@ const ContactMessages: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="All Statuses" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="new">New</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
@@ -376,7 +375,7 @@ const ContactMessages: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="All Priorities" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Priorities</SelectItem>
                       <SelectItem value="high">High</SelectItem>
                       <SelectItem value="medium">Medium</SelectItem>
@@ -395,7 +394,7 @@ const ContactMessages: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="general">General</SelectItem>
                       <SelectItem value="mentorship">Mentorship</SelectItem>
@@ -421,7 +420,7 @@ const ContactMessages: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="All Users" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white">
                       <SelectItem value="all">All Users</SelectItem>
                       <SelectItem value="registered">Registered</SelectItem>
                       <SelectItem value="guest">Guest</SelectItem>
