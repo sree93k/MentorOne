@@ -918,4 +918,34 @@ export default class UserService implements IUserService {
       };
     }
   }
+  async checkUserRegistrationByEmail(email: string): Promise<boolean> {
+    try {
+      console.log("UserService: Checking user registration for email", email);
+
+      if (!email || typeof email !== "string") {
+        console.log("UserService: Invalid email provided");
+        return false;
+      }
+
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // Use existing findByEmail method
+      const user = await this.UserRepository.findByEmail(normalizedEmail);
+
+      const isRegistered = !!user;
+      console.log("UserService: User registration check result", {
+        email: normalizedEmail,
+        isRegistered,
+      });
+
+      return isRegistered;
+    } catch (error: any) {
+      console.error("UserService: Error checking user registration", {
+        email,
+        error: error.message,
+      });
+      // Return false on error (treat as guest user)
+      return false;
+    }
+  }
 }

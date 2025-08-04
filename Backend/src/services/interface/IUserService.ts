@@ -36,4 +36,5 @@ export interface IUserService {
     userId: string,
     requestingUserId: string
   ): Promise<BlockStatusResponse>;
+  checkUserRegistrationByEmail(email: string): Promise<boolean>;
 }

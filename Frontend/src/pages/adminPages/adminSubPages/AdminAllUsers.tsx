@@ -160,290 +160,288 @@ const AllUsers: React.FC = () => {
   );
 
   return (
-    <div className="flex min-h-screen">
-      <main className="flex-1 mx-32 p-6 bg-white dark:bg-gray-900">
-        {/* Header and Stats */}
-        <div className="mb-3 flex items-start justify-between flex-wrap">
-          <div className="mb-4 items-center pt-5">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Users List
-            </h1>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
-            <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Total Users
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {total}
-              </p>
-            </Card>
-            <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Total Mentors
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {totalMentors}
-              </p>
-            </Card>
-            <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Total Mentees
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {totalMentees}
-              </p>
-            </Card>
-            <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Total Both
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {totalBoth}
-              </p>
-            </Card>
-            <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Approval Pendings
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {approvalPending}
-              </p>
-            </Card>
-          </div>
+    <div className="flex-1 ml-24 p-8 bg-white">
+      {/* Header and Stats */}
+      <div className="mb-3 flex items-start justify-between flex-wrap">
+        <div className="mb-4 items-center pt-5">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Users List
+          </h1>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
+          <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+              Total Users
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {total}
+            </p>
+          </Card>
+          <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+              Total Mentors
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {totalMentors}
+            </p>
+          </Card>
+          <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+              Total Mentees
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {totalMentees}
+            </p>
+          </Card>
+          <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+              Total Both
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {totalBoth}
+            </p>
+          </Card>
+          <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+              Approval Pendings
+            </h3>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {approvalPending}
+            </p>
+          </Card>
+        </div>
+      </div>
 
-        {/* Users Table */}
-        <div className="rounded-md border border-gray-200 dark:border-gray-700">
-          {loading ? (
-            <TableSkeleton />
-          ) : error ? (
-            <div className="p-4 text-center">
-              <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-                <svg
-                  className="h-16 w-16 text-red-400 mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-                  Something went wrong
-                </h2>
-                <p className="text-red-500 dark:text-red-400 mt-2">{error}</p>
-                <Button
-                  onClick={() => window.location.reload()}
-                  className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  Try Again
-                </Button>
-              </div>
+      {/* Users Table */}
+      <div className="rounded-md border border-gray-200 dark:border-gray-700">
+        {loading ? (
+          <TableSkeleton />
+        ) : error ? (
+          <div className="p-4 text-center">
+            <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <svg
+                className="h-16 w-16 text-red-400 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+                Something went wrong
+              </h2>
+              <p className="text-red-500 dark:text-red-400 mt-2">{error}</p>
+              <Button
+                onClick={() => window.location.reload()}
+                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Try Again
+              </Button>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50 dark:bg-gray-800 text-left">
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      SI No
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Name
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Email ID
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Mentor Status
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                          Role
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter(null)}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            All
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter("mentee")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Mentee
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter("mentor")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Mentor
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setRoleFilter("both")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Both
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-                          Status
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => setStatusFilter(null)}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            All
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setStatusFilter("Active")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Active
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setStatusFilter("Blocked")}
-                            className="text-gray-700 dark:text-gray-200"
-                          >
-                            Blocked
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.length === 0
-                    ? renderEmptyState()
-                    : filteredUsers.map((user, index) => (
-                        <tr
-                          key={user._id}
-                          className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-gray-50 dark:bg-gray-800 text-left">
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    SI No
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Email ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Mentor Status
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                        Role
+                        <ChevronDown className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white dark:bg-gray-800">
+                        <DropdownMenuItem
+                          onClick={() => setRoleFilter(null)}
+                          className="text-gray-700 dark:text-gray-200"
                         >
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                            {(page - 1) * limit + index + 1}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                            {`${user.firstName} ${user.lastName}`}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                            {user.email}
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            {user.mentorId?.isApproved === "Pending" ? (
-                              <Badge icon={HiCheck} color="purple">
-                                Pending
-                              </Badge>
-                            ) : user.mentorId?.isApproved === "Rejected" ? (
-                              <Badge icon={HiCheck} color="failure">
-                                Rejected
-                              </Badge>
-                            ) : user.mentorId?.isApproved === "Approved" ? (
-                              <Badge icon={HiCheck} color="success">
-                                Approved
-                              </Badge>
-                            ) : (
-                              <Badge icon={HiCheck} color="warning">
-                                N/A
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                            {Array.isArray(user.role)
-                              ? user.role.length === 2
-                                ? "Both"
-                                : user.role.includes("mentor")
-                                ? "Mentor"
-                                : user.role.includes("mentee")
-                                ? "Mentee"
-                                : "N/A"
-                              : "N/A"}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                            {user.isBlocked ? "Blocked" : "Active"}
-                          </td>
-                          <td className="px-4 py-3 text-sm">
-                            <Button
-                              className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
-                              onClick={() =>
-                                navigate(`/admin/userProfile/${user._id}`)
-                              }
-                            >
-                              Edit
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {!loading && !error && total > 0 && (
-          <div className="mt-4">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  {page > 1 ? (
-                    <PaginationPrevious
-                      onClick={() => setPage((prev) => prev - 1)}
-                      className="cursor-pointer"
-                    />
-                  ) : (
-                    <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
-                  )}
-                </PaginationItem>
-                {getPageItems().map((pageNum, index) =>
-                  pageNum === 0 ? (
-                    <PaginationItem key={`ellipsis-${index}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  ) : (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => setPage(pageNum)}
-                        isActive={pageNum === page}
-                        className="cursor-pointer text-gray-700 dark:text-gray-200"
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setRoleFilter("mentee")}
+                          className="text-gray-700 dark:text-gray-200"
+                        >
+                          Mentee
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setRoleFilter("mentor")}
+                          className="text-gray-700 dark:text-gray-200"
+                        >
+                          Mentor
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setRoleFilter("both")}
+                          className="text-gray-700 dark:text-gray-200"
+                        >
+                          Both
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
+                        Status
+                        <ChevronDown className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-white dark:bg-gray-800">
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter(null)}
+                          className="text-gray-700 dark:text-gray-200"
+                        >
+                          All
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("Active")}
+                          className="text-gray-700 dark:text-gray-200"
+                        >
+                          Active
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setStatusFilter("Blocked")}
+                          className="text-gray-700 dark:text-gray-200"
+                        >
+                          Blocked
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.length === 0
+                  ? renderEmptyState()
+                  : filteredUsers.map((user, index) => (
+                      <tr
+                        key={user._id}
+                        className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                )}
-                <PaginationItem>
-                  {page < totalPages ? (
-                    <PaginationNext
-                      onClick={() => setPage((prev) => prev + 1)}
-                      className="cursor-pointer"
-                    />
-                  ) : (
-                    <PaginationNext className="pointer-events-none opacity-50" />
-                  )}
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                          {(page - 1) * limit + index + 1}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                          {`${user.firstName} ${user.lastName}`}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                          {user.email}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {user.mentorId?.isApproved === "Pending" ? (
+                            <Badge icon={HiCheck} color="purple">
+                              Pending
+                            </Badge>
+                          ) : user.mentorId?.isApproved === "Rejected" ? (
+                            <Badge icon={HiCheck} color="failure">
+                              Rejected
+                            </Badge>
+                          ) : user.mentorId?.isApproved === "Approved" ? (
+                            <Badge icon={HiCheck} color="success">
+                              Approved
+                            </Badge>
+                          ) : (
+                            <Badge icon={HiCheck} color="warning">
+                              N/A
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                          {Array.isArray(user.role)
+                            ? user.role.length === 2
+                              ? "Both"
+                              : user.role.includes("mentor")
+                              ? "Mentor"
+                              : user.role.includes("mentee")
+                              ? "Mentee"
+                              : "N/A"
+                            : "N/A"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+                          {user.isBlocked ? "Blocked" : "Active"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Button
+                            className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
+                            onClick={() =>
+                              navigate(`/admin/userProfile/${user._id}`)
+                            }
+                          >
+                            Edit
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </main>
+      </div>
+
+      {/* Pagination */}
+      {!loading && !error && total > 0 && (
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                {page > 1 ? (
+                  <PaginationPrevious
+                    onClick={() => setPage((prev) => prev - 1)}
+                    className="cursor-pointer"
+                  />
+                ) : (
+                  <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
+                )}
+              </PaginationItem>
+              {getPageItems().map((pageNum, index) =>
+                pageNum === 0 ? (
+                  <PaginationItem key={`ellipsis-${index}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      onClick={() => setPage(pageNum)}
+                      isActive={pageNum === page}
+                      className="cursor-pointer text-gray-700 dark:text-gray-200"
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                {page < totalPages ? (
+                  <PaginationNext
+                    onClick={() => setPage((prev) => prev + 1)}
+                    className="cursor-pointer"
+                  />
+                ) : (
+                  <PaginationNext className="pointer-events-none opacity-50" />
+                )}
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 };

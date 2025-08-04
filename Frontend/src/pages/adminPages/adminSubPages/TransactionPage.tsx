@@ -308,7 +308,7 @@ t-red-400 mt-2"
 
   return (
     <div className="flex min-h-screen">
-      <div className="p-6 mx-32 w-full bg-white dark:bg-gray-900">
+      <div className="flex-1 ml-24 p-8 bg-white">
         <div className="flex flex-row mb-6">
           <div>
             <h1 className="text-2xl font-bold pt-4 text-gray-800 dark:text-gray-100">

@@ -12,35 +12,24 @@ import {
   ContactStatistics,
 } from "../../entities/ContactMessage";
 import ContactMessageModel from "../../models/ContactMessage";
-import { IUserService } from "../../services/interface/IUserService";
 import { FilterQuery } from "mongoose";
 
 export class ContactMessageRepository
   extends BaseRepository<any>
   implements IContactMessageRepository
 {
-  private userService: IUserService;
-  private userRegistrationCache: Map<
-    string,
-    { isRegistered: boolean; timestamp: number }
-  > = new Map();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-  constructor(userService: IUserService) {
+  constructor() {
     super(ContactMessageModel);
-    this.userService = userService;
   }
 
   async create(message: Partial<ContactMessage>): Promise<ContactMessage> {
     try {
-      // Check if user is registered with caching
-      const isRegisteredUser = await this.checkUserRegistrationStatusCached(
-        message.email!
-      );
-
+      // ✅ FIXED: Removed user registration check from repository
+      // This will be handled in the service layer now
       const messageData = {
         ...message,
-        isRegisteredUser,
+        // Set default to false, will be updated by service if needed
+        isRegisteredUser: message.isRegisteredUser ?? false,
       };
 
       const newMessage = new ContactMessageModel(messageData);
@@ -395,61 +384,5 @@ export class ContactMessageRepository
         `Failed to find messages by date range: ${error.message}`
       );
     }
-  }
-
-  // Private method for cached user registration checking
-  private async checkUserRegistrationStatusCached(
-    email: string
-  ): Promise<boolean> {
-    try {
-      const normalizedEmail = email.toLowerCase();
-      const cached = this.userRegistrationCache.get(normalizedEmail);
-      const now = Date.now();
-
-      // Return cached result if still valid
-      if (cached && now - cached.timestamp < this.CACHE_TTL) {
-        return cached.isRegistered;
-      }
-
-      // Fetch from UserService
-      const isRegistered = await this.userService.checkUserRegistrationByEmail(
-        normalizedEmail
-      );
-
-      // Cache the result
-      this.userRegistrationCache.set(normalizedEmail, {
-        isRegistered,
-        timestamp: now,
-      });
-
-      // Clean old cache entries periodically
-      this.cleanupCache();
-
-      return isRegistered;
-    } catch (error: any) {
-      console.error("Error checking user registration status:", error);
-      // Default to false (guest user) if error
-      return false;
-    }
-  }
-
-  // Private method to cleanup expired cache entries
-  private cleanupCache(): void {
-    const now = Date.now();
-    for (const [email, data] of this.userRegistrationCache.entries()) {
-      if (now - data.timestamp > this.CACHE_TTL) {
-        this.userRegistrationCache.delete(email);
-      }
-    }
-  }
-
-  // Method to invalidate cache when user registration changes
-  public invalidateUserCache(email: string): void {
-    this.userRegistrationCache.delete(email.toLowerCase());
-  }
-
-  // Method to clear all cache
-  public clearCache(): void {
-    this.userRegistrationCache.clear();
   }
 }
