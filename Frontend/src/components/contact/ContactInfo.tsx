@@ -61,9 +61,9 @@ const ContactInfo: React.FC<ContactInfoProps> = ({
         {contactMethods.map((method, index) => (
           <div key={index} className="flex items-center space-x-4">
             <div
-              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${method.color}`}
+              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${method.color}`}
             >
-              <method.icon className="w-6 h-6" />
+              <method.icon className="w-4 h-4" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -73,12 +73,12 @@ const ContactInfo: React.FC<ContactInfoProps> = ({
               method.href.startsWith("mailto:") ? (
                 <a
                   href={method.href}
-                  className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  className="text-sm  text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   {method.value}
                 </a>
               ) : (
-                <p className="text-sm font-semibold text-gray-900 dark:text-white leading-relaxed">
+                <p className="text-sm  text-gray-900 dark:text-white leading-relaxed">
                   {method.value}
                 </p>
               )}

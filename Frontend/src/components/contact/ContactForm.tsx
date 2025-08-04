@@ -246,7 +246,7 @@ const ContactForm: React.FC = () => {
                 >
                   <SelectValue placeholder="Select inquiry type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="general">General Inquiry</SelectItem>
                   <SelectItem value="mentorship">Mentorship Program</SelectItem>
                   <SelectItem value="courses">Courses & Training</SelectItem>
@@ -302,7 +302,7 @@ const ContactForm: React.FC = () => {
               <SelectTrigger className="h-12">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="phone">Phone Call</SelectItem>
                 <SelectItem value="whatsapp">WhatsApp</SelectItem>
