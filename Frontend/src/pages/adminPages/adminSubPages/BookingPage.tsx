@@ -1,27 +1,560 @@
+// import { useState, useEffect } from "react";
+// import { useDispatch, useSelector } from "react-redux";
+// import { Button } from "@/components/ui/button";
+// import {
+//   Table,
+//   TableBody,
+//   TableCell,
+//   TableHead,
+//   TableHeader,
+//   TableRow,
+// } from "@/components/ui/table";
+// import { Card } from "@/components/ui/card";
+// import { Input } from "@/components/ui/input";
+// import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";
+// import { ChevronDown, CalendarX, Check } from "lucide-react";
+// import { getAllBookings } from "@/services/adminService";
+// import { setLoading, setError } from "@/redux/slices/adminSlice";
+// import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
+
+// interface Booking {
+//   date: string;
+//   mentorName: string;
+//   menteeName: string;
+//   service: string;
+//   type: string;
+//   timeSlot: string;
+//   paymentStatus: string;
+//   bookingStatus: string;
+// }
+
+// interface RootState {
+//   admin: {
+//     loading: boolean;
+//     error: object;
+//   };
+// }
+
+// const BookingsPage = () => {
+//   const [bookings, setBookings] = useState<Booking[]>([]);
+//   const [total, setTotal] = useState(0);
+//   const [page, setPage] = useState(1);
+//   const [limit] = useState(10);
+//   const [searchQuery, setSearchQuery] = useState("");
+//   const [mentorFilter, setMentorFilter] = useState("");
+//   const [menteeFilter, setMenteeFilter] = useState("");
+//   const [typeFilter, setTypeFilter] = useState("All");
+//   const [statusFilter, setStatusFilter] = useState("confirmed");
+//   const [tab, setTab] = useState("confirmed");
+//   const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0 });
+//   const dispatch = useDispatch();
+//   const loading = useSelector((state: RootState) => state.admin.loading);
+//   const error = useSelector((state: RootState) => state.admin.error);
+
+//   const statusOptions = [
+//     "confirmed",
+//     "rescheduled",
+//     "pending",
+//     "completed",
+//     "cancelled",
+//   ];
+
+//   const mapTypeToDisplay = (type: string): string => {
+//     switch (type?.toLowerCase()) {
+//       case "1-1call":
+//       case "1:1 call":
+//         return "1:1 Call";
+//       case "prioritydm":
+//       case "priority dm":
+//         return "Priority DM";
+//       case "digitalproducts":
+//       case "digital product":
+//         return "Digital Product";
+//       default:
+//         return type || "Unknown";
+//     }
+//   };
+
+//   const fetchBookings = async () => {
+//     dispatch(setLoading(true));
+//     dispatch(setError({}));
+//     try {
+//       const response = await getAllBookings(
+//         page,
+//         limit,
+//         searchQuery,
+//         "", // No type filter for backend
+//         statusFilter
+//       );
+
+//       if (response?.data?.data) {
+//         const { data, total } = response.data;
+//         const formattedBookings = data.map((booking: any) => ({
+//           date: new Date(booking.bookingDate).toLocaleDateString("en-US", {
+//             day: "2-digit",
+//             month: "2-digit",
+//             year: "numeric",
+//           }),
+//           mentorName:
+//             `${booking.mentorId?.firstName || ""} ${
+//               booking.mentorId?.lastName || ""
+//             }`.trim() || "Unknown",
+//           menteeName:
+//             `${booking.menteeId?.firstName || ""} ${
+//               booking.menteeId?.lastName || ""
+//             }`.trim() || "Unknown",
+//           type: booking.serviceId?.type || "Unknown",
+//           service: booking.serviceId?.title || "Unknown",
+//           timeSlot: `${booking.startTime}`,
+//           paymentStatus: booking.paymentDetails?.status || "Unknown",
+//           bookingStatus: booking.status || "Unknown",
+//         }));
+//         setBookings(formattedBookings);
+//         setTotal(total);
+//         const pending = data.filter((b: any) => b.status === "pending").length;
+//         const completed = data.filter(
+//           (b: any) => b.status === "completed"
+//         ).length;
+//         setStats({ total, pending, completed });
+//       } else {
+//         dispatch(
+//           setError({
+//             message: response?.data?.error || "Failed to fetch bookings.",
+//           })
+//         );
+//         setBookings([]);
+//         setTotal(0);
+//         setStats({ total: 0, pending: 0, completed: 0 });
+//       }
+//     } catch (error: any) {
+//       dispatch(
+//         setError({
+//           message:
+//             error.response?.data?.error ||
+//             error.message ||
+//             "An error occurred while fetching bookings.",
+//         })
+//       );
+//       setBookings([]);
+//       setTotal(0);
+//       setStats({ total: 0, pending: 0, completed: 0 });
+//     } finally {
+//       dispatch(setLoading(false));
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchBookings();
+//   }, [page, searchQuery, mentorFilter, menteeFilter, statusFilter]);
+
+//   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setSearchQuery(e.target.value);
+//     setPage(1);
+//   };
+
+//   const handleTabChange = (value: string) => {
+//     setTab(value);
+//     setStatusFilter(value);
+//     setPage(1);
+//   };
+
+//   const handleMentorFilter = (value: string) => {
+//     setMentorFilter(value);
+//     setPage(1);
+//   };
+
+//   const handleMenteeFilter = (value: string) => {
+//     setMenteeFilter(value);
+//     setPage(1);
+//   };
+
+//   const handleTypeFilter = (value: string) => {
+//     setTypeFilter(value);
+//     setPage(1);
+//   };
+
+//   const handleStatusFilter = (value: string) => {
+//     setStatusFilter(value);
+//     setTab(value);
+//     setPage(1);
+//   };
+
+//   const handleNextPage = () => {
+//     if (page < totalPages) {
+//       setPage(page + 1);
+//     }
+//   };
+
+//   const handlePrevPage = () => {
+//     if (page > 1) {
+//       setPage(page - 1);
+//     }
+//   };
+
+//   const totalPages = Math.ceil(total / limit);
+
+//   const filteredBookings = bookings.filter((booking) => {
+//     const matchesMentor = mentorFilter
+//       ? booking.mentorName.toLowerCase().includes(mentorFilter.toLowerCase())
+//       : true;
+//     const matchesMentee = menteeFilter
+//       ? booking.menteeName.toLowerCase().includes(menteeFilter.toLowerCase())
+//       : true;
+//     const matchesType =
+//       typeFilter && typeFilter !== "All" ? booking.type === typeFilter : true;
+//     return matchesMentor && matchesMentee && matchesType;
+//   });
+
+//   const uniqueMentors = Array.from(
+//     new Set(bookings.map((b) => b.mentorName))
+//   ).sort();
+//   const uniqueMentees = Array.from(
+//     new Set(bookings.map((b) => b.menteeName))
+//   ).sort();
+//   const uniqueTypes = Array.from(new Set(bookings.map((b) => b.type))).sort();
+
+//   const renderEmptyState = (tab: string) => (
+//     <TableRow>
+//       <TableCell colSpan={7} className="text-center py-12">
+//         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+//           <CalendarX className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
+//           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+//             No {tab.charAt(0).toUpperCase() + tab.slice(1)} Bookings Found
+//           </h2>
+//           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md text-center">
+//             {tab === "confirmed"
+//               ? "There are no confirmed bookings at the moment."
+//               : tab === "rescheduled"
+//               ? "No bookings have been rescheduled yet."
+//               : tab === "pending"
+//               ? "There are no pending bookings waiting for confirmation."
+//               : tab === "completed"
+//               ? "No bookings have been completed yet."
+//               : "No bookings have been cancelled."}
+//           </p>
+//           {tab !== "completed" && tab !== "cancelled" && (
+//             <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
+//               New Booking
+//             </Button>
+//           )}
+//         </div>
+//       </TableCell>
+//     </TableRow>
+//   );
+
+//   const renderErrorState = () => (
+//     <TableRow>
+//       <TableCell colSpan={7} className="text-center py-12">
+//         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+//           <svg
+//             className="h-16 w-16 text-red-400 mb-4"
+//             fill="none"
+//             viewBox="0 0 24 24"
+//             stroke="currentColor"
+//           >
+//             <path
+//               strokeLinecap="round"
+//               strokeLinejoin="round"
+//               strokeWidth={2}
+//               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+//             />
+//           </svg>
+//           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
+//             Something went wrong
+//           </h2>
+//           <Button
+//             onClick={() => window.location.reload()}
+//             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full"
+//           >
+//             Try Again
+//           </Button>
+//         </div>
+//       </TableCell>
+//     </TableRow>
+//   );
+
+//   return (
+//     <div className="flex min-h-screen">
+//       {/* <div className="p-6 mx-32 w-full bg-white dark:bg-gray-900"> */}
+//       <div className="flex-1 ml-24 p-8 bg-white">
+//         <div className="flex flex-row mb-6">
+//           <div>
+//             <h1 className="text-2xl font-bold pt-4 text-gray-800 dark:text-gray-100">
+//               Bookings
+//             </h1>
+//           </div>
+//         </div>
+
+//         <div className="flex justify-between items-center gap-6 mb-8 border-b border-gray-200 dark:border-gray-700 pb-2">
+//           <div className="flex grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-6">
+//             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Total Bookings
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {stats.total}
+//               </p>
+//             </Card>
+//             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Pending
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {stats.pending}
+//               </p>
+//             </Card>
+//             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
+//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
+//                 Completed
+//               </h3>
+//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+//                 {stats.completed}
+//               </p>
+//             </Card>
+//           </div>
+//           <div>
+//             <Input
+//               placeholder="Search by mentor or mentee..."
+//               value={searchQuery}
+//               onChange={handleSearch}
+//               className="w-64 rounded-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 pr-4"
+//             />
+//           </div>
+//         </div>
+
+//         <Tabs value={tab} onValueChange={handleTabChange} className="mb-8">
+//           <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 dark:border-gray-700 bg-transparent">
+//             {statusOptions.map((status) => (
+//               <TabsTrigger
+//                 key={status}
+//                 value={status}
+//                 className={`pb-3 text-lg font-semibold transition-all rounded-none ${
+//                   tab === status
+//                     ? "border-b-2 border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100"
+//                     : "text-gray-500 dark:text-gray-400"
+//                 }`}
+//               >
+//                 {status.charAt(0).toUpperCase() + status.slice(1)}
+//               </TabsTrigger>
+//             ))}
+//           </TabsList>
+//           <TabsContent value={tab}>
+//             <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+//               <Table>
+//                 <TableHeader>
+//                   <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       Date
+//                     </TableHead>
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       <DropdownMenu>
+//                         <DropdownMenuTrigger className="flex items-center gap-1">
+//                           Mentor Name
+//                           <ChevronDown className="h-4 w-4" />
+//                         </DropdownMenuTrigger>
+//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
+//                           <DropdownMenuItem
+//                             onClick={() => handleMentorFilter("")}
+//                             className="text-gray-700 dark:text-gray-200"
+//                           >
+//                             All
+//                           </DropdownMenuItem>
+//                           {uniqueMentors.map((mentor) => (
+//                             <DropdownMenuItem
+//                               key={mentor}
+//                               onClick={() => handleMentorFilter(mentor)}
+//                               className="text-gray-700 dark:text-gray-200"
+//                             >
+//                               {mentor}
+//                             </DropdownMenuItem>
+//                           ))}
+//                         </DropdownMenuContent>
+//                       </DropdownMenu>
+//                     </TableHead>
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       <DropdownMenu>
+//                         <DropdownMenuTrigger className="flex items-center gap-1">
+//                           Mentee Name
+//                           <ChevronDown className="h-4 w-4" />
+//                         </DropdownMenuTrigger>
+//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
+//                           <DropdownMenuItem
+//                             onClick={() => handleMenteeFilter("")}
+//                             className="text-gray-700 dark:text-gray-200"
+//                           >
+//                             All
+//                           </DropdownMenuItem>
+//                           {uniqueMentees.map((mentee) => (
+//                             <DropdownMenuItem
+//                               key={mentee}
+//                               onClick={() => handleMenteeFilter(mentee)}
+//                               className="text-gray-700 dark:text-gray-200"
+//                             >
+//                               {mentee}
+//                             </DropdownMenuItem>
+//                           ))}
+//                         </DropdownMenuContent>
+//                       </DropdownMenu>
+//                     </TableHead>
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       <DropdownMenu>
+//                         <DropdownMenuTrigger className="flex items-center gap-1">
+//                           Service Type
+//                           <ChevronDown className="h-4 w-4" />
+//                         </DropdownMenuTrigger>
+//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
+//                           <DropdownMenuItem
+//                             onClick={() => handleTypeFilter("All")}
+//                             className="text-gray-700 dark:text-gray-200"
+//                           >
+//                             All
+//                           </DropdownMenuItem>
+//                           {uniqueTypes.map((option) => (
+//                             <DropdownMenuItem
+//                               key={option}
+//                               onClick={() => handleTypeFilter(option)}
+//                               className="text-gray-700 dark:text-gray-200"
+//                             >
+//                               {mapTypeToDisplay(option)}
+//                             </DropdownMenuItem>
+//                           ))}
+//                         </DropdownMenuContent>
+//                       </DropdownMenu>
+//                     </TableHead>
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       Service Name
+//                     </TableHead>
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       Time Slot
+//                     </TableHead>
+//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
+//                       <DropdownMenu>
+//                         <DropdownMenuTrigger className="flex items-center gap-1">
+//                           Booking Status
+//                           <ChevronDown className="h-4 w-4" />
+//                         </DropdownMenuTrigger>
+//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
+//                           {statusOptions.map((option) => (
+//                             <DropdownMenuItem
+//                               key={option}
+//                               onClick={() => handleStatusFilter(option)}
+//                               className="text-gray-700 dark:text-gray-200"
+//                             >
+//                               {option.charAt(0).toUpperCase() + option.slice(1)}
+//                             </DropdownMenuItem>
+//                           ))}
+//                         </DropdownMenuContent>
+//                       </DropdownMenu>
+//                     </TableHead>
+//                   </TableRow>
+//                 </TableHeader>
+//                 <TableBody>
+//                   {loading ? (
+//                     <TableRow>
+//                       <TableCell colSpan={7}>
+//                         <TableSkeleton />
+//                       </TableCell>
+//                     </TableRow>
+//                   ) : filteredBookings.length === 0 ? (
+//                     renderEmptyState(tab)
+//                   ) : (
+//                     filteredBookings.map((booking, index) => (
+//                       <TableRow
+//                         key={index}
+//                         className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+//                       >
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+//                           {booking.date}
+//                         </TableCell>
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+//                           {booking.mentorName}
+//                         </TableCell>
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+//                           {booking.menteeName}
+//                         </TableCell>
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+//                           {mapTypeToDisplay(booking.type)}
+//                         </TableCell>
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+//                           {booking.service}
+//                         </TableCell>
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+//                           {booking.timeSlot}
+//                         </TableCell>
+//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3 flex items-center gap-2">
+//                           {booking.bookingStatus === "confirmed" && (
+//                             <Check className="h-4 w-4 text-green-500" />
+//                           )}
+//                           {booking.bookingStatus.charAt(0).toUpperCase() +
+//                             booking.bookingStatus.slice(1)}
+//                         </TableCell>
+//                       </TableRow>
+//                     ))
+//                   )}
+//                 </TableBody>
+//               </Table>
+//             </div>
+//           </TabsContent>
+//         </Tabs>
+
+//         {totalPages > 0 && (
+//           <div className="flex justify-between items-center mt-6">
+//             <Button
+//               onClick={handlePrevPage}
+//               disabled={page === 1}
+//               className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-full px-6"
+//             >
+//               Previous
+//             </Button>
+//             <div className="flex gap-2">
+//               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+//                 <Button
+//                   key={p}
+//                   onClick={() => setPage(p)}
+//                   variant={page === p ? "default" : "outline"}
+//                   className={`${
+//                     page === p
+//                       ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+//                       : "bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+//                   } border-gray-300 dark:border-gray-600 rounded-full w-10 h-10`}
+//                 >
+//                   {p}
+//                 </Button>
+//               ))}
+//             </div>
+//             <Button
+//               onClick={handleNextPage}
+//               disabled={page === totalPages}
+//               className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-full px-6"
+//             >
+//               Next
+//             </Button>
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default BookingsPage;
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, CalendarX, Check } from "lucide-react";
-import { getAllBookings } from "@/services/adminService";
-import { setLoading, setError } from "@/redux/slices/adminSlice";
-import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
+  ChevronDown,
+  CalendarX,
+  Check,
+  Search,
+  Calendar,
+  Users,
+  Clock,
+  TrendingUp,
+  Filter,
+} from "lucide-react";
 
 interface Booking {
   date: string;
@@ -34,16 +567,40 @@ interface Booking {
   bookingStatus: string;
 }
 
-interface RootState {
-  admin: {
-    loading: boolean;
-    error: object;
-  };
-}
-
 const BookingsPage = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [total, setTotal] = useState(0);
+  const [bookings, setBookings] = useState<Booking[]>([
+    {
+      date: "12/15/2024",
+      mentorName: "John Smith",
+      menteeName: "Alice Johnson",
+      service: "Career Guidance",
+      type: "1:1 call",
+      timeSlot: "10:00 AM",
+      paymentStatus: "paid",
+      bookingStatus: "confirmed",
+    },
+    {
+      date: "12/16/2024",
+      mentorName: "Sarah Davis",
+      menteeName: "Bob Wilson",
+      service: "Technical Interview Prep",
+      type: "priority dm",
+      timeSlot: "2:00 PM",
+      paymentStatus: "paid",
+      bookingStatus: "pending",
+    },
+    {
+      date: "12/17/2024",
+      mentorName: "Mike Brown",
+      menteeName: "Carol Martinez",
+      service: "Code Review",
+      type: "digital product",
+      timeSlot: "4:00 PM",
+      paymentStatus: "paid",
+      bookingStatus: "completed",
+    },
+  ]);
+  const [total, setTotal] = useState(3);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,10 +609,8 @@ const BookingsPage = () => {
   const [typeFilter, setTypeFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("confirmed");
   const [tab, setTab] = useState("confirmed");
-  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0 });
-  const dispatch = useDispatch();
-  const loading = useSelector((state: RootState) => state.admin.loading);
-  const error = useSelector((state: RootState) => state.admin.error);
+  const [stats, setStats] = useState({ total: 3, pending: 1, completed: 1 });
+  const [loading, setLoading] = useState(false);
 
   const statusOptions = [
     "confirmed",
@@ -80,78 +635,6 @@ const BookingsPage = () => {
         return type || "Unknown";
     }
   };
-
-  const fetchBookings = async () => {
-    dispatch(setLoading(true));
-    dispatch(setError({}));
-    try {
-      const response = await getAllBookings(
-        page,
-        limit,
-        searchQuery,
-        "", // No type filter for backend
-        statusFilter
-      );
-
-      if (response?.data?.data) {
-        const { data, total } = response.data;
-        const formattedBookings = data.map((booking: any) => ({
-          date: new Date(booking.bookingDate).toLocaleDateString("en-US", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-          mentorName:
-            `${booking.mentorId?.firstName || ""} ${
-              booking.mentorId?.lastName || ""
-            }`.trim() || "Unknown",
-          menteeName:
-            `${booking.menteeId?.firstName || ""} ${
-              booking.menteeId?.lastName || ""
-            }`.trim() || "Unknown",
-          type: booking.serviceId?.type || "Unknown",
-          service: booking.serviceId?.title || "Unknown",
-          timeSlot: `${booking.startTime}`,
-          paymentStatus: booking.paymentDetails?.status || "Unknown",
-          bookingStatus: booking.status || "Unknown",
-        }));
-        setBookings(formattedBookings);
-        setTotal(total);
-        const pending = data.filter((b: any) => b.status === "pending").length;
-        const completed = data.filter(
-          (b: any) => b.status === "completed"
-        ).length;
-        setStats({ total, pending, completed });
-      } else {
-        dispatch(
-          setError({
-            message: response?.data?.error || "Failed to fetch bookings.",
-          })
-        );
-        setBookings([]);
-        setTotal(0);
-        setStats({ total: 0, pending: 0, completed: 0 });
-      }
-    } catch (error: any) {
-      dispatch(
-        setError({
-          message:
-            error.response?.data?.error ||
-            error.message ||
-            "An error occurred while fetching bookings.",
-        })
-      );
-      setBookings([]);
-      setTotal(0);
-      setStats({ total: 0, pending: 0, completed: 0 });
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-
-  useEffect(() => {
-    fetchBookings();
-  }, [page, searchQuery, mentorFilter, menteeFilter, statusFilter]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -179,24 +662,6 @@ const BookingsPage = () => {
     setPage(1);
   };
 
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
-    setTab(value);
-    setPage(1);
-  };
-
-  const handleNextPage = () => {
-    if (page < totalPages) {
-      setPage(page + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (page > 1) {
-      setPage(page - 1);
-    }
-  };
-
   const totalPages = Math.ceil(total / limit);
 
   const filteredBookings = bookings.filter((booking) => {
@@ -208,7 +673,18 @@ const BookingsPage = () => {
       : true;
     const matchesType =
       typeFilter && typeFilter !== "All" ? booking.type === typeFilter : true;
-    return matchesMentor && matchesMentee && matchesType;
+    const matchesStatus = booking.bookingStatus === statusFilter;
+    const matchesSearch = searchQuery
+      ? booking.mentorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.menteeName.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return (
+      matchesMentor &&
+      matchesMentee &&
+      matchesType &&
+      matchesStatus &&
+      matchesSearch
+    );
   });
 
   const uniqueMentors = Array.from(
@@ -219,322 +695,430 @@ const BookingsPage = () => {
   ).sort();
   const uniqueTypes = Array.from(new Set(bookings.map((b) => b.type))).sort();
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "confirmed":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "pending":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "completed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      case "rescheduled":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "1-1call":
+      case "1:1 call":
+        return "📞";
+      case "prioritydm":
+      case "priority dm":
+        return "💬";
+      case "digitalproducts":
+      case "digital product":
+        return "📱";
+      default:
+        return "📋";
+    }
+  };
+
   const renderEmptyState = (tab: string) => (
-    <TableRow>
-      <TableCell colSpan={7} className="text-center py-12">
-        <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-          <CalendarX className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-            No {tab.charAt(0).toUpperCase() + tab.slice(1)} Bookings Found
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md text-center">
-            {tab === "confirmed"
-              ? "There are no confirmed bookings at the moment."
-              : tab === "rescheduled"
-              ? "No bookings have been rescheduled yet."
-              : tab === "pending"
-              ? "There are no pending bookings waiting for confirmation."
-              : tab === "completed"
-              ? "No bookings have been completed yet."
-              : "No bookings have been cancelled."}
-          </p>
+    <tr>
+      <td colSpan={7} className="text-center py-16">
+        <div className="flex flex-col items-center justify-center space-y-6">
+          <div className="relative">
+            <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
+              <CalendarX className="h-12 w-12 text-indigo-500" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs">0</span>
+            </div>
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-semibold text-gray-900">
+              No {tab.charAt(0).toUpperCase() + tab.slice(1)} Bookings
+            </h3>
+            <p className="text-gray-500 max-w-md">
+              {tab === "confirmed"
+                ? "There are no confirmed bookings at the moment. New bookings will appear here once confirmed."
+                : tab === "rescheduled"
+                ? "No bookings have been rescheduled yet. Rescheduled sessions will be tracked here."
+                : tab === "pending"
+                ? "There are no pending bookings waiting for confirmation. Pending requests will show up here."
+                : tab === "completed"
+                ? "No bookings have been completed yet. Finished sessions will be listed here."
+                : "No bookings have been cancelled. Cancelled sessions would appear in this section."}
+            </p>
+          </div>
           {tab !== "completed" && tab !== "cancelled" && (
-            <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
-              New Booking
-            </Button>
+            <button className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Schedule New Booking
+            </button>
           )}
         </div>
-      </TableCell>
-    </TableRow>
-  );
-
-  const renderErrorState = () => (
-    <TableRow>
-      <TableCell colSpan={7} className="text-center py-12">
-        <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-          <svg
-            className="h-16 w-16 text-red-400 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-            Something went wrong
-          </h2>
-          <Button
-            onClick={() => window.location.reload()}
-            className="mt-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full"
-          >
-            Try Again
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
+      </td>
+    </tr>
   );
 
   return (
-    <div className="flex min-h-screen">
-      {/* <div className="p-6 mx-32 w-full bg-white dark:bg-gray-900"> */}
-      <div className="flex-1 ml-24 p-8 bg-white">
-        <div className="flex flex-row mb-6">
-          <div>
-            <h1 className="text-2xl font-bold pt-4 text-gray-800 dark:text-gray-100">
-              Bookings
-            </h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="flex-1 ml-24 p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center space-x-4 mb-2">
+            <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+              <Calendar className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Bookings Management
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Monitor and manage all booking activities
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-between items-center gap-6 mb-8 border-b border-gray-200 dark:border-gray-700 pb-2">
-          <div className="flex grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Total Bookings
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.total}
-              </p>
-            </Card>
-            <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Pending
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.pending}
-              </p>
-            </Card>
-            <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-              <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-                Completed
-              </h3>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                {stats.completed}
-              </p>
-            </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Total Bookings
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
+                <p className="text-xs text-green-600 flex items-center mt-2">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  +12% from last month
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+                <Calendar className="h-6 w-6 text-white" />
+              </div>
+            </div>
           </div>
-          <div>
-            <Input
-              placeholder="Search by mentor or mentee..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-64 rounded-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 pr-4"
-            />
+
+          <div className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Pending
+                </p>
+                <p className="text-3xl font-bold text-amber-600">
+                  {stats.pending}
+                </p>
+                <p className="text-xs text-amber-600 flex items-center mt-2">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Awaiting confirmation
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl">
+                <Clock className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Completed
+                </p>
+                <p className="text-3xl font-bold text-emerald-600">
+                  {stats.completed}
+                </p>
+                <p className="text-xs text-emerald-600 flex items-center mt-2">
+                  <Check className="h-3 w-3 mr-1" />
+                  Successfully finished
+                </p>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl">
+                <Users className="h-6 w-6 text-white" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <Tabs value={tab} onValueChange={handleTabChange} className="mb-8">
-          <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 dark:border-gray-700 bg-transparent">
-            {statusOptions.map((status) => (
-              <TabsTrigger
-                key={status}
-                value={status}
-                className={`pb-3 text-lg font-semibold transition-all rounded-none ${
-                  tab === status
-                    ? "border-b-2 border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100"
-                    : "text-gray-500 dark:text-gray-400"
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value={tab}>
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Date
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1">
-                          Mentor Name
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => handleMentorFilter("")}
-                            className="text-gray-700 dark:text-gray-200"
+        {/* Search and Filters */}
+        <div className="p-6 mb-8 bg-white border-0 shadow-lg rounded-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by mentor or mentee name..."
+                value={searchQuery}
+                onChange={handleSearch}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-600">
+                Filters applied:{" "}
+                {
+                  [
+                    mentorFilter,
+                    menteeFilter,
+                    typeFilter !== "All" ? typeFilter : null,
+                  ].filter(Boolean).length
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs and Table */}
+        <div className="bg-white border-0 shadow-lg rounded-2xl overflow-hidden">
+          {/* Tabs */}
+          <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+            <div className="bg-white rounded-xl p-1 shadow-sm inline-flex">
+              {statusOptions.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleTabChange(status)}
+                  className={`px-6 py-2 rounded-lg transition-all font-medium ${
+                    tab === status
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    Date
+                  </th>
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    <div className="relative group">
+                      <button className="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                        Mentor Name
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                        <button
+                          onClick={() => handleMentorFilter("")}
+                          className="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 first:rounded-t-xl"
+                        >
+                          All Mentors
+                        </button>
+                        {uniqueMentors.map((mentor) => (
+                          <button
+                            key={mentor}
+                            onClick={() => handleMentorFilter(mentor)}
+                            className="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700"
                           >
-                            All
-                          </DropdownMenuItem>
-                          {uniqueMentors.map((mentor) => (
-                            <DropdownMenuItem
-                              key={mentor}
-                              onClick={() => handleMentorFilter(mentor)}
-                              className="text-gray-700 dark:text-gray-200"
-                            >
-                              {mentor}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1">
-                          Mentee Name
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => handleMenteeFilter("")}
-                            className="text-gray-700 dark:text-gray-200"
+                            {mentor}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </th>
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    <div className="relative group">
+                      <button className="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                        Mentee Name
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                        <button
+                          onClick={() => handleMenteeFilter("")}
+                          className="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 first:rounded-t-xl"
+                        >
+                          All Mentees
+                        </button>
+                        {uniqueMentees.map((mentee) => (
+                          <button
+                            key={mentee}
+                            onClick={() => handleMenteeFilter(mentee)}
+                            className="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700"
                           >
-                            All
-                          </DropdownMenuItem>
-                          {uniqueMentees.map((mentee) => (
-                            <DropdownMenuItem
-                              key={mentee}
-                              onClick={() => handleMenteeFilter(mentee)}
-                              className="text-gray-700 dark:text-gray-200"
-                            >
-                              {mentee}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1">
-                          Service Type
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          <DropdownMenuItem
-                            onClick={() => handleTypeFilter("All")}
-                            className="text-gray-700 dark:text-gray-200"
+                            {mentee}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </th>
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    <div className="relative group">
+                      <button className="flex items-center gap-2 hover:text-indigo-600 transition-colors">
+                        Service Type
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                        <button
+                          onClick={() => handleTypeFilter("All")}
+                          className="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 first:rounded-t-xl"
+                        >
+                          All Types
+                        </button>
+                        {uniqueTypes.map((option) => (
+                          <button
+                            key={option}
+                            onClick={() => handleTypeFilter(option)}
+                            className="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center gap-2"
                           >
-                            All
-                          </DropdownMenuItem>
-                          {uniqueTypes.map((option) => (
-                            <DropdownMenuItem
-                              key={option}
-                              onClick={() => handleTypeFilter(option)}
-                              className="text-gray-700 dark:text-gray-200"
-                            >
-                              {mapTypeToDisplay(option)}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Service Name
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      Time Slot
-                    </TableHead>
-                    <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1">
-                          Booking Status
-                          <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="bg-white dark:bg-gray-800">
-                          {statusOptions.map((option) => (
-                            <DropdownMenuItem
-                              key={option}
-                              onClick={() => handleStatusFilter(option)}
-                              className="text-gray-700 dark:text-gray-200"
-                            >
-                              {option.charAt(0).toUpperCase() + option.slice(1)}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7}>
-                        <TableSkeleton />
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredBookings.length === 0 ? (
-                    renderEmptyState(tab)
-                  ) : (
-                    filteredBookings.map((booking, index) => (
-                      <TableRow
-                        key={index}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+                            <span>{getTypeIcon(option)}</span>
+                            {mapTypeToDisplay(option)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </th>
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    Service Name
+                  </th>
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    Time Slot
+                  </th>
+                  <th className="text-left text-gray-700 font-semibold py-4 px-6">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center">
+                      <div className="animate-pulse space-y-4">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredBookings.length === 0 ? (
+                  renderEmptyState(tab)
+                ) : (
+                  filteredBookings.map((booking, index) => (
+                    <tr
+                      key={index}
+                      className="hover:bg-gray-50 transition-colors border-b border-gray-100"
+                    >
+                      <td className="py-4 px-6">
+                        <div className="font-medium text-gray-900">
                           {booking.date}
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-                          {booking.mentorName}
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-                          {booking.menteeName}
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-                          {mapTypeToDisplay(booking.type)}
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3">
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {booking.mentorName.charAt(0)}
+                          </div>
+                          <span className="font-medium text-gray-900">
+                            {booking.mentorName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {booking.menteeName.charAt(0)}
+                          </div>
+                          <span className="font-medium text-gray-900">
+                            {booking.menteeName}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg">
+                            {getTypeIcon(booking.type)}
+                          </span>
+                          <span className="text-gray-700">
+                            {mapTypeToDisplay(booking.type)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-gray-900 font-medium">
                           {booking.service}
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-                          {booking.timeSlot}
-                        </TableCell>
-                        <TableCell className="text-gray-700 dark:text-gray-200 py-3 flex items-center gap-2">
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-700">
+                            {booking.timeSlot}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                            booking.bookingStatus
+                          )}`}
+                        >
                           {booking.bookingStatus === "confirmed" && (
-                            <Check className="h-4 w-4 text-green-500" />
+                            <Check className="h-3 w-3 mr-1" />
                           )}
                           {booking.bookingStatus.charAt(0).toUpperCase() +
                             booking.bookingStatus.slice(1)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </TabsContent>
-        </Tabs>
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-        {totalPages > 0 && (
-          <div className="flex justify-between items-center mt-6">
-            <Button
-              onClick={handlePrevPage}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center mt-8 space-x-4">
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-full px-6"
+              className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Previous
-            </Button>
-            <div className="flex gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <Button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  variant={page === p ? "default" : "outline"}
-                  className={`${
-                    page === p
-                      ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
-                      : "bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
-                  } border-gray-300 dark:border-gray-600 rounded-full w-10 h-10`}
-                >
-                  {p}
-                </Button>
-              ))}
+            </button>
+            <div className="flex space-x-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum =
+                  Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                      page === pageNum
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+                        : "border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
             </div>
-            <Button
-              onClick={handleNextPage}
+            <button
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-full px-6"
+              className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next
-            </Button>
+            </button>
           </div>
         )}
       </div>

@@ -12,61 +12,6 @@ export default class MessageService implements IMessageService {
     this.chatRepository = new ChatRepository();
   }
 
-  // 🎯 ENHANCED: Send message with proper status management
-  // async sendMessage(
-  //   chatId: string,
-  //   senderId: string,
-  //   content: string,
-  //   type: "text" | "image" | "audio" = "text"
-  // ): Promise<EMessage> {
-  //   try {
-  //     console.log("📤 MessageService: sendMessage start", {
-  //       chatId,
-  //       senderId,
-  //       type,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     // Create the message with proper initial status
-  //     const messageData = {
-  //       sender: senderId,
-  //       content,
-  //       type,
-  //       chat: chatId,
-  //       readBy: [senderId], // 🎯 CRITICAL: Sender automatically reads their own message
-  //       status: "sent" as const, // 🎯 INDUSTRY STANDARD: Start with "sent" status
-  //     };
-
-  //     const message = await this.messageRepository.create(messageData);
-  //     console.log("📤 MessageService: Message created", {
-  //       messageId: message._id,
-  //       status: message.status,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     // Update chat's latest message
-  //     await this.chatRepository.findByIdAndUpdate(chatId, {
-  //       latestMessage: message._id,
-  //       updatedAt: new Date(),
-  //     });
-
-  //     console.log("📤 MessageService: sendMessage completed", {
-  //       messageId: message._id,
-  //       chatId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     return message;
-  //   } catch (error: any) {
-  //     console.error("📤 MessageService: sendMessage error", {
-  //       chatId,
-  //       senderId,
-  //       error: error.message,
-  //       timestamp: new Date().toISOString(),
-  //     });
-  //     throw new Error("Failed to send message: " + error.message);
-  //   }
-  // }
   async sendMessage(
     chatId: string,
     senderId: string,
@@ -156,31 +101,6 @@ export default class MessageService implements IMessageService {
     }
   }
 
-  // 🎯 ENHANCED: Get messages with proper status information
-  // async getMessagesByChatId(chatId: string): Promise<EMessage[]> {
-  //   try {
-  //     console.log("📨 MessageService: getMessagesByChatId start", {
-  //       chatId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     const messages = await this.messageRepository.findByChatId(chatId);
-  //     console.log("📨 MessageService: Messages fetched", {
-  //       chatId,
-  //       messageCount: messages.length,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     return messages;
-  //   } catch (error: any) {
-  //     console.error("📨 MessageService: getMessagesByChatId error", {
-  //       chatId,
-  //       error: error.message,
-  //       timestamp: new Date().toISOString(),
-  //     });
-  //     throw new Error("Failed to get messages: " + error.message);
-  //   }
-  // }
   async getMessagesByChatId(chatId: string): Promise<EMessage[]> {
     try {
       console.log("📨 MessageService: getMessagesByChatId start", {
@@ -213,74 +133,6 @@ export default class MessageService implements IMessageService {
     }
   }
 
-  // 🎯 ENHANCED: Mark messages as read with comprehensive logging and status updates
-  // async markMessagesAsRead(chatId: string, userId: string): Promise<number> {
-  //   try {
-  //     console.log("🎯 MessageService: markMessagesAsRead start", {
-  //       chatId,
-  //       userId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     // 🎯 CRITICAL: Only mark messages as read that:
-  //     // 1. Are in this chat
-  //     // 2. Were NOT sent by this user
-  //     // 3. Are NOT already read by this user
-  //     const result = await this.messageRepository.markAsReadByUser(
-  //       chatId,
-  //       userId
-  //     );
-
-  //     console.log("🎯 MessageService: markMessagesAsRead completed", {
-  //       chatId,
-  //       userId,
-  //       markedCount: result,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     return result;
-  //   } catch (error: any) {
-  //     console.error("🎯 MessageService: markMessagesAsRead error", {
-  //       chatId,
-  //       userId,
-  //       error: error.message,
-  //       timestamp: new Date().toISOString(),
-  //     });
-  //     throw new Error("Failed to mark messages as read: " + error.message);
-  //   }
-  // }
-  // async markMessagesAsRead(chatId: string, userId: string): Promise<number> {
-  //   try {
-  //     console.log("🎯 MessageService: markMessagesAsRead start", {
-  //       chatId,
-  //       userId,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     // 🎯 CRITICAL: Update both readBy array AND status field
-  //     const result = await this.messageRepository.markAsReadByUserWithStatus(
-  //       chatId,
-  //       userId
-  //     );
-
-  //     console.log("🎯 MessageService: markMessagesAsRead completed", {
-  //       chatId,
-  //       userId,
-  //       markedCount: result,
-  //       timestamp: new Date().toISOString(),
-  //     });
-
-  //     return result;
-  //   } catch (error: any) {
-  //     console.error("🎯 MessageService: markMessagesAsRead error", {
-  //       chatId,
-  //       userId,
-  //       error: error.message,
-  //       timestamp: new Date().toISOString(),
-  //     });
-  //     throw new Error("Failed to mark messages as read: " + error.message);
-  //   }
-  // }
   async markMessagesAsRead(chatId: string, userId: string): Promise<number> {
     try {
       console.log("🎯 MessageService: markMessagesAsRead start", {

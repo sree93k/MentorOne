@@ -66,52 +66,6 @@ export default class NotificationRepository
     }
   }
 
-  // NEW METHOD: Find unread notifications by role
-  // async findUnreadByRecipientAndRole(
-  //   recipientId: string,
-  //   role: "mentor" | "mentee"
-  // ) {
-  //   try {
-  //     return await Notification.find({
-  //       recipientId,
-  //       isRead: false,
-  //       $or: [{ targetRole: role }, { targetRole: "both" }],
-  //     })
-  //       .populate({
-  //         path: "senderId",
-  //         select: "firstName lastName",
-  //         model: "Users",
-  //       })
-  //       .sort({ createdAt: -1 })
-  //       .lean()
-  //       .then((notifications) =>
-  //         notifications.map((n) => ({
-  //           _id: n._id.toString(),
-  //           recipient: n.recipientId,
-  //           targetRole: n.targetRole,
-  //           type: n.type,
-  //           content: n.message,
-  //           relatedId: n.relatedId,
-  //           isRead: n.isRead,
-  //           createdAt: n.createdAt,
-  //           sender:
-  //             n.senderId &&
-  //             typeof n.senderId === "object" &&
-  //             "firstName" in n.senderId
-  //               ? {
-  //                   firstName: (n.senderId as any).firstName,
-  //                   lastName: (n.senderId as any).lastName,
-  //                 }
-  //               : undefined,
-  //         }))
-  //       );
-  //   } catch (error: any) {
-  //     throw new Error(
-  //       "Failed to fetch role-specific notifications: " + error.message
-  //     );
-  //   }
-  // }
-
   async findUnreadByRecipientAndRole(
     recipientId: string,
     role: "mentor" | "mentee",
@@ -206,26 +160,6 @@ export default class NotificationRepository
     }
   }
 
-  // ✅ NEW METHOD: Count unseen notifications by role
-  // async countUnseenByRecipientAndRole(
-  //   recipientId: string,
-  //   role: "mentor" | "mentee"
-  // ): Promise<number> {
-  //   try {
-  //     const thirtyDaysAgo = new Date();
-  //     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-  //     return await Notification.countDocuments({
-  //       recipientId,
-  //       isSeen: false,
-  //       createdAt: { $gte: thirtyDaysAgo },
-  //       $or: [{ targetRole: role }, { targetRole: "both" }],
-  //     });
-  //   } catch (error: any) {
-  //     throw new Error("Failed to count unseen notifications: " + error.message);
-  //   }
-  // }
-  // In NotificationRepository.ts
   async countUnseenByRecipientAndRole(
     recipientId: string,
     role: "mentor" | "mentee"

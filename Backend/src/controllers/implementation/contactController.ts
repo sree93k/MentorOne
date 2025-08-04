@@ -105,6 +105,150 @@ class ContactController {
   // =================== ADMIN ROUTES ===================
 
   // GET /admin/contact/messages - Admin gets all messages with pagination and filters
+  //   getAllMessages = async (req: Request, res: Response): Promise<void> => {
+  //     try {
+  //       const page = parseInt(req.query.page as string) || 1;
+  //       const limit = parseInt(req.query.limit as string) || 20;
+  //       const sortBy = (req.query.sortBy as string) || "createdAt";
+  //       const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
+  //       const search = req.query.search as string;
+
+  //       // Build filters object
+  //       const filters: any = {};
+
+  //       if (req.query.status) filters.status = req.query.status;
+  //       if (req.query.inquiryType) filters.inquiryType = req.query.inquiryType;
+  //       if (req.query.priority) filters.priority = req.query.priority;
+  //       if (req.query.assignedTo) filters.assignedTo = req.query.assignedTo;
+
+  //       // Handle registered user filter
+  //       if (req.query.isRegisteredUser !== undefined) {
+  //         filters.isRegisteredUser = req.query.isRegisteredUser === "true";
+  //       }
+
+  //       // Handle date range filter
+  //       if (req.query.startDate && req.query.endDate) {
+  //         filters.dateRange = {
+  //           start: new Date(req.query.startDate as string),
+  //           end: new Date(req.query.endDate as string),
+  //         };
+  //       }
+
+  //       if (search) {
+  //         filters.search = search;
+  //       }
+
+  //       const result = await this.contactMessageService.getAllMessages(
+  //         { page, limit, sortBy, sortOrder },
+  //         filters
+  //       );
+
+  //       res.status(200).json({
+  //         success: true,
+  //         data: result.data,
+  //         pagination: result.pagination,
+  //       });
+  //     } catch (error: any) {
+  //       console.error("❌ Get all messages error:", error);
+  //       res.status(500).json({
+  //         success: false,
+  //         message: "Failed to fetch messages",
+  //         error:
+  //           process.env.NODE_ENV === "development" ? error.message : undefined,
+  //       });
+  //     }
+  //   };
+  // Fix for the getAllMessages method in ContactController
+  // Replace the existing getAllMessages method with this improved version
+
+  //   getAllMessages = async (req: Request, res: Response): Promise<void> => {
+  //     try {
+  //       const page = parseInt(req.query.page as string) || 1;
+  //       const limit = parseInt(req.query.limit as string) || 20;
+  //       const sortBy = (req.query.sortBy as string) || "createdAt";
+  //       const sortOrder = (req.query.sortOrder as "asc" | "desc") || "desc";
+  //       const search = req.query.search as string;
+
+  //       // Build filters object
+  //       const filters: any = {};
+
+  //       if (req.query.status) filters.status = req.query.status;
+  //       if (req.query.inquiryType) filters.inquiryType = req.query.inquiryType;
+  //       if (req.query.priority) filters.priority = req.query.priority;
+  //       if (req.query.assignedTo) filters.assignedTo = req.query.assignedTo;
+
+  //       // ✅ FIXED: Better handling of isRegisteredUser parameter
+  //       if (
+  //         req.query.isRegisteredUser !== undefined &&
+  //         req.query.isRegisteredUser !== null
+  //       ) {
+  //         const isRegisteredUserParam = req.query.isRegisteredUser as string;
+
+  //         // Handle various string representations of boolean values
+  //         if (isRegisteredUserParam === "true" || isRegisteredUserParam === "1") {
+  //           filters.isRegisteredUser = true;
+  //           console.log("🔍 Filter: Only registered users");
+  //         } else if (
+  //           isRegisteredUserParam === "false" ||
+  //           isRegisteredUserParam === "0"
+  //         ) {
+  //           filters.isRegisteredUser = false;
+  //           console.log("🔍 Filter: Only guest users");
+  //         }
+  //         // If it's any other value, we don't set the filter (show all)
+  //       }
+
+  //       // Handle date range filter
+  //       if (req.query.startDate && req.query.endDate) {
+  //         filters.dateRange = {
+  //           start: new Date(req.query.startDate as string),
+  //           end: new Date(req.query.endDate as string),
+  //         };
+  //       }
+
+  //       if (search) {
+  //         filters.search = search;
+  //       }
+
+  //       // ✅ Debug logging
+  //       console.log("🔍 getAllMessages filters:", {
+  //         page,
+  //         limit,
+  //         filters,
+  //         queryParams: req.query,
+  //       });
+
+  //       const result = await this.contactMessageService.getAllMessages(
+  //         { page, limit, sortBy, sortOrder },
+  //         filters
+  //       );
+
+  //       // ✅ Debug logging for results
+  //       console.log("🔍 getAllMessages results:", {
+  //         totalItems: result.pagination.totalItems,
+  //         currentPage: result.pagination.currentPage,
+  //         dataCount: result.data.length,
+  //         appliedFilters: filters,
+  //       });
+
+  //       res.status(200).json({
+  //         success: true,
+  //         data: result.data,
+  //         pagination: result.pagination,
+  //         appliedFilters: filters, // ✅ Send back applied filters for frontend debugging
+  //       });
+  //     } catch (error: any) {
+  //       console.error("❌ Get all messages error:", error);
+  //       res.status(500).json({
+  //         success: false,
+  //         message: "Failed to fetch messages",
+  //         error:
+  //           process.env.NODE_ENV === "development" ? error.message : undefined,
+  //       });
+  //     }
+  //   };
+  // Replace your existing getAllMessages method in ContactController with this fixed version
+
   getAllMessages = async (req: Request, res: Response): Promise<void> => {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -116,14 +260,40 @@ class ContactController {
       // Build filters object
       const filters: any = {};
 
+      // Standard filters
       if (req.query.status) filters.status = req.query.status;
       if (req.query.inquiryType) filters.inquiryType = req.query.inquiryType;
       if (req.query.priority) filters.priority = req.query.priority;
       if (req.query.assignedTo) filters.assignedTo = req.query.assignedTo;
 
-      // Handle registered user filter
+      // ✅ FIXED: Proper handling of isRegisteredUser parameter
       if (req.query.isRegisteredUser !== undefined) {
-        filters.isRegisteredUser = req.query.isRegisteredUser === "true";
+        const isRegisteredUserParam = req.query.isRegisteredUser;
+
+        console.log("🔍 Processing isRegisteredUser param:", {
+          rawParam: isRegisteredUserParam,
+          type: typeof isRegisteredUserParam,
+        });
+
+        // Handle string and boolean values
+        if (
+          isRegisteredUserParam === "true" ||
+          isRegisteredUserParam === true
+        ) {
+          filters.isRegisteredUser = true;
+          console.log(
+            "🔍 Applied filter: isRegisteredUser = true (Registered Users)"
+          );
+        } else if (
+          isRegisteredUserParam === "false" ||
+          isRegisteredUserParam === false
+        ) {
+          filters.isRegisteredUser = false;
+          console.log(
+            "🔍 Applied filter: isRegisteredUser = false (Guest Users)"
+          );
+        }
+        // If it's any other value, we don't apply the filter (show all)
       }
 
       // Handle date range filter
@@ -134,19 +304,45 @@ class ContactController {
         };
       }
 
+      // Handle search filter
       if (search) {
         filters.search = search;
       }
+
+      // ✅ Enhanced debug logging
+      console.log("🔍 getAllMessages processing:", {
+        page,
+        limit,
+        allQueryParams: req.query,
+        processedFilters: filters,
+        isRegisteredUserReceived: req.query.isRegisteredUser,
+        isRegisteredUserInFilters: filters.hasOwnProperty("isRegisteredUser"),
+      });
 
       const result = await this.contactMessageService.getAllMessages(
         { page, limit, sortBy, sortOrder },
         filters
       );
 
+      // ✅ Debug logging for results
+      console.log("🔍 getAllMessages results:", {
+        totalItems: result.pagination.totalItems,
+        currentPage: result.pagination.currentPage,
+        dataCount: result.data.length,
+        appliedFilters: filters,
+        sampleData: result.data.slice(0, 2).map((msg) => ({
+          id: msg._id,
+          name: msg.name,
+          email: msg.email,
+          isRegisteredUser: msg.isRegisteredUser,
+        })),
+      });
+
       res.status(200).json({
         success: true,
         data: result.data,
         pagination: result.pagination,
+        appliedFilters: filters, // ✅ Send back applied filters
       });
     } catch (error: any) {
       console.error("❌ Get all messages error:", error);

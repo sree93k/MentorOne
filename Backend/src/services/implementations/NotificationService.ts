@@ -285,48 +285,6 @@ export default class NotificationService implements INotificationService {
     }
   }
 
-  // UPDATED METHOD: Role-aware notification fetching
-  // async getUnreadNotifications(
-  //   recipientId: string,
-  //   role?: "mentor" | "mentee"
-  // ): Promise<any[]> {
-  //   try {
-  //     const notifications = role
-  //       ? await this.notificationRepository.findUnreadByRecipientAndRole(
-  //           recipientId,
-  //           role
-  //         )
-  //       : await this.notificationRepository.findUnreadByRecipient(recipientId);
-
-  //     const mappedNotifications = notifications.map((n) => ({
-  //       _id: n._id,
-  //       recipient: n.recipient,
-  //       targetRole: n.targetRole, // NEW FIELD
-  //       type: n.type,
-  //       content: n.content,
-  //       link:
-  //         n.type === "payment"
-  //           ? `/payments/${n.relatedId}`
-  //           : n.type === "booking"
-  //           ? `/bookings/${n.relatedId}`
-  //           : n.type === "meeting"
-  //           ? `/user/meeting-join/${n.relatedId}`
-  //           : undefined,
-  //       isRead: n.isRead,
-  //       createdAt: new Date(n.createdAt).toISOString(),
-  //       sender: n.sender,
-  //     }));
-
-  //     console.log(
-  //       `Fetched ${role || "all"} notifications:`,
-  //       mappedNotifications.length
-  //     );
-  //     return mappedNotifications;
-  //   } catch (error: any) {
-  //     console.error("Error fetching unread notifications:", error.message);
-  //     throw new Error("Failed to fetch notifications: " + error.message);
-  //   }
-  // }
   async getUnreadNotifications(
     recipientId: string,
     role?: "mentor" | "mentee",
@@ -343,24 +301,54 @@ export default class NotificationService implements INotificationService {
           )
         : await this.notificationRepository.findUnreadByRecipient(recipientId);
 
+      // const mappedNotifications = notifications.map((n) => ({
+      //   _id: n._id,
+      //   recipient: n.recipient,
+      //   targetRole: n.targetRole,
+      //   type: n.type,
+      //   content: n.content,
+      //   link:
+      //     n.type === "payment"
+      //       ? `/payments/${n.relatedId}`
+      //       : n.type === "booking"
+      //       ? `/bookings/${n.relatedId}`
+      //       : n.type === "meeting"
+      //       ? `/user/meeting-join/${n.relatedId}`
+      //       : n.type === "booking_reminder"
+      //       ? `/bookings/${n.relatedId}`
+      //       : undefined,
+      //   isRead: n.isRead,
+      //   isSeen: n.isSeen, // ✅ NEW FIELD
+      //   createdAt: new Date(n.createdAt).toISOString(),
+      //   sender: n.sender,
+      // }));
+      const getNotificationLink = (notification: any): string | undefined => {
+        switch (notification.type) {
+          case "payment":
+            return `/payments/${notification.relatedId}`;
+          case "booking":
+            return `/bookings/${notification.relatedId}`;
+          case "meeting":
+            return `/user/meeting-join/${notification.relatedId}`;
+          case "booking_reminder":
+            return `/bookings/${notification.relatedId}`;
+          case "contact_response": // ✅ NEW: Handle contact response links
+            return `/support`; // Or wherever you want users to go for contact support
+          default:
+            return undefined;
+        }
+      };
+
+      // Update your notification service mapping to include the new link logic:
       const mappedNotifications = notifications.map((n) => ({
         _id: n._id,
         recipient: n.recipient,
         targetRole: n.targetRole,
         type: n.type,
         content: n.content,
-        link:
-          n.type === "payment"
-            ? `/payments/${n.relatedId}`
-            : n.type === "booking"
-            ? `/bookings/${n.relatedId}`
-            : n.type === "meeting"
-            ? `/user/meeting-join/${n.relatedId}`
-            : n.type === "booking_reminder"
-            ? `/bookings/${n.relatedId}`
-            : undefined,
+        link: getNotificationLink(n), // ✅ Use the helper function
         isRead: n.isRead,
-        isSeen: n.isSeen, // ✅ NEW FIELD
+        isSeen: n.isSeen,
         createdAt: new Date(n.createdAt).toISOString(),
         sender: n.sender,
       }));

@@ -40,7 +40,7 @@ export interface PaginatedResult<T> {
 export interface IContactMessageRepository {
   create(message: Partial<ContactMessage>): Promise<ContactMessage>;
   findById(id: string): Promise<ContactMessage | null>;
-  findAll(
+  findAllContactMessages(
     options: PaginationOptions,
     filters?: FilterOptions
   ): Promise<PaginatedResult<ContactMessage>>;

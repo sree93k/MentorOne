@@ -36,6 +36,7 @@ export const initializeNotificationSocket = async (
     "chat-notifications",
     "meeting-notifications",
     "booking_reminder-notifications", // ✅ ADDED MISSING CHANNEL
+    "contact_response-notifications",
     // Role-specific count channels
     "mentor-notification-count",
     "mentee-notification-count",
