@@ -1,548 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableHead,
-//   TableHeader,
-//   TableRow,
-// } from "@/components/ui/table";
-// import { Card } from "@/components/ui/card";
-// import { Input } from "@/components/ui/input";
-// import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
-// import { ChevronDown, CalendarX, Check } from "lucide-react";
-// import { getAllBookings } from "@/services/adminService";
-// import { setLoading, setError } from "@/redux/slices/adminSlice";
-// import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
-
-// interface Booking {
-//   date: string;
-//   mentorName: string;
-//   menteeName: string;
-//   service: string;
-//   type: string;
-//   timeSlot: string;
-//   paymentStatus: string;
-//   bookingStatus: string;
-// }
-
-// interface RootState {
-//   admin: {
-//     loading: boolean;
-//     error: object;
-//   };
-// }
-
-// const BookingsPage = () => {
-//   const [bookings, setBookings] = useState<Booking[]>([]);
-//   const [total, setTotal] = useState(0);
-//   const [page, setPage] = useState(1);
-//   const [limit] = useState(10);
-//   const [searchQuery, setSearchQuery] = useState("");
-//   const [mentorFilter, setMentorFilter] = useState("");
-//   const [menteeFilter, setMenteeFilter] = useState("");
-//   const [typeFilter, setTypeFilter] = useState("All");
-//   const [statusFilter, setStatusFilter] = useState("confirmed");
-//   const [tab, setTab] = useState("confirmed");
-//   const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0 });
-//   const dispatch = useDispatch();
-//   const loading = useSelector((state: RootState) => state.admin.loading);
-//   const error = useSelector((state: RootState) => state.admin.error);
-
-//   const statusOptions = [
-//     "confirmed",
-//     "rescheduled",
-//     "pending",
-//     "completed",
-//     "cancelled",
-//   ];
-
-//   const mapTypeToDisplay = (type: string): string => {
-//     switch (type?.toLowerCase()) {
-//       case "1-1call":
-//       case "1:1 call":
-//         return "1:1 Call";
-//       case "prioritydm":
-//       case "priority dm":
-//         return "Priority DM";
-//       case "digitalproducts":
-//       case "digital product":
-//         return "Digital Product";
-//       default:
-//         return type || "Unknown";
-//     }
-//   };
-
-//   const fetchBookings = async () => {
-//     dispatch(setLoading(true));
-//     dispatch(setError({}));
-//     try {
-//       const response = await getAllBookings(
-//         page,
-//         limit,
-//         searchQuery,
-//         "", // No type filter for backend
-//         statusFilter
-//       );
-
-//       if (response?.data?.data) {
-//         const { data, total } = response.data;
-//         const formattedBookings = data.map((booking: any) => ({
-//           date: new Date(booking.bookingDate).toLocaleDateString("en-US", {
-//             day: "2-digit",
-//             month: "2-digit",
-//             year: "numeric",
-//           }),
-//           mentorName:
-//             `${booking.mentorId?.firstName || ""} ${
-//               booking.mentorId?.lastName || ""
-//             }`.trim() || "Unknown",
-//           menteeName:
-//             `${booking.menteeId?.firstName || ""} ${
-//               booking.menteeId?.lastName || ""
-//             }`.trim() || "Unknown",
-//           type: booking.serviceId?.type || "Unknown",
-//           service: booking.serviceId?.title || "Unknown",
-//           timeSlot: `${booking.startTime}`,
-//           paymentStatus: booking.paymentDetails?.status || "Unknown",
-//           bookingStatus: booking.status || "Unknown",
-//         }));
-//         setBookings(formattedBookings);
-//         setTotal(total);
-//         const pending = data.filter((b: any) => b.status === "pending").length;
-//         const completed = data.filter(
-//           (b: any) => b.status === "completed"
-//         ).length;
-//         setStats({ total, pending, completed });
-//       } else {
-//         dispatch(
-//           setError({
-//             message: response?.data?.error || "Failed to fetch bookings.",
-//           })
-//         );
-//         setBookings([]);
-//         setTotal(0);
-//         setStats({ total: 0, pending: 0, completed: 0 });
-//       }
-//     } catch (error: any) {
-//       dispatch(
-//         setError({
-//           message:
-//             error.response?.data?.error ||
-//             error.message ||
-//             "An error occurred while fetching bookings.",
-//         })
-//       );
-//       setBookings([]);
-//       setTotal(0);
-//       setStats({ total: 0, pending: 0, completed: 0 });
-//     } finally {
-//       dispatch(setLoading(false));
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchBookings();
-//   }, [page, searchQuery, mentorFilter, menteeFilter, statusFilter]);
-
-//   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setSearchQuery(e.target.value);
-//     setPage(1);
-//   };
-
-//   const handleTabChange = (value: string) => {
-//     setTab(value);
-//     setStatusFilter(value);
-//     setPage(1);
-//   };
-
-//   const handleMentorFilter = (value: string) => {
-//     setMentorFilter(value);
-//     setPage(1);
-//   };
-
-//   const handleMenteeFilter = (value: string) => {
-//     setMenteeFilter(value);
-//     setPage(1);
-//   };
-
-//   const handleTypeFilter = (value: string) => {
-//     setTypeFilter(value);
-//     setPage(1);
-//   };
-
-//   const handleStatusFilter = (value: string) => {
-//     setStatusFilter(value);
-//     setTab(value);
-//     setPage(1);
-//   };
-
-//   const handleNextPage = () => {
-//     if (page < totalPages) {
-//       setPage(page + 1);
-//     }
-//   };
-
-//   const handlePrevPage = () => {
-//     if (page > 1) {
-//       setPage(page - 1);
-//     }
-//   };
-
-//   const totalPages = Math.ceil(total / limit);
-
-//   const filteredBookings = bookings.filter((booking) => {
-//     const matchesMentor = mentorFilter
-//       ? booking.mentorName.toLowerCase().includes(mentorFilter.toLowerCase())
-//       : true;
-//     const matchesMentee = menteeFilter
-//       ? booking.menteeName.toLowerCase().includes(menteeFilter.toLowerCase())
-//       : true;
-//     const matchesType =
-//       typeFilter && typeFilter !== "All" ? booking.type === typeFilter : true;
-//     return matchesMentor && matchesMentee && matchesType;
-//   });
-
-//   const uniqueMentors = Array.from(
-//     new Set(bookings.map((b) => b.mentorName))
-//   ).sort();
-//   const uniqueMentees = Array.from(
-//     new Set(bookings.map((b) => b.menteeName))
-//   ).sort();
-//   const uniqueTypes = Array.from(new Set(bookings.map((b) => b.type))).sort();
-
-//   const renderEmptyState = (tab: string) => (
-//     <TableRow>
-//       <TableCell colSpan={7} className="text-center py-12">
-//         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-//           <CalendarX className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
-//           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-//             No {tab.charAt(0).toUpperCase() + tab.slice(1)} Bookings Found
-//           </h2>
-//           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md text-center">
-//             {tab === "confirmed"
-//               ? "There are no confirmed bookings at the moment."
-//               : tab === "rescheduled"
-//               ? "No bookings have been rescheduled yet."
-//               : tab === "pending"
-//               ? "There are no pending bookings waiting for confirmation."
-//               : tab === "completed"
-//               ? "No bookings have been completed yet."
-//               : "No bookings have been cancelled."}
-//           </p>
-//           {tab !== "completed" && tab !== "cancelled" && (
-//             <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
-//               New Booking
-//             </Button>
-//           )}
-//         </div>
-//       </TableCell>
-//     </TableRow>
-//   );
-
-//   const renderErrorState = () => (
-//     <TableRow>
-//       <TableCell colSpan={7} className="text-center py-12">
-//         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-//           <svg
-//             className="h-16 w-16 text-red-400 mb-4"
-//             fill="none"
-//             viewBox="0 0 24 24"
-//             stroke="currentColor"
-//           >
-//             <path
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth={2}
-//               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-//             />
-//           </svg>
-//           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-//             Something went wrong
-//           </h2>
-//           <Button
-//             onClick={() => window.location.reload()}
-//             className="mt-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full"
-//           >
-//             Try Again
-//           </Button>
-//         </div>
-//       </TableCell>
-//     </TableRow>
-//   );
-
-//   return (
-//     <div className="flex min-h-screen">
-//       {/* <div className="p-6 mx-32 w-full bg-white dark:bg-gray-900"> */}
-//       <div className="flex-1 ml-24 p-8 bg-white">
-//         <div className="flex flex-row mb-6">
-//           <div>
-//             <h1 className="text-2xl font-bold pt-4 text-gray-800 dark:text-gray-100">
-//               Bookings
-//             </h1>
-//           </div>
-//         </div>
-
-//         <div className="flex justify-between items-center gap-6 mb-8 border-b border-gray-200 dark:border-gray-700 pb-2">
-//           <div className="flex grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-6">
-//             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//                 Total Bookings
-//               </h3>
-//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//                 {stats.total}
-//               </p>
-//             </Card>
-//             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//                 Pending
-//               </h3>
-//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//                 {stats.pending}
-//               </p>
-//             </Card>
-//             <Card className="p-2 h-20 w-36 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm">
-//               <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//                 Completed
-//               </h3>
-//               <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//                 {stats.completed}
-//               </p>
-//             </Card>
-//           </div>
-//           <div>
-//             <Input
-//               placeholder="Search by mentor or mentee..."
-//               value={searchQuery}
-//               onChange={handleSearch}
-//               className="w-64 rounded-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 pr-4"
-//             />
-//           </div>
-//         </div>
-
-//         <Tabs value={tab} onValueChange={handleTabChange} className="mb-8">
-//           <TabsList className="w-full flex justify-start gap-8 border-b border-gray-200 dark:border-gray-700 bg-transparent">
-//             {statusOptions.map((status) => (
-//               <TabsTrigger
-//                 key={status}
-//                 value={status}
-//                 className={`pb-3 text-lg font-semibold transition-all rounded-none ${
-//                   tab === status
-//                     ? "border-b-2 border-gray-900 text-gray-900 dark:border-gray-100 dark:text-gray-100"
-//                     : "text-gray-500 dark:text-gray-400"
-//                 }`}
-//               >
-//                 {status.charAt(0).toUpperCase() + status.slice(1)}
-//               </TabsTrigger>
-//             ))}
-//           </TabsList>
-//           <TabsContent value={tab}>
-//             <div className="rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-//               <Table>
-//                 <TableHeader>
-//                   <TableRow className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       Date
-//                     </TableHead>
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       <DropdownMenu>
-//                         <DropdownMenuTrigger className="flex items-center gap-1">
-//                           Mentor Name
-//                           <ChevronDown className="h-4 w-4" />
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
-//                           <DropdownMenuItem
-//                             onClick={() => handleMentorFilter("")}
-//                             className="text-gray-700 dark:text-gray-200"
-//                           >
-//                             All
-//                           </DropdownMenuItem>
-//                           {uniqueMentors.map((mentor) => (
-//                             <DropdownMenuItem
-//                               key={mentor}
-//                               onClick={() => handleMentorFilter(mentor)}
-//                               className="text-gray-700 dark:text-gray-200"
-//                             >
-//                               {mentor}
-//                             </DropdownMenuItem>
-//                           ))}
-//                         </DropdownMenuContent>
-//                       </DropdownMenu>
-//                     </TableHead>
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       <DropdownMenu>
-//                         <DropdownMenuTrigger className="flex items-center gap-1">
-//                           Mentee Name
-//                           <ChevronDown className="h-4 w-4" />
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
-//                           <DropdownMenuItem
-//                             onClick={() => handleMenteeFilter("")}
-//                             className="text-gray-700 dark:text-gray-200"
-//                           >
-//                             All
-//                           </DropdownMenuItem>
-//                           {uniqueMentees.map((mentee) => (
-//                             <DropdownMenuItem
-//                               key={mentee}
-//                               onClick={() => handleMenteeFilter(mentee)}
-//                               className="text-gray-700 dark:text-gray-200"
-//                             >
-//                               {mentee}
-//                             </DropdownMenuItem>
-//                           ))}
-//                         </DropdownMenuContent>
-//                       </DropdownMenu>
-//                     </TableHead>
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       <DropdownMenu>
-//                         <DropdownMenuTrigger className="flex items-center gap-1">
-//                           Service Type
-//                           <ChevronDown className="h-4 w-4" />
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
-//                           <DropdownMenuItem
-//                             onClick={() => handleTypeFilter("All")}
-//                             className="text-gray-700 dark:text-gray-200"
-//                           >
-//                             All
-//                           </DropdownMenuItem>
-//                           {uniqueTypes.map((option) => (
-//                             <DropdownMenuItem
-//                               key={option}
-//                               onClick={() => handleTypeFilter(option)}
-//                               className="text-gray-700 dark:text-gray-200"
-//                             >
-//                               {mapTypeToDisplay(option)}
-//                             </DropdownMenuItem>
-//                           ))}
-//                         </DropdownMenuContent>
-//                       </DropdownMenu>
-//                     </TableHead>
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       Service Name
-//                     </TableHead>
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       Time Slot
-//                     </TableHead>
-//                     <TableHead className="text-gray-900 dark:text-gray-100 font-semibold text-sm uppercase tracking-wide py-4">
-//                       <DropdownMenu>
-//                         <DropdownMenuTrigger className="flex items-center gap-1">
-//                           Booking Status
-//                           <ChevronDown className="h-4 w-4" />
-//                         </DropdownMenuTrigger>
-//                         <DropdownMenuContent className="bg-white dark:bg-gray-800">
-//                           {statusOptions.map((option) => (
-//                             <DropdownMenuItem
-//                               key={option}
-//                               onClick={() => handleStatusFilter(option)}
-//                               className="text-gray-700 dark:text-gray-200"
-//                             >
-//                               {option.charAt(0).toUpperCase() + option.slice(1)}
-//                             </DropdownMenuItem>
-//                           ))}
-//                         </DropdownMenuContent>
-//                       </DropdownMenu>
-//                     </TableHead>
-//                   </TableRow>
-//                 </TableHeader>
-//                 <TableBody>
-//                   {loading ? (
-//                     <TableRow>
-//                       <TableCell colSpan={7}>
-//                         <TableSkeleton />
-//                       </TableCell>
-//                     </TableRow>
-//                   ) : filteredBookings.length === 0 ? (
-//                     renderEmptyState(tab)
-//                   ) : (
-//                     filteredBookings.map((booking, index) => (
-//                       <TableRow
-//                         key={index}
-//                         className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-//                       >
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-//                           {booking.date}
-//                         </TableCell>
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-//                           {booking.mentorName}
-//                         </TableCell>
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-//                           {booking.menteeName}
-//                         </TableCell>
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-//                           {mapTypeToDisplay(booking.type)}
-//                         </TableCell>
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-//                           {booking.service}
-//                         </TableCell>
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3">
-//                           {booking.timeSlot}
-//                         </TableCell>
-//                         <TableCell className="text-gray-700 dark:text-gray-200 py-3 flex items-center gap-2">
-//                           {booking.bookingStatus === "confirmed" && (
-//                             <Check className="h-4 w-4 text-green-500" />
-//                           )}
-//                           {booking.bookingStatus.charAt(0).toUpperCase() +
-//                             booking.bookingStatus.slice(1)}
-//                         </TableCell>
-//                       </TableRow>
-//                     ))
-//                   )}
-//                 </TableBody>
-//               </Table>
-//             </div>
-//           </TabsContent>
-//         </Tabs>
-
-//         {totalPages > 0 && (
-//           <div className="flex justify-between items-center mt-6">
-//             <Button
-//               onClick={handlePrevPage}
-//               disabled={page === 1}
-//               className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-full px-6"
-//             >
-//               Previous
-//             </Button>
-//             <div className="flex gap-2">
-//               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-//                 <Button
-//                   key={p}
-//                   onClick={() => setPage(p)}
-//                   variant={page === p ? "default" : "outline"}
-//                   className={`${
-//                     page === p
-//                       ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
-//                       : "bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
-//                   } border-gray-300 dark:border-gray-600 rounded-full w-10 h-10`}
-//                 >
-//                   {p}
-//                 </Button>
-//               ))}
-//             </div>
-//             <Button
-//               onClick={handleNextPage}
-//               disabled={page === totalPages}
-//               className="bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-full px-6"
-//             >
-//               Next
-//             </Button>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default BookingsPage;
 import { useState, useEffect } from "react";
 import {
   ChevronDown,
@@ -554,6 +9,7 @@ import {
   Clock,
   TrendingUp,
   Filter,
+  RotateCcw,
 } from "lucide-react";
 
 interface Booking {
@@ -611,6 +67,8 @@ const BookingsPage = () => {
   const [tab, setTab] = useState("confirmed");
   const [stats, setStats] = useState({ total: 3, pending: 1, completed: 1 });
   const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   const statusOptions = [
     "confirmed",
@@ -851,7 +309,7 @@ const BookingsPage = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="p-6 mb-8 bg-white border-0 shadow-lg rounded-2xl">
+        {/* <div className="p-6 mb-8 bg-white border-0 shadow-lg rounded-2xl">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -877,8 +335,136 @@ const BookingsPage = () => {
               </span>
             </div>
           </div>
-        </div>
+        </div> */}
+        {/* Enhanced Search & Filter Section */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Search className="h-5 w-5 text-blue-600" />
+                Search & Filter Bookings
+              </h2>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-xl hover:from-blue-200 hover:to-indigo-200 transition-all duration-300 font-medium"
+              >
+                <Filter className="h-4 w-4" />
+                <span>{showFilters ? "Hide" : "Show"} Advanced Filters</span>
+              </button>
+            </div>
 
+            {/* Enhanced Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search by mentor, mentee, or service..."
+                value={searchQuery}
+                onChange={handleSearch}
+                className="w-full pl-12 pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all duration-300 text-gray-900 placeholder-gray-500"
+              />
+              {searching && (
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                </div>
+              )}
+            </div>
+
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Mentor Filter */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Mentor
+                    </label>
+                    <select
+                      value={mentorFilter}
+                      onChange={(e) => handleMentorFilter(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all duration-300"
+                    >
+                      <option value="">All Mentors</option>
+                      {uniqueMentors.map((mentor) => (
+                        <option key={mentor} value={mentor}>
+                          {mentor}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Mentee Filter */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Mentee
+                    </label>
+                    <select
+                      value={menteeFilter}
+                      onChange={(e) => handleMenteeFilter(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all duration-300"
+                    >
+                      <option value="">All Mentees</option>
+                      {uniqueMentees.map((mentee) => (
+                        <option key={mentee} value={mentee}>
+                          {mentee}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Service Type Filter */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Service Type
+                    </label>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => handleTypeFilter(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all duration-300"
+                    >
+                      <option value="All">All Types</option>
+                      {uniqueTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {getTypeIcon(type)} {mapTypeToDisplay(type)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Filter Results & Clear */}
+            {(searchQuery ||
+              mentorFilter ||
+              menteeFilter ||
+              (typeFilter && typeFilter !== "All")) && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    {total} result{total !== 1 ? "s" : ""} found
+                  </span>
+                  {total > 0 && (
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setMentorFilter("");
+                    setMenteeFilter("");
+                    setTypeFilter("All");
+                    setPage(1);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-300 font-medium"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span>Clear All Filters</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         {/* Tabs and Table */}
         <div className="bg-white border-0 shadow-lg rounded-2xl overflow-hidden">
           {/* Tabs */}

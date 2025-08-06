@@ -1,452 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { ChevronDown } from "lucide-react";
-// import { getAllusers } from "@/services/adminService";
-// import { Card } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-// } from "@/components/ui/dropdown-menu";
-// import {
-//   Pagination,
-//   PaginationContent,
-//   PaginationEllipsis,
-//   PaginationItem,
-//   PaginationLink,
-//   PaginationNext,
-//   PaginationPrevious,
-// } from "@/components/ui/pagination";
-// import { Badge } from "flowbite-react";
-// import { HiCheck } from "react-icons/hi";
-// import { Users } from "lucide-react";
-// import TableSkeleton from "@/components/loadingPage/TabelSkeleton";
-// interface User {
-//   _id: string;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   mentorStatus?: string;
-//   role: string[];
-//   status: string;
-//   isBlocked?: boolean;
-//   mentorId?: { isApproved: string };
-// }
-
-// const AllUsers: React.FC = () => {
-//   const [users, setUsers] = useState<User[]>([]);
-//   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-//   const [total, setTotal] = useState(0);
-//   const [page, setPage] = useState(1);
-//   const [roleFilter, setRoleFilter] = useState<string | null>(null);
-//   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-//   const [totalMentees, setTotalMentees] = useState(0);
-//   const [totalMentors, setTotalMentors] = useState(0);
-//   const [totalBoth, setTotalBoth] = useState(0);
-//   const [approvalPending, setApprovalPending] = useState(0);
-//   const limit = 10;
-//   const navigate = useNavigate();
-
-//   // Reset page to 1 when filters change
-//   useEffect(() => {
-//     setPage(1);
-//   }, [roleFilter, statusFilter]);
-
-//   // Fetch users when page or filters change
-//   useEffect(() => {
-//     const fetchUsers = async () => {
-//       setLoading(true);
-//       setError(null);
-//       try {
-//         const response = await getAllusers(
-//           page,
-//           limit,
-//           roleFilter ?? undefined,
-//           statusFilter ?? undefined
-//         );
-//         if (response && response.status === 200) {
-//           console.log("Users response", response.data.data);
-
-//           const fetchedUsers = response.data.data.users;
-
-//           setUsers(fetchedUsers);
-//           setTotal(response.data.data.total);
-//           setTotalMentors(response.data.data.totalMentors);
-//           setTotalMentees(response.data.data.totalMentees);
-//           setTotalBoth(response.data.data.totalBoth);
-//           setApprovalPending(response.data.data.approvalPending);
-
-//           // Apply frontend filtering for role display
-//           const filtered = fetchedUsers.filter((user: User) => {
-//             if (!roleFilter) return true;
-//             if (roleFilter === "mentee")
-//               return (
-//                 Array.isArray(user.role) &&
-//                 user.role.includes("mentee") &&
-//                 user.role.length === 1
-//               );
-//             if (roleFilter === "mentor")
-//               return (
-//                 Array.isArray(user.role) &&
-//                 user.role.includes("mentor") &&
-//                 user.role.length === 1
-//               );
-//             if (roleFilter === "both")
-//               return (
-//                 Array.isArray(user.role) &&
-//                 user.role.includes("mentor") &&
-//                 user.role.includes("mentee")
-//               );
-//             return true;
-//           });
-
-//           setFilteredUsers(filtered);
-//         } else {
-//           setError("Failed to fetch users. Please try again.");
-//         }
-//       } catch (err) {
-//         setError("An error occurred while fetching users.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchUsers();
-//   }, [page, roleFilter, statusFilter]);
-
-//   const totalPages = Math.ceil(total / limit);
-
-//   // Generate pagination items
-//   const getPageItems = () => {
-//     if (totalPages <= 5) {
-//       return Array.from({ length: totalPages }, (_, i) => i + 1);
-//     } else {
-//       const pages = [1];
-//       if (page > 3) pages.push(0); // Ellipsis
-//       for (
-//         let i = Math.max(2, page - 1);
-//         i <= Math.min(totalPages - 1, page + 1);
-//         i++
-//       ) {
-//         pages.push(i);
-//       }
-//       if (page < totalPages - 2) pages.push(0); // Ellipsis
-//       if (totalPages > 1) pages.push(totalPages);
-//       return pages;
-//     }
-//   };
-
-//   const renderEmptyState = () => (
-//     <tr>
-//       <td colSpan={7} className="px-4 py-12 text-center">
-//         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-//           <Users className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-4 animate-bounce" />
-//           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-//             No Users Found
-//           </h2>
-//           <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-md">
-//             It looks like there are no users matching your criteria. Try
-//             adjusting the filters or invite new users to join!
-//           </p>
-//           <Button className="mt-4 bg-green-500 hover:bg-green-600 text-white">
-//             No New Users
-//           </Button>
-//         </div>
-//       </td>
-//     </tr>
-//   );
-
-//   return (
-//     <div className="flex-1 ml-24 p-8 bg-white">
-//       {/* Header and Stats */}
-//       <div className="mb-3 flex items-start justify-between flex-wrap">
-//         <div className="mb-4 items-center pt-5">
-//           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-//             Users List
-//           </h1>
-//         </div>
-//         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-0 ml-auto">
-//           <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-//             <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//               Total Users
-//             </h3>
-//             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//               {total}
-//             </p>
-//           </Card>
-//           <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-//             <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//               Total Mentors
-//             </h3>
-//             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//               {totalMentors}
-//             </p>
-//           </Card>
-//           <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-//             <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//               Total Mentees
-//             </h3>
-//             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//               {totalMentees}
-//             </p>
-//           </Card>
-//           <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-//             <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//               Total Both
-//             </h3>
-//             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//               {totalBoth}
-//             </p>
-//           </Card>
-//           <Card className="p-2 h-20 bg-gray-50 dark:bg-gray-800">
-//             <h3 className="text-sm text-gray-600 dark:text-gray-400 mb-0">
-//               Approval Pendings
-//             </h3>
-//             <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-//               {approvalPending}
-//             </p>
-//           </Card>
-//         </div>
-//       </div>
-
-//       {/* Users Table */}
-//       <div className="rounded-md border border-gray-200 dark:border-gray-700">
-//         {loading ? (
-//           <TableSkeleton />
-//         ) : error ? (
-//           <div className="p-4 text-center">
-//             <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
-//               <svg
-//                 className="h-16 w-16 text-red-400 mb-4"
-//                 fill="none"
-//                 viewBox="0 0 24 24"
-//                 stroke="currentColor"
-//               >
-//                 <path
-//                   strokeLinecap="round"
-//                   strokeLinejoin="round"
-//                   strokeWidth={2}
-//                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-//                 />
-//               </svg>
-//               <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200">
-//                 Something went wrong
-//               </h2>
-//               <p className="text-red-500 dark:text-red-400 mt-2">{error}</p>
-//               <Button
-//                 onClick={() => window.location.reload()}
-//                 className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-//               >
-//                 Try Again
-//               </Button>
-//             </div>
-//           </div>
-//         ) : (
-//           <div className="overflow-x-auto">
-//             <table className="w-full">
-//               <thead>
-//                 <tr className="border-b bg-gray-50 dark:bg-gray-800 text-left">
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     SI No
-//                   </th>
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     Name
-//                   </th>
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     Email ID
-//                   </th>
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     Mentor Status
-//                   </th>
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     <DropdownMenu>
-//                       <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-//                         Role
-//                         <ChevronDown className="h-4 w-4" />
-//                       </DropdownMenuTrigger>
-//                       <DropdownMenuContent className="bg-white dark:bg-gray-800">
-//                         <DropdownMenuItem
-//                           onClick={() => setRoleFilter(null)}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           All
-//                         </DropdownMenuItem>
-//                         <DropdownMenuItem
-//                           onClick={() => setRoleFilter("mentee")}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           Mentee
-//                         </DropdownMenuItem>
-//                         <DropdownMenuItem
-//                           onClick={() => setRoleFilter("mentor")}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           Mentor
-//                         </DropdownMenuItem>
-//                         <DropdownMenuItem
-//                           onClick={() => setRoleFilter("both")}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           Both
-//                         </DropdownMenuItem>
-//                       </DropdownMenuContent>
-//                     </DropdownMenu>
-//                   </th>
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     <DropdownMenu>
-//                       <DropdownMenuTrigger className="flex items-center gap-1 text-gray-700 dark:text-gray-200">
-//                         Status
-//                         <ChevronDown className="h-4 w-4" />
-//                       </DropdownMenuTrigger>
-//                       <DropdownMenuContent className="bg-white dark:bg-gray-800">
-//                         <DropdownMenuItem
-//                           onClick={() => setStatusFilter(null)}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           All
-//                         </DropdownMenuItem>
-//                         <DropdownMenuItem
-//                           onClick={() => setStatusFilter("Active")}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           Active
-//                         </DropdownMenuItem>
-//                         <DropdownMenuItem
-//                           onClick={() => setStatusFilter("Blocked")}
-//                           className="text-gray-700 dark:text-gray-200"
-//                         >
-//                           Blocked
-//                         </DropdownMenuItem>
-//                       </DropdownMenuContent>
-//                     </DropdownMenu>
-//                   </th>
-//                   <th className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-//                     Action
-//                   </th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {filteredUsers.length === 0
-//                   ? renderEmptyState()
-//                   : filteredUsers.map((user, index) => (
-//                       <tr
-//                         key={user._id}
-//                         className="border-b hover:bg-gray-50 dark:hover:bg-gray-800"
-//                       >
-//                         <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-//                           {(page - 1) * limit + index + 1}
-//                         </td>
-//                         <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-//                           {`${user.firstName} ${user.lastName}`}
-//                         </td>
-//                         <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-//                           {user.email}
-//                         </td>
-//                         <td className="px-4 py-3 text-sm">
-//                           {user.mentorId?.isApproved === "Pending" ? (
-//                             <Badge icon={HiCheck} color="purple">
-//                               Pending
-//                             </Badge>
-//                           ) : user.mentorId?.isApproved === "Rejected" ? (
-//                             <Badge icon={HiCheck} color="failure">
-//                               Rejected
-//                             </Badge>
-//                           ) : user.mentorId?.isApproved === "Approved" ? (
-//                             <Badge icon={HiCheck} color="success">
-//                               Approved
-//                             </Badge>
-//                           ) : (
-//                             <Badge icon={HiCheck} color="warning">
-//                               N/A
-//                             </Badge>
-//                           )}
-//                         </td>
-//                         <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-//                           {Array.isArray(user.role)
-//                             ? user.role.length === 2
-//                               ? "Both"
-//                               : user.role.includes("mentor")
-//                               ? "Mentor"
-//                               : user.role.includes("mentee")
-//                               ? "Mentee"
-//                               : "N/A"
-//                             : "N/A"}
-//                         </td>
-//                         <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-//                           {user.isBlocked ? "Blocked" : "Active"}
-//                         </td>
-//                         <td className="px-4 py-3 text-sm">
-//                           <Button
-//                             className="w-20 bg-blue-500 hover:bg-blue-600 text-white"
-//                             onClick={() =>
-//                               navigate(`/admin/userProfile/${user._id}`)
-//                             }
-//                           >
-//                             Edit
-//                           </Button>
-//                         </td>
-//                       </tr>
-//                     ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         )}
-//       </div>
-
-//       {/* Pagination */}
-//       {!loading && !error && total > 0 && (
-//         <div className="mt-4">
-//           <Pagination>
-//             <PaginationContent>
-//               <PaginationItem>
-//                 {page > 1 ? (
-//                   <PaginationPrevious
-//                     onClick={() => setPage((prev) => prev - 1)}
-//                     className="cursor-pointer"
-//                   />
-//                 ) : (
-//                   <PaginationPrevious className="cursor-pointer pointer-events-none opacity-50" />
-//                 )}
-//               </PaginationItem>
-//               {getPageItems().map((pageNum, index) =>
-//                 pageNum === 0 ? (
-//                   <PaginationItem key={`ellipsis-${index}`}>
-//                     <PaginationEllipsis />
-//                   </PaginationItem>
-//                 ) : (
-//                   <PaginationItem key={pageNum}>
-//                     <PaginationLink
-//                       onClick={() => setPage(pageNum)}
-//                       isActive={pageNum === page}
-//                       className="cursor-pointer text-gray-700 dark:text-gray-200"
-//                     >
-//                       {pageNum}
-//                     </PaginationLink>
-//                   </PaginationItem>
-//                 )
-//               )}
-//               <PaginationItem>
-//                 {page < totalPages ? (
-//                   <PaginationNext
-//                     onClick={() => setPage((prev) => prev + 1)}
-//                     className="cursor-pointer"
-//                   />
-//                 ) : (
-//                   <PaginationNext className="pointer-events-none opacity-50" />
-//                 )}
-//               </PaginationItem>
-//             </PaginationContent>
-//           </Pagination>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default AllUsers;
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -459,6 +10,7 @@ import {
   UserPlus,
   TrendingUp,
   Activity,
+  RotateCcw,
 } from "lucide-react";
 import { getAllusers } from "@/services/adminService";
 import { Card } from "@/components/ui/card";
@@ -509,6 +61,8 @@ const AllUsers: React.FC = () => {
   const [totalMentors, setTotalMentors] = useState(0);
   const [totalBoth, setTotalBoth] = useState(0);
   const [approvalPending, setApprovalPending] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searching, setSearching] = useState(false);
   const limit = 10;
   const navigate = useNavigate();
 
@@ -521,6 +75,7 @@ const AllUsers: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
+      setSearching(true);
       setError(null);
       try {
         const response = await getAllusers(
@@ -573,6 +128,7 @@ const AllUsers: React.FC = () => {
         setError("An error occurred while fetching users.");
       } finally {
         setLoading(false);
+        setSearching(false);
       }
     };
     fetchUsers();
@@ -751,7 +307,7 @@ const AllUsers: React.FC = () => {
       </div>
 
       {/* Enhanced Search and Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+      {/* <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -768,7 +324,6 @@ const AllUsers: React.FC = () => {
             )}
           </div>
 
-          {/* Search Bar */}
           <div className="relative mb-4">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
@@ -780,7 +335,7 @@ const AllUsers: React.FC = () => {
             />
           </div>
 
-          {/* Filter Badges */}
+        
           {hasActiveFilters && (
             <div className="flex items-center gap-2 mb-4">
               <span className="text-sm text-gray-600">Active filters:</span>
@@ -802,14 +357,109 @@ const AllUsers: React.FC = () => {
             </div>
           )}
 
-          {/* Results Summary */}
+    
           <div className="text-sm text-gray-600">
             <span className="font-semibold text-blue-600">{total}</span> user
             {total !== 1 ? "s" : ""} found
           </div>
         </div>
-      </div>
+      </div> */}
+      {/* Enhanced Search & Filter Section */}
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Search className="h-5 w-5 text-blue-600" />
+              Search & Filter Users
+            </h2>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-xl hover:from-blue-200 hover:to-indigo-200 transition-all duration-300 font-medium"
+            >
+              <Filter className="h-4 w-4" />
+              <span>{showFilters ? "Hide" : "Show"} Advanced Filters</span>
+            </button>
+          </div>
 
+          {/* Enhanced Search Bar */}
+          <div className="relative mb-6">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Search by name, email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all duration-300 text-gray-900 placeholder-gray-500"
+            />
+            {searching && (
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Advanced Filters */}
+          {showFilters && (
+            <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 border border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Role Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    User Role
+                  </label>
+                  <select
+                    value={roleFilter || ""}
+                    onChange={(e) => setRoleFilter(e.target.value || null)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all duration-300"
+                  >
+                    <option value="">All Roles</option>
+                    <option value="mentee">👨‍🎓 Mentee</option>
+                    <option value="mentor">👨‍🏫 Mentor</option>
+                    <option value="both">🎯 Both</option>
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    User Status
+                  </label>
+                  <select
+                    value={statusFilter || ""}
+                    onChange={(e) => setStatusFilter(e.target.value || null)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white transition-all duration-300"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="Active">✅ Active</option>
+                    <option value="Blocked">🚫 Blocked</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Filter Results & Clear */}
+          {hasActiveFilters && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                  {total} result{total !== 1 ? "s" : ""} found
+                </span>
+                {total > 0 && (
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                )}
+              </div>
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-300 font-medium"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>Clear All Filters</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
       {/* Enhanced Users Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         {loading ? (
