@@ -268,7 +268,7 @@ const VideoCallHome: React.FC = () => {
             {/* Hero Section */}
             <div className="space-y-6">
               <div className="space-y-4">
-                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent leading-tight">
+                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   Video calls and meetings for everyone
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">

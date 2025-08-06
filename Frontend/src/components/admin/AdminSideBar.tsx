@@ -314,7 +314,7 @@ const SidebarItem = ({
           }`}
         >
           <Icon
-            size={24}
+            size={26}
             className={`transition-all duration-300 ${
               active
                 ? " text-white"
@@ -450,7 +450,7 @@ const AdminSidebar: React.FC = () => {
       <div
         className="fixed left-4 top-4 bottom-4 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 transition-all duration-300 z-10 overflow-hidden"
         style={{
-          width: isExpanded ? "300px" : "100px",
+          width: isExpanded ? "280px" : "100px",
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%)",
         }}
@@ -481,7 +481,7 @@ const AdminSidebar: React.FC = () => {
             <img
               src={LogoName}
               alt="Mentor ONE"
-              className="h-12 object-contain"
+              className="h-10 object-contain"
             />
             <div className="text-xs text-gray-500 font-medium mt-1">
               Admin Panel
