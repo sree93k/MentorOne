@@ -260,7 +260,7 @@ const MenteeHeader: React.FC = () => {
             <Link
               to="/seeker/contact"
               className={`${isActive(
-                "/contact"
+                "/seeker/contact"
               )} text-gray-700 dark:text-gray-300`}
             >
               Contact

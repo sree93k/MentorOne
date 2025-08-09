@@ -632,7 +632,7 @@ const MenteeDashboard: React.FC = () => {
         setIsLoading(true);
         const data = await getDashboardData();
         setDashboardData(data);
-        console.log("DASHBOARD MENTEE DATA>>>>>");
+        console.log(" ✅   ✅   ✅   ✅  DASHBOARD MENTEE DATA>>>>>", data);
       } catch (err: any) {
         setError(err.message || "Failed to load dashboard data");
       } finally {

@@ -819,7 +819,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
       <SheetContent
         side="right"
         className="p-0 gap-0 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 border-l border-gray-200 dark:border-gray-700"
-        style={{ width: "28vw", maxWidth: "480px", minWidth: "380px" }}
+        style={{ width: "38vw", maxWidth: "480px", minWidth: "380px" }}
       >
         {/* Modern Header */}
         <SheetHeader className="px-0 pt-0 sticky top-0 z-10">
@@ -941,7 +941,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
               {notifications.map((notification, index) => (
                 <div
                   key={notification._id}
-                  className={`group relative transform transition-all duration-300 hover:scale-[1.02] ${
+                  className={`group relative transform transition-all duration-300 hover:scale-[1.05] ${
                     hoveredNotification === notification._id
                       ? "scale-[1.02]"
                       : ""
@@ -1029,7 +1029,7 @@ const Notification: React.FC<NotificationProps> = ({ open, onOpenChange }) => {
                     </div>
 
                     {/* Hover effect overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    <div className="absolute inset-0  opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                   </div>
                 </div>
               ))}

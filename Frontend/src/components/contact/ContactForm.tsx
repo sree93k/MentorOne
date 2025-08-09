@@ -163,7 +163,7 @@ const ContactForm: React.FC = () => {
   };
 
   return (
-    <Card className="bg-white dark:bg-gray-800 shadow-xl border-0">
+    <Card className="bg-white  dark:bg-gray-800 shadow-xl border-0">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-gray-900 dark:text-white">
           Send us a Message
@@ -336,7 +336,7 @@ const ContactForm: React.FC = () => {
           </div>
 
           {/* File Upload */}
-          <div className="space-y-2">
+          <div className="space-y-2 ">
             <Label className="text-sm font-medium">
               Attach File (Optional)
             </Label>

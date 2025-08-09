@@ -218,7 +218,7 @@ export default function MeetingJoinPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen  bg-gradient-to-br from-purple-300 via-white to-blue-300">
       {/* Modern Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

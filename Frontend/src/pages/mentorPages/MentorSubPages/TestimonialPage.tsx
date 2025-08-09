@@ -585,7 +585,7 @@ export default function TestimonialPage() {
   }
 
   return (
-    <div className="pl-20 max-w-7xl mx-auto px-6 py-8 space-y-4">
+    <div className="pl-20 max-w-7xl mx-auto px-6 py-8 space-y-4 bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -628,9 +628,9 @@ export default function TestimonialPage() {
             {!isEditing ? (
               <Button
                 onClick={handleEdit}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
+                className="bg-gradient-to-r from-purple-600 to-blue-600  hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
               >
-                <Pencil className="h-4 w-4 mr-2" />
+                <Pencil className="h-4 w-4 mr-2 " />
                 Edit Top Testimonials
               </Button>
             ) : (

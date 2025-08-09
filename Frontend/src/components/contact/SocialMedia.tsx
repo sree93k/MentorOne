@@ -1,14 +1,7 @@
 // components/contact/SocialMedia.tsx
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Facebook,
-  Twitter,
-  Linkedin,
-  Instagram,
-  Youtube,
-  Github,
-} from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Twitter, Linkedin, Instagram, Youtube } from "lucide-react";
 
 interface SocialMediaProps {
   socialLinks?: {
@@ -51,11 +44,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ socialLinks = {} }) => {
 
   return (
     <Card className="bg-white dark:bg-gray-800 shadow-xl border-0">
-      <CardHeader>
-        {/* <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-          Follow Us
-        </CardTitle> */}
-      </CardHeader>
+      <CardHeader></CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-3">
           {defaultSocialLinks.map((social, index) => (

@@ -48,9 +48,9 @@ const ContactPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-r from-purple-50 to-blue-50 dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 text-white py-10">
+      <section className="bg-gradient-to-r from-blue-600 to-purple-600  text-white py-16 rounded-3xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
             Get in Touch
@@ -67,7 +67,7 @@ const ContactPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Contact Information Cards */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="lg:col-span-1 space-y-6 rounded-2xl">
               {/* Quick Contact Card */}
               <ContactInfo
                 contactInfo={contactInfo}
@@ -104,7 +104,7 @@ const ContactPage: React.FC = () => {
       </section>
 
       {/* Map Section */}
-      <section className=" pt-8 py-16 bg-white dark:bg-gray-800">
+      <section className=" pt-8 py-16 mb-12 bg-white dark:bg-gray-800 rounded-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -154,7 +154,7 @@ const ContactPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600">
+      <section className="py-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to Start Your Journey?

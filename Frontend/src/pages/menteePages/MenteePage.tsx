@@ -11,7 +11,6 @@ import BookingsPage from "./subPages/MenteeBookings";
 import MentorProfilePage from "./subPages/MentorProfilePage";
 import MentorServicePage from "./subPages/MentorServicePage";
 import MentorsList from "./subPages/MentorsList";
-import MenteeCourses from "./subPages/MenteeCourses";
 import VideoTutorialPage from "./subPages/VideoTutorial";
 import DigitalProducts from "./subPages/DigitalProduct";
 import StripeCheckoutPage from "@/pages/menteePages/subPages/StripeCheckoutPage";
@@ -56,7 +55,6 @@ const MenteePage = () => {
             <Route path="/dashboard" element={<MenteeDashboard />} />
             <Route path="/profile" element={<MenteeProfile />} />
             <Route path="/mentor" element={<MentorsPage />} />
-            <Route path="/menteecourses" element={<MenteeCourses />} />
             <Route path="/payment" element={<MenteeBillingPage />} />
             <Route path="/bookings" element={<BookingsPage />} />
             <Route path="/mentorprofile/:id" element={<MentorProfilePage />} />
