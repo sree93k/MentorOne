@@ -36,7 +36,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
-import Logo from "@/assets/logo6.png";
+import Logo from "@/assets/Logorebarnd1.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -2144,13 +2144,14 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
             }`}
           >
             <div className="p-2 sm:p-4 border-b border-gray-100 bg-white flex justify-between items-center">
-              <h2
-                className="text-lg sm:text-xl font-semibold flex items-center space-x-2"
-                style={{ color: "#6978f5" }}
-              >
-                <img src={Logo} alt="Logo" className="w-6 h-6 sm:w-8 sm:h-8" />
+              <h1 className="text-lg bold sm:text-2xl font-bold flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <img
+                  src={Logo}
+                  alt="Logo"
+                  className="w-10 h-10 sm:w-10 sm:h-10"
+                />
                 <span>Chat ONE</span>
-              </h2>
+              </h1>
               <Button
                 variant="ghost"
                 size="icon"

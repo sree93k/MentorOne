@@ -1046,7 +1046,7 @@ export default function PriorityDMPage() {
                 value={key}
                 className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
                   selectedTab === key
-                    ? "bg-white dark:bg-slate-800 text-blue-600 shadow-md"
+                    ? "bg-gradient-to-r from-purple-600 to-blue-600 dark:bg-slate-800 text-white shadow-md"
                     : "text-slate-600 dark:text-slate-400"
                 }`}
               >

@@ -717,7 +717,7 @@ export default function MentorPaymentsPage() {
   }
 
   return (
-    <div className=" pl-20 max-w-7xl mx-auto px-6 py-8 space-y-4">
+    <div className=" pl-20 max-w-7xl mx-auto px-6 py-8 space-y-4 bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>

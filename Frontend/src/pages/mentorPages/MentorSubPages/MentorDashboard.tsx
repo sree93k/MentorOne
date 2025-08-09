@@ -1253,7 +1253,7 @@ const MentorDashboard: React.FC = () => {
   }
 
   return (
-    <main className="ml-0 sm:ml-24 p-4 sm:p-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+    <main className="ml-0 sm:ml-24 p-4 sm:p-8 bg-gradient-to-br from-purple-50 via-white to-blue-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">

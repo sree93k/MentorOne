@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar, Link2, Plus, Video, Users, Clock, User } from "lucide-react";
 import { toast } from "react-hot-toast";
-import Logo from "@/assets/logo6.png";
+import Logo from "@/assets/Logorebarnd1.png";
 import MeetingImage from "@/assets/MeetingImage.jpg";
 import { startVideoCall } from "@/services/userServices";
 import {
@@ -197,9 +197,9 @@ const VideoCallHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-purple-300 via-white to-blue-300">
       {/* Modern Header */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
+      <header className="bg-white  backdrop-blur-xl border-b border-gray-200/50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div
             className="flex items-center cursor-pointer group"
@@ -208,9 +208,9 @@ const VideoCallHome: React.FC = () => {
             <img
               src={Logo}
               alt="MentorOne"
-              className="h-8 mr-3 group-hover:scale-105 transition-transform"
+              className="h-12 mx-6 group-hover:scale-105 transition-transform"
             />
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               MentorOne Meet
             </span>
           </div>
@@ -261,7 +261,7 @@ const VideoCallHome: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 md:px-6">
+      <main className="max-w-7xl mx-auto py-20 px-4 md:px-6">
         <div className="flex flex-col md:flex-row gap-8 items-start">
           {/* Left Column - Controls */}
           <div className="flex-1 space-y-8">
@@ -354,7 +354,7 @@ const VideoCallHome: React.FC = () => {
 
             {/* Bookings Table for Mentors */}
             {isOnline.role === "mentor" && (
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 overflow-hidden max-w-5xl">
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-[0_0_0_1px_rgba(59,130,246,0.3)] overflow-hidden max-w-5xl">
                 <div className="p-4 border-b border-gray-200/50">
                   <div className="flex items-center space-x-2">
                     <Users className="w-5 h-5 text-blue-600" />
