@@ -1,6 +1,6 @@
 // routes/media/adminMediaRoute.ts
 import { Router, Request, Response, NextFunction } from "express";
-import UploadService from "../../services/implementations/UploadService";
+import UploadService from "../../services/implementations/SecureUploadService";
 import { authenticate as authenticateAdmin } from "../../middlewares/authenticateAdmin";
 import ApiResponse from "../../utils/apiResponse";
 import { HttpStatus } from "../../constants/HttpStatus";

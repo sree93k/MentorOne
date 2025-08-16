@@ -2208,9 +2208,6 @@ const Chatting = ({ open, onOpenChange }: ChatProps) => {
                           </span>
                         </div>
                         <div className="flex justify-between items-center mt-1">
-                          {/* <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-[150px]">
-                            {user.lastMessage || "Start chatting now!"}
-                          </p> */}
                           <p className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-[150px]">
                             {renderTypingIndicator(user)}
                           </p>

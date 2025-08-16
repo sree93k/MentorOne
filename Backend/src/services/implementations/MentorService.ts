@@ -354,7 +354,38 @@ export default class MentorService implements IMentorService {
               "Exclusive content is required for video tutorials"
             );
           }
-          serviceData.exclusiveContent = parsedExclusiveContent;
+
+          // 🔒 PROCESS VIDEO DATA: Convert videoKey to videoS3Key for signed URLs
+          console.log("createService service step 12.5: Processing video data for signed URLs");
+          const processedExclusiveContent = parsedExclusiveContent.map((season: any) => {
+            if (season.episodes && Array.isArray(season.episodes)) {
+              const processedEpisodes = season.episodes.map((episode: any) => {
+                const processedEpisode = { ...episode };
+                
+                // Convert videoKey to videoS3Key for the signed URL system
+                if (episode.videoKey) {
+                  processedEpisode.videoS3Key = episode.videoKey;
+                  console.log(`🔒 Processed episode: ${episode.title} - S3 Key: ${episode.videoKey}`);
+                }
+                
+                // Keep videoUrl for backward compatibility but prefer S3 keys
+                if (episode.videoUrl) {
+                  processedEpisode.videoUrl = episode.videoUrl;
+                }
+                
+                return processedEpisode;
+              });
+              
+              return {
+                ...season,
+                episodes: processedEpisodes
+              };
+            }
+            return season;
+          });
+
+          serviceData.exclusiveContent = processedExclusiveContent;
+          console.log("createService service step 12.6: Video data processing completed");
         }
       } else {
         console.log("createService service step 14");

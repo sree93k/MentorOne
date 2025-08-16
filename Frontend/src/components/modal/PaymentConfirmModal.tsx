@@ -333,13 +333,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "react-hot-toast";
-import { loadStripe } from "@stripe/stripe-js";
+import { stripePromise } from "@/config/stripe";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store/store";
 import { createCheckoutSession } from "@/services/paymentServcie";
 import { CreditCard, Shield, Clock, Calendar, Lock } from "lucide-react";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface Service {
   _id: string;
@@ -533,15 +531,26 @@ export default function PaymentModal({
         "Redirecting to Stripe Checkout with sessionId:",
         response.sessionId
       );
+      console.log("Stripe instance:", stripe);
+      console.log("Stripe redirect method available:", typeof stripe.redirectToCheckout);
+      
       const { error } = await stripe.redirectToCheckout({
         sessionId: response.sessionId,
       });
 
       if (error) {
         console.error("Stripe redirect error:", error);
+        console.error("Error details:", {
+          type: error.type,
+          code: error.code,
+          message: error.message,
+          payment_intent: error.payment_intent
+        });
         throw new Error(
           error.message || "Failed to redirect to Stripe Checkout"
         );
+      } else {
+        console.log("Stripe redirect successful - should be redirecting now");
       }
     } catch (error: any) {
       console.error("Payment error:", error);

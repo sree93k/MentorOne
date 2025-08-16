@@ -235,7 +235,7 @@ export const getVideoUrl = async (key: string) => {
   try {
     console.log("menteeService getVideoUrl.. step 1", key);
     const response = await api.get(
-      `/seeker/video-url/${encodeURIComponent(key)}`
+      `/seeker/urlvideo-/${encodeURIComponent(key)}`
     );
     console.log("menteeService getVideoUrl.. step 2", response);
     return response.data.data.url;
@@ -417,5 +417,168 @@ export const getAllServices = async (
       response: error.response?.data,
     });
     throw new Error(`Failed to fetch services: ${error.message}`);
+  }
+};
+
+// Add this to the end of your existing menteeService.ts file:
+
+// Add these new secure video functions:
+
+export const createVideoSession = async (serviceId: string) => {
+  try {
+    console.log("menteeService createVideoSession step 1", serviceId);
+    const response = await api.post(`/seeker/video-session/${serviceId}`);
+    console.log("menteeService createVideoSession step 2", response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error creating video session:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to create video session"
+    );
+  }
+};
+
+export const getSecureVideoUrl = async (
+  key: string,
+  serviceId: string,
+  sessionToken: string
+) => {
+  try {
+    console.log("menteeService getSecureVideoUrl step 1", { key, serviceId });
+    const response = await api.get(
+      `/seeker/secure-video-url/${encodeURIComponent(key)}`,
+      {
+        params: {
+          sessionToken,
+          serviceId,
+        },
+      }
+    );
+    console.log("menteeService getSecureVideoUrl step 2", response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error fetching secure video URL:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch secure video URL"
+    );
+  }
+};
+
+export const extendVideoSession = async (sessionToken: string) => {
+  try {
+    console.log("menteeService extendVideoSession step 1", sessionToken);
+    const response = await api.post("/seeker/extend-video-session", {
+      sessionToken,
+    });
+    console.log("menteeService extendVideoSession step 2", response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error extending video session:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to extend video session"
+    );
+  }
+};
+
+export const revokeVideoSession = async (sessionToken: string) => {
+  try {
+    console.log("menteeService revokeVideoSession step 1", sessionToken);
+    const response = await api.post("/seeker/revoke-video-session", {
+      sessionToken,
+    });
+    console.log("menteeService revokeVideoSession step 2", response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error revoking video session:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to revoke video session"
+    );
+  }
+};
+
+// 🔒 NEW SIGNED URL FUNCTIONS FOR ENHANCED SECURITY
+export const generateVideoSignedUrl = async (
+  videoKey: string,
+  serviceId: string,
+  sessionToken: string
+) => {
+  try {
+    console.log("menteeService generateVideoSignedUrl step 1", {
+      videoKey: videoKey.substring(0, 30) + "...",
+      serviceId,
+    });
+    
+    const response = await api.get("/seeker/generate-video-signed-url", {
+      params: {
+        videoKey,
+        serviceId,
+        sessionToken,
+      },
+    });
+    
+    console.log("menteeService generateVideoSignedUrl step 2 - Success");
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error generating video signed URL:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to generate signed URL"
+    );
+  }
+};
+
+export const generateTutorialSignedUrls = async (
+  tutorialId: string,
+  sessionToken: string
+) => {
+  try {
+    console.log("menteeService generateTutorialSignedUrls step 1", {
+      tutorialId,
+    });
+    
+    const response = await api.get(
+      `/seeker/generate-tutorial-signed-urls/${tutorialId}`,
+      {
+        params: {
+          sessionToken,
+        },
+      }
+    );
+    
+    console.log("menteeService generateTutorialSignedUrls step 2 - Success", {
+      urlCount: response.data.data.signedUrls?.length || 0,
+    });
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error generating tutorial signed URLs:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to generate tutorial signed URLs"
+    );
+  }
+};
+
+export const refreshVideoSignedUrl = async (
+  videoKey: string,
+  serviceId: string,
+  sessionToken: string
+) => {
+  try {
+    console.log("menteeService refreshVideoSignedUrl step 1", {
+      videoKey: videoKey.substring(0, 30) + "...",
+      serviceId,
+    });
+    
+    const response = await api.post("/seeker/refresh-video-signed-url", {
+      videoKey,
+      serviceId,
+      sessionToken,
+    });
+    
+    console.log("menteeService refreshVideoSignedUrl step 2 - Success");
+    return response.data.data;
+  } catch (error: any) {
+    console.error("Error refreshing video signed URL:", error);
+    throw new Error(
+      error.response?.data?.error || "Failed to refresh signed URL"
+    );
   }
 };

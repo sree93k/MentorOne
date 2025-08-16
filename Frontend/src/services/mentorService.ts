@@ -106,7 +106,7 @@ export const updateMentorDatas = async (payload: any) => {
 export const uploadToS3WithPresignedUrl = async (
   file: File,
   folder: string
-): Promise<string> => {
+): Promise<{ url: string; key: string }> => {
   try {
     console.log("uploadToS3WithPresignedUrl service step 1");
 
@@ -130,6 +130,7 @@ export const uploadToS3WithPresignedUrl = async (
       body: file,
       headers: {
         "Content-Type": file.type,
+        "x-amz-server-side-encryption": "AES256",
       },
     });
     console.log("S3 upload response status:", uploadResponse.status);
@@ -145,10 +146,72 @@ export const uploadToS3WithPresignedUrl = async (
       import.meta.env.VITE_AWS_REGION
     }.amazonaws.com/${key}`;
     console.log("File uploaded successfully:", uploadedUrl);
-    return uploadedUrl;
+    
+    // 🔒 SECURITY: Return both URL and key for signed URL system
+    return { url: uploadedUrl, key };
   } catch (error: any) {
     console.error("Error uploading with presigned URL:", error);
+    
+    // 🔧 FALLBACK: Try backend upload if presigned URL fails (CORS issues)
+    if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+      console.log("🔧 CORS detected, trying backend upload fallback...");
+      try {
+        return await uploadVideoToBackend(file);
+      } catch (backendError: any) {
+        console.error("Backend upload fallback also failed:", backendError);
+        throw new Error(`Both upload methods failed. Presigned: ${error.message}, Backend: ${backendError.message}`);
+      }
+    }
+    
     throw new Error(`Failed to upload file to S3: ${error.message}`);
+  }
+};
+
+// 🔧 BACKEND VIDEO UPLOAD - Fallback for CORS issues
+export const uploadVideoToBackend = async (
+  file: File
+): Promise<{ url: string; key: string }> => {
+  try {
+    console.log("🔧 uploadVideoToBackend: Starting backend upload", {
+      fileName: file.name,
+      fileSize: file.size
+    });
+
+    const formData = new FormData();
+    formData.append('video', file);
+
+    const response = await api.post("/expert/upload-video-backend", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      // Add progress tracking if needed
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log(`🔧 Upload progress: ${percentCompleted}%`);
+        }
+      }
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.error || "Backend upload failed");
+    }
+
+    const { s3Key, videoUrl } = response.data.data;
+    
+    console.log("✅ uploadVideoToBackend: Success", {
+      s3Key,
+      videoUrl
+    });
+
+    return { 
+      url: videoUrl, 
+      key: s3Key 
+    };
+
+  } catch (error: any) {
+    console.error("🚫 uploadVideoToBackend: Error", error);
+    throw new Error(`Backend upload failed: ${error.response?.data?.error || error.message}`);
   }
 };
 
@@ -185,7 +248,8 @@ export const CreateService = async (formData: FormData) => {
       const pdfFile = formData.get("pdfFile") as File;
       if (pdfFile) {
         console.log("Uploading PDF:", pdfFile.name);
-        pdfUrl = await uploadToS3WithPresignedUrl(pdfFile, "pdfs");
+        const pdfUploadResult = await uploadToS3WithPresignedUrl(pdfFile, "pdfs");
+        pdfUrl = pdfUploadResult.url; // Keep using URL for PDFs for now
         console.log("Uploaded PDF URL:", pdfUrl);
         formData.delete("pdfFile");
         formData.append("fileUrl", pdfUrl);
@@ -216,17 +280,19 @@ export const CreateService = async (formData: FormData) => {
               ) as string;
 
               console.log("Uploading video:", video.name);
-              const videoUrl = await uploadToS3WithPresignedUrl(
+              const uploadResult = await uploadToS3WithPresignedUrl(
                 video,
                 "videos"
               );
-              console.log("Uploaded video URL:", videoUrl);
+              console.log("Uploaded video result:", uploadResult);
 
+              // 🔒 SECURITY: Store only S3 key, not full URL
               const episodeObject = {
                 episode,
                 title,
                 description,
-                videoUrl,
+                videoKey: uploadResult.key, // Store only the S3 key
+                videoUrl: uploadResult.url, // Keep for backward compatibility temporarily
               };
 
               if (!seasons[season]) {

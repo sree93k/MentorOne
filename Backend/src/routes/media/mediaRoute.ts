@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
-import UploadService from "../../services/implementations/UploadService";
+import UploadService from "../../services/implementations/SecureUploadService";
 import { authenticate } from "../../middlewares/authenticateuser";
 import ApiResponse from "../../utils/apiResponse";
 import { HttpStatus } from "../../constants/HttpStatus";

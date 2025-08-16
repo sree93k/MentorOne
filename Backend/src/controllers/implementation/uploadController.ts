@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/UploadService";
+import UploadService from "../../services/implementations/SecureUploadService";
 import sharp from "sharp";
 import fs from "fs/promises";
 import { ApiError } from "../../middlewares/errorHandler";

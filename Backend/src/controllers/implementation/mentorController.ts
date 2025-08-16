@@ -9,12 +9,17 @@ import { IUserService } from "../../services/interface/IUserService";
 import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/UploadService";
+import UploadService from "../../services/implementations/SecureUploadService";
 import { IMentorService } from "../../services/interface/IMentorService";
 import MentorService from "../../services/implementations/MentorService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
 import CalendarService from "../../services/implementations/CalenderService";
 import { HttpStatus } from "../../constants/HttpStatus";
+import BackendUploadService from "../../services/implementations/BackendUploadService";
+import IndustryStandardVideoService from "../../services/implementations/IndustryStandardVideoService";
+import EnhancedSecureVideoProxy from "../../services/implementations/EnhancedSecureVideoProxy";
+import VideoMigrationService from "../../services/implementations/VideoMigrationService";
+import VideoAnalyticsService from "../../services/implementations/VideoAnalyticsService";
 
 class mentorController {
   private userAuthService: IUserAuthService;
@@ -815,6 +820,362 @@ class mentorController {
     } catch (error: any) {
       console.error("Error updating top testimonials:", error);
       next(error);
+    }
+  };
+
+  // 🔧 BACKEND VIDEO UPLOAD - Alternative to presigned URLs for CORS issues
+  public uploadVideoBackend = async (
+    req: Request & { file?: Express.Multer.File; user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("🔧 MentorController uploadVideoBackend: Starting", {
+        hasFile: !!req.file,
+        userId: req.user?.id?.substring(0, 8) + "..."
+      });
+
+      if (!req.file) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          success: false,
+          error: "No video file provided"
+        });
+        return;
+      }
+
+      if (!req.user?.id) {
+        res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          error: "User not authenticated"
+        });
+        return;
+      }
+
+      // Upload video to S3 via backend
+      const uploadResult = await BackendUploadService.uploadVideoFile(req.file, 'videos');
+
+      if (!uploadResult.success) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          error: uploadResult.error || "Failed to upload video"
+        });
+        return;
+      }
+
+      console.log("✅ MentorController uploadVideoBackend: Success", {
+        s3Key: uploadResult.s3Key
+      });
+
+      res.status(HttpStatus.OK).json({
+        success: true,
+        data: {
+          s3Key: uploadResult.s3Key,
+          videoUrl: uploadResult.videoUrl
+        },
+        message: "Video uploaded successfully"
+      });
+
+    } catch (error: any) {
+      console.error("🚫 MentorController uploadVideoBackend: Error", error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: "Failed to upload video"
+      });
+    }
+  };
+
+  // 🎬 INDUSTRY STANDARD VIDEO UPLOAD
+  public uploadVideoIndustryStandard = async (
+    req: Request & { file?: Express.Multer.File; user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      console.log("🎬 Industry standard video upload starting", {
+        hasFile: !!req.file,
+        userId: req.user?.id?.substring(0, 8) + "...",
+        contentType: req.body.contentType,
+        serviceId: req.body.serviceId
+      });
+
+      if (!req.file) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          success: false,
+          error: "No video file provided"
+        });
+        return;
+      }
+
+      if (!req.user?.id) {
+        res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          error: "User not authenticated"
+        });
+        return;
+      }
+
+      // Extract upload configuration from request
+      const config = {
+        userId: req.user.id,
+        serviceId: req.body.serviceId || 'temp-service',
+        contentType: req.body.contentType || 'video-tutorials',
+        environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as 'development' | 'production',
+        securityLevel: 'private' as 'private'
+      };
+
+      // Content protection options
+      const protectionOptions = {
+        enableWatermark: req.body.enableWatermark !== 'false',
+        watermarkText: req.body.watermarkText || `© ${req.user.id}`,
+        enableDRM: req.body.enableDRM === 'true',
+        allowDownload: req.body.allowDownload === 'true',
+        maxViewsPerUser: parseInt(req.body.maxViewsPerUser) || 1000,
+        expiryDate: req.body.expiryDate ? new Date(req.body.expiryDate) : undefined
+      };
+
+      // Upload with industry standards
+      const uploadResult = await IndustryStandardVideoService.uploadVideoFile(
+        req.file,
+        config,
+        protectionOptions
+      );
+
+      if (!uploadResult.success) {
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          success: false,
+          error: uploadResult.error || "Failed to upload video"
+        });
+        return;
+      }
+
+      console.log("✅ Industry standard video upload successful", {
+        videoS3Key: uploadResult.videoS3Key,
+        secureId: uploadResult.videoSecureId
+      });
+
+      res.status(HttpStatus.OK).json({
+        success: true,
+        data: {
+          videoS3Key: uploadResult.videoS3Key,
+          videoSecureId: uploadResult.videoSecureId,
+          accessToken: uploadResult.accessToken,
+          metadata: uploadResult.metadata
+        },
+        message: "Video uploaded with industry standards"
+      });
+
+    } catch (error: any) {
+      console.error("🚫 Industry standard video upload failed:", error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: "Failed to upload video"
+      });
+    }
+  };
+
+  // 🔗 GENERATE SECURE VIDEO URL
+  public generateSecureVideoUrl = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { s3Key, videoSecureId, expiresIn, quality } = req.query as {
+        s3Key?: string;
+        videoSecureId?: string;
+        expiresIn?: string;
+        quality?: string;
+      };
+
+      if (!req.user?.id) {
+        res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          error: "User not authenticated"
+        });
+        return;
+      }
+
+      if (!s3Key && !videoSecureId) {
+        res.status(HttpStatus.BAD_REQUEST).json({
+          success: false,
+          error: "Either s3Key or videoSecureId is required"
+        });
+        return;
+      }
+
+      const request = {
+        s3Key,
+        videoSecureId,
+        userId: req.user.id,
+        userAgent: req.headers['user-agent'],
+        ipAddress: req.ip || req.connection.remoteAddress
+      };
+
+      const options = {
+        expiresIn: expiresIn ? parseInt(expiresIn) : 3600,
+        quality,
+        analytics: true
+      };
+
+      const result = await EnhancedSecureVideoProxy.generateSecureStreamingUrl(request, options);
+
+      if (!result.success) {
+        res.status(HttpStatus.FORBIDDEN).json({
+          success: false,
+          error: result.error || "Access denied"
+        });
+        return;
+      }
+
+      res.status(HttpStatus.OK).json({
+        success: true,
+        data: {
+          url: result.url,
+          expiresIn: options.expiresIn
+        },
+        message: "Secure video URL generated"
+      });
+
+    } catch (error: any) {
+      console.error("🚫 Failed to generate secure video URL:", error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: "Failed to generate secure URL"
+      });
+    }
+  };
+
+  // 📊 GET VIDEO ANALYTICS
+  public getVideoAnalytics = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { videoS3Key, serviceId, startDate, endDate } = req.query as {
+        videoS3Key?: string;
+        serviceId?: string;
+        startDate?: string;
+        endDate?: string;
+      };
+
+      if (!req.user?.id) {
+        res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          error: "User not authenticated"
+        });
+        return;
+      }
+
+      const query = {
+        mentorId: req.user.id,
+        videoS3Key,
+        serviceId,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined
+      };
+
+      const analytics = await VideoAnalyticsService.getVideoAnalytics(query);
+
+      if (!analytics) {
+        res.status(HttpStatus.NOT_FOUND).json({
+          success: false,
+          error: "Analytics not found"
+        });
+        return;
+      }
+
+      res.status(HttpStatus.OK).json({
+        success: true,
+        data: analytics,
+        message: "Video analytics retrieved"
+      });
+
+    } catch (error: any) {
+      console.error("🚫 Failed to get video analytics:", error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: "Failed to get analytics"
+      });
+    }
+  };
+
+  // 🔄 MIGRATE VIDEOS
+  public migrateVideos = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          error: "User not authenticated"
+        });
+        return;
+      }
+
+      const options = {
+        dryRun: req.body.dryRun === true,
+        batchSize: req.body.batchSize || 5,
+        onlyFailedMigrations: req.body.onlyFailedMigrations === true,
+        backupOriginals: req.body.backupOriginals !== false,
+        updateAnalytics: req.body.updateAnalytics !== false
+      };
+
+      console.log("🔄 Starting video migration", {
+        userId: req.user.id.substring(0, 8) + "...",
+        options
+      });
+
+      const migrationResult = await VideoMigrationService.migrateAllVideos(options);
+
+      res.status(HttpStatus.OK).json({
+        success: migrationResult.success,
+        data: migrationResult,
+        message: migrationResult.success 
+          ? "Video migration completed successfully"
+          : "Video migration completed with errors"
+      });
+
+    } catch (error: any) {
+      console.error("🚫 Video migration failed:", error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: "Migration failed"
+      });
+    }
+  };
+
+  // 📈 GET MIGRATION PROGRESS
+  public getMigrationProgress = async (
+    req: Request & { user?: { id: string } },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(HttpStatus.UNAUTHORIZED).json({
+          success: false,
+          error: "User not authenticated"
+        });
+        return;
+      }
+
+      const progress = await VideoMigrationService.getMigrationProgress();
+
+      res.status(HttpStatus.OK).json({
+        success: true,
+        data: progress,
+        message: "Migration progress retrieved"
+      });
+
+    } catch (error: any) {
+      console.error("🚫 Failed to get migration progress:", error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        error: "Failed to get migration progress"
+      });
     }
   };
 }

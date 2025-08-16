@@ -9,7 +9,7 @@ import { IUserService } from "../../services/interface/IUserService";
 import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/UploadService";
+import UploadService from "../../services/implementations/SecureUploadService";
 import { HttpStatus } from "../../constants/HttpStatus";
 import axios from "axios";
 import sharp from "sharp";

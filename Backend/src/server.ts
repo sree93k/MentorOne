@@ -1,278 +1,3 @@
-// import dotenv from "dotenv";
-// import path from "path";
-// dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-// import express from "express";
-// import { createServer } from "http";
-// import cors from "cors";
-// import compression from "compression";
-// import morgan from "morgan";
-// import { connectDatabase } from "./config/database";
-// import { router } from "./routes/router";
-// import cookieParser from "cookie-parser";
-// import multer from "multer";
-// import { Server } from "socket.io";
-// import { createClient } from "@redis/client";
-// import { createAdapter } from "@socket.io/redis-adapter";
-// import "./services/queue"; // Initialize queue processors
-// import { CleanupJobs } from "./jobs/cleanupJobs";
-// import { serverAdapter } from "./utils/bullDashboard";
-// import adminController from "./controllers/implementation/adminController";
-// import { setIO } from "./utils/socketManager";
-// const requiredEnvVars = [
-//   "ACCESS_TOKEN_SECRET",
-//   "REFRESH_TOKEN_SECRET",
-//   "MONGO_URI",
-//   "STRIPE_SECRET_KEY",
-//   "STRIPE_WEBHOOK_SECRET",
-//   "REDIS_URL",
-//   "FRONTEND_URL",
-// ];
-
-// for (const envVar of requiredEnvVars) {
-//   if (!process.env[envVar]) {
-//     console.error(`Error: ${envVar} is not defined in environment variables`);
-//     process.exit(1);
-//   }
-// }
-
-// const app = express();
-// const httpServer = createServer(app);
-
-// // Redis Setup - Only for Socket.IO now (since tokens have their own client)
-// export const pubClient = createClient({ url: process.env.REDIS_URL });
-// export const subClient = pubClient.duplicate();
-
-// let redisConnected = false;
-// CleanupJobs.initializeCleanupJobs();
-// console.log("🚀 Reminder system initialized");
-// // Enhanced error handling and connection tracking
-// pubClient.on("error", (err) => {
-//   console.error("❌ Redis Pub Client Error:", err);
-//   redisConnected = false;
-// });
-
-// subClient.on("error", (err) => {
-//   console.error("❌ Redis Sub Client Error:", err);
-//   redisConnected = false;
-// });
-
-// pubClient.on("connect", () => {
-//   console.log("✅ Redis Pub Client connected");
-// });
-
-// subClient.on("connect", () => {
-//   console.log("✅ Redis Sub Client connected");
-//   redisConnected = true;
-// });
-
-// pubClient.on("ready", () => {
-//   console.log("🚀 Redis Pub Client is ready to use");
-//   redisConnected = true;
-// });
-
-// // Function to initialize Redis connections (only for Socket.IO)
-// const initializeRedis = async (): Promise<void> => {
-//   try {
-//     console.log("🔧 Initializing Redis connections for Socket.IO...");
-
-//     await Promise.all([pubClient.connect(), subClient.connect()]);
-
-//     redisConnected = true;
-//     console.log("✅ Socket.IO Redis clients connected successfully");
-
-//     // Set up Socket.IO adapter
-//     io.adapter(createAdapter(pubClient, subClient));
-//     console.log("✅ Redis adapter connected for Socket.IO");
-//   } catch (err) {
-//     console.error("❌ Failed to connect Socket.IO Redis:", err);
-//     redisConnected = false;
-//     throw err;
-//   }
-// };
-
-// // Export a function to check Redis status (for Socket.IO)
-// export const isRedisConnected = (): boolean => {
-//   return redisConnected;
-// };
-
-// // Initialize Socket.IO server
-// const io = new Server(httpServer, {
-//   cors: {
-//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-//     credentials: true,
-//     methods: ["GET", "POST"],
-//   },
-//   path: "/socket.io/",
-// });
-
-// // Define namespaces
-// const chatNamespace = io.of("/chat");
-// const videoNamespace = io.of("/video");
-// const notificationNamespace = io.of("/notifications");
-// adminController.setSocketIO(io);
-// setIO(io);
-// app.use("/admin/queues", serverAdapter.getRouter());
-// // Middleware
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-//     credentials: true,
-//     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization", "Stripe-Signature"],
-//   })
-// );
-
-// app.use("/stripe/api/webhook", express.raw({ type: "application/json" }));
-// app.use(express.json());
-// app.use(cookieParser());
-// app.use(morgan("dev"));
-// app.use(compression());
-// app.use("/uploads", express.static("uploads"));
-
-// // Multer setup
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => cb(null, "uploads/"),
-//   filename: (req, file, cb) =>
-//     cb(null, Date.now() + path.extname(file.originalname)),
-// });
-
-// // Add health check endpoint
-// app.get("/health", async (req, res) => {
-//   try {
-//     // Dynamically import token service for health check
-//     const { default: RedisTokenService } = await import(
-//       "./services/implementations/RedisTokenService"
-//     );
-
-//     res.json({
-//       status: "ok",
-//       socketIORedis: isRedisConnected(),
-//       timestamp: new Date().toISOString(),
-//     });
-//   } catch (error) {
-//     res.json({
-//       status: "partial",
-//       socketIORedis: isRedisConnected(),
-//       tokenServiceError: error.message,
-//       timestamp: new Date().toISOString(),
-//     });
-//   }
-// });
-
-// // Routes
-// app.use("/", router);
-
-// app.get("/*", function (req, res) {
-//   res.sendFile(
-//     path.join(__dirname, "../../Frontend/index.html"),
-//     function (err) {
-//       if (err) {
-//         res.status(500).send("something wrong");
-//       }
-//     }
-//   );
-// });
-
-// // Main initialization function
-// const startServer = async (): Promise<void> => {
-//   try {
-//     console.log("🚀 Starting server initialization...");
-
-//     // 1. Connect to database
-//     console.log("📄 Connecting to database...");
-//     await connectDatabase();
-//     console.log("✅ Database connected");
-
-//     // 2. Initialize Redis connections for Socket.IO
-//     console.log("🔧 Initializing Socket.IO Redis...");
-//     await initializeRedis();
-//     console.log("✅ Socket.IO Redis initialized");
-
-//     // 3. Test token service Redis connection (optional - will initialize on first use)
-//     console.log("🔧 Token service will initialize on first use...");
-
-//     // 4. Initialize Socket.IO namespaces
-//     console.log("🌐 Initializing Socket.IO namespaces...");
-
-//     const { initializeChatSocket } = await import("./utils/socket/chat");
-//     const { initializeVideoSocket } = await import("./utils/socket/videoCall");
-//     const { initializeNotificationSocket } = await import(
-//       "./utils/socket/notification"
-//     );
-
-//     await initializeChatSocket(chatNamespace);
-//     console.log("✅ Socket.IO /chat namespace initialized");
-
-//     await initializeVideoSocket(videoNamespace);
-//     console.log("✅ Socket.IO /video namespace initialized");
-
-//     await initializeNotificationSocket(notificationNamespace);
-//     console.log("✅ Socket.IO /notifications namespace initialized");
-
-//     // 5. Start HTTP server
-//     const PORT = process.env.PORT || 5002;
-//     httpServer.listen(PORT, () => {
-//       console.log(`🚀 Server running on port ${PORT}`);
-//       console.log("🌍 Environment:", process.env.NODE_ENV || "development");
-//       console.log("🎯 Frontend URL:", process.env.FRONTEND_URL);
-//       console.log("✅ All services initialized successfully");
-//       console.log("🔗 Health check: http://localhost:" + PORT + "/health");
-//       console.log(
-//         "🔗 Admin login: http://localhost:" + PORT + "/admin/auth/login"
-//       );
-//     });
-//   } catch (error) {
-//     console.error("❌ Failed to start server:", error);
-//     process.exit(1);
-//   }
-// };
-// console.log("🚀 Server started");
-// console.log(
-//   "📊 Bull Dashboard available at: http://localhost:3000/admin/queues"
-// );
-// // Graceful shutdown
-// const gracefulShutdown = async (signal: string): Promise<void> => {
-//   console.log(`${signal} received, shutting down gracefully`);
-//   try {
-//     // Try to disconnect token service gracefully
-//     try {
-//       const { default: RedisTokenService } = await import(
-//         "./services/implementations/RedisTokenService"
-//       );
-//       console.log("🔧 Disconnecting token service...");
-//       await RedisTokenService.disconnect();
-//     } catch (tokenError) {
-//       console.warn(
-//         "⚠️ Could not disconnect token service:",
-//         tokenError.message
-//       );
-//     }
-
-//     // Close Socket.IO Redis connections
-//     console.log("🔧 Disconnecting Socket.IO Redis...");
-//     await Promise.all([pubClient.quit(), subClient.quit()]);
-
-//     // Close HTTP server
-//     console.log("🔧 Closing HTTP server...");
-//     httpServer.close();
-
-//     console.log("✅ Graceful shutdown completed");
-//     process.exit(0);
-//   } catch (error) {
-//     console.error("❌ Error during shutdown:", error);
-//     process.exit(1);
-//   }
-// };
-
-// process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-// process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-
-// // Start the server
-// startServer().catch((error) => {
-//   console.error("❌ Failed to start server:", error);
-//   process.exit(1);
-// });
 import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
@@ -395,10 +120,14 @@ app.use("/admin/queues", serverAdapter.getRouter());
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+      "http://localhost:5173",
+      "http://localhost:5174" // Add port 5174 for video requests
+    ],
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Stripe-Signature"],
+    allowedHeaders: ["Content-Type", "Authorization", "Stripe-Signature", "X-Session-Token", "Range"],
   })
 );
 
@@ -434,6 +163,12 @@ app.get("/health", async (req, res) => {
       status: "ok",
       socketIORedis: isRedisConnected(),
       timestamp: new Date().toISOString(),
+      environment: {
+        AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID ? "✅ SET" : "❌ MISSING",
+        AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME ? "✅ SET" : "❌ MISSING",
+        MONGO_URI: process.env.MONGO_URI ? "✅ SET" : "❌ MISSING",
+        FRONTEND_URL: process.env.FRONTEND_URL ? "✅ SET" : "❌ MISSING",
+      }
     });
   } catch (error) {
     res.json({
@@ -441,6 +176,12 @@ app.get("/health", async (req, res) => {
       socketIORedis: isRedisConnected(),
       tokenServiceError: error.message,
       timestamp: new Date().toISOString(),
+      environment: {
+        AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID ? "✅ SET" : "❌ MISSING",
+        AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME ? "✅ SET" : "❌ MISSING",
+        MONGO_URI: process.env.MONGO_URI ? "✅ SET" : "❌ MISSING",
+        FRONTEND_URL: process.env.FRONTEND_URL ? "✅ SET" : "❌ MISSING",
+      }
     });
   }
 });

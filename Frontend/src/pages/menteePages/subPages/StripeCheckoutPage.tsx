@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import PaymentMethods from "@/components/payments/PaymentForm";
 import CardForm from "@/components/payments/CardForm";
-import { ChevronLeft, Lock } from "lucide-react";
+import { ChevronLeft, Lock, CheckCircle, XCircle } from "lucide-react";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import toast from "react-hot-toast";
 
 interface Service {
   _id?: string;
@@ -52,6 +54,10 @@ export default function StripeCheckoutPage({
   const [paymentMethod, setPaymentMethod] = useState<
     "card" | "gpay" | "amazon" | "upi"
   >("card");
+  const [paymentStatus, setPaymentStatus] = useState<
+    "idle" | "processing" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const platformCharge = Math.round(Number(service.amount) * 0.15);
   const totalAmount = Number(service.amount) + platformCharge;
@@ -60,8 +66,30 @@ export default function StripeCheckoutPage({
     ? format(new Date(selectedDate), "d MMMM yyyy")
     : "N/A";
 
-  const handlePay = () => {
-    // Static UI, no action
+  const handlePaymentSuccess = (paymentResult: any) => {
+    console.log("Payment successful:", paymentResult);
+    setPaymentStatus("success");
+    setErrorMessage(null);
+    
+    toast.success("Payment successful! Redirecting to bookings...");
+    
+    // Redirect to bookings page after success
+    setTimeout(() => {
+      navigate("/seeker/bookings");
+    }, 2000);
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error("Payment error:", error);
+    setPaymentStatus("error");
+    setErrorMessage(error);
+    
+    toast.error(`Payment failed: ${error}`);
+  };
+
+  const handlePaymentProcessing = () => {
+    setPaymentStatus("processing");
+    setErrorMessage(null);
   };
 
   return (
@@ -70,10 +98,30 @@ export default function StripeCheckoutPage({
         variant="ghost"
         className="mb-6 pl-2 text-blue-600 hover:text-blue-700"
         onClick={() => navigate("/seeker/mentorservice")}
+        disabled={paymentStatus === "processing"}
       >
         <ChevronLeft className="h-4 w-4 mr-1" />
         Back
       </Button>
+
+      {/* Payment Status Alert */}
+      {paymentStatus === "success" && (
+        <Alert className="mb-6 border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Payment successful! You will be redirected to your bookings shortly.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {paymentStatus === "error" && errorMessage && (
+        <Alert variant="destructive" className="mb-6">
+          <XCircle className="h-4 w-4" />
+          <AlertDescription>
+            Payment failed: {errorMessage}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Payment Form Section */}
@@ -95,12 +143,12 @@ export default function StripeCheckoutPage({
                     <span>, 1-click checkout</span>
                   </div>
 
-                  <CardForm onSubmit={handlePay} />
-
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6">
-                    <Lock className="h-4 w-4" />
-                    Payments are secure and encrypted
-                  </div>
+                  <CardForm 
+                    amount={totalAmount}
+                    currency="INR"
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
                 </>
               )}
 

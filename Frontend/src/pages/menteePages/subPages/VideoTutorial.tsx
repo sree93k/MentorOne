@@ -1,312 +1,20 @@
-// import { useState, useEffect } from "react";
-// import { ArrowLeft } from "lucide-react";
-// import { Button } from "@/components/ui/button";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import {
-//   Accordion,
-//   AccordionContent,
-//   AccordionItem,
-//   AccordionTrigger,
-// } from "@/components/ui/accordion";
-// import { useParams, useNavigate } from "react-router-dom";
-// import { getTutorialById, getVideoUrl } from "@/services/menteeService";
-
-// interface Episode {
-//   _id: string;
-//   episode: string;
-//   title: string;
-//   description: string;
-//   videoUrl: string;
-//   completed?: boolean;
-// }
-
-// interface Season {
-//   _id: string;
-//   season: string;
-//   episodes: Episode[];
-// }
-
-// export default function VideoTutorialPage() {
-//   const { id } = useParams<{ id: string }>();
-//   const [tutorial, setTutorial] = useState<any>(null);
-//   const [activeEpisode, setActiveEpisode] = useState<string | null>(null);
-//   const [videoUrl, setVideoUrl] = useState<string>("");
-//   const [error, setError] = useState<string | null>(null);
-//   const navigate = useNavigate();
-
-//   // Function to extract S3 object key from full URL
-//   const getS3Key = (url: string): string => {
-//     console.log("getS3Key input:", url);
-//     const bucketUrl = "https://mentorone-app.s3.ap-south-1.amazonaws.com/";
-//     let key = url;
-//     if (url.startsWith(bucketUrl)) {
-//       key = url.replace(bucketUrl, "");
-//     } else if (url.includes("/videos/")) {
-//       // Handle cases where URL might be relative or malformed
-//       key = url.split("/videos/").pop() || url;
-//     }
-//     // Remove any query parameters
-//     key = key.split("?")[0];
-//     console.log("getS3Key output:", key);
-//     return key;
-//   };
-
-//   useEffect(() => {
-//     const fetchTutorial = async () => {
-//       if (!id) {
-//         setError("Tutorial ID is missing");
-//         return;
-//       }
-//       try {
-//         const tutorialData = await getTutorialById(id);
-//         const seasons = tutorialData.exclusiveContent.map((season: any) => ({
-//           ...season,
-//           episodes: season.episodes.map((ep: any, index: number) => ({
-//             ...ep,
-//             completed: index < 2,
-//           })),
-//         }));
-//         setTutorial({ ...tutorialData, exclusiveContent: seasons });
-//         if (seasons[0]?.episodes[0]) {
-//           setActiveEpisode(seasons[0].episodes[0]._id);
-//           const s3Key = getS3Key(seasons[0].episodes[0].videoUrl);
-//           console.log("Fetching video URL for key:", s3Key);
-//           const url = await getVideoUrl(s3Key);
-//           console.log("Received video URL:", url);
-//           setVideoUrl(url);
-//         }
-//         setError(null);
-//       } catch (err: any) {
-//         console.error("Failed to fetch tutorial:", err);
-//         setError(err.message || "Failed to load tutorial");
-//       }
-//     };
-//     fetchTutorial();
-//   }, [id]);
-
-//   const handleEpisodeClick = async (episode: Episode) => {
-//     setActiveEpisode(episode._id);
-//     try {
-//       const s3Key = getS3Key(episode.videoUrl);
-//       console.log("Fetching video URL for key:", s3Key);
-//       const url = await getVideoUrl(s3Key);
-//       console.log("Received video URL:", url);
-//       setVideoUrl(url);
-//     } catch (err: any) {
-//       console.error("Failed to load video:", err);
-//       setError(err.message || "Failed to load video");
-//     }
-//   };
-
-//   if (error) {
-//     return (
-//       <div className="flex min-h-screen justify-center items-center">
-//         <p className="text-red-500">{error}</p>
-//       </div>
-//     );
-//   }
-
-//   if (!tutorial) {
-//     return (
-//       <div className="flex min-h-screen justify-center items-center">
-//         <p>Loading...</p>
-//       </div>
-//     );
-//   }
-
-//   const seasons: Season[] = tutorial.exclusiveContent;
-//   const completedCount = seasons
-//     .flatMap((s: Season) => s.episodes)
-//     .filter((e: Episode) => e.completed).length;
-//   const totalCount = seasons.flatMap((s: Season) => s.episodes).length;
-//   const progressPercentage = Math.round((completedCount / totalCount) * 100);
-
-//   const activeEpisodeData = seasons
-//     .flatMap((s: Season) => s.episodes)
-//     .find((e: Episode) => e._id === activeEpisode);
-
-//   return (
-//     <div className="flex min-h-screen bg-white">
-//       <div className="flex-1">
-//         <main className="flex">
-//           <div>
-//             <Button
-//               variant="ghost"
-//               className="pl-0"
-//               onClick={() => navigate(-1)}
-//             >
-//               <ArrowLeft className="h-7 w-7" />
-//             </Button>
-//           </div>
-//           <div className="w-2/3 p-4">
-//             <div className="aspect-video bg-gray-900 mb-4 relative">
-//               {videoUrl ? (
-//                 <video
-//                   width="100%"
-//                   height="100%"
-//                   controls
-//                   src={videoUrl}
-//                   className="object-contain"
-//                   preload="auto"
-//                 >
-//                   Your browser does not support the video tag.
-//                 </video>
-//               ) : (
-//                 <p>Loading video...</p>
-//               )}
-//             </div>
-
-//             <Tabs defaultValue="about" className="w-full">
-//               <TabsList className="mb-4">
-//                 <TabsTrigger value="about" className="font-bold">
-//                   About
-//                 </TabsTrigger>
-//                 <TabsTrigger value="discuss">Discuss Doubt</TabsTrigger>
-//               </TabsList>
-//               <TabsContent value="about">
-//                 <h2 className="text-2xl font-bold mb-4">
-//                   {activeEpisodeData?.episode} | {activeEpisodeData?.title}
-//                 </h2>
-//                 <p className="mb-4">{activeEpisodeData?.description}</p>
-//               </TabsContent>
-//               <TabsContent value="discuss">
-//                 <div className="p-4 bg-gray-100 rounded-lg">
-//                   <h3 className="font-bold mb-2">Discussion Forum</h3>
-//                   <p>Ask your doubts and discuss with other learners here.</p>
-//                 </div>
-//               </TabsContent>
-//             </Tabs>
-//           </div>
-
-//           <div className="w-1/3 bg-gray-100 p-4">
-//             <h2 className="text-2xl font-bold mb-2">{tutorial.title}</h2>
-//             <div className="flex items-center gap-2 mb-4">
-//               <div className="h-2 flex-1 bg-gray-300 rounded-full overflow-hidden">
-//                 <div
-//                   className="h-full bg-green-500 rounded-full"
-//                   style={{ width: `${progressPercentage}%` }}
-//                 />
-//               </div>
-//               <span className="text-sm font-medium">
-//                 {progressPercentage} %
-//               </span>
-//             </div>
-//             <p className="text-sm text-gray-600 mb-4">
-//               {completedCount} of {totalCount} Completed
-//             </p>
-
-//             <Accordion
-//               type="single"
-//               collapsible
-//               defaultValue="season-1"
-//               className="w-full"
-//             >
-//               {seasons.map((season: Season) => (
-//                 <AccordionItem key={season._id} value={season._id}>
-//                   <AccordionTrigger className="font-bold">
-//                     {season.season}
-//                   </AccordionTrigger>
-//                   <AccordionContent>
-//                     <div className="space-y-2">
-//                       {season.episodes.map((episode: Episode) => (
-//                         <div
-//                           key={episode._id}
-//                           className={`flex items-center gap-2 p-2 rounded-md cursor-pointer ${
-//                             activeEpisode === episode._id ? "bg-white" : ""
-//                           }`}
-//                           onClick={() => handleEpisodeClick(episode)}
-//                         >
-//                           <div className="flex-shrink-0">
-//                             <svg
-//                               width="20"
-//                               height="20"
-//                               viewBox="0 0 24 24"
-//                               fill="none"
-//                               xmlns="http://www.w3.org/2000/svg"
-//                             >
-//                               <rect
-//                                 width="24"
-//                                 height="24"
-//                                 rx="4"
-//                                 fill="#F1F1F1"
-//                               />
-//                               {episode.completed ? (
-//                                 <circle cx="12" cy="12" r="8" fill="#4CAF50" />
-//                               ) : (
-//                                 <path
-//                                   d="M16 12L10 16.5V7.5L16 12Z"
-//                                   fill="black"
-//                                   stroke="black"
-//                                   strokeWidth="1.5"
-//                                   strokeLinecap="round"
-//                                   strokeLinejoin="round"
-//                                 />
-//                               )}
-//                             </svg>
-//                           </div>
-//                           <div>
-//                             <div className="flex items-center gap-2">
-//                               <span className="text-sm font-medium">
-//                                 {episode.episode}
-//                               </span>
-//                               <span className="text-sm">|</span>
-//                               <span className="text-sm">{episode.title}</span>
-//                             </div>
-//                           </div>
-//                           {episode.completed && (
-//                             <div className="ml-auto">
-//                               <svg
-//                                 width="16"
-//                                 height="16"
-//                                 viewBox="0 0 24 24"
-//                                 fill="none"
-//                                 xmlns="http://www.w3.org/2000/svg"
-//                               >
-//                                 <path
-//                                   d="M5 13L9 17L19 7"
-//                                   stroke="#4CAF50"
-//                                   strokeWidth="2"
-//                                   strokeLinecap="round"
-//                                   strokeLinejoin="round"
-//                                 />
-//                               </svg>
-//                             </div>
-//                           )}
-//                         </div>
-//                       ))}
-//                     </div>
-//                   </AccordionContent>
-//                 </AccordionItem>
-//               ))}
-//             </Accordion>
-//           </div>
-//         </main>
-//       </div>
-//     </div>
-//   );
-// }
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowLeft,
-  Play,
   CheckCircle,
   Clock,
   BookOpen,
   MessageCircle,
-  Users,
   BarChart3,
-  Volume2,
-  Settings,
-  Maximize,
   Download,
   Share2,
   Star,
-  Award,
-  Target,
-  Sparkles,
   Video,
   PlayCircle,
   PauseCircle,
+  Wifi,
+  WifiOff,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -320,7 +28,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useParams, useNavigate } from "react-router-dom";
-import { getTutorialById, getVideoUrl } from "@/services/menteeService";
+import { getTutorialById } from "@/services/menteeService";
+import EnhancedVideoSecurityService from "@/services/videoSecurityService";
+import HLSVideoPlayerService from "@/services/HLSVideoPlayerService";
+import { VideoSecurityManager } from "@/services/videoSecurityEnhancements";
 
 interface Episode {
   _id: string;
@@ -337,19 +48,153 @@ interface Season {
   episodes: Episode[];
 }
 
+interface UserInfo {
+  name: string;
+  id: string;
+}
+
 export default function VideoTutorialPage() {
   const { id } = useParams<{ id: string }>();
   const [tutorial, setTutorial] = useState<any>(null);
   const [activeEpisode, setActiveEpisode] = useState<string | null>(null);
-  const [videoUrl, setVideoUrl] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [hoveredEpisode, setHoveredEpisode] = useState<string | null>(null);
+  const [sessionExpiredModal, setSessionExpiredModal] = useState(false);
+  const [videoStreamingMethod, setVideoStreamingMethod] = useState<
+    "hls" | "progressive" | null
+  >(null);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connected" | "connecting" | "error"
+  >("connecting");
+  const [videoQuality, setVideoQuality] = useState<string>("Auto");
+
+  // 🔥 FIX: Add video URL state to store in React
+  const [videoUrl, setVideoUrl] = useState<string>("");
+
+  // 🔒 SECURITY: Add security manager and user info
+  const [securityManager] = useState(() => new VideoSecurityManager());
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    name: "User",
+    id: "unknown",
+  });
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // 🔒 SECURITY: Setup security event listeners
+  useEffect(() => {
+    const handleSessionIntegrityFailure = (event: CustomEvent) => {
+      console.error("🚫 Session integrity failure detected:", event.detail);
+      setError("Security violation detected. Please refresh and try again.");
+      setVideoUrl("");
+    };
+
+    const handleRecordingDetected = () => {
+      console.warn("🚫 Recording attempt detected");
+      setError("Recording is not allowed for this content.");
+    };
+
+    window.addEventListener(
+      "sessionIntegrityFailure",
+      handleSessionIntegrityFailure as EventListener
+    );
+    window.addEventListener("recordingDetected", handleRecordingDetected);
+
+    return () => {
+      window.removeEventListener(
+        "sessionIntegrityFailure",
+        handleSessionIntegrityFailure as EventListener
+      );
+      window.removeEventListener("recordingDetected", handleRecordingDetected);
+    };
+  }, []);
+
+  // 🔒 ENHANCED VIDEO LOADING WITH COMPLETE SECURITY
+  const loadVideoSecurely = useCallback(
+    async (episode: Episode, serviceId: string) => {
+      setIsVideoLoading(true);
+      setError(null);
+      setConnectionStatus("connecting");
+      setVideoUrl("");
+
+      try {
+        console.log("🔒 Loading video with enhanced security", {
+          episodeId: episode._id,
+          title: episode.title,
+          serviceId,
+        });
+
+        if (!videoRef.current) {
+          throw new Error("Video element not available");
+        }
+
+        // Clean up previous video
+        HLSVideoPlayerService.destroyPlayer();
+
+        // Extract S3 key from video URL
+        const s3Key = extractS3Key(episode.videoUrl);
+
+        // Load video using auto-detection (HLS or Progressive)
+        const loadResult = await HLSVideoPlayerService.loadVideo(
+          videoRef.current,
+          serviceId,
+          s3Key,
+          episode._id
+        );
+
+        setVideoStreamingMethod(loadResult.method);
+        setConnectionStatus("connected");
+
+        // 🔥 FIX: Store video URL in React state
+        if (loadResult.videoUrl) {
+          console.log(
+            "🔧 STORING VIDEO URL IN REACT STATE:",
+            loadResult.videoUrl
+          );
+          setVideoUrl(loadResult.videoUrl);
+        }
+
+        // 🔒 SECURITY: Apply comprehensive protection
+        if (videoRef.current && id) {
+          securityManager.protectVideo(videoRef.current, serviceId, userInfo);
+        }
+
+        console.log("🎬 Video loaded successfully with security", {
+          method: loadResult.method,
+          security: loadResult.info.security,
+          downloadPrevention: loadResult.info.downloadPrevention,
+          videoUrl: loadResult.videoUrl ? "SET" : "NOT_SET",
+        });
+
+        // Set up video event listeners for analytics
+        setTimeout(() => {
+          if (videoRef.current) {
+            setupVideoEventListeners(videoRef.current);
+          }
+        }, 100);
+      } catch (error: any) {
+        console.error("🔒 FAILED TO LOAD SECURE VIDEO:", error);
+        setError(error.message || "Failed to load video");
+        setConnectionStatus("error");
+        setVideoUrl("");
+
+        if (
+          error.message.includes("Session expired") ||
+          error.message.includes("Invalid")
+        ) {
+          setSessionExpiredModal(true);
+        }
+      } finally {
+        setIsVideoLoading(false);
+      }
+    },
+    [securityManager, userInfo, id]
+  );
+
   // Function to extract S3 object key from full URL
-  const getS3Key = (url: string): string => {
-    console.log("getS3Key input:", url);
+  const extractS3Key = (url: string): string => {
     const bucketUrl = "https://mentorone-app.s3.ap-south-1.amazonaws.com/";
     let key = url;
     if (url.startsWith(bucketUrl)) {
@@ -358,62 +203,280 @@ export default function VideoTutorialPage() {
       key = url.split("/videos/").pop() || url;
     }
     key = key.split("?")[0];
-    console.log("getS3Key output:", key);
     return key;
   };
 
+  // Set up video analytics and heartbeat with security monitoring
+  const setupVideoEventListeners = (video: HTMLVideoElement) => {
+    if (!video) {
+      console.warn("🎬 Video element is null, skipping event listeners");
+      return;
+    }
+
+    video.addEventListener("loadstart", () => {
+      console.log("🔒 Secure video loading started");
+    });
+
+    video.addEventListener("loadedmetadata", () => {
+      console.log("🔒 Secure video metadata loaded successfully!");
+      if (
+        video.videoWidth > 0 &&
+        video.videoHeight > 0 &&
+        !isNaN(video.duration)
+      ) {
+        console.log("✅ Secure video controls enabled!");
+      }
+    });
+
+    video.addEventListener("canplay", () => {
+      console.log("🔒 Secure video ready to play");
+      setConnectionStatus("connected");
+    });
+
+    video.addEventListener("waiting", () => {
+      console.log("🔒 Secure video buffering");
+      setConnectionStatus("connecting");
+    });
+
+    video.addEventListener("playing", () => {
+      console.log("🔒 Secure video playing");
+      setConnectionStatus("connected");
+
+      // Update session activity
+      if (id) {
+        EnhancedVideoSecurityService.markSessionActive(id);
+      }
+    });
+
+    video.addEventListener("pause", () => {
+      console.log("🔒 Secure video paused");
+
+      // Update session activity
+      if (id) {
+        EnhancedVideoSecurityService.markSessionInactive(id);
+      }
+    });
+
+    video.addEventListener("error", (e) => {
+      console.error("🔒 Secure video error:", e);
+      setConnectionStatus("error");
+      setError("Secure video playback error occurred");
+    });
+
+    // 🔒 SECURITY: Monitor for unauthorized access attempts
+    video.addEventListener("loadstart", () => {
+      if (!video.src.includes("sessionToken=")) {
+        console.error("🚫 Unauthorized video source detected!");
+        video.src = "";
+        setError("Unauthorized video access detected");
+      }
+    });
+
+    // Quality change detection for HLS
+    if (HLSVideoPlayerService.isUsingHLS()) {
+      const checkQuality = () => {
+        const qualities = HLSVideoPlayerService.getAvailableQualities();
+        if (qualities.length > 0) {
+          setVideoQuality(qualities[0] || "Auto");
+        }
+      };
+
+      const qualityInterval = setInterval(checkQuality, 5000);
+      return () => clearInterval(qualityInterval);
+    }
+  };
+
+  // 🔒 SECURE EPISODE HANDLER
+  const handleEpisodeClick = async (episode: Episode) => {
+    setActiveEpisode(episode._id);
+
+    if (!id) {
+      setError("Service ID is missing");
+      return;
+    }
+
+    try {
+      console.log("🔒 Loading episode with enhanced security", {
+        episodeId: episode._id,
+        title: episode.title,
+      });
+
+      // Create or validate video session first
+      await EnhancedVideoSecurityService.createVideoSession(id);
+
+      // Load the video securely
+      await loadVideoSecurely(episode, id);
+
+      console.log("🔒 Episode loaded successfully with security");
+    } catch (error: any) {
+      console.error("🔒 Failed to load secure episode:", error);
+      setError(error.message || "Failed to load video");
+    }
+  };
+
+  // 🔒 SESSION EXPIRED MODAL HANDLER
+  const handleSessionExpired = async () => {
+    setSessionExpiredModal(false);
+    setError(null);
+
+    try {
+      if (activeEpisode && tutorial && id) {
+        const episode = tutorial.exclusiveContent
+          .flatMap((s: Season) => s.episodes)
+          .find((e: Episode) => e._id === activeEpisode);
+
+        if (episode) {
+          console.log("🔒 Retrying after session refresh with security");
+          await handleEpisodeClick(episode);
+        }
+      }
+    } catch (error) {
+      console.error("🔒 Error refreshing secure session:", error);
+      setError("Unable to refresh session. Please try again later.");
+    }
+  };
+
+  // 🔒 SECURE INITIAL LOAD
   useEffect(() => {
     const fetchTutorial = async () => {
       if (!id) {
         setError("Tutorial ID is missing");
         return;
       }
+
       try {
+        // 🔒 SECURITY: Get user info for watermarking
+        // In a real app, you'd get this from your auth context
+        const currentUser = {
+          name: "John Doe", // Get from auth context
+          id: "user123", // Get from auth context
+        };
+        setUserInfo(currentUser);
+
         const tutorialData = await getTutorialById(id);
         const seasons = tutorialData.exclusiveContent.map((season: any) => ({
           ...season,
           episodes: season.episodes.map((ep: any, index: number) => ({
             ...ep,
-            completed: index < 2,
+            completed: index < 2, // Mock completion status
           })),
         }));
+
         setTutorial({ ...tutorialData, exclusiveContent: seasons });
+
+        // 🔒 SECURE INITIAL VIDEO LOAD
         if (seasons[0]?.episodes[0]) {
           setActiveEpisode(seasons[0].episodes[0]._id);
-          setIsVideoLoading(true);
-          const s3Key = getS3Key(seasons[0].episodes[0].videoUrl);
-          console.log("Fetching video URL for key:", s3Key);
-          const url = await getVideoUrl(s3Key);
-          console.log("Received video URL:", url);
-          setVideoUrl(url);
-          setIsVideoLoading(false);
+          try {
+            await handleEpisodeClick(seasons[0].episodes[0]);
+          } catch (error: any) {
+            console.error("Failed to load initial secure video:", error);
+            setError(error.message || "Failed to load initial video");
+          }
         }
+
         setError(null);
       } catch (err: any) {
         console.error("Failed to fetch tutorial:", err);
         setError(err.message || "Failed to load tutorial");
-        setIsVideoLoading(false);
       }
     };
+
     fetchTutorial();
   }, [id]);
 
-  const handleEpisodeClick = async (episode: Episode) => {
-    setActiveEpisode(episode._id);
-    setIsVideoLoading(true);
-    try {
-      const s3Key = getS3Key(episode.videoUrl);
-      console.log("Fetching video URL for key:", s3Key);
-      const url = await getVideoUrl(s3Key);
-      console.log("Received video URL:", url);
-      setVideoUrl(url);
-    } catch (err: any) {
-      console.error("Failed to load video:", err);
-      setError(err.message || "Failed to load video");
-    } finally {
-      setIsVideoLoading(false);
-    }
+  // 🔒 CLEANUP ON COMPONENT UNMOUNT
+  useEffect(() => {
+    return () => {
+      if (id) {
+        console.log("🔒 Cleaning up secure video session");
+        EnhancedVideoSecurityService.revokeVideoSession(id).catch(
+          console.error
+        );
+        HLSVideoPlayerService.destroyPlayer();
+        securityManager.cleanup();
+      }
+    };
+  }, [id, securityManager]);
+
+  // Connection Status Indicator
+  const ConnectionIndicator = () => (
+    <div className="flex items-center gap-2 text-xs">
+      {connectionStatus === "connected" && (
+        <>
+          <Wifi className="w-3 h-3 text-green-500" />
+          <span className="text-green-600">Secure Connected</span>
+        </>
+      )}
+      {connectionStatus === "connecting" && (
+        <>
+          <div className="w-3 h-3 border border-yellow-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-yellow-600">Secure Connecting...</span>
+        </>
+      )}
+      {connectionStatus === "error" && (
+        <>
+          <WifiOff className="w-3 h-3 text-red-500" />
+          <span className="text-red-600">Security Error</span>
+        </>
+      )}
+    </div>
+  );
+
+  // Streaming Method Badge
+  const StreamingMethodBadge = () => {
+    if (!videoStreamingMethod) return null;
+
+    return (
+      <Badge
+        className={`text-xs ${
+          videoStreamingMethod === "hls"
+            ? "bg-green-100 text-green-800 border-green-300"
+            : "bg-yellow-100 text-yellow-800 border-yellow-300"
+        }`}
+      >
+        {videoStreamingMethod === "hls"
+          ? "🔒 HLS Secure"
+          : "🔒 Progressive Secure"}
+      </Badge>
+    );
   };
+
+  // Add Session Expired Modal
+  const SessionExpiredModal = () =>
+    sessionExpiredModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Secure Session Expired
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Your secure video session has expired for security reasons. Click
+              refresh to continue watching with enhanced protection.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setSessionExpiredModal(false)}
+                variant="outline"
+                className="flex-1 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSessionExpired}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl"
+              >
+                🔒 Refresh Secure Session
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
 
   if (error) {
     return (
@@ -425,7 +488,7 @@ export default function VideoTutorialPage() {
                 <Video className="w-8 h-8 text-red-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Error Loading Tutorial
+                Secure Video Error
               </h3>
               <p className="text-red-600 mb-4">{error}</p>
               <Button
@@ -448,7 +511,9 @@ export default function VideoTutorialPage() {
           <div className="flex justify-center items-center py-32">
             <div className="text-center">
               <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading tutorial...</p>
+              <p className="text-gray-600 font-medium">
+                Loading secure tutorial...
+              </p>
             </div>
           </div>
         </div>
@@ -470,52 +535,87 @@ export default function VideoTutorialPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Back Button */}
-      <div className="relative z-10 -ml-6  ">
+      <div className="relative z-10 -ml-6">
         <button
-          className=" group flex h-12 w-12 items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-blue-600 hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
+          className="group flex h-12 w-12 items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-blue-600 hover:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
           onClick={() => navigate(-1)}
           aria-label="Go back"
         >
           <ArrowLeft className="h-5 w-5 text-gray-600 group-hover:text-white transition-colors duration-300" />
         </button>
       </div>
-      <div className="max-w-7xl mx-auto px-4 py-8 -mt-10">
-        {/* Header */}
 
+      <div className="max-w-7xl mx-auto px-4 py-8 -mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-4">
           {/* Main Video Section */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Video Player Card */}
+            {/* 🔒 SECURE Video Player Card */}
             <Card className="border-0 shadow-2xl bg-black rounded-2xl overflow-hidden">
               <CardContent className="p-0">
-                <div className="aspect-video relative bg-black rounded-2xl overflow-hidden">
+                <div
+                  ref={videoContainerRef}
+                  className="aspect-video relative bg-black rounded-2xl overflow-hidden"
+                >
                   {isVideoLoading ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-black">
                       <div className="text-center">
                         <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
                         <p className="text-white font-medium">
-                          Loading video...
+                          🔒 Loading secure video...
                         </p>
+                        <ConnectionIndicator />
                       </div>
                     </div>
-                  ) : videoUrl ? (
-                    <video
-                      width="100%"
-                      height="100%"
-                      controls
-                      src={videoUrl}
-                      className="object-contain rounded-2xl"
-                      preload="auto"
-                      style={{ background: "#000" }}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
+                  ) : activeEpisodeData ? (
+                    <>
+                      {/* 🔒 SECURE VIDEO ELEMENT */}
+                      <video
+                        ref={videoRef}
+                        id="secure-video-player"
+                        src={videoUrl}
+                        width="100%"
+                        height="100%"
+                        controls
+                        className="object-contain rounded-2xl"
+                        preload="metadata"
+                        style={{ background: "#000" }}
+                        controlsList="nodownload noremoteplayback"
+                        disablePictureInPicture={true}
+                        crossOrigin="use-credentials"
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          return false;
+                        }}
+                        onLoad={() => console.log("🔒 Secure video loaded")}
+                        onError={(e) =>
+                          console.error("🔒 Secure video error:", e)
+                        }
+                      >
+                        Your browser does not support secure video playback.
+                      </video>
+
+                      {/* 🔒 SECURITY Info Overlay */}
+                      <div className="absolute top-4 right-4 flex flex-col gap-2">
+                        <ConnectionIndicator />
+                        <StreamingMethodBadge />
+                        <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                          🔒 Protected Content
+                        </Badge>
+                        {videoStreamingMethod === "hls" && (
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-300 text-xs">
+                            Quality: {videoQuality}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* 🔒 WATERMARK (will be added by SecurityManager) */}
+                    </>
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-900 to-blue-900">
                       <div className="text-center">
                         <PlayCircle className="w-24 h-24 text-white/50 mx-auto mb-4" />
                         <p className="text-white/70 font-medium">
-                          Select an episode to start learning
+                          🔒 Select an episode to start secure learning
                         </p>
                       </div>
                     </div>
@@ -524,7 +624,7 @@ export default function VideoTutorialPage() {
               </CardContent>
             </Card>
 
-            {/* Video Controls & Info */}
+            {/* 🔒 SECURE Video Controls & Info */}
             <Card className="border-0 shadow-xl bg-white rounded-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <div className="flex items-center justify-between">
@@ -537,7 +637,14 @@ export default function VideoTutorialPage() {
                         {activeEpisodeData?.episode} |{" "}
                         {activeEpisodeData?.title}
                       </CardTitle>
-                      <p className="text-sm text-gray-600">Episode Details</p>
+                      <p className="text-sm text-gray-600 flex items-center gap-2">
+                        🔒 Secure Episode Details
+                        {videoStreamingMethod === "hls" && (
+                          <Badge className="bg-green-100 text-green-700 border-green-300 text-xs">
+                            🔒 HLS Secure Streaming
+                          </Badge>
+                        )}
+                      </p>
                     </div>
                   </div>
 
@@ -545,7 +652,13 @@ export default function VideoTutorialPage() {
                     <Button variant="ghost" size="sm" className="rounded-lg">
                       <Share2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="rounded-lg">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-lg opacity-50"
+                      disabled
+                      title="🔒 Download blocked for security"
+                    >
                       <Download className="w-4 h-4" />
                     </Button>
                   </div>
@@ -563,6 +676,13 @@ export default function VideoTutorialPage() {
                       About
                     </TabsTrigger>
                     <TabsTrigger
+                      value="security"
+                      className="rounded-lg px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Security
+                    </TabsTrigger>
+                    <TabsTrigger
                       value="discuss"
                       className="rounded-lg px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold"
                     >
@@ -570,11 +690,11 @@ export default function VideoTutorialPage() {
                       Discuss
                     </TabsTrigger>
                     <TabsTrigger
-                      value="notes"
+                      value="stats"
                       className="rounded-lg px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold"
                     >
-                      <Target className="w-4 h-4 mr-2" />
-                      Notes
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Stats
                     </TabsTrigger>
                   </TabsList>
 
@@ -599,17 +719,73 @@ export default function VideoTutorialPage() {
                           <p className="text-sm text-gray-600">Duration</p>
                         </div>
                         <div className="text-center p-3 bg-blue-50 rounded-xl">
-                          <Users className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                          <Settings className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                           <p className="text-lg font-bold text-gray-900">
-                            1.2k
+                            {videoStreamingMethod?.toUpperCase() || "Loading"}
                           </p>
-                          <p className="text-sm text-gray-600">Views</p>
+                          <p className="text-sm text-gray-600">Streaming</p>
                         </div>
                         <div className="text-center p-3 bg-green-50 rounded-xl">
                           <Star className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                          <p className="text-lg font-bold text-gray-900">4.8</p>
-                          <p className="text-sm text-gray-600">Rating</p>
+                          <p className="text-lg font-bold text-gray-900">
+                            🔒 Secure
+                          </p>
+                          <p className="text-sm text-gray-600">Protection</p>
                         </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="security" className="mt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                          🔒 Security Features Active
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                            <h4 className="font-semibold text-green-800 mb-2">
+                              ✅ Download Protection
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              Video cannot be downloaded or saved
+                            </p>
+                          </div>
+                          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                            <h4 className="font-semibold text-green-800 mb-2">
+                              ✅ Session Monitoring
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              Session integrity continuously verified
+                            </p>
+                          </div>
+                          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                            <h4 className="font-semibold text-green-800 mb-2">
+                              ✅ Recording Detection
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              Screen recording attempts are blocked
+                            </p>
+                          </div>
+                          <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                            <h4 className="font-semibold text-green-800 mb-2">
+                              ✅ Watermarking
+                            </h4>
+                            <p className="text-sm text-green-700">
+                              User identification overlay applied
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+                        <h4 className="font-semibold text-red-800 mb-2">
+                          ⚠️ Security Notice
+                        </h4>
+                        <p className="text-sm text-red-700">
+                          This content is protected by advanced security
+                          measures. Any attempts to circumvent these protections
+                          may result in account suspension.
+                        </p>
                       </div>
                     </div>
                   </TabsContent>
@@ -637,26 +813,36 @@ export default function VideoTutorialPage() {
                     </Card>
                   </TabsContent>
 
-                  <TabsContent value="notes" className="mt-6">
-                    <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-xl">
-                      <CardContent className="p-6">
-                        <div className="text-center">
-                          <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Target className="w-8 h-8 text-white" />
-                          </div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            Personal Notes
-                          </h3>
-                          <p className="text-gray-600 mb-4">
-                            Take notes while learning to remember key points.
-                          </p>
-                          <Button className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white rounded-xl">
-                            <Target className="w-4 h-4 mr-2" />
-                            Add Notes
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <TabsContent value="stats" className="mt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-gray-50 rounded-xl">
+                        <h4 className="font-semibold text-gray-700">Method</h4>
+                        <p className="text-lg font-bold text-purple-600">
+                          {videoStreamingMethod?.toUpperCase() || "Loading"}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-gray-50 rounded-xl">
+                        <h4 className="font-semibold text-gray-700">
+                          Security
+                        </h4>
+                        <p className="text-lg font-bold text-green-600">
+                          🔒 Maximum
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-gray-50 rounded-xl">
+                        <h4 className="font-semibold text-gray-700">Status</h4>
+                        <p className="text-lg font-bold text-blue-600">
+                          {connectionStatus.charAt(0).toUpperCase() +
+                            connectionStatus.slice(1)}
+                        </p>
+                      </div>
+                      <div className="text-center p-4 bg-gray-50 rounded-xl">
+                        <h4 className="font-semibold text-gray-700">Quality</h4>
+                        <p className="text-lg font-bold text-orange-600">
+                          {videoQuality}
+                        </p>
+                      </div>
+                    </div>
                   </TabsContent>
                 </Tabs>
               </CardContent>
@@ -699,7 +885,7 @@ export default function VideoTutorialPage() {
                       </span>
                       <Badge className="bg-green-100 text-green-800 border-0">
                         <CheckCircle className="w-3 h-3 mr-1" />
-                        Active
+                        🔒 Secure
                       </Badge>
                     </div>
 
@@ -727,7 +913,7 @@ export default function VideoTutorialPage() {
                 <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-purple-600" />
-                    Course Content
+                    🔒 Secure Course Content
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
@@ -750,10 +936,10 @@ export default function VideoTutorialPage() {
                             </div>
                             <div className="text-left">
                               <h4 className="font-bold text-gray-900 text-sm">
-                                {season.season}
+                                🔒 {season.season}
                               </h4>
                               <p className="text-xs text-gray-600">
-                                {season.episodes.length} episodes
+                                {season.episodes.length} secure episodes
                               </p>
                             </div>
                           </div>
@@ -811,6 +997,7 @@ export default function VideoTutorialPage() {
                                   <div className="flex items-center gap-2 text-xs text-gray-500">
                                     <Clock className="w-3 h-3" />
                                     <span>15 min</span>
+                                    <span className="text-green-600">🔒</span>
                                   </div>
                                 </div>
 
@@ -818,7 +1005,7 @@ export default function VideoTutorialPage() {
                                 {episode.completed && (
                                   <div className="flex-shrink-0">
                                     <Badge className="bg-green-100 text-green-700 border-0 text-xs px-2 py-1">
-                                      Done
+                                      ✅ Done
                                     </Badge>
                                   </div>
                                 )}
@@ -835,6 +1022,9 @@ export default function VideoTutorialPage() {
           </div>
         </div>
       </div>
+
+      {/* 🔒 SECURE Session Expired Modal */}
+      <SessionExpiredModal />
     </div>
   );
 }

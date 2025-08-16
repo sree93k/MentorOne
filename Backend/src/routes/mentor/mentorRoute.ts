@@ -36,6 +36,14 @@ mentorRoutes.get(
   mentorController.getPresignedUrl
 );
 
+// 🔧 BACKEND VIDEO UPLOAD - Alternative to presigned URLs for CORS issues
+mentorRoutes.post(
+  "/upload-video-backend",
+  authenticate,
+  upload.single('video'),
+  mentorController.uploadVideoBackend.bind(mentorController)
+);
+
 mentorRoutes.get("/allServices", authenticate, mentorController.getAllServices);
 mentorRoutes.get("/service/:id", authenticate, mentorController.getServiceById);
 mentorRoutes.put(
@@ -141,4 +149,37 @@ mentorRoutes.put(
   authenticate,
   mentorController.updateTopTestimonials.bind(mentorController)
 );
+
+// 🎬 INDUSTRY STANDARD VIDEO SYSTEM ROUTES
+mentorRoutes.post(
+  "/upload-video-industry-standard",
+  authenticate,
+  upload.single('video'),
+  mentorController.uploadVideoIndustryStandard.bind(mentorController)
+);
+
+mentorRoutes.get(
+  "/generate-secure-video-url",
+  authenticate,
+  mentorController.generateSecureVideoUrl.bind(mentorController)
+);
+
+mentorRoutes.get(
+  "/video-analytics",
+  authenticate,
+  mentorController.getVideoAnalytics.bind(mentorController)
+);
+
+mentorRoutes.post(
+  "/migrate-videos",
+  authenticate,
+  mentorController.migrateVideos.bind(mentorController)
+);
+
+mentorRoutes.get(
+  "/migration-progress",
+  authenticate,
+  mentorController.getMigrationProgress.bind(mentorController)
+);
+
 export default mentorRoutes;

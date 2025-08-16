@@ -28,7 +28,6 @@ import { EyeIcon, EyeOffIcon, Mail, Lock, User, Phone } from "lucide-react";
 import {
   setUser,
   setIsAuthenticated,
-  setAccessToken,
   setCurrentTab,
   setLoading,
 } from "@/redux/slices/userSlice";
