@@ -1,24 +1,17 @@
+import { injectable, inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
-import UserAuthService from "../../services/implementations/UserAuthService";
 import { IUserAuthService } from "../../services/interface/IUserAuthService";
-import OTPServices from "../../services/implementations/OTPService";
 import { IOTPService } from "../../services/interface/IOTPService";
 import { IUserService } from "../../services/interface/IUserService";
-import UserService from "../../services/implementations/UserService";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/SecureUploadService";
 import { IMenteeService } from "../../services/interface/IMenteeService";
-import MenteeService from "../../services/implementations/MenteeService";
 import { IMentorService } from "../../services/interface/IMentorService";
-import MentorService from "../../services/implementations/MentorService";
-import BookingService from "../../services/implementations/Bookingservice";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { IPaymentService } from "../../services/interface/IPaymentService";
-import PaymentService from "../../services/implementations/PaymentService";
-import CalendarService from "../../services/implementations/CalenderService";
 import { ICalendarService } from "../../services/interface/ICalenderService";
+import { TYPES } from "../../inversify/types";
 import sharp from "sharp";
 import stripe from "../../config/stripe";
 import { HttpStatus } from "../../constants/HttpStatus";
@@ -33,7 +26,8 @@ import VideoSignedUrlService from "../../services/implementations/VideoSignedUrl
 import SignedUrlService from "../../services/implementations/SignedUrlService";
 import MigrationService from "../../services/implementations/MigrationService";
 
-class menteeController {
+@injectable()
+class MenteeController {
   private userAuthService: IUserAuthService;
   private OTPServices: IOTPService;
   private userService: IUserService;
@@ -43,6 +37,7 @@ class menteeController {
   private bookingService: IBookingService;
   private PaymentService: IPaymentService;
   private CalendarService: ICalendarService;
+  
   private options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -50,16 +45,26 @@ class menteeController {
     maxAge: 1000 * 60 * 60 * 24 * 2,
   };
 
-  constructor() {
-    this.userAuthService = new UserAuthService();
-    this.OTPServices = new OTPServices();
-    this.userService = new UserService();
-    this.uploadService = new UploadService();
-    this.MenteeService = new MenteeService();
-    this.MentorService = new MentorService();
-    this.bookingService = new BookingService();
-    this.PaymentService = new PaymentService();
-    this.CalendarService = new CalendarService();
+  constructor(
+    @inject(TYPES.IUserAuthService) userAuthService: IUserAuthService,
+    @inject(TYPES.IOTPService) otpService: IOTPService,
+    @inject(TYPES.IUserService) userService: IUserService,
+    @inject(TYPES.IUploadService) uploadService: IUploadService,
+    @inject(TYPES.IMenteeService) menteeService: IMenteeService,
+    @inject(TYPES.IMentorService) mentorService: IMentorService,
+    @inject(TYPES.IBookingService) bookingService: IBookingService,
+    @inject(TYPES.IPaymentService) paymentService: IPaymentService,
+    @inject(TYPES.ICalenderService) calendarService: ICalendarService
+  ) {
+    this.userAuthService = userAuthService;
+    this.OTPServices = otpService;
+    this.userService = userService;
+    this.uploadService = uploadService;
+    this.MenteeService = menteeService;
+    this.MentorService = mentorService;
+    this.bookingService = bookingService;
+    this.PaymentService = paymentService;
+    this.CalendarService = calendarService;
   }
 
   public getBookings = async (
@@ -2557,4 +2562,4 @@ class menteeController {
   };
 }
 
-export default new menteeController();
+export default MenteeController;

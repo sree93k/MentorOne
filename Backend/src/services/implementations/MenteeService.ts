@@ -1,4 +1,5 @@
-import UserRepository from "../../repositories/implementations/UserRepository";
+import { injectable, inject } from "inversify";
+import { TYPES } from "../../inversify/types";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IMenteeService } from "../interface/IMenteeService";
 import { EUsers } from "../../entities/userEntity";
@@ -42,6 +43,7 @@ interface DashboardData {
   topTestimonials: ETestimonial[];
 }
 
+@injectable()
 export default class MenteeService implements IMenteeService {
   private MenteeRepository: IMenteeRepository;
   private PriorityDMRepository: IPriorityDMRepository;
@@ -54,17 +56,28 @@ export default class MenteeService implements IMenteeService {
   private CareerProfessional: ICareerProfessional;
   private UserRepository: IUserRepository;
 
-  constructor() {
-    this.MenteeRepository = new MenteeRepository();
-    this.PriorityDMRepository = new PriorityDMRepository();
-    this.ServiceService = new ServiceService(); // Changed to use ServiceService
-    this.BookingService = new BookingService();
-    this.Testimonial = new TestimonialService();
-    this.WalletRepository = new WalletRepository();
-    this.CareerCollege = new CareerCollege();
-    this.CareerSchool = new CareerSchool();
-    this.CareerProfessional = new CareerProfessional();
-    this.UserRepository = new UserRepository();
+  constructor(
+    @inject(TYPES.IMenteeRepository) menteeRepository: IMenteeRepository,
+    @inject(TYPES.IPriorityDmRepository) priorityDMRepository: IPriorityDmRepository,
+    @inject(TYPES.IServiceServices) serviceService: IServiceServices,
+    @inject(TYPES.IBookingService) bookingService: IBookingService,
+    @inject(TYPES.ITestimonialService) testimonialService: ITestimonialService,
+    @inject(TYPES.IWalletRepository) walletRepository: IWalletRepository,
+    @inject(TYPES.ICareerCollege) careerCollege: ICareerCollege,
+    @inject(TYPES.ICareerSchool) careerSchool: ICareerSchool,
+    @inject(TYPES.ICareerProfessional) careerProfessional: ICareerProfessional,
+    @inject(TYPES.IUserRepository) userRepository: IUserRepository
+  ) {
+    this.MenteeRepository = menteeRepository;
+    this.PriorityDMRepository = priorityDMRepository;
+    this.ServiceService = serviceService;
+    this.BookingService = bookingService;
+    this.Testimonial = testimonialService;
+    this.WalletRepository = walletRepository;
+    this.CareerCollege = careerCollege;
+    this.CareerSchool = careerSchool;
+    this.CareerProfessional = careerProfessional;
+    this.UserRepository = userRepository;
   }
 
   //welcomeData

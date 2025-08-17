@@ -1,18 +1,26 @@
+import { injectable, inject } from "inversify";
 import { EOTP } from "../../entities/OTPEntity";
 import { EUsers } from "../../entities/userEntity";
 import { IOTPRepository } from "../../repositories/interface/IOTPRepository";
 import { IOTPService } from "../interface/IOTPService";
-import OTPRepository from "../../repositories/implementations/OTPRepository";
 import { sendMail } from "../../utils/emailService";
 import OTPModel from "../../models/otpModel";
 import UserModel from "../../models/userModel";
 import bcrypt from "bcryptjs";
+import { TYPES } from "../../inversify/types";
 
+/**
+ * 🔹 DIP COMPLIANCE: Injectable OTP Service
+ * Uses dependency injection for repository dependency
+ */
+@injectable()
 export default class OTPService implements IOTPService {
   private OTPRepository: IOTPRepository;
 
-  constructor() {
-    this.OTPRepository = new OTPRepository();
+  constructor(
+    @inject(TYPES.IOTPRepository) otpRepository: IOTPRepository
+  ) {
+    this.OTPRepository = otpRepository;
   }
 
   async sendOTP(user: EUsers): Promise<EOTP | null> {

@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import mongoose from "mongoose";
 import BlockedDate from "../../models/blockedModel";
 import {
@@ -7,6 +8,7 @@ import {
 import BaseRepository from "./BaseRepository";
 import { EBlockedDate } from "../../entities/blockedEntity";
 
+@injectable()
 export default class BlockedRepository
   extends BaseRepository<EBlockedDate>
   implements IBlockedRepository

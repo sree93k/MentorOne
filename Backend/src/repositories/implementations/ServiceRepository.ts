@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import mongoose from "mongoose";
 import { IServiceRepository } from "../interface/IServiceRepository";
 import Service from "../../models/serviceModel";
@@ -16,6 +17,7 @@ interface GetAllServicesResponse {
   totalCount: number;
 }
 
+@injectable()
 export default class ServiceRepository
   extends BaseRepository<EService>
   implements IServiceRepository

@@ -1,10 +1,11 @@
+import { injectable } from "inversify";
 import Booking from "../../models/bookingModel";
-
 import { IBookingRepository } from "../interface/IBookingRepository";
 import { EBooking } from "../../entities/bookingEntity";
 import BaseRepository from "./BaseRepository";
 import mongoose from "mongoose";
 
+@injectable()
 export default class BookingRepository
   extends BaseRepository<EBooking>
   implements IBookingRepository

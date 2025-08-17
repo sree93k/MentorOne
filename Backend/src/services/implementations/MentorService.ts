@@ -1,5 +1,6 @@
-import UserRepository from "../../repositories/implementations/UserRepository";
+import { injectable, inject } from "inversify";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
+import { TYPES } from "../../inversify/types";
 import { IMentorService } from "../interface/IMentorService";
 import {
   UpdateMentorDTO,
@@ -58,6 +59,7 @@ interface GetAllServicesResponse {
   currentPage: number;
 }
 
+@injectable()
 export default class MentorService implements IMentorService {
   private UserRepository: IUserRepository;
   private MentorRepository: IMentorRepository;
@@ -70,17 +72,28 @@ export default class MentorService implements IMentorService {
   private CareerSchool: ICareerSchool;
   private CareerProfessional: ICareerProfessional;
 
-  constructor() {
-    this.UserRepository = new UserRepository();
-    this.MentorRepository = new MentorRepository();
-    this.ServiceService = new ServiceService(); // Changed to use ServiceService
-    this.SlotRepository = new SlotRepository();
-    this.ScheduleRepository = new ScheduleRepository();
-    this.PriorityDMRepository = new PriorityDMRepository();
-    this.BookingService = new BookingService();
-    this.CareerCollege = new CareerCollege();
-    this.CareerSchool = new CareerSchool();
-    this.CareerProfessional = new CareerProfessional();
+  constructor(
+    @inject(TYPES.IUserRepository) userRepository: IUserRepository,
+    @inject(TYPES.IMentorRepository) mentorRepository: IMentorRepository,
+    @inject(TYPES.IServiceServices) serviceService: IServiceServices,
+    @inject(TYPES.ISlotRepository) slotRepository: ISlotRepository,
+    @inject(TYPES.IScheduleRepository) scheduleRepository: IScheduleRepository,
+    @inject(TYPES.IPriorityDmRepository) priorityDMRepository: IPriorityDmRepository,
+    @inject(TYPES.IBookingService) bookingService: IBookingService,
+    @inject(TYPES.ICareerCollege) careerCollege: ICareerCollege,
+    @inject(TYPES.ICareerSchool) careerSchool: ICareerSchool,
+    @inject(TYPES.ICareerProfessional) careerProfessional: ICareerProfessional
+  ) {
+    this.UserRepository = userRepository;
+    this.MentorRepository = mentorRepository;
+    this.ServiceService = serviceService;
+    this.SlotRepository = slotRepository;
+    this.ScheduleRepository = scheduleRepository;
+    this.PriorityDMRepository = priorityDMRepository;
+    this.BookingService = bookingService;
+    this.CareerCollege = careerCollege;
+    this.CareerSchool = careerSchool;
+    this.CareerProfessional = careerProfessional;
   }
 
   async welcomeData(

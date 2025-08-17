@@ -1,12 +1,15 @@
 import { Router, Request, Response } from "express";
-import adminController from "../../controllers/implementation/adminController";
+import { RouteFactory } from "../../utils/routeFactory";
 import { validateAdminLogin } from "../../validator/AdminValidator";
 import adminAuthRoute from "./adminAuthRoute";
 import { authenticate } from "../../middlewares/authenticateAdmin";
-import appealController from "../../controllers/implementation/AppealController";
 import adminContactRoutes from "../contact/adminContactRoute"; // ✅ NEW
 
 const adminRoutes = Router();
+
+// Get controller instances from DI factory
+const adminController = RouteFactory.getAdminController();
+const appealController = RouteFactory.getAppealController();
 
 // ✅ INDUSTRY STANDARD: Auth routes first
 adminRoutes.use("/auth", adminAuthRoute);

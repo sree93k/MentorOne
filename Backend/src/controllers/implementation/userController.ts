@@ -1,8 +1,9 @@
+import { injectable, inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import { IUserService } from "../../services/interface/IUserService";
-import UserService from "../../services/implementations/UserService";
+import { TYPES } from "../../inversify/types";
 import { createClient } from "@redis/client";
 import { getIO } from "../../utils/socket/chat";
 import { HttpStatus } from "../../constants/HttpStatus";
@@ -32,11 +33,14 @@ redisClient.on("connect", () =>
   }
 })();
 
+@injectable()
 class UserController {
   private UserService: IUserService;
 
-  constructor() {
-    this.UserService = new UserService();
+  constructor(
+    @inject(TYPES.IUserService) userService: IUserService
+  ) {
+    this.UserService = userService;
   }
 
   public validateSuccessResponse = async (
@@ -427,4 +431,4 @@ class UserController {
   };
 }
 
-export default new UserController();
+export default UserController;

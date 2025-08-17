@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import Testimonial from "../../models/testimonialsModel";
 import Booking from "../../models/bookingModel";
 import { ITestimonialRepository } from "../interface/ITestimonialRepository";
@@ -5,6 +6,7 @@ import { ETestimonial } from "../../entities/testimonialEntity";
 import mongoose from "mongoose";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class TestimonialRepository
   extends BaseRepository<ETestimonial>
   implements ITestimonialRepository

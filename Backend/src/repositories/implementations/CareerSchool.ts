@@ -1,8 +1,10 @@
+import { injectable } from "inversify";
 import { ESchoolExperience } from "../../entities/schoolEntity";
 import SchoolExperience from "../../models/schoolExperienceModel";
 import { ICareerSchool } from "../interface/ICareerSchool";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class CareerSchool
   extends BaseRepository<ESchoolExperience>
   implements ICareerSchool

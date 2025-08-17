@@ -1,24 +1,28 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
-import PaymentService from "../../services/implementations/PaymentService";
-import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
 import stripe from "../../config/stripe";
 import { HttpStatus } from "../../constants/HttpStatus";
+import { TYPES } from "../../inversify/types";
 
 interface AuthUser {
   id: string;
 }
 
+@injectable()
 class PaymentController {
   private paymentService: IPaymentService;
   private bookingService: IBookingService;
 
-  constructor() {
-    this.paymentService = new PaymentService();
-    this.bookingService = new BookingService();
+  constructor(
+    @inject(TYPES.IPaymentService) paymentService: IPaymentService,
+    @inject(TYPES.IBookingService) bookingService: IBookingService
+  ) {
+    this.paymentService = paymentService;
+    this.bookingService = bookingService;
   }
 
   private handleStripeError = (error: any): ApiError => {
@@ -370,4 +374,4 @@ class PaymentController {
   };
 }
 
-export default new PaymentController();
+export default PaymentController;

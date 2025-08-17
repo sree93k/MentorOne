@@ -1,21 +1,25 @@
+import { injectable, inject } from "inversify";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { ICalendarService } from "../interface/ICalenderService";
-import PolicyRepository from "../../repositories/implementations/PolicyRepository";
 import { IPolicyRepository } from "../../repositories/interface/IPolicyRepository";
-import BlockedRepository from "../../repositories/implementations/BlockedRepository";
 import { IBlockedRepository } from "../../repositories/interface/IBlockedRepository";
-import ScheduleRepository from "../../repositories/implementations/ScheduleRepository";
 import { IScheduleRepository } from "../../repositories/interface/IScheduleRepository";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export default class CalendarService implements ICalendarService {
   private PolicyRepository: IPolicyRepository;
   private BlockedRepository: IBlockedRepository;
   private ScheduleRepository: IScheduleRepository;
 
-  constructor() {
-    this.PolicyRepository = new PolicyRepository();
-    this.BlockedRepository = new BlockedRepository();
-    this.ScheduleRepository = new ScheduleRepository();
+  constructor(
+    @inject(TYPES.IPolicyRepository) policyRepository: IPolicyRepository,
+    @inject(TYPES.IBlockedRepository) blockedRepository: IBlockedRepository,
+    @inject(TYPES.IScheduleRepository) scheduleRepository: IScheduleRepository
+  ) {
+    this.PolicyRepository = policyRepository;
+    this.BlockedRepository = blockedRepository;
+    this.ScheduleRepository = scheduleRepository;
   }
 
   async getMentorCalendar(mentorId: string) {

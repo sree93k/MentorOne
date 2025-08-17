@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import { EMentor } from "../../entities/mentorEntity";
 import { IMentorRepository } from "../interface/IMentorRepository";
 import Mentor from "../../models/mentorModel";
@@ -8,6 +9,7 @@ import Service from "../../models/serviceModel";
 import { EService } from "../../entities/serviceEntity";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class MentorRepository
   extends BaseRepository<EMentor>
   implements IMentorRepository

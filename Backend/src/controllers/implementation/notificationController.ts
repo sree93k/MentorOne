@@ -1,18 +1,23 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
-import NotificationService from "../../services/implementations/NotificationService";
+import { INotificationService } from "../../services/interface/INotificationService";
 import ApiResponse from "../../utils/apiResponse";
 import { HttpStatus } from "../../constants/HttpStatus";
+import { TYPES } from "../../inversify/types";
 
 interface AuthUser {
   id: string;
 }
 
+@injectable()
 class NotificationController {
-  private notificationService: NotificationService;
+  private notificationService: INotificationService;
 
-  constructor() {
-    this.notificationService = new NotificationService();
+  constructor(
+    @inject(TYPES.INotificationService) notificationService: INotificationService
+  ) {
+    this.notificationService = notificationService;
   }
 
   // public getUnreadNotifications = async (
@@ -309,4 +314,4 @@ class NotificationController {
   };
 }
 
-export default new NotificationController();
+export default NotificationController;

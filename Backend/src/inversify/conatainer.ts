@@ -1,37 +1,21 @@
-import { RedisTokenService } from "../services/implementations/RedisTokenService";
-import AdminAuthService from "../services/implementations/AdminAuthService";
-import AdminRepository from "../repositories/implementations/AdminRepository";
+/**
+ * 🔹 DIP COMPLIANCE: Modern Dependency Injection Container
+ * This file now exports the proper Inversify container
+ * Replaced manual singleton pattern with proper DI framework
+ */
 
-class DIContainer {
-  private static _redisTokenService: RedisTokenService;
-  private static _adminAuthService: AdminAuthService;
-  private static _adminRepository: AdminRepository;
+export { container as DIContainer } from "./inversify.config";
+export { TYPES } from "./types";
 
-  public static getRedisTokenService(): RedisTokenService {
-    if (!this._redisTokenService) {
-      this._redisTokenService = new RedisTokenService();
-    }
-    return this._redisTokenService;
-  }
-
-  public static getAdminRepository(): AdminRepository {
-    if (!this._adminRepository) {
-      this._adminRepository = new AdminRepository();
-    }
-    return this._adminRepository;
-  }
-
-  public static getAdminAuthService(): AdminAuthService {
-    if (!this._adminAuthService) {
-      const redisTokenService = this.getRedisTokenService();
-      const adminRepository = this.getAdminRepository();
-      this._adminAuthService = new AdminAuthService(
-        redisTokenService,
-        adminRepository
-      );
-    }
-    return this._adminAuthService;
+// Re-export for backward compatibility during migration
+export default class LegacyDIContainer {
+  /**
+   * @deprecated Use the new Inversify container instead
+   * This class is kept for backward compatibility during migration
+   */
+  static getDeprecationWarning() {
+    console.warn(
+      "⚠️  LegacyDIContainer is deprecated. Use the new Inversify container instead."
+    );
   }
 }
-
-export default DIContainer;

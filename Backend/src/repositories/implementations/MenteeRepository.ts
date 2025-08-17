@@ -1,8 +1,10 @@
+import { injectable } from "inversify";
 import { EMentee } from "../../entities/menteeEntiry";
 import Mentee from "../../models/menteeModel";
 import { IMenteeRepository } from "../interface/IMenteeRepository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class MenteeRepository
   extends BaseRepository<EMentee>
   implements IMenteeRepository

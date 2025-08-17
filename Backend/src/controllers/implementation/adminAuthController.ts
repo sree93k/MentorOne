@@ -214,4 +214,4 @@ export class AdminAuthController {
   }
 }
 
-export default new AdminAuthController();
+export default AdminAuthController;

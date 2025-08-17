@@ -1,8 +1,10 @@
+import { injectable } from "inversify";
 import { ENotification } from "../../entities/notificationEntity";
 import Notification from "../../models/notificationModel";
 import { INotificationRepository } from "../../repositories/interface/INotifictaionRepository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class NotificationRepository
   extends BaseRepository<ENotification>
   implements INotificationRepository

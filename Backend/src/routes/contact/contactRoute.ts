@@ -1,5 +1,5 @@
 import { Router } from "express";
-import contactController from "../../controllers/implementation/contactController";
+import { RouteFactory } from "../../utils/routeFactory";
 import {
   validateContactForm,
   validateMessageId,
@@ -7,6 +7,9 @@ import {
 } from "../../validator/ContactValidator";
 
 const contactRoutes = Router();
+
+// Get controller instance from factory
+const contactController = RouteFactory.getContactController();
 
 // =================== PUBLIC ROUTES ===================
 // No authentication required

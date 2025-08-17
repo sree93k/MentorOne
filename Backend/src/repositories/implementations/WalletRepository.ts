@@ -1,9 +1,11 @@
+import { injectable } from "inversify";
 import mongoose from "mongoose";
 import { EWallet } from "../../entities/WalletEntity";
 import Wallet from "../../models/WalletSchema";
 import BaseRepository from "./BaseRepository";
 import { IWalletRepository } from "../interface/IWalletRepository";
 
+@injectable()
 export default class WalletRepository
   extends BaseRepository<EWallet>
   implements IWalletRepository

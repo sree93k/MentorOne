@@ -1,9 +1,8 @@
+import { injectable, inject } from "inversify";
 import bcrypt from "bcryptjs";
 import { EUsers } from "../../entities/userEntity";
 import { IUserAuthService } from "../interface/IUserAuthService";
-import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import UserRepository from "../../repositories/implementations/UserRepository";
-import OTPServices from "./OTPService";
+import { IUserCrudRepository } from "../../repositories/interface/IUserCrudRepository";
 import { IOTPService } from "../interface/IOTPService";
 import UserModel from "../../models/userModel";
 import {
@@ -15,16 +14,27 @@ import {
 } from "../../utils/jwt";
 import ApiResponse from "../../utils/apiResponse";
 import { RedisTokenService } from "./RedisTokenService";
+import { TYPES } from "../../inversify/types";
 
+/**
+ * 🔹 DIP COMPLIANCE: Injectable User Authentication Service
+ * Uses dependency injection instead of direct instantiation
+ * Depends on interfaces, not concrete implementations
+ */
+@injectable()
 export default class UserAuthService implements IUserAuthService {
-  private UserRepository: IUserRepository;
+  private UserRepository: IUserCrudRepository;
   private OTPService: IOTPService;
   private redisTokenService: RedisTokenService;
 
-  constructor() {
-    this.UserRepository = new UserRepository();
-    this.OTPService = new OTPServices();
-    this.redisTokenService = new RedisTokenService();
+  constructor(
+    @inject(TYPES.IUserCrudRepository) userRepository: IUserCrudRepository,
+    @inject(TYPES.IOTPService) otpService: IOTPService,
+    @inject(TYPES.RedisTokenService) redisTokenService: RedisTokenService
+  ) {
+    this.UserRepository = userRepository;
+    this.OTPService = otpService;
+    this.redisTokenService = redisTokenService;
   }
 
   async createUser(email: string): Promise<{

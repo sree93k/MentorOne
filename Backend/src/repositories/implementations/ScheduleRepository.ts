@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import mongoose from "mongoose";
 import Schedule from "../../models/scheduleModel";
 import { ESchedule } from "../../entities/scheduleEntity";
@@ -7,6 +8,7 @@ import {
 } from "../interface/IScheduleRepository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class ScheduleRepository
   extends BaseRepository<ESchedule>
   implements IScheduleRepository

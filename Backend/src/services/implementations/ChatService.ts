@@ -1,20 +1,27 @@
-import ChatRepository from "../../repositories/implementations/ChatRepository";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
-import MessageRepository from "../../repositories/implementations/MessageRepository";
+import { injectable, inject } from "inversify";
+import { IChatRepository } from "../../repositories/interface/IChatRepository";
+import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
+import { IMessageRepository } from "../../repositories/interface/IMessageRepository";
 import { IChatService } from "../interface/IChatService";
 import { createClient } from "@redis/client";
 import { EChat } from "../../entities/chatEntity";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export default class ChatService implements IChatService {
-  private chatRepository: ChatRepository;
-  private bookingRepository: BookingRepository;
-  private messageRepository: MessageRepository;
+  private chatRepository: IChatRepository;
+  private bookingRepository: IBookingRepository;
+  private messageRepository: IMessageRepository;
   private redisClient;
 
-  constructor() {
-    this.chatRepository = new ChatRepository();
-    this.bookingRepository = new BookingRepository();
-    this.messageRepository = new MessageRepository();
+  constructor(
+    @inject(TYPES.IChatRepository) chatRepository: IChatRepository,
+    @inject(TYPES.IBookingRepository) bookingRepository: IBookingRepository,
+    @inject(TYPES.IMessageRepository) messageRepository: IMessageRepository
+  ) {
+    this.chatRepository = chatRepository;
+    this.bookingRepository = bookingRepository;
+    this.messageRepository = messageRepository;
     this.redisClient = createClient({ url: process.env.REDIS_URL });
     this.redisClient.connect().catch((err) => {
       console.error("ChatService: Redis connection error:", err.message);

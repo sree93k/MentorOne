@@ -1,22 +1,27 @@
+import { injectable, inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
-import PaymentService from "../../services/implementations/PaymentService";
-import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { ApiError } from "../../middlewares/errorHandler";
-import TestimonialService from "../../services/implementations/TestimonialService";
 import { ITestimonialService } from "../../services/interface/ITestimonialService";
 import { HttpStatus } from "../../constants/HttpStatus";
 import ApiResponse from "../../utils/apiResponse";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 class BookingController {
   private paymentService: IPaymentService;
   private bookingService: IBookingService;
   private testimonialService: ITestimonialService;
-  constructor() {
-    this.paymentService = new PaymentService();
-    this.bookingService = new BookingService();
-    this.testimonialService = new TestimonialService();
+  
+  constructor(
+    @inject(TYPES.IPaymentService) paymentService: IPaymentService,
+    @inject(TYPES.IBookingService) bookingService: IBookingService,
+    @inject(TYPES.ITestimonialService) testimonialService: ITestimonialService
+  ) {
+    this.paymentService = paymentService;
+    this.bookingService = bookingService;
+    this.testimonialService = testimonialService;
   }
 
   public createBooking = async (
@@ -800,4 +805,4 @@ class BookingController {
   };
 }
 
-export default new BookingController();
+export default BookingController;

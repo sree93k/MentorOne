@@ -1,9 +1,11 @@
+import { injectable } from "inversify";
 import Payment from "../../models/paymentModel";
 import mongoose from "mongoose";
 import { IPaymentRepository } from "../interface/IPaymentRepository";
 import BaseRepository from "./BaseRepository";
 import { EPayment } from "../../entities/paymentEntity";
 
+@injectable()
 export default class PaymentRepository
   extends BaseRepository<EPayment>
   implements IPaymentRepository

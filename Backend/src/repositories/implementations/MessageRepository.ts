@@ -1,9 +1,11 @@
+import { injectable } from "inversify";
 import Message from "../../models/messageModel";
 import BaseRepository from "./BaseRepository";
 import { EMessage } from "../../entities/messageEntity";
 import { IMessageRepository } from "../interface/IMessageRepository";
 import mongoose from "mongoose";
 
+@injectable()
 export default class MessageRepository
   extends BaseRepository<EMessage>
   implements IMessageRepository

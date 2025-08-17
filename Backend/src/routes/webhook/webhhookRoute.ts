@@ -1,8 +1,11 @@
 import { Router } from "express";
-import webhookController from "../../controllers/implementation/webHookController";
+import { RouteFactory } from "../../utils/routeFactory";
 import { stripeMiddleware } from "../../middlewares/stripeMiddleware";
 
 const webhookRoute = Router();
+
+// Get controller instance from factory
+const webhookController = RouteFactory.getWebHookController();
 
 webhookRoute.post(
   "/webhook",

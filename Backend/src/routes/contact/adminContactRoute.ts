@@ -1,6 +1,6 @@
 // src/routes/contact/adminContactRoute.ts
 import { Router } from "express";
-import contactController from "../../controllers/implementation/contactController";
+import { RouteFactory } from "../../utils/routeFactory";
 import { authenticate } from "../../middlewares/authenticateAdmin";
 import {
   validateMessageId,
@@ -12,6 +12,9 @@ import {
 } from "../../validator/ContactValidator";
 
 const adminContactRoutes = Router();
+
+// Get controller instance from factory
+const contactController = RouteFactory.getContactController();
 
 // Apply admin authentication middleware to all routes
 adminContactRoutes.use(authenticate);

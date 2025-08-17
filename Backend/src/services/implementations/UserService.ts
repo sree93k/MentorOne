@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import { EUsers } from "../../entities/userEntity";
 import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
@@ -60,6 +61,7 @@ interface BlockStatusResponse {
   };
   cacheHit?: boolean;
 }
+@injectable()
 export default class UserService implements IUserService {
   private UserRepository: IUserRepository;
   private CareerCollege: ICareerCollege;

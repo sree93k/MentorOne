@@ -1,20 +1,24 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
 import ApiResponse from "../../utils/apiResponse";
-import VideoCallService from "../../services/implementations/VideoCallService";
 import { IVideoCallService } from "../../services/interface/IVideoCallService";
 import { ApiError } from "../../middlewares/errorHandler";
 import { HttpStatus } from "../../constants/HttpStatus";
+import { TYPES } from "../../inversify/types";
 
 interface AuthUser {
   id: string;
   firstName?: string;
 }
 
+@injectable()
 class VideoCallController {
   private videoCallService: IVideoCallService;
 
-  constructor() {
-    this.videoCallService = new VideoCallService();
+  constructor(
+    @inject(TYPES.IVideoCallService) videoCallService: IVideoCallService
+  ) {
+    this.videoCallService = videoCallService;
     this.createMeeting = this.createMeeting.bind(this);
     this.validateMeeting = this.validateMeeting.bind(this);
     this.joinMeeting = this.joinMeeting.bind(this);
@@ -226,4 +230,4 @@ class VideoCallController {
   };
 }
 
-export default new VideoCallController();
+export default VideoCallController;

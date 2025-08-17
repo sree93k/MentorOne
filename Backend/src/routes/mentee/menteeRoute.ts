@@ -1,14 +1,17 @@
 import { Router } from "express";
-import menteeController from "../../controllers/implementation/menteeController";
+import { RouteFactory } from "../../utils/routeFactory";
 import multer from "multer";
 import { authenticate } from "../../middlewares/authenticateuser";
-import uploadController from "../../controllers/implementation/uploadController";
-import bookingController from "../../controllers/implementation/bookingController";
-import paymentController from "../../controllers/implementation/paymentController";
 import videoAccessMiddleware from "../../middlewares/videoAccessMiddleware";
 
 const menteeRoutes = Router();
 const upload = multer({ dest: "uploads/" });
+
+// Get controller instances from factory
+const menteeController = RouteFactory.getMenteeController();
+const uploadController = RouteFactory.getUploadController();
+const bookingController = RouteFactory.getBookingController();
+const paymentController = RouteFactory.getPaymentController();
 
 menteeRoutes.put(
   "/welcomeform",

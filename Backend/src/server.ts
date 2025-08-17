@@ -17,7 +17,7 @@ import { createAdapter } from "@socket.io/redis-adapter";
 import "./services/queue"; // Initialize queue processors
 import { CleanupJobs } from "./jobs/cleanupJobs";
 import { serverAdapter } from "./utils/bullDashboard";
-import adminController from "./controllers/implementation/adminController";
+import { RouteFactory } from "./utils/routeFactory";
 import { setIO } from "./utils/socketManager";
 
 const requiredEnvVars = [
@@ -112,6 +112,7 @@ const io = new Server(httpServer, {
 const chatNamespace = io.of("/chat");
 const videoNamespace = io.of("/video");
 const notificationNamespace = io.of("/notifications");
+const adminController = RouteFactory.getAdminController();
 adminController.setSocketIO(io);
 setIO(io);
 

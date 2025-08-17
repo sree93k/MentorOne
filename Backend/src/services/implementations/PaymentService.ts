@@ -1,3 +1,4 @@
+import { injectable, inject } from "inversify";
 import stripe from "../../config/stripe";
 import {
   IPaymentService,
@@ -8,27 +9,30 @@ import {
   UpdatePaymentDTO,
 } from "../interface/IPaymentService";
 import Stripe from "stripe";
-import PaymentRepository from "../../repositories/implementations/PaymentRepository";
-import UserRepository from "../../repositories/implementations/UserRepository";
-import { IServiceService } from "../interface/IServiceServices"; // Changed import
-import ServiceService from "./ServiceServices"; // Changed import
-import WalletRepository from "../../repositories/implementations/WalletRepository";
+import { IServiceServices } from "../interface/IServiceServices";
 import { IPaymentRepository } from "../../repositories/interface/IPaymentRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
 import { IWalletRepository } from "../../repositories/interface/IWalletRepository";
 import { EPayment } from "../../entities/paymentEntity";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export default class PaymentService implements IPaymentService {
   private paymentRepository: IPaymentRepository;
   private userRepository: IUserRepository;
-  private serviceService: IServiceService; // Changed from serviceRepository
+  private serviceService: IServiceServices;
   private walletRepository: IWalletRepository;
 
-  constructor() {
-    this.paymentRepository = new PaymentRepository();
-    this.userRepository = new UserRepository();
-    this.serviceService = new ServiceService(); // Changed to use ServiceService
-    this.walletRepository = new WalletRepository();
+  constructor(
+    @inject(TYPES.IPaymentRepository) paymentRepository: IPaymentRepository,
+    @inject(TYPES.IUserRepository) userRepository: IUserRepository,
+    @inject(TYPES.IServiceServices) serviceService: IServiceServices,
+    @inject(TYPES.IWalletRepository) walletRepository: IWalletRepository
+  ) {
+    this.paymentRepository = paymentRepository;
+    this.userRepository = userRepository;
+    this.serviceService = serviceService;
+    this.walletRepository = walletRepository;
   }
 
   // Complete payment creation method (for saveBookingAndPayment)

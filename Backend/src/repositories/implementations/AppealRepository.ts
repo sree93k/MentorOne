@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import { FilterQuery } from "mongoose";
 import BaseRepository from "./BaseRepository"; // ✅ Import with curly braces
 import AppealModel from "../../models/appealModel"; // ✅ Import the default export
@@ -10,6 +11,7 @@ import {
 import { IAppealRepository } from "../interface/IAppealRepository";
 import { IPaginatedResult } from "../interface/IBaseRepository";
 
+@injectable()
 export default class AppealRepository
   extends BaseRepository<EAppeal>
   implements IAppealRepository

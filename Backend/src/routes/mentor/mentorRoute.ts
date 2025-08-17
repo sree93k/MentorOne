@@ -1,13 +1,17 @@
 import { Router } from "express";
 import { welcomeFormValidator } from "../../validator/MentorValidator";
-import mentorController from "../../controllers/implementation/mentorController";
+import { RouteFactory } from "../../utils/routeFactory";
 import { authenticate } from "../../middlewares/authenticateuser";
 import multer from "multer";
-import bookingController from "../../controllers/implementation/bookingController";
-import paymentController from "../../controllers/implementation/paymentController";
 import { auth } from "../../utils/socket";
+
 const upload = multer({ storage: multer.memoryStorage() });
 const mentorRoutes = Router();
+
+// Get controller instances from factory
+const mentorController = RouteFactory.getMentorController();
+const bookingController = RouteFactory.getBookingController();
+const paymentController = RouteFactory.getPaymentController();
 
 mentorRoutes.put(
   "/welcomeform",

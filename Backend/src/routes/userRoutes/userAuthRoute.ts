@@ -1,5 +1,5 @@
 import { Router } from "express";
-import userAuthController from "../../controllers/implementation/userAuthController";
+import { RouteFactory } from "../../utils/routeFactory";
 import {
   validateUserLogin,
   validateUserSignUp,
@@ -19,6 +19,9 @@ import {
 } from "../../middlewares/authenticateuser";
 
 const userAuthRoutes = Router();
+
+// Get controller instance from DI factory
+const userAuthController = RouteFactory.getUserAuthController();
 
 // User auth routes
 userAuthRoutes.post("/sendOTP", validateSignUpOTP, userAuthController.sendOTP);

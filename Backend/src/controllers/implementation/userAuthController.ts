@@ -1,21 +1,26 @@
+import { injectable, inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
-import UserAuthService from "../../services/implementations/UserAuthService";
 import { IUserAuthService } from "../../services/interface/IUserAuthService";
-import OTPServices from "../../services/implementations/OTPService";
 import { IOTPService } from "../../services/interface/IOTPService";
 import { IUserService } from "../../services/interface/IUserService";
-import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/SecureUploadService";
 import { HttpStatus } from "../../constants/HttpStatus";
 import axios from "axios";
 import sharp from "sharp";
 import cookieConfig from "../../config/cookieConifg";
+import { TYPES } from "../../inversify/types";
+import { IUserAuthController } from "../interface/IUserAuthController";
 
-class UserAuthController {
+/**
+ * 🔹 DIP COMPLIANCE: Injectable User Authentication Controller
+ * Uses dependency injection instead of direct service instantiation
+ * Implements controller interface for better testability
+ */
+@injectable()
+class UserAuthController implements IUserAuthController {
   private userAuthService: IUserAuthService;
   private OTPServices: IOTPService;
   private userService: IUserService;
@@ -29,11 +34,16 @@ class UserAuthController {
     maxAge: 3 * 60 * 60 * 1000, // 3 hours (longer than JWT 30s expiry)
   };
 
-  constructor() {
-    this.userAuthService = new UserAuthService();
-    this.OTPServices = new OTPServices();
-    this.userService = new UserService();
-    this.uploadService = new UploadService();
+  constructor(
+    @inject(TYPES.IUserAuthService) userAuthService: IUserAuthService,
+    @inject(TYPES.IOTPService) otpService: IOTPService,
+    @inject(TYPES.IUserService) userService: IUserService,
+    @inject(TYPES.IUploadService) uploadService: IUploadService
+  ) {
+    this.userAuthService = userAuthService;
+    this.OTPServices = otpService;
+    this.userService = userService;
+    this.uploadService = uploadService;
   }
 
   public sendOTP = async (
@@ -721,4 +731,4 @@ class UserAuthController {
   };
 }
 
-export default new UserAuthController();
+export default UserAuthController;

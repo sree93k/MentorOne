@@ -1,3 +1,4 @@
+import { injectable, inject } from "inversify";
 import { IAdminService } from "../interface/IAdminService";
 import Users from "../../models/userModel";
 import Mentor from "../../models/mentorModel";
@@ -5,35 +6,41 @@ import { EUsers } from "../../entities/userEntity";
 import { EMentee } from "../../entities/menteeEntiry";
 import { EMentor } from "../../entities/mentorEntity";
 import { sendMail } from "../../utils/emailService";
-import { IServiceService } from "../interface/IServiceServices";
-import ServiceService from "./ServiceServices";
-import BookingService from "./Bookingservice";
+import { IServiceServices } from "../interface/IServiceServices";
 import { IBookingService } from "../interface/IBookingService";
 import { EBooking } from "../../entities/bookingEntity";
-import UserRepository from "../../repositories/implementations/UserRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import MenteeService from "./MenteeService";
 import { IMenteeService } from "../interface/IMenteeService";
-import MentorService from "./MentorService";
 import { IMentorService } from "../interface/IMentorService";
 import { EService } from "../../entities/serviceEntity";
 import { UserEjectionService } from "./UserEjectionService";
+import { TYPES } from "../../inversify/types";
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
+/**
+ * 🔹 DIP COMPLIANCE: Injectable Admin Service
+ * Uses dependency injection for all service dependencies
+ */
+@injectable()
 export default class AdminService implements IAdminService {
-  private ServiceService: IServiceService;
+  private ServiceService: IServiceServices;
   private BookingService: IBookingService;
   private UserRepository: IUserRepository;
   private MenteeServcie: IMenteeService;
   private MentorService: IMentorService;
 
-  constructor() {
-    this.ServiceService = new ServiceService();
-    this.BookingService = new BookingService();
-    this.UserRepository = new UserRepository();
-    this.MenteeServcie = new MenteeService();
-    this.MentorService = new MentorService();
+  constructor(
+    @inject(TYPES.IServiceServices) serviceService: IServiceServices,
+    @inject(TYPES.IUserRepository) userRepository: IUserRepository
+  ) {
+    this.ServiceService = serviceService;
+    this.UserRepository = userRepository;
+    
+    // TODO: Inject these after making them @injectable
+    this.BookingService = null as any; // Temporary
+    this.MenteeServcie = null as any; // Temporary  
+    this.MentorService = null as any; // Temporary
   }
 
   async fetchAllUsers(

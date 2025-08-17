@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import mongoose from "mongoose";
 import PriorityDMModel from "../../models/priorityDmModel";
 import { EPriorityDM } from "../../entities/priorityDMEntity";
@@ -5,6 +6,7 @@ import BaseRepository from "./BaseRepository";
 import { IPriorityDMRepository } from "../interface/IPriorityDmRepository";
 import { extend } from "joi";
 
+@injectable()
 export default class PriorityDMRepository
   extends BaseRepository<EPriorityDM>
   implements IPriorityDMRepository

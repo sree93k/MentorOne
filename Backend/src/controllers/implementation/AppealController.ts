@@ -1,18 +1,22 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
 import { HttpStatus } from "../../constants/HttpStatus";
 import ApiResponse from "../../utils/apiResponse";
 import { IAppealService } from "../../services/interface/IAppealService";
-import AppealService from "../../services/implementations/AppealService";
+import { TYPES } from "../../inversify/types";
 import {
   CustomValidator,
   ValidationRules,
 } from "../../utils/validators/customValidator";
 
+@injectable()
 class AppealController {
   private appealService: IAppealService;
 
-  constructor() {
-    this.appealService = new AppealService();
+  constructor(
+    @inject(TYPES.IAppealService) appealService: IAppealService
+  ) {
+    this.appealService = appealService;
   }
 
   // Validation middleware
@@ -369,4 +373,4 @@ class AppealController {
   };
 }
 
-export default new AppealController();
+export default AppealController;

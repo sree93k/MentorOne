@@ -1,9 +1,11 @@
 // src/repositories/implementations/AdminRepository.ts
+import { injectable } from "inversify";
 import { EAdmin } from "../../entities/adminEntity";
 import Admin from "../../models/adminModel";
 import { IAdminRepository } from "../interface/IAdminRespository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class AdminRepository
   extends BaseRepository<EAdmin>
   implements IAdminRepository

@@ -1,33 +1,35 @@
+import { injectable, inject } from "inversify";
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
-import UserAuthService from "../../services/implementations/UserAuthService";
 import { IUserAuthService } from "../../services/interface/IUserAuthService";
-import OTPServices from "../../services/implementations/OTPService";
 import { IOTPService } from "../../services/interface/IOTPService";
 import { IUserService } from "../../services/interface/IUserService";
-import UserService from "../../services/implementations/UserService";
 import { EOTP } from "../../entities/OTPEntity";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/SecureUploadService";
 import { IMentorService } from "../../services/interface/IMentorService";
-import MentorService from "../../services/implementations/MentorService";
-import { ICalendarService } from "../../services/interface/ICalenderService";
-import CalendarService from "../../services/implementations/CalenderService";
+import { ICalenderService } from "../../services/interface/ICalenderService";
 import { HttpStatus } from "../../constants/HttpStatus";
 import BackendUploadService from "../../services/implementations/BackendUploadService";
 import IndustryStandardVideoService from "../../services/implementations/IndustryStandardVideoService";
 import EnhancedSecureVideoProxy from "../../services/implementations/EnhancedSecureVideoProxy";
 import VideoMigrationService from "../../services/implementations/VideoMigrationService";
 import VideoAnalyticsService from "../../services/implementations/VideoAnalyticsService";
+import { TYPES } from "../../inversify/types";
+import { IMentorController } from "../interface/IMentorController";
 
-class mentorController {
+/**
+ * 🔹 DIP COMPLIANCE: Injectable Mentor Controller
+ * Uses dependency injection instead of direct service instantiation
+ */
+@injectable()
+class MentorController implements IMentorController {
   private userAuthService: IUserAuthService;
   private OTPServices: IOTPService;
   private userService: IUserService;
   private uploadService: IUploadService;
   private MentorService: IMentorService;
-  private calendarService: ICalendarService;
+  private calendarService: ICalenderService;
 
   private options = {
     httpOnly: true,
@@ -36,13 +38,20 @@ class mentorController {
     maxAge: 1000 * 60 * 60 * 24 * 2, // 2 days
   };
 
-  constructor() {
-    this.userAuthService = new UserAuthService();
-    this.OTPServices = new OTPServices();
-    this.userService = new UserService();
-    this.uploadService = new UploadService();
-    this.MentorService = new MentorService();
-    this.calendarService = new CalendarService();
+  constructor(
+    @inject(TYPES.IUserAuthService) userAuthService: IUserAuthService,
+    @inject(TYPES.IOTPService) otpService: IOTPService,
+    @inject(TYPES.IUploadService) uploadService: IUploadService,
+    @inject(TYPES.IUserService) userService: IUserService,
+    @inject(TYPES.IMentorService) mentorService: IMentorService,
+    @inject(TYPES.ICalenderService) calendarService: ICalenderService
+  ) {
+    this.userAuthService = userAuthService;
+    this.OTPServices = otpService;
+    this.uploadService = uploadService;
+    this.userService = userService;
+    this.MentorService = mentorService;
+    this.calendarService = calendarService;
   }
 
   public uploadWelcomeForm = async (
@@ -1179,4 +1188,4 @@ class mentorController {
     }
   };
 }
-export default new mentorController();
+export default MentorController;

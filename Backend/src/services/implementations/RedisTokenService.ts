@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import {
   createClient,
   RedisClientType,
@@ -6,7 +7,11 @@ import {
   RedisScripts,
 } from "@redis/client";
 
-// ✅ ENHANCED VERSION: Handles both Admin and User tokens
+/**
+ * 🔹 DIP COMPLIANCE: Injectable Redis Token Service
+ * Handles both Admin and User tokens with dependency injection
+ */
+@injectable()
 export class RedisTokenService {
   private redis: RedisClientType<
     RedisModules,

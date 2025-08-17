@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import { ESchedule } from "../../entities/scheduleEntity";
 import { EBlockedDate } from "../../entities/blockedEntity";
 import scheduleModel from "../../models/scheduleModel";
@@ -5,6 +6,7 @@ import blockedModel from "../../models/blockedModel";
 import { ISlotRepository } from "../interface/ISlotRepository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class SlotRepository
   extends BaseRepository<ESchedule>
   implements ISlotRepository

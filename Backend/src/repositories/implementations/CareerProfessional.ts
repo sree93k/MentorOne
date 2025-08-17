@@ -1,7 +1,9 @@
+import { injectable } from "inversify";
 import { EWorkExperience } from "../../entities/professionalEnitity";
 import WorkExperience from "../../models/professionalExperienceModel";
 import { ICareerProfessional } from "../interface/ICareerProfessional";
 import BaseRepository from "./BaseRepository";
+@injectable()
 export default class CareerProfessional
   extends BaseRepository<EWorkExperience>
   implements ICareerProfessional

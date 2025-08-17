@@ -1,8 +1,9 @@
+import { injectable, inject } from "inversify";
 import { IUploadService } from "../interface/IUploadService";
 import { s3 } from "../../config/awsS3";
 import sharp from "sharp";
-import UserRepository from "../../repositories/implementations/UserRepository";
-import { IUserRepository } from "../../repositories/interface/IUserRepository";
+import { IUserCrudRepository } from "../../repositories/interface/IUserCrudRepository";
+import { TYPES } from "../../inversify/types";
 
 const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 
@@ -12,11 +13,18 @@ interface SecureVideoUrl {
   sessionToken?: string;
 }
 
+/**
+ * 🔹 DIP COMPLIANCE: Injectable Secure Upload Service
+ * Uses dependency injection for user repository
+ */
+@injectable()
 export default class SecureUploadService implements IUploadService {
-  private UserRepository: IUserRepository;
+  private UserRepository: IUserCrudRepository;
 
-  constructor() {
-    this.UserRepository = new UserRepository();
+  constructor(
+    @inject(TYPES.IUserCrudRepository) userRepository: IUserCrudRepository
+  ) {
+    this.UserRepository = userRepository;
   }
 
   public async uploadProfileImage(

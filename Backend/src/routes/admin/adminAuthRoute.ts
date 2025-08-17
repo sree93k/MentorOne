@@ -1,5 +1,5 @@
 import { Router } from "express";
-import adminAuthController from "../../controllers/implementation/adminAuthController";
+import { RouteFactory } from "../../utils/routeFactory";
 import { validateAdminLogin } from "../../validator/AdminValidator";
 import {
   verifyRefreshTokenMiddleware,
@@ -7,6 +7,9 @@ import {
 } from "../../middlewares/authenticateAdmin";
 
 const adminAuthRoute = Router();
+
+// Get controller instance from factory
+const adminAuthController = RouteFactory.getAdminAuthController();
 
 // Login route
 adminAuthRoute.post("/login", validateAdminLogin, adminAuthController.login);

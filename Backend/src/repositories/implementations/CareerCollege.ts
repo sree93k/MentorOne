@@ -1,8 +1,10 @@
+import { injectable } from "inversify";
 import { ECollegeExperience } from "../../entities/collegeEntity";
 import CollegeExperience from "../../models/CollegeExperienceModel";
 import { ICareerCollege } from "../interface/ICareerCollege";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class CareerCollege
   extends BaseRepository<ECollegeExperience>
   implements ICareerCollege

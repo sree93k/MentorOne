@@ -1,12 +1,11 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../../middlewares/errorHandler";
 import ApiResponse from "../../utils/apiResponse";
-import ChatService from "../../services/implementations/ChatService";
-import MessageService from "../../services/implementations/MessageService";
-import VideoCallService from "../../services/implementations/VideoCallService";
 import { IChatService } from "../../services/interface/IChatService";
 import { IMessageService } from "../../services/interface/IMessageService";
 import { IVideoCallService } from "../../services/interface/IVideoCallService";
+import { TYPES } from "../../inversify/types";
 import { HttpStatus } from "../../constants/HttpStatus";
 
 interface AuthUser {
@@ -26,15 +25,20 @@ interface ChatUserResponse {
   otherUserId: string;
 }
 
+@injectable()
 class SocketController {
   private chatService: IChatService;
   private messageService: IMessageService;
   private videoCallService: IVideoCallService;
 
-  constructor() {
-    this.chatService = new ChatService();
-    this.messageService = new MessageService();
-    this.videoCallService = new VideoCallService();
+  constructor(
+    @inject(TYPES.IChatService) chatService: IChatService,
+    @inject(TYPES.IMessageService) messageService: IMessageService,
+    @inject(TYPES.IVideoCallService) videoCallService: IVideoCallService
+  ) {
+    this.chatService = chatService;
+    this.messageService = messageService;
+    this.videoCallService = videoCallService;
   }
 
   public getChatUsers = async (
@@ -328,4 +332,4 @@ class SocketController {
   };
 }
 
-export default new SocketController();
+export default SocketController;

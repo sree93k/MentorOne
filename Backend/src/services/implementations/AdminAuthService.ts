@@ -1,3 +1,4 @@
+import { injectable, inject } from "inversify";
 import bcrypt from "bcryptjs";
 import { EAdmin } from "../../entities/adminEntity";
 import { IAdminAuthService } from "../interface/IAdminAuthservice";
@@ -5,14 +6,16 @@ import { IAdminRepository } from "../../repositories/interface/IAdminRespository
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt";
 import { HttpStatus } from "../../constants/HttpStatus";
 import { RedisTokenService } from "./RedisTokenService";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export default class AdminAuthService implements IAdminAuthService {
   private adminRepository: IAdminRepository;
   private redisTokenService: RedisTokenService;
 
   constructor(
-    redisTokenService: RedisTokenService,
-    adminRepository: IAdminRepository
+    @inject(TYPES.RedisTokenService) redisTokenService: RedisTokenService,
+    @inject(TYPES.IAdminRepository) adminRepository: IAdminRepository
   ) {
     this.adminRepository = adminRepository;
     this.redisTokenService = redisTokenService;

@@ -1,8 +1,8 @@
+import { injectable, inject } from "inversify";
 import { IAppealService } from "../interface/IAppealService";
+import { TYPES } from "../../inversify/types";
 import { IAppealRepository } from "../../repositories/interface/IAppealRepository";
-import AppealRepository from "../../repositories/implementations/AppealRepository";
 import { IUserRepository } from "../../repositories/interface/IUserRepository";
-import UserRepository from "../../repositories/implementations/UserRepository"; // ✅ Fixed import
 import {
   EAppeal,
   CreateAppealDTO,
@@ -12,13 +12,17 @@ import {
 import { IPaginatedResult } from "../../repositories/interface/IBaseRepository";
 import { sendMail } from "../../utils/emailService";
 
+@injectable()
 export default class AppealService implements IAppealService {
   private appealRepository: IAppealRepository;
   private userRepository: IUserRepository;
 
-  constructor() {
-    this.appealRepository = new AppealRepository();
-    this.userRepository = new UserRepository(); // ✅ Fixed instantiation
+  constructor(
+    @inject(TYPES.IAppealRepository) appealRepository: IAppealRepository,
+    @inject(TYPES.IUserRepository) userRepository: IUserRepository
+  ) {
+    this.appealRepository = appealRepository;
+    this.userRepository = userRepository;
   }
 
   async submitAppeal(appealData: CreateAppealDTO): Promise<{

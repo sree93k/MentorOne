@@ -1,6 +1,7 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
 import { IUploadService } from "../../services/interface/IUploadService";
-import UploadService from "../../services/implementations/SecureUploadService";
+import { TYPES } from "../../inversify/types";
 import sharp from "sharp";
 import fs from "fs/promises";
 import { ApiError } from "../../middlewares/errorHandler";
@@ -11,11 +12,14 @@ interface AuthUser {
   id: string;
 }
 
+@injectable()
 class UploadController {
   private uploadService: IUploadService;
 
-  constructor() {
-    this.uploadService = new UploadService();
+  constructor(
+    @inject(TYPES.IUploadService) uploadService: IUploadService
+  ) {
+    this.uploadService = uploadService;
   }
 
   public uploadProfileImage = async (
@@ -202,4 +206,4 @@ class UploadController {
   };
 }
 
-export default new UploadController();
+export default UploadController;

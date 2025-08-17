@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import Chat from "../../models/chatModel";
 import Message from "../../models/messageModel";
 import BaseRepository from "./BaseRepository";
@@ -5,6 +6,7 @@ import { EChat } from "../../entities/chatEntity";
 import { IChatRepository } from "../interface/IChatRepository";
 import mongoose from "mongoose";
 
+@injectable()
 export default class ChatRepository
   extends BaseRepository<EChat>
   implements IChatRepository

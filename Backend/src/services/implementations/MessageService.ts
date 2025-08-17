@@ -1,15 +1,21 @@
-import MessageRepository from "../../repositories/implementations/MessageRepository";
-import ChatRepository from "../../repositories/implementations/ChatRepository";
+import { injectable, inject } from "inversify";
+import { IMessageRepository } from "../../repositories/interface/IMessageRepository";
+import { IChatRepository } from "../../repositories/interface/IChatRepository";
 import { IMessageService } from "../interface/IMessageService";
 import { EMessage } from "../../entities/messageEntity";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export default class MessageService implements IMessageService {
-  private messageRepository: MessageRepository;
-  private chatRepository: ChatRepository;
+  private messageRepository: IMessageRepository;
+  private chatRepository: IChatRepository;
 
-  constructor() {
-    this.messageRepository = new MessageRepository();
-    this.chatRepository = new ChatRepository();
+  constructor(
+    @inject(TYPES.IMessageRepository) messageRepository: IMessageRepository,
+    @inject(TYPES.IChatRepository) chatRepository: IChatRepository
+  ) {
+    this.messageRepository = messageRepository;
+    this.chatRepository = chatRepository;
   }
 
   async sendMessage(

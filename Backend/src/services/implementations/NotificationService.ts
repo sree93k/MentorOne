@@ -1,8 +1,9 @@
-import NotificationRepository from "../../repositories/implementations/NotificationRepository";
+import { injectable, inject } from "inversify";
+import { INotifictaionRepository } from "../../repositories/interface/INotifictaionRepository";
 import { pubClient } from "../../server";
-import BookingRepository from "../../repositories/implementations/BookingRepository";
 import { IBookingRepository } from "../../repositories/interface/IBookingRepository";
-import { INotificationService } from "../../services/interface/INotificationService";
+import { INotificationService } from "../interface/INotificationService";
+import { TYPES } from "../../inversify/types";
 
 interface NotificationData {
   recipientId: string;
@@ -13,13 +14,17 @@ interface NotificationData {
   sender?: { firstName: string; lastName: string; id: string };
 }
 
+@injectable()
 export default class NotificationService implements INotificationService {
-  private notificationRepository: NotificationRepository;
+  private notificationRepository: INotifictaionRepository;
   private bookingRepository: IBookingRepository;
 
-  constructor() {
-    this.notificationRepository = new NotificationRepository();
-    this.bookingRepository = new BookingRepository();
+  constructor(
+    @inject(TYPES.INotificationRepository) notificationRepository: INotifictaionRepository,
+    @inject(TYPES.IBookingRepository) bookingRepository: IBookingRepository
+  ) {
+    this.notificationRepository = notificationRepository;
+    this.bookingRepository = bookingRepository;
   }
 
   async createNotification(

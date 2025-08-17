@@ -1,7 +1,9 @@
-import TestimonialRepository from "../../repositories/implementations/TestimonialRepository";
+import { injectable, inject } from "inversify";
 import { ITestimonialRepository } from "../../repositories/interface/ITestimonialRepository";
 import { ETestimonial } from "../../entities/testimonialEntity";
 import mongoose from "mongoose";
+import { TYPES } from "../../inversify/types";
+import { ITestimonialService } from "../interface/ITestimonialService";
 interface SaveTestimonialParams {
   menteeId: string;
   mentorId: string;
@@ -17,11 +19,14 @@ interface UpdateTestimonialParams {
   rating?: number;
 }
 
-export default class TestimonialService {
+@injectable()
+export default class TestimonialService implements ITestimonialService {
   private testimonialRepository: ITestimonialRepository;
 
-  constructor() {
-    this.testimonialRepository = new TestimonialRepository();
+  constructor(
+    @inject(TYPES.ITestimonialRepository) testimonialRepository: ITestimonialRepository
+  ) {
+    this.testimonialRepository = testimonialRepository;
   }
 
   async saveTestimonial(params: SaveTestimonialParams): Promise<ETestimonial> {

@@ -1,13 +1,28 @@
+import { injectable } from "inversify";
 import { EUsers } from "../../entities/userEntity";
 import Users from "../../models/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
+import { IUserCrudRepository } from "../interface/IUserCrudRepository";
+import { IMentorQueryRepository } from "../interface/IMentorQueryRepository";
+import { IUserStatusRepository } from "../interface/IUserStatusRepository";
+import { IUserStatsRepository } from "../interface/IUserStatsRepository";
 import mongoose from "mongoose";
 import BaseRepository from "./BaseRepository";
 import Service from "../../models/serviceModel";
 
+/**
+ * 🔹 DIP COMPLIANCE: Injectable User Repository
+ * Implements all segregated interfaces following ISP and DIP principles
+ */
+@injectable()
 export default class UserRepository
   extends BaseRepository<EUsers>
-  implements IUserRepository
+  implements 
+    IUserRepository,
+    IUserCrudRepository,
+    IMentorQueryRepository,
+    IUserStatusRepository,
+    IUserStatsRepository
 {
   constructor() {
     super(Users);

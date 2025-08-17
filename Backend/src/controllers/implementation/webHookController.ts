@@ -1,20 +1,24 @@
+import { injectable, inject } from "inversify";
 import { Request, Response, NextFunction } from "express";
 import ApiResponse from "../../utils/apiResponse";
 import { ApiError } from "../../middlewares/errorHandler";
-import PaymentService from "../../services/implementations/PaymentService";
-import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
 import { IBookingService } from "../../services/interface/IBookingService";
 import { HttpStatus } from "../../constants/HttpStatus";
+import { TYPES } from "../../inversify/types";
 import { Stripe } from "stripe";
 
+@injectable()
 class WebhookController {
   private paymentService: IPaymentService;
   private bookingService: IBookingService;
 
-  constructor() {
-    this.paymentService = new PaymentService();
-    this.bookingService = new BookingService();
+  constructor(
+    @inject(TYPES.IPaymentService) paymentService: IPaymentService,
+    @inject(TYPES.IBookingService) bookingService: IBookingService
+  ) {
+    this.paymentService = paymentService;
+    this.bookingService = bookingService;
   }
 
   public handleWebhook = async (
@@ -128,4 +132,4 @@ class WebhookController {
   };
 }
 
-export default new WebhookController();
+export default WebhookController;

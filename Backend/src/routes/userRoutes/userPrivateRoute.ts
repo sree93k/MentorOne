@@ -1,19 +1,22 @@
 import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
-import uploadController from "../../controllers/implementation/uploadController";
+import { RouteFactory } from "../../utils/routeFactory";
 import {
   authenticate,
   blockDetectionMiddleware,
 } from "../../middlewares/authenticateuser";
-import userController from "../../controllers/implementation/userController";
-import paymentController from "../../controllers/implementation/paymentController";
-import socketController from "../../controllers/implementation/socketController";
-import videoCallController from "../../controllers/implementation/videoCallController";
-import chatController from "../../controllers/implementation/socketController";
-import notificationController from "../../controllers/implementation/notificationController";
-import bookingController from "../../controllers/implementation/bookingController";
 
 const userPrivateRoute = Router();
+
+// Get controller instances from DI factory
+const uploadController = RouteFactory.getUploadController();
+const userController = RouteFactory.getUserController();
+const paymentController = RouteFactory.getPaymentController();
+const socketController = RouteFactory.getSocketController();
+const videoCallController = RouteFactory.getVideoCallController();
+const chatController = RouteFactory.getSocketController();
+const notificationController = RouteFactory.getNotificationController();
+const bookingController = RouteFactory.getBookingController();
 
 // Configure multer to save files to an 'uploads' folder
 const upload = multer({ dest: "uploads/" });

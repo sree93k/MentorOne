@@ -71,12 +71,17 @@
 //     }
 //   }
 // }
+import { injectable } from "inversify";
 import { EUsers } from "../../entities/userEntity";
 import { EOTP } from "../../entities/OTPEntity";
 import { IOTPRepository } from "../interface/IOTPRepository";
 import BaseRepository from "./BaseRepository";
 import OTPModel from "../../models/otpModel";
 
+/**
+ * 🔹 DIP COMPLIANCE: Injectable OTP Repository
+ */
+@injectable()
 export default class OTPRepository
   extends BaseRepository<EOTP>
   implements IOTPRepository

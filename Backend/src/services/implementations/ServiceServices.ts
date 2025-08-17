@@ -1,6 +1,7 @@
+import { injectable, inject } from "inversify";
 import mongoose from "mongoose";
 import {
-  IServiceService,
+  IServiceServices,
   GetAllServicesParams,
   GetAllServicesForMenteeParams,
   GetAllServicesResponse,
@@ -10,7 +11,6 @@ import {
   GetTopServicesResponse,
 } from "../interface/IServiceServices";
 import { IServiceRepository } from "../../repositories/interface/IServiceRepository";
-import ServiceRepository from "../../repositories/implementations/ServiceRepository";
 import { EService } from "../../entities/serviceEntity";
 import {
   CreateServiceDTO,
@@ -18,12 +18,20 @@ import {
   ServiceValidationDTO,
   VideoTutorialFilterDTO,
 } from "../../dtos/serviceDTO";
+import { TYPES } from "../../inversify/types";
 
-export default class ServiceService implements IServiceService {
+/**
+ * 🔹 DIP COMPLIANCE: Injectable Service Services
+ * Uses dependency injection for repository dependency
+ */
+@injectable()
+export default class ServiceServices implements IServiceServices {
   private serviceRepository: IServiceRepository;
 
-  constructor() {
-    this.serviceRepository = new ServiceRepository();
+  constructor(
+    @inject(TYPES.IServiceRepository) serviceRepository: IServiceRepository
+  ) {
+    this.serviceRepository = serviceRepository;
   }
 
   async createService(serviceData: Partial<EService>): Promise<EService> {

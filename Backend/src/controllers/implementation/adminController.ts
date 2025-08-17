@@ -1,25 +1,36 @@
 // src/controllers/adminController.ts
+import { injectable, inject } from "inversify";
 import { NextFunction, Request, response, Response } from "express";
 import ApiResponse from "../../utils/apiResponse";
 import { IAdminService } from "../../services/interface/IAdminService";
-import AdminService from "../../services/implementations/AdminService";
 import { IBookingService } from "../../services/interface/IBookingService";
-import BookingService from "../../services/implementations/Bookingservice";
 import { IPaymentService } from "../../services/interface/IPaymentService";
-import PaymentService from "../../services/implementations/PaymentService";
 import { HttpStatus } from "../../constants/HttpStatus";
 import { Server } from "socket.io";
 import { UserEjectionService } from "../../services/implementations/UserEjectionService";
 import { getIO } from "../../utils/socketManager";
-class AdminController {
+import { TYPES } from "../../inversify/types";
+import { IAdminController } from "../interface/IAdminController";
+
+/**
+ * 🔹 DIP COMPLIANCE: Injectable Admin Controller
+ * Uses dependency injection instead of direct service instantiation
+ */
+@injectable()
+class AdminController implements IAdminController {
   private adminService: IAdminService;
   private bookingService: IBookingService;
   private paymentService: IPaymentService;
   private io: Server | null = null;
-  constructor() {
-    this.adminService = new AdminService();
-    this.bookingService = new BookingService();
-    this.paymentService = new PaymentService();
+
+  constructor(
+    @inject(TYPES.IAdminService) adminService: IAdminService,
+    @inject(TYPES.IBookingService) bookingService: IBookingService,
+    @inject(TYPES.IPaymentService) paymentService: IPaymentService
+  ) {
+    this.adminService = adminService;
+    this.bookingService = bookingService;
+    this.paymentService = paymentService;
   }
   public setSocketIO(socketIO: Server): void {
     this.io = socketIO;
@@ -411,7 +422,7 @@ class AdminController {
     });
   };
 }
-export default new AdminController();
+export default AdminController;
 
 export const testCookies = (req: Request, res: Response): void => {
   console.log("🧪 === COOKIE TEST ENDPOINT ===");

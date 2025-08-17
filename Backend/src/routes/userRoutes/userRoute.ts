@@ -1,10 +1,13 @@
 import { Router } from "express";
 import userAuthRoute from "./userAuthRoute";
 import userPrivateRoute from "./userPrivateRoute";
-import userController from "../../controllers/implementation/userController";
-import appealController from "../../controllers/implementation/AppealController";
+import { RouteFactory } from "../../utils/routeFactory";
 
 const userRoutes = Router();
+
+// Get controller instances from factory
+const userController = RouteFactory.getUserController();
+const appealController = RouteFactory.getAppealController();
 
 // ✅ INDUSTRY STANDARD: Auth routes first
 userRoutes.use("/auth", userAuthRoute);
