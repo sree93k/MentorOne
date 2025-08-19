@@ -51,7 +51,7 @@ import VideoCallRepository from "../repositories/implementations/VideoCallReposi
 import WalletRepository from "../repositories/implementations/WalletRepository";
 import TestimonialRepository from "../repositories/implementations/TestimonialRepository";
 import PriorityDmRepository from "../repositories/implementations/PriorityDmRepository";
-import ContactMessageRepository from "../repositories/implementations/ContactMessageRepository";
+import ModernContactMessageRepository from "../repositories/implementations/ModernContactMessageRepository";
 import AppealRepository from "../repositories/implementations/AppealRepository";
 import BlockedRepository from "../repositories/implementations/BlockedRepository";
 import BotConversationRepository from "../repositories/implementations/BotConversationRepository";
@@ -165,9 +165,6 @@ container.bind<IMentorQueryRepository>(TYPES.IMentorQueryRepository).to(UserRepo
 container.bind<IUserStatusRepository>(TYPES.IUserStatusRepository).to(UserRepository).inSingletonScope();
 container.bind<IUserStatsRepository>(TYPES.IUserStatsRepository).to(UserRepository).inSingletonScope();
 
-// Admin Repository Binding
-container.bind<IAdminRespository>(TYPES.IAdminRepository).to(AdminRepository).inSingletonScope();
-
 // Repository Bindings - Injectable ones enabled
 container.bind<IOTPRepository>(TYPES.IOTPRepository).to(OTPRepository).inSingletonScope();
 container.bind<IServiceRepository>(TYPES.IServiceRepository).to(ServiceRepository).inSingletonScope();
@@ -194,15 +191,11 @@ container.bind<IAppealRepository>(TYPES.IAppealRepository).to(AppealRepository).
 container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepository).inSingletonScope();
 container.bind<IChatRepository>(TYPES.IChatRepository).to(ChatRepository).inSingletonScope();
 container.bind<INotifictaionRepository>(TYPES.INotificationRepository).to(NotificationRepository).inSingletonScope();
-// container.bind<IScheduleRepository>(TYPES.IScheduleRepository).to(ScheduleRepository).inSingletonScope();
-// container.bind<ISlotRepository>(TYPES.ISlotRepository).to(SlotRepository).inSingletonScope();
-// container.bind<IVideoCallRepository>(TYPES.IVideoCallRepository).to(VideoCallRepository).inSingletonScope();
-// container.bind<IPriorityDmRepository>(TYPES.IPriorityDmRepository).to(PriorityDmRepository).inSingletonScope();
-// container.bind<IContactMessageRepository>(TYPES.IContactMessageRepository).to(ContactMessageRepository).inSingletonScope();
-// container.bind<IAppealRepository>(TYPES.IAppealRepository).to(AppealRepository).inSingletonScope();
-// container.bind<IBlockedRepository>(TYPES.IBlockedRepository).to(BlockedRepository).inSingletonScope();
-// container.bind<IBotConversationRepository>(TYPES.IBotConversationRepository).to(BotConversationRepository).inSingletonScope();
-// container.bind<IBotRateLimitRepository>(TYPES.IBotRateLimitRepository).to(BotRateLimitRepository).inSingletonScope();
+// Enable remaining repositories with modern implementations
+container.bind<IVideoCallRepository>(TYPES.IVideoCallRepository).to(VideoCallRepository).inSingletonScope();
+container.bind<IContactMessageRepository>(TYPES.IContactMessageRepository).to(ModernContactMessageRepository).inSingletonScope();
+container.bind<IBotConversationRepository>(TYPES.IBotConversationRepository).to(BotConversationRepository).inSingletonScope();
+container.bind<IBotRateLimitRepository>(TYPES.IBotRateLimitRepository).to(BotRateLimitRepository).inSingletonScope();
 
 // ================================
 // SERVICE BINDINGS (Core services now enabled)
@@ -228,10 +221,11 @@ container.bind<IMessageService>(TYPES.IMessageService).to(MessageService).inSing
 container.bind<IChatService>(TYPES.IChatService).to(ChatService).inSingletonScope();
 container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService).inSingletonScope();
 
-// TODO: Enable after adding @injectable to these services:
-// container.bind<IAdminAuthService>(TYPES.IAdminAuthService).to(AdminAuthService).inSingletonScope();
+// Enable AdminAuthService for admin authentication
+container.bind<IAdminAuthservice>(TYPES.IAdminAuthService).to(AdminAuthService).inSingletonScope();
+// Enable ContactMessageService for admin messages functionality
+container.bind<IContactMessageService>(TYPES.IContactMessageService).to(ContactMessageService).inSingletonScope();
 // container.bind<IVideoCallService>(TYPES.IVideoCallService).to(VideoCallService).inSingletonScope();
-// container.bind<IContactMessageService>(TYPES.IContactMessageService).to(ContactMessageService).inSingletonScope();
 // container.bind<IChatbotService>(TYPES.IChatbotService).to(ChatbotService).inSingletonScope();
 // container.bind<IAIService>(TYPES.IAIService).to(AIService).inSingletonScope();
 
@@ -258,11 +252,13 @@ container.bind<ISocketController>(TYPES.ISocketController).to(SocketController).
 container.bind<INotificationController>(TYPES.INotificationController).to(NotificationController).inSingletonScope();
 container.bind<IWebHookController>(TYPES.IWebHookController).to(WebHookController).inSingletonScope();
 
-// TODO: Enable after their service dependencies are made @injectable:
-// container.bind<IUserController>(TYPES.IUserController).to(UserController).inSingletonScope();
-// container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController).inSingletonScope();
+// Enable UserController - it has proper DI setup
+container.bind<IUserController>(TYPES.IUserController).to(UserController).inSingletonScope();
+// Enable AdminAuthController now that AdminAuthService dependencies are resolved
+container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController).inSingletonScope();
+// Enable ContactController now that ContactMessageService dependencies are resolved
+container.bind<IContactController>(TYPES.IContactController).to(ContactController).inSingletonScope();
 // container.bind<IVideoCallController>(TYPES.IVideoCallController).to(VideoCallController).inSingletonScope();
-// container.bind<IContactController>(TYPES.IContactController).to(ContactController).inSingletonScope();
 // container.bind<IChatbotController>(TYPES.IChatbotController).to(ChatbotController).inSingletonScope();
 // container.bind<ISecureVideoProxyController>(TYPES.ISecureVideoProxyController).to(SecureVideoProxyController).inSingletonScope();
 

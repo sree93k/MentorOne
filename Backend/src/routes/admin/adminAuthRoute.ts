@@ -12,20 +12,20 @@ const adminAuthRoute = Router();
 const adminAuthController = RouteFactory.getAdminAuthController();
 
 // Login route
-adminAuthRoute.post("/login", validateAdminLogin, adminAuthController.login);
+adminAuthRoute.post("/login", validateAdminLogin, adminAuthController.login.bind(adminAuthController));
 
 // Logout route (requires valid refresh token)
 adminAuthRoute.patch(
   "/logout",
   verifyRefreshTokenMiddleware,
-  adminAuthController.logout
+  adminAuthController.logout.bind(adminAuthController)
 );
 
 // Refresh token route (requires valid refresh token)
 adminAuthRoute.post(
   "/refresh-token",
   verifyRefreshTokenMiddleware,
-  adminAuthController.refreshToken
+  adminAuthController.refreshToken.bind(adminAuthController)
 );
 
 export default adminAuthRoute;

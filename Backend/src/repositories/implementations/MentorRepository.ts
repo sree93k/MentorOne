@@ -107,23 +107,6 @@ export default class MentorRepository
     }
   }
 
-  // async createVideoTutorial(
-  //   videoTutorial: Record<string, any>
-  // ): Promise<string> {
-  //   try {
-  //     console.log("createVideoTutorial repo step 1");
-  //     const newVideoTutorial = new VideoTutorial(videoTutorial);
-  //     console.log("createVideoTutorial repo step 2");
-  //     await newVideoTutorial.save();
-  //     console.log("createVideoTutorial repo step 3");
-  //     return newVideoTutorial._id.toString();
-  //   } catch (error) {
-  //     console.log("createVideoTutorial repo step 4");
-  //     console.error("Error creating video tutorial:", error);
-  //     throw new Error("Failed to create video tutorial");
-  //   }
-  // }
-
   async findById(id: string): Promise<EMentor | null> {
     try {
       return await Mentor.findById(id);

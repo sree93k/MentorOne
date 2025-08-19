@@ -1,49 +1,10 @@
-// import BotConversation from "../../models/BotConversationModel";
-// import { EBotConversation } from "../../entities/EBotConversationEntity";
-// import { IBotConversationRepository } from "../interface/IBotConversationRepository";
-
-// export class BotConversationRepository implements IBotConversationRepository {
-//   async createConversation(
-//     data: Partial<EBotConversation>
-//   ): Promise<EBotConversation> {
-//     const conversation = new BotConversation(data);
-//     return await conversation.save();
-//   }
-
-//   async findBySessionId(sessionId: string): Promise<EBotConversation | null> {
-//     return await BotConversation.findOne({ sessionId }).lean();
-//   }
-
-//   async addMessage(sessionId: string, message: any): Promise<EBotConversation> {
-//     return await BotConversation.findOneAndUpdate(
-//       { sessionId },
-//       {
-//         $push: { messages: message },
-//         $inc: { totalQuestions: message.sender === "user" ? 1 : 0 },
-//       },
-//       { new: true, upsert: true }
-//     );
-//   }
-
-//   async updateConversation(
-//     sessionId: string,
-//     updates: Partial<EBotConversation>
-//   ): Promise<EBotConversation | null> {
-//     return await BotConversation.findOneAndUpdate({ sessionId }, updates, {
-//       new: true,
-//     });
-//   }
-
-//   async getConversationHistory(sessionId: string): Promise<any[]> {
-//     const conversation = await BotConversation.findOne({ sessionId });
-//     return conversation?.messages || [];
-//   }
-// }
+import { injectable } from "inversify";
 import BotConversation from "../../models/BotConversationModel";
 import { EBotConversation } from "../../entities/EBotConversationEntity";
 import { IBotConversationRepository } from "../interface/IBotConversationRepository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export class BotConversationRepository
   extends BaseRepository<EBotConversation>
   implements IBotConversationRepository
@@ -111,3 +72,5 @@ export class BotConversationRepository
     }
   }
 }
+
+export default BotConversationRepository;

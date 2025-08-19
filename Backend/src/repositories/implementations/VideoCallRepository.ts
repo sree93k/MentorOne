@@ -1,8 +1,10 @@
+import { injectable } from "inversify";
 import VideoCall from "../../models/VideoCall";
 import { EVideoCall } from "../../entities/videoCallEntity";
 import IVideoCallRepository from "../interface/IVideoCallRepository";
 import BaseRepository from "./BaseRepository";
 
+@injectable()
 export default class VideoCallRepository
   extends BaseRepository<EVideoCall>
   implements IVideoCallRepository

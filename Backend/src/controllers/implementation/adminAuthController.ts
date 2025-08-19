@@ -1,9 +1,19 @@
+import { injectable, inject } from "inversify";
 import { Request, Response } from "express";
-import DIContainer from "../../inversify/conatainer";
 import { HttpStatus } from "../../constants/HttpStatus";
 import { AdminLoginDTO } from "../../dtos/adminDTO";
+import { IAdminAuthService } from "../../services/interface/IAdminAuthservice";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export class AdminAuthController {
+  private adminAuthService: IAdminAuthService;
+
+  constructor(
+    @inject(TYPES.IAdminAuthService) adminAuthService: IAdminAuthService
+  ) {
+    this.adminAuthService = adminAuthService;
+  }
   async login(req: Request, res: Response): Promise<void> {
     try {
       console.log("🔐 === LOGIN ATTEMPT DEBUG ===");
@@ -11,12 +21,12 @@ export class AdminAuthController {
       console.log("🔐 Request headers:", req.headers);
       console.log("🔐 Existing cookies:", req.cookies);
 
-      const adminAuthService = DIContainer.getAdminAuthService();
+      // Use the injected service through interface-based DI
       const { adminEmail, adminPassword } = req.body as AdminLoginDTO;
 
       console.log("🔐 Login attempt for:", adminEmail);
 
-      const result = await adminAuthService.login({
+      const result = await this.adminAuthService.login({
         adminEmail,
         adminPassword,
       });
@@ -97,7 +107,7 @@ export class AdminAuthController {
       console.log("🚪 === LOGOUT ATTEMPT DEBUG ===");
       console.log("🚪 Request cookies:", req.cookies);
 
-      const adminAuthService = DIContainer.getAdminAuthService();
+      // Use injected service instead of legacy DI container
       const userId = req.user?.id;
 
       console.log("🚪 Logout attempt for user:", userId);
@@ -111,7 +121,7 @@ export class AdminAuthController {
       }
 
       // ✅ CHANGED: Only need userId for logout (refresh token retrieved from Redis)
-      const result = await adminAuthService.logout(userId);
+      const result = await this.adminAuthService.logout(userId);
 
       if (result) {
         // ✅ ONLY CLEAR ACCESS TOKEN COOKIE
@@ -151,7 +161,7 @@ export class AdminAuthController {
       console.log("🔄 Request cookies:", req.cookies);
       console.log("🔄 Request headers:", req.headers);
 
-      const adminAuthService = DIContainer.getAdminAuthService();
+      // Use injected service instead of legacy DI container
       const userId = req.user?.id;
 
       console.log("🔄 Refresh token endpoint called");
@@ -167,7 +177,7 @@ export class AdminAuthController {
       }
 
       // ✅ CHANGED: Only need userId (refresh token retrieved from Redis)
-      const result = await adminAuthService.refreshAccessToken(userId);
+      const result = await this.adminAuthService.refreshAccessToken(userId);
 
       if (result) {
         console.log("✅ Token refresh successful");

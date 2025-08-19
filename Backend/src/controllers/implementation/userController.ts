@@ -5,7 +5,7 @@ import ApiResponse from "../../utils/apiResponse";
 import { IUserService } from "../../services/interface/IUserService";
 import { TYPES } from "../../inversify/types";
 import { createClient } from "@redis/client";
-import { getIO } from "../../utils/socket/chat";
+import { getIO } from "../../utils/socket/socketIOInstance";
 import { HttpStatus } from "../../constants/HttpStatus";
 import {
   UserNotFoundError,

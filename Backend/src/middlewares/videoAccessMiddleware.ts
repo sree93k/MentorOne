@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../middlewares/errorHandler";
 import { HttpStatus } from "../constants/HttpStatus";
-import BookingService from "../services/implementations/Bookingservice";
 import { IBookingService } from "../services/interface/IBookingService";
+import { container } from "../inversify/inversify.config";
+import { TYPES } from "../inversify/types";
 import rateLimit from "express-rate-limit";
 
 // Fix: Use proper interface that matches your existing Request type
@@ -17,7 +18,7 @@ class VideoAccessMiddleware {
   private bookingService: IBookingService;
 
   constructor() {
-    this.bookingService = new BookingService();
+    this.bookingService = container.get<IBookingService>(TYPES.IBookingService);
   }
 
   // 🔧 ADJUSTED: More generous rate limiting for development/testing

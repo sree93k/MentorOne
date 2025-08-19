@@ -32,15 +32,16 @@ export default class AdminService implements IAdminService {
 
   constructor(
     @inject(TYPES.IServiceServices) serviceService: IServiceServices,
-    @inject(TYPES.IUserRepository) userRepository: IUserRepository
+    @inject(TYPES.IUserRepository) userRepository: IUserRepository,
+    @inject(TYPES.IBookingService) bookingService: IBookingService,
+    @inject(TYPES.IMenteeService) menteeService: IMenteeService,
+    @inject(TYPES.IMentorService) mentorService: IMentorService
   ) {
     this.ServiceService = serviceService;
     this.UserRepository = userRepository;
-    
-    // TODO: Inject these after making them @injectable
-    this.BookingService = null as any; // Temporary
-    this.MenteeServcie = null as any; // Temporary  
-    this.MentorService = null as any; // Temporary
+    this.BookingService = bookingService;
+    this.MenteeServcie = menteeService;
+    this.MentorService = mentorService;
   }
 
   async fetchAllUsers(

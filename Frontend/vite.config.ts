@@ -6,6 +6,10 @@ import flowbiteReact from "flowbite-react/plugin/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), flowbiteReact()],
+  server: {
+    port: 5173,
+    strictPort: true, // Fail if port 5173 is not available
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

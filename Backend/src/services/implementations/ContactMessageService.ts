@@ -1,4 +1,5 @@
 // src/services/implementation/ContactMessageService.ts
+import { injectable, inject } from "inversify";
 import {
   IContactMessageService,
   CreateContactMessageDTO,
@@ -18,12 +19,14 @@ import {
 } from "../../repositories/interface/IContactMessageRepository";
 import { IUserService } from "../interface/IUserService";
 import { ADMIN_CONFIG } from "../../config/adminConfig";
+import { TYPES } from "../../inversify/types";
 
+@injectable()
 export class ContactMessageService implements IContactMessageService {
   private contactMessageRepository: ContactMessageRepository;
   private userService: IUserService;
 
-  constructor(userService: IUserService) {
+  constructor(@inject(TYPES.IUserService) userService: IUserService) {
     this.userService = userService;
     // ✅ FIXED: Remove userService dependency from repository
     this.contactMessageRepository = new ContactMessageRepository();
@@ -910,3 +913,5 @@ Visit us at: ${process.env.CLIENT_HOST_URL || "https://mentorone.com"}`;
     return converted;
   }
 }
+
+export default ContactMessageService;

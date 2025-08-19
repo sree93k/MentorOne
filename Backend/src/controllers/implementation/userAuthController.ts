@@ -14,11 +14,6 @@ import cookieConfig from "../../config/cookieConifg";
 import { TYPES } from "../../inversify/types";
 import { IUserAuthController } from "../interface/IUserAuthController";
 
-/**
- * 🔹 DIP COMPLIANCE: Injectable User Authentication Controller
- * Uses dependency injection instead of direct service instantiation
- * Implements controller interface for better testability
- */
 @injectable()
 class UserAuthController implements IUserAuthController {
   private userAuthService: IUserAuthService;

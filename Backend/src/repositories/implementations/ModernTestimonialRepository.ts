@@ -1,12 +1,11 @@
 /**
- * 🔹 MODERN INDUSTRY STANDARD: Testimonial Repository
- * Type-safe, comprehensive testimonial repository implementation
+ * 🔹 PHASE 2 MIGRATION: Modern Testimonial Repository
+ * Type-safe, comprehensive testimonial and review management with moderation and analytics
  */
 
 import { injectable } from "inversify";
 import { Types, FilterQuery } from "mongoose";
 import { ETestimonial } from "../../entities/testimonialEntity";
-import { EBooking } from "../../entities/bookingEntity";
 import { ITestimonialRepository } from "../interface/ITestimonialRepository";
 import { EnhancedBaseRepository } from "./EnhancedBaseRepository";
 import { 
@@ -25,50 +24,144 @@ import {
 } from "../types/RepositoryTypes";
 
 // Import models
-import TestimonialModel from "../../models/testimonialsModel";
-import BookingModel from "../../models/bookingModel";
+import Testimonial from "../../models/testimonialsModel";
+import Booking from "../../models/bookingModel";
 
 /**
  * 🔹 TESTIMONIAL-SPECIFIC TYPES
  */
+type TestimonialStatus = "pending" | "approved" | "rejected" | "flagged";
+type TestimonialSource = "booking" | "service" | "general";
+type ModerationAction = "approved" | "rejected" | "flagged" | "reported";
+
 interface TestimonialCreateData {
   menteeId: string;
   mentorId: string;
   serviceId: string;
   bookingId: string;
-  comment: string;
   rating: number;
+  comment?: string;
+  status?: TestimonialStatus;
+  source?: TestimonialSource;
+  metadata?: {
+    completionDate?: Date;
+    sessionDuration?: number;
+    clientIp?: string;
+    userAgent?: string;
+    isVerified?: boolean;
+  };
 }
 
 interface TestimonialUpdateData {
-  comment?: string;
   rating?: number;
-  isApproved?: boolean;
-  moderatorNotes?: string;
+  comment?: string;
+  status?: TestimonialStatus;
+  moderationNotes?: string;
+  moderatedBy?: string;
+  moderatedAt?: Date;
+  flagReason?: string;
+  isHighlighted?: boolean;
 }
 
 interface TestimonialFilters {
   mentorId?: string;
-  serviceId?: string;
   menteeId?: string;
+  serviceId?: string;
   bookingId?: string;
-  rating?: number;
-  isApproved?: boolean;
+  status?: TestimonialStatus | TestimonialStatus[];
+  ratingRange?: {
+    min: number;
+    max: number;
+  };
   dateRange?: {
     start: Date;
     end: Date;
   };
+  isHighlighted?: boolean;
+  hasComment?: boolean;
+  source?: TestimonialSource;
+  isVerified?: boolean;
 }
 
-interface RatingStats {
+interface TestimonialAnalytics {
+  totalTestimonials: number;
   averageRating: number;
-  totalCount: number;
-  ratingDistribution: Record<number, number>;
+  ratingDistribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+  statusDistribution: Record<TestimonialStatus, number>;
+  responseRate: number;
+  sentimentAnalysis: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  topMentors: Array<{
+    mentorId: string;
+    mentorName: string;
+    averageRating: number;
+    testimonialCount: number;
+  }>;
+  topServices: Array<{
+    serviceId: string;
+    serviceName: string;
+    averageRating: number;
+    testimonialCount: number;
+  }>;
+  trends: Array<{
+    month: string;
+    averageRating: number;
+    testimonialCount: number;
+  }>;
+}
+
+interface TestimonialWithDetails extends ETestimonial {
+  mentee: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    profilePicture?: string;
+  };
+  mentor: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    profilePicture?: string;
+  };
+  service: {
+    _id: string;
+    title: string;
+    type: string;
+  };
+  booking?: {
+    _id: string;
+    bookingDate: Date;
+    status: string;
+    completedAt?: Date;
+  };
+  moderationHistory?: Array<{
+    action: ModerationAction;
+    moderatedBy: string;
+    timestamp: Date;
+    notes?: string;
+  }>;
+}
+
+interface ModerationData {
+  status: TestimonialStatus;
+  moderatedBy: string;
+  moderationNotes?: string;
+  flagReason?: string;
+  action: ModerationAction;
 }
 
 /**
  * 🔹 MODERN TESTIMONIAL REPOSITORY
- * Industry-standard implementation with comprehensive error handling and type safety
+ * Industry-standard testimonial management with moderation and comprehensive analytics
  */
 @injectable()
 export default class ModernTestimonialRepository 
@@ -76,7 +169,7 @@ export default class ModernTestimonialRepository
   implements ITestimonialRepository {
 
   constructor() {
-    super(TestimonialModel);
+    super(Testimonial);
   }
 
   /**

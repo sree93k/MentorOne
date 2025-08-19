@@ -21,6 +21,12 @@ export interface INotificationRepository {
 
   // Use the correct return type for your transformed data
   findUnreadByRecipient(recipientId: string): Promise<INotificationResponse[]>;
+  findUnreadByRecipientAndRole(
+    recipientId: string,
+    role: "mentor" | "mentee",
+    page?: number,
+    limit?: number
+  ): Promise<any[]>;
 
   findById(notificationId: string): Promise<ENotification | null>;
 

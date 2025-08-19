@@ -63,18 +63,21 @@ export default class BookingService implements IBookingService {
   constructor(
     @inject(TYPES.IServiceServices) serviceService: IServiceServices,
     @inject(TYPES.IUserRepository) userRepository: IUserRepository,
-    @inject(TYPES.IPaymentService) paymentService: IPaymentService
+    @inject(TYPES.IPaymentService) paymentService: IPaymentService,
+    @inject(TYPES.IBookingRepository) bookingRepository: IBookingRepository,
+    @inject(TYPES.IChatService) chatService: IChatService,
+    @inject(TYPES.INotificationService) notificationService: INotificationService,
+    @inject(TYPES.IWalletRepository) walletRepository: IWalletRepository,
+    @inject(TYPES.IBlockedRepository) blockedRepository: IBlockedRepository
   ) {
     this.serviceService = serviceService;
     this.userRepository = userRepository;
     this.PaymentService = paymentService;
-    
-    // TODO: Inject these after making them @injectable
-    this.bookingRepository = null as any;
-    this.chatService = null as any;
-    this.notificationService = null as any;
-    this.walletRepository = null as any;
-    this.blockedRepository = null as any;
+    this.bookingRepository = bookingRepository;
+    this.chatService = chatService;
+    this.notificationService = notificationService;
+    this.walletRepository = walletRepository;
+    this.blockedRepository = blockedRepository;
   }
 
   async createBooking(params: BookingParams): Promise<any> {
